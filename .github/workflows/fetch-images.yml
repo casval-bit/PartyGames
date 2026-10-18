@@ -1,0 +1,31 @@
+name: Chercher les images des cartes
+
+# À lancer à la main : onglet Actions > "Chercher les images des cartes" > Run workflow.
+# Le script interroge Wikipédia, télécharge les images dans public/cards/ puis l'action les enregistre dans le dépôt
+# (avec src/data/images.json). Les images sont alors embarquées dans l'appli : aucune requête réseau pendant la partie.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Refaire aussi les cartes qui ont déjà une image"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node tools/fetch-images.js ${{ inputs.force && '--force' || '' }}
+      - name: Enregistrer les images
+        run: |
+          git config user.name "images-bot"
+          git config user.email "images-bot@users.noreply.github.com"
+          git add src/data/images.json public/cards
+          git diff --staged --quiet || git commit -m "Images des cartes (Wikipédia)"
+          git push

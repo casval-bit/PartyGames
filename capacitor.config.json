@@ -1,0 +1,8 @@
+{
+  "appId": "fr.brice.timesup",
+  "appName": "Party Hub",
+  "webDir": "dist",
+  "backgroundColor": "#16101f",
+  "android": { "allowMixedContent": false },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

@@ -1,0 +1,1088 @@
+﻿nom;categories;pays;periode
+# Colonnes (séparateur ;) : nom ; categories ; pays ; periode. Plusieurs valeurs dans une colonne : sépare-les par |
+#  - categories : ids de src/data/categories.js (ex. chanteur|acteur). Un nom présent dans plusieurs catégories n'est jamais tiré 2 fois.
+#  - pays       : pays d'origine, ou pays du lieu pour un événement (liste dans src/data/countries.js). Peut rester vide.
+#  - periode    : 1964-2024 | 1964-auj | 1503 | XIX | 1990s | 356av-323av  (voir README). Siècles toujours, décennies dès 1970.
+# Les lignes qui commencent par # sont ignorées. Lance "npm run check-cards" pour vérifier ta liste.
+Lenny Kravitz;chanteur|acteur;États-Unis;1989-auj
+Omar Sy;acteur|francais;France;2000-auj
+Jean Dujardin;acteur|francais;France;1990-auj
+Marion Cotillard;acteur|francais;France;1993-auj
+Vincent Cassel;acteur|francais;France;1991-auj
+Audrey Tautou;acteur|francais;France;1999-auj
+Gérard Depardieu;acteur|francais;France;1967-auj
+Louis de Funès;acteur|francais;France;1945-1983
+Bourvil;acteur|francais;France;1945-1970
+Jean Reno;acteur|francais;France;1979-auj
+Catherine Deneuve;acteur|francais;France;1957-auj
+Isabelle Adjani;acteur|francais;France;1970-auj
+Léa Seydoux;acteur|francais;France;2006-auj
+Tahar Rahim;acteur|francais;France;2009-auj
+Leonardo DiCaprio;acteur;États-Unis;1991-auj
+Brad Pitt;acteur;États-Unis;1987-auj
+Tom Hanks;acteur;États-Unis;1980-auj
+Tom Cruise;acteur;États-Unis;1981-auj
+Johnny Depp;acteur;États-Unis;1984-auj
+Keanu Reeves;acteur;Canada|États-Unis;1985-auj
+Meryl Streep;acteur;États-Unis;1971-auj
+Angelina Jolie;acteur;États-Unis;1993-auj
+Scarlett Johansson;acteur;États-Unis;1994-auj
+Jennifer Lawrence;acteur;États-Unis;2008-auj
+Emma Stone;acteur;États-Unis;2007-auj
+Margot Robbie;acteur;Australie;2008-auj
+Morgan Freeman;acteur;États-Unis;1964-auj
+Robert De Niro;acteur;États-Unis;1963-auj
+Al Pacino;acteur;États-Unis;1969-auj
+Denzel Washington;acteur;États-Unis;1981-auj
+Will Smith;acteur|chanteur;États-Unis;1990-auj
+Jackie Chan;acteur;Chine;1962-auj
+Arnold Schwarzenegger;acteur|politique;Autriche|États-Unis;1970-2023
+Sylvester Stallone;acteur;États-Unis;1970-auj
+Marilyn Monroe;acteur|chanteur;États-Unis;1946-1962
+Audrey Hepburn;acteur;Belgique|Royaume-Uni;1948-1993
+Charlie Chaplin;acteur|realisateur;Royaume-Uni|États-Unis;1914-1967
+Zendaya;acteur;États-Unis;2010-auj
+Timothée Chalamet;acteur;États-Unis;2014-auj
+Ryan Gosling;acteur;Canada;1993-auj
+Cillian Murphy;acteur;Irlande;1996-auj
+Jim Carrey;acteur;Canada|États-Unis;1981-auj
+Robin Williams;acteur;États-Unis;1972-2014
+Mr Bean;fictif;Royaume-Uni;1990-1995
+Victor Hugo;auteur|francais|histoire;France;1802-1885
+Molière;auteur|francais|histoire;France;1622-1673
+Alexandre Dumas;auteur|francais;France;1802-1870
+Jules Verne;auteur|francais;France;1828-1905
+Émile Zola;auteur|francais;France;1840-1902
+Marcel Proust;auteur|francais;France;1871-1922
+Albert Camus;auteur|francais;France|Algérie;1913-1960
+Jean de La Fontaine;auteur|francais;France;1621-1695
+Antoine de Saint-Exupéry;auteur|francais;France;1900-1944
+Honoré de Balzac;auteur|francais;France;1799-1850
+Gustave Flaubert;auteur|francais;France;1821-1880
+Charles Baudelaire;auteur|francais;France;1821-1867
+Arthur Rimbaud;auteur|francais;France;1854-1891
+Maurice Leblanc;auteur|francais;France;1864-1941
+Marc Levy;auteur|francais;France;2000-auj
+Guillaume Musso;auteur|francais;France;2001-auj
+William Shakespeare;auteur;Royaume-Uni;1564-1616
+J. K. Rowling;auteur;Royaume-Uni;1997-auj
+J. R. R. Tolkien;auteur;Royaume-Uni;1892-1973
+Stephen King;auteur;États-Unis;1974-auj
+Agatha Christie;auteur;Royaume-Uni;1890-1976
+Ernest Hemingway;auteur;États-Unis;1899-1961
+George Orwell;auteur;Royaume-Uni;1903-1950
+Mark Twain;auteur;États-Unis;1835-1910
+Edgar Allan Poe;auteur;États-Unis;1809-1849
+Roald Dahl;auteur;Royaume-Uni;1916-1990
+Dan Brown;auteur;États-Unis;1998-auj
+Georges Simenon;auteur;Belgique;1903-1989
+Eiichiro Oda;auteur|manga;Japon;1997-auj
+Akira Toriyama;auteur|manga;Japon;1955-2024
+Steven Spielberg;realisateur;États-Unis;1971-auj
+Quentin Tarantino;realisateur;États-Unis;1992-auj
+Christopher Nolan;realisateur;Royaume-Uni|États-Unis;1998-auj
+Martin Scorsese;realisateur;États-Unis;1967-auj
+Alfred Hitchcock;realisateur;Royaume-Uni|États-Unis;1925-1976
+Stanley Kubrick;realisateur;États-Unis|Royaume-Uni;1953-1999
+James Cameron;realisateur;Canada|États-Unis;1978-auj
+Tim Burton;realisateur;États-Unis;1982-auj
+Ridley Scott;realisateur;Royaume-Uni;1977-auj
+Peter Jackson;realisateur;Nouvelle-Zélande;1987-auj
+George Lucas;realisateur;États-Unis;1971-2012
+Francis Ford Coppola;realisateur;États-Unis;1963-auj
+Luc Besson;realisateur|francais;France;1983-auj
+Jean-Pierre Jeunet;realisateur|francais;France;1991-auj
+Michel Hazanavicius;realisateur|francais;France;1999-auj
+Éric Toledano;realisateur|francais;France;2005-auj
+Dany Boon;realisateur|acteur|francais;France;1990-auj
+Claude Lelouch;realisateur|francais;France;1960-auj
+François Truffaut;realisateur|francais;France;1957-1984
+Hayao Miyazaki;realisateur|anime;Japon;1963-auj
+Greta Gerwig;realisateur;États-Unis;2008-auj
+Denis Villeneuve;realisateur;Canada;1998-auj
+Wes Anderson;realisateur;États-Unis;1996-auj
+David Fincher;realisateur;États-Unis;1992-auj
+Michael Jackson;chanteur;États-Unis;1964-2009
+Madonna;chanteur;États-Unis;1982-auj
+Beyoncé;chanteur;États-Unis;1997-auj
+Rihanna;chanteur;Barbade;2005-auj
+Taylor Swift;chanteur;États-Unis;2006-auj
+Lady Gaga;chanteur;États-Unis;2008-auj
+Elvis Presley;chanteur;États-Unis;1954-1977
+Freddie Mercury;chanteur;Royaume-Uni|Tanzanie;1970-1991
+Bob Marley;chanteur;Jamaïque;1962-1981
+Shakira;chanteur;Colombie;1991-auj
+Ed Sheeran;chanteur;Royaume-Uni;2011-auj
+Adele;chanteur;Royaume-Uni;2008-auj
+Céline Dion;chanteur;Canada;1981-auj
+Dua Lipa;chanteur;Royaume-Uni;2015-auj
+Billie Eilish;chanteur;États-Unis;2015-auj
+Bruno Mars;chanteur;États-Unis;2010-auj
+The Weeknd;chanteur;Canada;2011-auj
+Harry Styles;chanteur;Royaume-Uni;2010-auj
+Prince;chanteur;États-Unis;1978-2016
+David Bowie;chanteur;Royaume-Uni;1967-2016
+Édith Piaf;chanteur|francais;France;1935-1963
+Johnny Hallyday;chanteur|francais;France;1960-2017
+Stromae;chanteur|francais;Belgique;2009-auj
+Mylène Farmer;chanteur|francais;France;1984-auj
+Charles Aznavour;chanteur|francais;France|Arménie;1946-2018
+Jacques Brel;chanteur;Belgique|France;1953-1978
+Serge Gainsbourg;chanteur|francais;France;1958-1991
+Angèle;chanteur;Belgique;2018-auj
+Christine and the Queens;chanteur|francais;France;2010-auj
+Indochine;chanteur|francais;France;1981-auj
+Zaz;chanteur|francais;France;2010-auj
+Vianney;chanteur|francais;France;2014-auj
+Louane;chanteur|francais|acteur;France;2014-auj
+Patrick Bruel;chanteur|francais;France;1980-auj
+Claude François;chanteur|francais;France;1962-1978
+Dalida;chanteur;France|Italie|Égypte;1956-1987
+Joe Dassin;chanteur;France|États-Unis;1964-1980
+Florent Pagny;chanteur|francais;France;1987-auj
+Pharrell Williams;chanteur|rappeur;États-Unis;1992-auj
+Snoop Dogg;rappeur|chanteur|acteur;États-Unis;1992-auj
+Eminem;rappeur;États-Unis;1996-auj
+Jay-Z;rappeur;États-Unis;1996-auj
+Kanye West;rappeur;États-Unis;1996-auj
+Drake;rappeur;Canada;2006-auj
+Kendrick Lamar;rappeur;États-Unis;2003-auj
+Nicki Minaj;rappeur;Trinité-et-Tobago|États-Unis;2007-auj
+Cardi B;rappeur;États-Unis;2015-auj
+Travis Scott;rappeur;États-Unis;2013-auj
+50 Cent;rappeur;États-Unis;1999-auj
+Tupac Shakur;rappeur;États-Unis;1991-1996
+The Notorious B.I.G.;rappeur;États-Unis;1992-1997
+Booba;rappeur|francais;France;1996-auj
+Jul;rappeur|francais;France;2013-auj
+Nekfeu;rappeur|francais;France;2010-auj
+Orelsan;rappeur|francais;France;2005-auj
+PNL;rappeur|francais;France;2014-auj
+Soprano;rappeur|francais;France;2000-auj
+MC Solaar;rappeur|francais;France|Sénégal;1990-auj
+Aya Nakamura;chanteur|francais;France|Mali;2015-auj
+Damso;rappeur;Belgique|Congo (RDC);2015-auj
+Gims;rappeur|chanteur|francais;France|Congo (RDC);2005-auj
+Ninho;rappeur|francais;France;2016-auj
+SCH;rappeur|francais;France;2015-auj
+Koba LaD;rappeur|francais;France;2019-auj
+Laylow;rappeur|francais;France;2017-auj
+Doc Gynéco;rappeur|francais;France;1996-auj
+Cyril Hanouna;emission|francais;France;2000-auj
+Nagui;emission|francais;France;1987-auj
+Stéphane Bern;emission|francais;France;1990-auj
+Jean-Pierre Foucault;emission|francais;France;1980-auj
+Karine Le Marchand;emission|francais;France;2000-auj
+Camille Combal;emission|francais;France;2008-auj
+Laurent Ruquier;emission|francais;France;1990-auj
+Thierry Ardisson;emission|francais;France;1985-2025
+Philippe Etchebest;emission|francais;France;2010-auj
+Cyril Lignac;emission|francais;France;2010-auj
+Daniel Cohn-Bendit;politique|francais;France|Allemagne;1968-auj
+N'oubliez pas les paroles;emission;France;2007-auj
+Koh-Lanta;emission;France;2001-auj
+Top Chef;emission;France;2010-auj
+Fort Boyard;emission;France;1990-auj
+The Voice;emission;France;2012-auj
+Questions pour un champion;emission;France;1988-auj
+Les 12 coups de midi;emission;France;2010-auj
+Qui veut gagner des millions ?;emission;France;2000-auj
+Le Meilleur Pâtissier;emission;France;2012-auj
+L'Amour est dans le pré;emission;France;2005-auj
+Tout le monde veut prendre sa place;emission;France;2016-auj
+Danse avec les stars;emission;France;2011-auj
+Star Academy;emission;France;2001-auj
+Secret Story;emission;France;2007-auj
+Les Anges;emission;France;2011-auj
+Le Grand Bêtisier;emission;France;1980-auj
+Taratata;emission;France;1993-2011
+Thalassa;emission;France;1975-auj
+Des chiffres et des lettres;emission;France;1965-auj
+Le Juste Prix;emission;France;1987-auj
+La Roue de la fortune;emission;France;1987-auj
+Scrubs;serie;États-Unis;2001-2010
+Friends;serie;États-Unis;1994-2004
+Game of Thrones;serie;États-Unis;2011-2019
+Breaking Bad;serie;États-Unis;2008-2013
+Stranger Things;serie;États-Unis;2016-2025
+The Walking Dead;serie;États-Unis;2010-2022
+La Casa de Papel;serie;Espagne;2017-2021
+Squid Game;serie;Corée du Sud;2021-2025
+Lupin;serie;France;2021-2025
+Dix pour cent;serie;France;2015-2020
+Plus belle la vie;serie;France;2004-2022
+Kaamelott;serie;France;2005-2009
+Sherlock;serie;Royaume-Uni;2010-2017
+How I Met Your Mother;serie;États-Unis;2005-2014
+The Big Bang Theory;serie;États-Unis;2007-2019
+Prison Break;serie;États-Unis;2005-2017
+Les Simpson;serie|dessinanime;États-Unis;1989-auj
+Dr House;serie;États-Unis;2004-2012
+Grey's Anatomy;serie;États-Unis;2005-auj
+The Office;serie;États-Unis;2005-2013
+Black Mirror;serie;Royaume-Uni;2011-auj
+Peaky Blinders;serie;Royaume-Uni;2013-2022
+The Witcher;serie;États-Unis|Pologne;2019-auj
+Les Feux de l'amour;serie;États-Unis;1973-auj
+Docteur Quinn, femme médecin;serie;États-Unis;1993-1998
+Navarro;serie;France;1989-2007
+Joséphine, ange gardien;serie;France;1997-2018
+Dark;serie;Allemagne;2017-2020
+Wednesday;serie;États-Unis;2022-auj
+The Mandalorian;serie;États-Unis;2019-auj
+Harry Potter;fictif;Royaume-Uni;1997-auj
+Dumbledore;fictif;Royaume-Uni;1997-auj
+Voldemort;fictif;Royaume-Uni;1997-auj
+Gandalf;fictif;Royaume-Uni;1937-auj
+Frodon Sacquet;fictif;Royaume-Uni;1954-auj
+Gollum;fictif;Royaume-Uni;1937-auj
+Dark Vador;fictif;États-Unis;1977-auj
+Yoda;fictif;États-Unis;1980-auj
+Luke Skywalker;fictif;États-Unis;1977-auj
+Han Solo;fictif;États-Unis;1977-auj
+James Bond;fictif;Royaume-Uni;1953-auj
+Sherlock Holmes;fictif;Royaume-Uni;1887-auj
+Hercule Poirot;fictif;Royaume-Uni;1920-1975
+Arsène Lupin;fictif;France;1905-auj
+Indiana Jones;fictif;États-Unis;1981-2023
+Spider-Man;fictif;États-Unis;1962-auj
+Batman;fictif;États-Unis;1939-auj
+Superman;fictif;États-Unis;1938-auj
+Wonder Woman;fictif;États-Unis;1941-auj
+Hulk;fictif;États-Unis;1962-auj
+Iron Man;fictif;États-Unis;1963-auj
+Thor;fictif;États-Unis;1962-auj
+Joker;fictif;États-Unis;1940-auj
+Dracula;fictif;Royaume-Uni|Roumanie;1897-auj
+Frankenstein;fictif;Royaume-Uni|Suisse;1818-auj
+Zorro;fictif;États-Unis;1919-auj
+Robin des Bois;fictif;Royaume-Uni;XIII|XIV
+Le Roi Arthur;fictif;Royaume-Uni;V|VI
+Merlin l'enchanteur;fictif;Royaume-Uni;V|VI
+Tintin;fictif;Belgique;1929-auj
+Milou;fictif;Belgique;1929-auj
+Astérix;fictif;France;1959-auj
+Obélix;fictif;France;1959-auj
+Lucky Luke;fictif;Belgique;1946-auj
+Gaston Lagaffe;fictif;Belgique;1957-auj
+Le Petit Prince;fictif;France;1943-auj
+Cendrillon;fictif;France;XVII
+Blanche-Neige;fictif;Allemagne;XIX
+Peter Pan;fictif;Royaume-Uni;1902-auj
+Pinocchio;fictif;Italie;1881-auj
+Le Père Noël;fictif;;
+Alice au pays des merveilles;fictif;Royaume-Uni;1865-auj
+Hannibal Lecter;fictif;États-Unis;1981-auj
+Forrest Gump;fictif;États-Unis;1986-1994
+Rocky Balboa;fictif;États-Unis;1976-auj
+Shrek;dessinanime|fictif;États-Unis;1990-auj
+Mario;jeuvideo;Japon;1981-auj
+Luigi;jeuvideo;Japon;1983-auj
+Princesse Peach;jeuvideo;Japon;1985-auj
+Bowser;jeuvideo;Japon;1985-auj
+Link;jeuvideo;Japon;1986-auj
+Zelda;jeuvideo;Japon;1986-auj
+Donkey Kong;jeuvideo;Japon;1981-auj
+Pikachu;jeuvideo|anime;Japon;1996-auj
+Dracaufeu;jeuvideo|anime;Japon;1996-auj
+Sonic;jeuvideo;Japon;1991-auj
+Pac-Man;jeuvideo;Japon;1980-auj
+Lara Croft;jeuvideo;Royaume-Uni;1996-auj
+Master Chief;jeuvideo;États-Unis;2001-auj
+Kratos;jeuvideo;États-Unis;2005-auj
+Geralt de Riv;jeuvideo;Pologne;2007-auj
+Ezio Auditore;jeuvideo;Canada|France;2009-2016
+Nathan Drake;jeuvideo;États-Unis;2007-2022
+Steve (Minecraft);jeuvideo;Suède;2011-auj
+Creeper;jeuvideo;Suède;2009-auj
+Kirby;jeuvideo;Japon;1992-auj
+Samus Aran;jeuvideo;Japon;1986-auj
+Ryu (Street Fighter);jeuvideo;Japon;1987-auj
+Cloud Strife;jeuvideo;Japon;1997-auj
+Sephiroth;jeuvideo;Japon;1997-auj
+Crash Bandicoot;jeuvideo;États-Unis;1996-auj
+Rayman;jeuvideo;France;1995-auj
+Tom Nook;jeuvideo;Japon;2001-auj
+Isabelle (Animal Crossing);jeuvideo;Japon;2012-auj
+Joel (The Last of Us);jeuvideo;États-Unis;2013-auj
+Ellie (The Last of Us);jeuvideo;États-Unis;2013-auj
+Arthur Morgan;jeuvideo;États-Unis;2018
+Solid Snake;jeuvideo;Japon;1987-auj
+Mega Man;jeuvideo;Japon;1987-auj
+Pyramid Head;jeuvideo;Japon;2001-auj
+Eddy Merckx;cycliste|sportif;Belgique;1961-1978
+Bernard Hinault;cycliste|sportif|francais;France;1974-1986
+Jacques Anquetil;cycliste|sportif|francais;France;1953-1969
+Raymond Poulidor;cycliste|sportif|francais;France;1960-1977
+Laurent Fignon;cycliste|francais;France;1982-1993
+Greg LeMond;cycliste;États-Unis;1981-1994
+Miguel Indurain;cycliste;Espagne;1984-1996
+Marco Pantani;cycliste;Italie;1992-2003
+Lance Armstrong;cycliste;États-Unis;1992-2011
+Chris Froome;cycliste;Royaume-Uni|Kenya;2007-2022
+Mark Cavendish;cycliste;Royaume-Uni;2005-2024
+Peter Sagan;cycliste;Slovaquie;2009-2024
+Fausto Coppi;cycliste;Italie;1939-1959
+Richard Virenque;cycliste|francais;France;1992-2004
+Thomas Voeckler;cycliste|francais;France;2001-2017
+Julian Alaphilippe;cycliste|francais;France;2014-auj
+Thibaut Pinot;cycliste|francais;France;2011-2023
+Romain Bardet;cycliste|francais;France;2012-2024
+Warren Barguil;cycliste|francais;France;2013-auj
+David Gaudu;cycliste|francais;France;2018-auj
+Tadej Pogačar;cycliste;Slovénie;2019-auj
+Jonas Vingegaard;cycliste;Danemark;2019-auj
+Remco Evenepoel;cycliste;Belgique;2019-auj
+Primož Roglič;cycliste;Slovénie;2016-auj
+Wout van Aert;cycliste;Belgique;2016-auj
+Mathieu van der Poel;cycliste;Pays-Bas;2015-auj
+Marianne Vos;cycliste;Pays-Bas;2005-auj
+Jasper Philipsen;cycliste;Belgique;2019-auj
+Biniam Girmay;cycliste;Érythrée;2019-auj
+Kévin Vauquelin;cycliste|francais;France;2022-auj
+Usain Bolt;sportif;Jamaïque;2004-2017
+Serena Williams;sportif;États-Unis;1995-2022
+Roger Federer;sportif;Suisse;1998-2022
+Rafael Nadal;sportif;Espagne;2001-2024
+Novak Djokovic;sportif;Serbie;2003-auj
+Michael Jordan;sportif;États-Unis;1984-2003
+LeBron James;sportif;États-Unis;2003-auj
+Stephen Curry;sportif;États-Unis;2009-auj
+Victor Wembanyama;sportif|francais;France;2022-auj
+Tony Parker;sportif|francais;France|Belgique|États-Unis;1999-2019
+Muhammad Ali;sportif;États-Unis;1960-1981
+Mike Tyson;sportif;États-Unis;1985-2005
+Tiger Woods;sportif;États-Unis;1996-auj
+Michael Phelps;sportif;États-Unis;2000-2016
+Simone Biles;sportif;États-Unis;2013-auj
+Teddy Riner;sportif|francais;France;2007-auj
+Léon Marchand;sportif|francais;France;2021-auj
+Florent Manaudou;sportif|francais;France;2003-2021
+Yannick Noah;sportif|chanteur|francais;France;1977-auj
+Tony Estanguet;sportif|francais;France;1996-2008
+Marie-José Pérec;sportif|francais;France;1988-1996
+Renaud Lavillenie;sportif|francais;France;2008-2021
+Lewis Hamilton;sportif;Royaume-Uni;2007-auj
+Michael Schumacher;sportif;Allemagne;1991-2012
+Ayrton Senna;sportif;Brésil;1984-1994
+Max Verstappen;sportif;Pays-Bas;2015-auj
+Sébastien Loeb;sportif|francais;France;1997-auj
+Valentino Rossi;sportif;Italie;1996-2021
+Martin Fourcade;sportif|francais;France;2008-2020
+Zinédine Zidane;footballeur|sportif|francais;France;1988-2006
+Kylian Mbappé;footballeur|sportif|francais;France;2015-auj
+Antoine Griezmann;footballeur|sportif|francais;France;2009-auj
+Thierry Henry;footballeur|sportif|francais;France;1994-2014
+Michel Platini;footballeur|sportif|francais;France;1972-1987
+Eric Cantona;footballeur|sportif|francais;France;1983-1997
+Karim Benzema;footballeur|sportif|francais;France;2004-auj
+Paul Pogba;footballeur|sportif|francais;France;2011-auj
+N'Golo Kanté;footballeur|sportif|francais;France;2012-auj
+Hugo Lloris;footballeur|sportif|francais;France;2005-2024
+Olivier Giroud;footballeur|sportif|francais;France;2005-2024
+Raphaël Varane;footballeur|sportif|francais;France;2010-2024
+Ousmane Dembélé;footballeur|sportif|francais;France;2014-auj
+Lionel Messi;footballeur|sportif;Argentine;2004-auj
+Cristiano Ronaldo;footballeur|sportif;Portugal;2002-auj
+Neymar;footballeur|sportif;Brésil;2009-auj
+Diego Maradona;footballeur|sportif;Argentine;1976-1997
+Pelé;footballeur|sportif;Brésil;1956-1977
+Ronaldinho;footballeur|sportif;Brésil;1998-2015
+Zlatan Ibrahimović;footballeur|sportif;Suède;1999-2023
+David Beckham;footballeur|sportif;Royaume-Uni;1992-2013
+Erling Haaland;footballeur|sportif;Norvège;2016-auj
+Mohamed Salah;footballeur|sportif;Égypte;2010-auj
+Luka Modrić;footballeur|sportif;Croatie;2003-auj
+Lamine Yamal;footballeur|sportif;Espagne;2023-auj
+Jude Bellingham;footballeur|sportif;Royaume-Uni;2019-auj
+Johan Cruyff;footballeur|sportif;Pays-Bas;1964-1984
+Paolo Maldini;footballeur|sportif;Italie;1985-2009
+Xavi;footballeur|sportif;Espagne;1998-2019
+Andrés Iniesta;footballeur|sportif;Espagne;2002-2024
+Gianluigi Buffon;footballeur|sportif;Italie;1995-2023
+Emmanuel Macron;politique|francais;France;2012-auj
+Jacques Chirac;politique|francais;France;1967-2007
+Nicolas Sarkozy;politique|francais;France;1983-2012
+François Hollande;politique|francais;France;1983-2017
+François Mitterrand;politique|francais;France;1946-1995
+Charles de Gaulle;politique|histoire|francais;France;1940-1969
+Valéry Giscard d'Estaing;politique|francais;France;1956-1981
+Marine Le Pen;politique|francais;France;1998-auj
+Jean-Luc Mélenchon;politique|francais;France;1983-auj
+Simone Veil;politique|histoire|francais;France;1974-2007
+Barack Obama;politique;États-Unis;2004-2017
+Donald Trump;politique;États-Unis;2015-auj
+Joe Biden;politique;États-Unis;1973-2025
+Angela Merkel;politique;Allemagne;1990-2021
+Vladimir Poutine;politique;Russie;1999-auj
+Winston Churchill;politique|histoire;Royaume-Uni;1900-1955
+Margaret Thatcher;politique|histoire;Royaume-Uni;1959-1990
+John F. Kennedy;politique|histoire;États-Unis;1947-1963
+Abraham Lincoln;politique|histoire;États-Unis;1834-1865
+Nelson Mandela;politique|histoire;Afrique du Sud;1944-1999
+Gandhi;politique|histoire;Inde|Afrique du Sud;1893-1948
+Justin Trudeau;politique;Canada;2008-2025
+Giorgia Meloni;politique;Italie;2008-auj
+Volodymyr Zelensky;politique;Ukraine;2019-auj
+Mozart;compositeur;Autriche;1761-1791
+Beethoven;compositeur;Allemagne;1782-1827
+Jean-Sébastien Bach;compositeur;Allemagne;1703-1750
+Frédéric Chopin;compositeur;Pologne|France;1817-1849
+Claude Debussy;compositeur|francais;France;1880-1918
+Maurice Ravel;compositeur|francais;France;1900-1937
+Antonio Vivaldi;compositeur;Italie;1703-1741
+Tchaïkovski;compositeur;Russie;1858-1893
+Giuseppe Verdi;compositeur;Italie;1832-1901
+Richard Wagner;compositeur;Allemagne;1833-1883
+Franz Schubert;compositeur;Autriche;1810-1828
+Johannes Brahms;compositeur;Allemagne;1850-1897
+Franz Liszt;compositeur;Hongrie;1830-1886
+Joseph Haydn;compositeur;Autriche;1750-1809
+Georg Friedrich Haendel;compositeur;Allemagne|Royaume-Uni;1700-1759
+Erik Satie;compositeur|francais;France;1884-1925
+Hector Berlioz;compositeur|francais;France;1820-1869
+Georges Bizet;compositeur|francais;France;1850-1875
+Camille Saint-Saëns;compositeur|francais;France;1850-1921
+Igor Stravinsky;compositeur;Russie|États-Unis;1905-1971
+Rachmaninov;compositeur;Russie;1890-1943
+Giacomo Puccini;compositeur;Italie;1880-1924
+Gioachino Rossini;compositeur;Italie;1810-1868
+Jacques Offenbach;compositeur|francais;France|Allemagne;1830-1880
+Gabriel Fauré;compositeur|francais;France;1860-1924
+Hans Zimmer;compositeur;Allemagne;1979-auj
+John Williams;compositeur;États-Unis;1955-auj
+Ennio Morricone;compositeur;Italie;1955-2020
+Ludovico Einaudi;compositeur;Italie;1980-auj
+Yann Tiersen;compositeur|francais;France;1995-auj
+Philip Glass;compositeur;États-Unis;1960-auj
+George Gershwin;compositeur;États-Unis;1915-1937
+Gustav Mahler;compositeur;Autriche;1880-1911
+Antonín Dvořák;compositeur;Tchéquie;1860-1904
+Edvard Grieg;compositeur;Norvège;1860-1907
+Titanic;film;États-Unis;1997
+Avatar;film;États-Unis;2009
+Le Seigneur des anneaux;film;Nouvelle-Zélande|États-Unis;2001-2003
+Star Wars;film;États-Unis;1977-auj
+Jurassic Park;film;États-Unis;1993
+Matrix;film;États-Unis;1999
+Inception;film;États-Unis|Royaume-Uni;2010
+Le Parrain;film;États-Unis;1972
+Pulp Fiction;film;États-Unis;1994
+Gladiator;film;États-Unis|Royaume-Uni;2000
+Les Évadés;film;États-Unis;1994
+Le Roi lion;film|dessinanime;États-Unis;1994
+Toy Story;film|dessinanime;États-Unis;1995
+Le Fabuleux Destin d'Amélie Poulain;film|francais;France;2001
+Intouchables;film|francais;France;2011
+Bienvenue chez les Ch'tis;film|francais;France;2008
+Le Père Noël est une ordure;film|francais;France;1982
+La Grande Vadrouille;film|francais;France;1966
+Les Visiteurs;film|francais;France;1993
+Taxi;film|francais;France;1998
+Le Dîner de cons;film|francais;France;1998
+La Haine;film|francais;France;1995
+Léon;film;France|États-Unis;1994
+Le Cinquième Élément;film;France;1997
+Retour vers le futur;film;États-Unis;1985
+E.T. l'extra-terrestre;film;États-Unis;1982
+Les Dents de la mer;film;États-Unis;1975
+Ratatouille;film|dessinanime;États-Unis;2007
+Là-haut;film|dessinanime;États-Unis;2009
+Vice-versa;film|dessinanime;États-Unis;2015
+Barbie;film;États-Unis;2023
+Oppenheimer;film;États-Unis|Royaume-Uni;2023
+Interstellar;film;États-Unis|Royaume-Uni;2014
+Le Silence des agneaux;film;États-Unis;1991
+Fight Club;film;États-Unis;1999
+Le Voyage de Chihiro;film|anime;Japon;2001
+Pirates des Caraïbes;film;États-Unis;2003-2017
+La Reine des neiges;film|dessinanime;États-Unis;2013
+Les Choristes;film|francais;France;2004
+Le Grand Bleu;film|francais;France;1988
+Les Tontons flingueurs;film|francais;France;1963
+La Cité de la peur;film|francais;France;1994
+Dune;film;États-Unis;2021
+Joker (film);film;États-Unis;2019
+Thriller;album;États-Unis;1982
+Abbey Road;album;Royaume-Uni;1969
+Nevermind;album;États-Unis;1991
+The Dark Side of the Moon;album;Royaume-Uni;1973
+Back in Black;album;Australie;1980
+Rumours;album;Royaume-Uni|États-Unis;1977
+Hotel California;album;États-Unis;1976
+Purple Rain;album;États-Unis;1984
+Random Access Memories;album;France;2013
+Discovery;album;France;2001
+Lemonade;album;États-Unis;2016
+Future Nostalgia;album;Royaume-Uni;2020
+Midnights;album;États-Unis;2022
+1989;album;États-Unis;2014
+Parachutes;album;Royaume-Uni;2000
+Kind of Blue;album;États-Unis;1959
+OK Computer;album;Royaume-Uni;1997
+The Wall;album;Royaume-Uni;1979
+Born in the U.S.A.;album;États-Unis;1984
+Appetite for Destruction;album;États-Unis;1987
+Master of Puppets;album;États-Unis;1986
+Californication;album;États-Unis;1999
+Illmatic;album;États-Unis;1994
+The Marshall Mathers LP;album;États-Unis;2000
+To Pimp a Butterfly;album;États-Unis;2015
+The College Dropout;album;États-Unis;2004
+Racine carrée;album;Belgique;2013
+Multitude;album;Belgique;2022
+Histoire de Melody Nelson;album;France;1971
+Sgt. Pepper's Lonely Hearts Club Band;album;Royaume-Uni;1967
+Tapestry;album;États-Unis;1971
+Bad;album;États-Unis;1987
+Off the Wall;album;États-Unis;1979
+Rubber Soul;album;Royaume-Uni;1965
+Pet Sounds;album;États-Unis;1966
+Blonde;album;États-Unis;2016
+Renaissance;album;États-Unis;2022
+Vincent van Gogh;peintre|histoire;Pays-Bas|France;1853-1890
+Claude Monet;peintre|francais;France;1840-1926
+Pablo Picasso;peintre;Espagne|France;1881-1973
+Salvador Dalí;peintre;Espagne;1904-1989
+Frida Kahlo;peintre;Mexique;1907-1954
+Édouard Manet;peintre|francais;France;1832-1883
+Auguste Renoir;peintre|francais;France;1841-1919
+Paul Cézanne;peintre|francais;France;1839-1906
+Paul Gauguin;peintre|francais;France;1848-1903
+Edgar Degas;peintre|francais;France;1834-1917
+Henri Matisse;peintre|francais;France;1869-1954
+Gustav Klimt;peintre;Autriche;1862-1918
+Edvard Munch;peintre;Norvège;1863-1944
+Francisco de Goya;peintre;Espagne;1746-1828
+Diego Vélasquez;peintre;Espagne;1599-1660
+Eugène Delacroix;peintre|francais;France;1798-1863
+Jacques-Louis David;peintre|francais;France;1748-1825
+Jean-Michel Basquiat;peintre;États-Unis;1960-1988
+Andy Warhol;peintre;États-Unis;1928-1987
+Wassily Kandinsky;peintre;Russie|Allemagne|France;1866-1944
+Piet Mondrian;peintre;Pays-Bas;1872-1944
+Joan Miró;peintre;Espagne;1893-1983
+Banksy;peintre;Royaume-Uni;1990-auj
+Georges Seurat;peintre|francais;France;1859-1891
+Sandro Botticelli;peintre;Italie;1445-1510
+Le Caravage;peintre;Italie;1571-1610
+Jérôme Bosch;peintre;Pays-Bas;1450-1516
+Henri de Toulouse-Lautrec;peintre|francais;France;1864-1901
+René Magritte;peintre;Belgique;1898-1967
+Jackson Pollock;peintre;États-Unis;1912-1956
+Rembrandt;peintre;Pays-Bas;1606-1669
+Johannes Vermeer;peintre;Pays-Bas;1632-1675
+Léonard de Vinci;peintre|histoire;Italie;1452-1519
+Michel-Ange;peintre|histoire;Italie;1475-1564
+Raphaël;peintre;Italie;1483-1520
+Hokusai;peintre;Japon;1760-1849
+Yayoi Kusama;peintre;Japon;1929-auj
+La Joconde;tableau;Italie|France;1503-1519
+La Nuit étoilée;tableau;France;1889
+Le Cri;tableau;Norvège;1893
+Guernica;tableau;Espagne;1937
+Les Tournesols;tableau;France;1888
+La Persistance de la mémoire;tableau;Espagne;1931
+Le Baiser;tableau;Autriche;1908
+La Liberté guidant le peuple;tableau;France;1830
+Impression, soleil levant;tableau;France;1872
+Les Demoiselles d'Avignon;tableau;Espagne|France;1907
+La Jeune Fille à la perle;tableau;Pays-Bas;1665
+La Ronde de nuit;tableau;Pays-Bas;1642
+Les Nymphéas;tableau;France;1897-1926
+Le Radeau de la Méduse;tableau;France;1819
+La Naissance de Vénus;tableau;Italie;1485
+Le Déjeuner sur l'herbe;tableau;France;1863
+American Gothic;tableau;États-Unis;1930
+Le Fils de l'homme;tableau;Belgique;1964
+La Cène;tableau;Italie;1495-1498
+Les Ménines;tableau;Espagne;1656
+Olympia;tableau;France;1863
+Bal du moulin de la Galette;tableau;France;1876
+La Grande Jatte;tableau;France;1884-1886
+Les Joueurs de cartes;tableau;France;1890-1895
+La Grande Vague de Kanagawa;tableau;Japon;1831
+Le Sacre de Napoléon;tableau;France;1805-1807
+Le Jardin des délices;tableau;Pays-Bas;1503-1515
+Les Glaneuses;tableau;France;1857
+Rose;plante;;
+Tulipe;plante;Pays-Bas|Turquie;
+Lavande;plante;France;
+Tournesol;plante;;
+Marguerite;plante;;
+Coquelicot;plante;;
+Orchidée;plante;;
+Cactus;plante;Mexique;
+Bambou;plante;Chine|Japon;
+Basilic;plante;Inde|Italie;
+Menthe;plante;;
+Thym;plante;France;
+Romarin;plante;;
+Persil;plante;;
+Ciboulette;plante;;
+Fougère;plante;;
+Lierre;plante;;
+Muguet;plante;France;
+Pissenlit;plante;;
+Lys;plante;;
+Pivoine;plante;Chine;
+Hortensia;plante;Japon;
+Jasmin;plante;Inde;
+Mimosa;plante;Australie;
+Aloe vera;plante;;
+Gui;plante;;
+Ortie;plante;;
+Sapin;plante;;
+Chêne;plante;;
+Baobab;plante;Madagascar|Sénégal;
+Nénuphar;plante;;
+France;pays;France;
+Japon;pays;Japon;
+Brésil;pays;Brésil;
+Australie;pays;Australie;
+Canada;pays;Canada;
+Égypte;pays;Égypte;
+Islande;pays;Islande;
+Maroc;pays;Maroc;
+Mexique;pays;Mexique;
+Norvège;pays;Norvège;
+Pérou;pays;Pérou;
+Inde;pays;Inde;
+Argentine;pays;Argentine;
+Corée du Sud;pays;Corée du Sud;
+Nouvelle-Zélande;pays;Nouvelle-Zélande;
+Kenya;pays;Kenya;
+Vietnam;pays;Vietnam;
+Portugal;pays;Portugal;
+Grèce;pays;Grèce;
+Suisse;pays;Suisse;
+Turquie;pays;Turquie;
+Afrique du Sud;pays;Afrique du Sud;
+Thaïlande;pays;Thaïlande;
+Irlande;pays;Irlande;
+Cuba;pays;Cuba;
+Madagascar;pays;Madagascar;
+Allemagne;pays;Allemagne;
+Italie;pays;Italie;
+Belgique;pays;Belgique;
+Chili;pays;Chili;
+Napoléon Bonaparte;histoire|politique|francais;France;1769-1821
+Jeanne d'Arc;histoire|francais;France;1412-1431
+Louis XIV;histoire|francais;France;1638-1715
+Marie-Antoinette;histoire|francais;France|Autriche;1755-1793
+Charlemagne;histoire|francais;France|Allemagne;742-814
+Vercingétorix;histoire|francais;France;80av-46av
+Clovis;histoire|francais;France;466-511
+Robespierre;histoire|francais;France;1758-1794
+Marie Curie;histoire|francais;Pologne|France;1867-1934
+Louis Pasteur;histoire|francais;France;1822-1895
+Albert Einstein;histoire;Allemagne|Suisse|États-Unis;1879-1955
+Isaac Newton;histoire;Royaume-Uni;1643-1727
+Galilée;histoire;Italie;1564-1642
+Charles Darwin;histoire;Royaume-Uni;1809-1882
+Nikola Tesla;histoire;Serbie|États-Unis;1856-1943
+Jules César;histoire;Italie;100av-44av
+Cléopâtre;histoire;Égypte;69av-30av
+Toutânkhamon;histoire;Égypte;1341av-1323av
+Gengis Khan;histoire;Mongolie;1162-1227
+Alexandre le Grand;histoire;Grèce;356av-323av
+Christophe Colomb;histoire;Italie|Espagne;1451-1506
+Napoléon III;histoire|francais;France;1808-1873
+Néron;histoire;Italie;37-68
+Attila;histoire;Hongrie;406-453
+Hannibal;histoire;Tunisie;247av-183av
+Martin Luther King;histoire;États-Unis;1929-1968
+Rosa Parks;histoire;États-Unis;1913-2005
+Che Guevara;histoire;Argentine|Cuba;1928-1967
+Anne Frank;histoire;Allemagne|Pays-Bas;1929-1945
+Neil Armstrong;histoire;États-Unis;1930-2012
+Youri Gagarine;histoire;Russie;1934-1968
+Thomas Pesquet;histoire|francais;France;1978-auj
+Coco Chanel;histoire|francais;France;1883-1971
+Steve Jobs;histoire;États-Unis;1955-2011
+Bill Gates;histoire;États-Unis;1955-auj
+Walt Disney;histoire;États-Unis;1901-1966
+BTS;kpop;Corée du Sud;2013-auj
+Jungkook;kpop;Corée du Sud;2013-auj
+V (BTS);kpop;Corée du Sud;2013-auj
+Jimin;kpop;Corée du Sud;2013-auj
+RM;kpop;Corée du Sud;2013-auj
+Suga;kpop;Corée du Sud;2013-auj
+Jin;kpop;Corée du Sud;2013-auj
+J-Hope;kpop;Corée du Sud;2013-auj
+BLACKPINK;kpop;Corée du Sud;2016-auj
+Jennie;kpop;Corée du Sud;2016-auj
+Lisa;kpop;Thaïlande|Corée du Sud;2016-auj
+Rosé;kpop;Nouvelle-Zélande|Corée du Sud;2016-auj
+Jisoo;kpop;Corée du Sud;2016-auj
+Psy;kpop;Corée du Sud;2001-auj
+TWICE;kpop;Corée du Sud;2015-auj
+Stray Kids;kpop;Corée du Sud;2017-auj
+EXO;kpop;Corée du Sud;2012-auj
+Seventeen;kpop;Corée du Sud;2015-auj
+NewJeans;kpop;Corée du Sud;2022-auj
+aespa;kpop;Corée du Sud;2020-auj
+ITZY;kpop;Corée du Sud;2019-auj
+G-Dragon;kpop;Corée du Sud;2006-auj
+IU;kpop;Corée du Sud;2008-auj
+Taeyeon;kpop;Corée du Sud;2007-auj
+Girls' Generation;kpop;Corée du Sud;2007-auj
+ENHYPEN;kpop;Corée du Sud;2020-auj
+TXT;kpop;Corée du Sud;2019-auj
+Gangnam Style;kpop;Corée du Sud;2012
+Dynamite (BTS);kpop;Corée du Sud;2020
+Squeezie;internet|francais;France;2012-auj
+Cyprien;internet|francais;France;2007-auj
+Norman;internet|francais;France;2010-auj
+Mister V;internet|francais;France;2012-auj
+Michou;internet|francais;France;2016-auj
+Inoxtag;internet|francais;France;2018-auj
+Léna Situations;internet|francais;France;2014-auj
+Natoo;internet|francais;France;2012-auj
+Amixem;internet|francais;France;2012-auj
+Gotaga;internet|francais;France;2010-auj
+Domingo;internet|francais;France;2013-auj
+Locklear;internet|francais;France;2013-auj
+Seb la Frite;internet|francais;France;2012-auj
+Mcfly et Carlito;internet|francais;France;2010-auj
+Le Rire Jaune;internet|francais;France;2012-auj
+Pierre Croce;internet|francais;France;2017-auj
+Tibo InShape;internet|francais;France;2014-auj
+Hugo Décrypte;internet|francais;France;2015-auj
+MrBeast;internet;États-Unis;2012-auj
+PewDiePie;internet;Suède;2010-auj
+Kai Cenat;internet;États-Unis;2017-auj
+IShowSpeed;internet;États-Unis;2021-auj
+Charli D'Amelio;internet;États-Unis;2019-auj
+Khaby Lame;internet;Sénégal|Italie;2020-auj
+Markiplier;internet;États-Unis;2012-auj
+Ninja;internet;États-Unis;2011-auj
+Dream;internet;États-Unis;2014-auj
+Technoblade;internet;États-Unis;2013-2022
+Emma Chamberlain;internet;États-Unis;2016-auj
+Logan Paul;internet;États-Unis;2013-auj
+Coluche;francais;France;1968-1986
+Jamel Debbouze;francais;France|Maroc;1995-auj
+Gad Elmaleh;francais;Maroc|France;1992-auj
+Florence Foresti;francais;France;1998-auj
+Muriel Robin;francais;France;1980-auj
+Élie Semoun;francais;France;1990-auj
+Kev Adams;francais;France;2008-auj
+Franck Dubosc;francais;France;1993-auj
+Christian Clavier;francais;France;1975-auj
+Brigitte Macron;francais;France;2017-auj
+Brigitte Bardot;francais;France;1952-1973
+Alain Delon;francais;France;1957-2019
+Jean-Paul Belmondo;francais;France;1957-2021
+Yves Montand;francais;France|Italie;1945-1991
+Gustave Eiffel;francais|histoire;France;1832-1923
+Pierre de Coubertin;francais|histoire;France;1863-1937
+Jacques Cousteau;francais;France;1910-1997
+Paul Bocuse;francais;France;1926-2018
+Karl Lagerfeld;francais;Allemagne|France;1958-2019
+Jean-Paul Gaultier;francais;France;1970-auj
+Bernard Arnault;francais;France;1971-auj
+Naruto;anime|manga;Japon;1999-2014
+Sasuke;anime|manga;Japon;1999-2014
+Kakashi;anime|manga;Japon;1999-2014
+Goku;anime|manga;Japon;1984-auj
+Vegeta;anime|manga;Japon;1984-auj
+Luffy;anime|manga;Japon;1997-auj
+Zoro;anime|manga;Japon;1997-auj
+Sanji;anime|manga;Japon;1997-auj
+Eren Jäger;anime|manga;Japon;2009-2021
+Levi Ackerman;anime|manga;Japon;2009-2021
+Tanjiro;anime|manga;Japon;2016-2020
+Nezuko;anime|manga;Japon;2016-2020
+Light Yagami;anime|manga;Japon;2003-2006
+L (Death Note);anime|manga;Japon;2003-2006
+Saitama;anime|manga;Japon;2009-auj
+Deku;anime|manga;Japon;2014-2024
+All Might;anime|manga;Japon;2014-2024
+Gon Freecss;anime|manga;Japon;1998-auj
+Edward Elric;anime|manga;Japon;2001-2010
+Totoro;anime;Japon;1988
+Sailor Moon;anime|manga;Japon;1991-1997
+Pokémon;anime;Japon;1996-auj
+Doraemon;anime|manga;Japon;1969-auj
+Gojo Satoru;anime|manga;Japon;2018-2024
+Sukuna;anime|manga;Japon;2018-2024
+Spy x Family;anime|manga;Japon;2019-auj
+One Piece;anime|manga;Japon;1997-auj
+Dragon Ball Z;anime;Japon;1989-1996
+Attack on Titan;anime|manga;Japon;2009-2021
+Demon Slayer;anime|manga;Japon;2016-2020
+Bleach;manga|anime;Japon;2001-2016
+Death Note;manga|anime;Japon;2003-2006
+Fullmetal Alchemist;manga|anime;Japon;2001-2010
+Berserk;manga|anime;Japon;1989-2021
+Akira;manga|anime;Japon;1982-1990
+Hunter x Hunter;manga|anime;Japon;1998-auj
+Fairy Tail;manga|anime;Japon;2006-2017
+My Hero Academia;manga|anime;Japon;2014-2024
+Jujutsu Kaisen;manga|anime;Japon;2018-2024
+Chainsaw Man;manga|anime;Japon;2018-auj
+Vagabond;manga;Japon;1998-2015
+Slam Dunk;manga|anime;Japon;1990-1996
+Monster;manga|anime;Japon;1994-2001
+20th Century Boys;manga;Japon;1999-2007
+Blue Lock;manga|anime;Japon;2018-auj
+Haikyu!!;manga|anime;Japon;2012-2020
+Tokyo Ghoul;manga|anime;Japon;2011-2018
+One-Punch Man;manga|anime;Japon;2009-auj
+JoJo's Bizarre Adventure;manga|anime;Japon;1987-auj
+Détective Conan;manga|anime;Japon;1994-auj
+Fruits Basket;manga|anime;Japon;1998-2006
+Nana;manga|anime;Japon;2000-2009
+Astro Boy;manga|anime;Japon;1952-1968
+Les Chevaliers du Zodiaque;manga|anime;Japon;1986-1990
+Dr. Slump;manga|anime;Japon;1980-1984
+City Hunter;manga|anime;Japon;1985-1991
+Olive et Tom;manga|anime;Japon;1981-auj
+Ken le survivant;manga|anime;Japon;1983-1988
+Dragon Ball;manga|anime;Japon;1984-1995
+Lady Oscar;manga|anime;Japon;1972-1973
+Mickey Mouse;dessinanime;États-Unis;1928-auj
+Donald Duck;dessinanime;États-Unis;1934-auj
+Bugs Bunny;dessinanime;États-Unis;1940-auj
+Tom et Jerry;dessinanime;États-Unis;1940-auj
+Bob l'éponge;dessinanime;États-Unis;1999-auj
+Homer Simpson;dessinanime;États-Unis;1989-auj
+Bart Simpson;dessinanime;États-Unis;1989-auj
+Peter Griffin;dessinanime;États-Unis;1999-auj
+Scooby-Doo;dessinanime;États-Unis;1969-auj
+Les Schtroumpfs;dessinanime;Belgique;1958-auj
+Winnie l'ourson;dessinanime;Royaume-Uni|États-Unis;1926-auj
+Bambi;dessinanime;États-Unis;1942
+Dumbo;dessinanime;États-Unis;1941
+Simba;dessinanime;États-Unis;1994
+Elsa;dessinanime;États-Unis;2013
+Olaf;dessinanime;États-Unis;2013
+Buzz l'Éclair;dessinanime;États-Unis;1995
+Woody;dessinanime;États-Unis;1995
+Nemo;dessinanime;États-Unis;2003
+Dory;dessinanime;États-Unis;2003
+Wall-E;dessinanime;États-Unis;2008
+Les Minions;dessinanime;États-Unis|France;2010-auj
+Gru;dessinanime;États-Unis|France;2010-auj
+Rémy (Ratatouille);dessinanime;États-Unis;2007
+Maya l'abeille;dessinanime;Allemagne;1912-auj
+Oggy et les cafards;dessinanime;France;1998-auj
+Titeuf;dessinanime;Suisse|France;1992-auj
+Les Totally Spies;dessinanime;France|Canada;2001-auj
+Lion;animal;;
+Éléphant;animal;;
+Girafe;animal;;
+Panda;animal;Chine;
+Koala;animal;Australie;
+Kangourou;animal;Australie;
+Pingouin;animal;;
+Dauphin;animal;;
+Requin;animal;;
+Baleine;animal;;
+Hippopotame;animal;;
+Rhinocéros;animal;;
+Crocodile;animal;;
+Paresseux;animal;;
+Ornithorynque;animal;Australie;
+Caméléon;animal;Madagascar;
+Flamant rose;animal;;
+Hérisson;animal;;
+Loutre;animal;;
+Raton laveur;animal;;
+Chouette;animal;;
+Perroquet;animal;;
+Pieuvre;animal;;
+Méduse;animal;;
+Hippocampe;animal;;
+Tortue;animal;;
+Écureuil;animal;;
+Renard;animal;;
+Loup;animal;;
+Ours polaire;animal;;
+Zeus;mythologie;Grèce;
+Héra;mythologie;Grèce;
+Poséidon;mythologie;Grèce;
+Hadès;mythologie;Grèce;
+Athéna;mythologie;Grèce;
+Apollon;mythologie;Grèce;
+Artémis;mythologie;Grèce;
+Arès;mythologie;Grèce;
+Aphrodite;mythologie;Grèce;
+Hermès;mythologie;Grèce;
+Dionysos;mythologie;Grèce;
+Héphaïstos;mythologie;Grèce;
+Hercule;mythologie;Grèce;
+Persée;mythologie;Grèce;
+Thésée;mythologie;Grèce;
+Achille;mythologie;Grèce;
+Ulysse;mythologie;Grèce;
+Orphée;mythologie;Grèce;
+Méduse (mythologie);mythologie;Grèce;
+Le Minotaure;mythologie;Grèce;
+Pégase;mythologie;Grèce;
+Cerbère;mythologie;Grèce;
+Odin;mythologie;Norvège|Islande;
+Thor (mythologie);mythologie;Norvège|Islande;
+Loki;mythologie;Norvège|Islande;
+Anubis;mythologie;Égypte;
+Ra;mythologie;Égypte;
+Isis;mythologie;Égypte;
+Le Kraken;mythologie;Norvège;
+Le Phénix;mythologie;Grèce|Égypte;
+Coca-Cola;marque;États-Unis;1886-auj
+Nike;marque;États-Unis;1964-auj
+Adidas;marque;Allemagne;1949-auj
+Apple;marque;États-Unis;1976-auj
+Google;marque;États-Unis;1998-auj
+Amazon;marque;États-Unis;1994-auj
+Netflix;marque;États-Unis;1997-auj
+McDonald's;marque;États-Unis;1940-auj
+Starbucks;marque;États-Unis;1971-auj
+Ikea;marque;Suède;1943-auj
+Lego;marque;Danemark;1932-auj
+Nutella;marque;Italie;1964-auj
+Haribo;marque;Allemagne;1920-auj
+Ferrari;marque;Italie;1947-auj
+Renault;marque;France;1899-auj
+Peugeot;marque;France;1810-auj
+Citroën;marque;France;1919-auj
+Decathlon;marque;France;1976-auj
+Carrefour;marque;France;1960-auj
+Leclerc;marque;France;1949-auj
+Michelin;marque;France;1889-auj
+Danone;marque;France|Espagne;1919-auj
+Kinder;marque;Italie;1968-auj
+Lacoste;marque;France;1933-auj
+Louis Vuitton;marque;France;1854-auj
+Chanel;marque;France;1910-auj
+Hermès (marque);marque;France;1837-auj
+Spotify;marque;Suède;2006-auj
+Nintendo;marque;Japon;1889-auj
+PlayStation;marque;Japon;1994-auj
+Tesla;marque;États-Unis;2003-auj
+Red Bull;marque;Autriche|Thaïlande;1987-auj
+Révolution française;evenement;France;1789-1799
+Prise de la Bastille;evenement;France;1789
+Mort de Louis XVI;evenement;France;1793
+Sacre de Napoléon Ier;evenement;France;1804
+Bataille de Waterloo;evenement;Belgique;1815
+Commune de Paris;evenement;France;1871
+Affaire Dreyfus;evenement;France;1894-1906
+Exposition universelle de 1889;evenement;France;1889
+Construction de la tour Eiffel;evenement;France;1887-1889
+Naufrage du Titanic;evenement;Royaume-Uni|États-Unis;1912
+Première Guerre mondiale;evenement;France|Allemagne|Royaume-Uni|Russie|Italie|États-Unis;1914-1918
+Bataille de Verdun;evenement;France;1916
+Révolution russe;evenement;Russie;1917
+Seconde Guerre mondiale;evenement;France|Allemagne|Royaume-Uni|Russie|Italie|Japon|États-Unis|Chine;1939-1945
+Bataille de Stalingrad;evenement;Russie;1942-1943
+Débarquement de Normandie;evenement;France;1944
+Libération de Paris;evenement;France;1944
+Bombe d'Hiroshima;evenement;Japon;1945
+Guerre froide;evenement;Russie|États-Unis;1947-1991
+Guerre d'Algérie;evenement;France|Algérie;1954-1962
+Guerre du Vietnam;evenement;Vietnam|États-Unis;1955-1975
+Crise des missiles de Cuba;evenement;Cuba|États-Unis|Russie;1962
+Assassinat de Kennedy;evenement;États-Unis;1963
+Premiers pas sur la Lune;evenement;États-Unis;1969
+Mai 68;evenement;France;1968
+Catastrophe de Tchernobyl;evenement;Ukraine;1986
+Chute du mur de Berlin;evenement;Allemagne;1989
+Fin de l'apartheid;evenement;Afrique du Sud;1990-1994
+Coupe du monde 1998;evenement;France;1998
+Attentats du 11 septembre;evenement;États-Unis;2001
+Catastrophe de Fukushima;evenement;Japon;2011
+Brexit;evenement;Royaume-Uni;2016-2020
+Coupe du monde 2018;evenement;Russie;2018
+Incendie de Notre-Dame;evenement;France;2019
+Pandémie de Covid-19;evenement;Chine|France|Italie|États-Unis;2019-2023
+Coupe du monde 2022;evenement;Qatar;2022
+Jeux olympiques de Paris 2024;evenement;France;2024
+Déclaration d'indépendance des États-Unis;evenement;États-Unis;1776
+Siècle des Lumières;evenement;France|Royaume-Uni;1715-1789
+Révolution industrielle;evenement;Royaume-Uni|France;1760-1840
+Peste noire;evenement;France|Italie|Royaume-Uni;1347-1352
+Guerre de Cent Ans;evenement;France|Royaume-Uni;1337-1453
+Chute de Constantinople;evenement;Turquie;1453
+Découverte de l'Amérique;evenement;Espagne;1492
+Bataille de Marignan;evenement;Italie|France;1515
+Bataille d'Hastings;evenement;Royaume-Uni;1066
+Chute de l'Empire romain d'Occident;evenement;Italie;476
+Éruption du Vésuve et destruction de Pompéi;evenement;Italie;79
+Assassinat de Jules César;evenement;Italie;44av
+Bataille d'Alésia;evenement;France;52av
+Guerre de Troie;evenement;Grèce|Turquie;1200av
+Construction des pyramides de Gizeh;evenement;Égypte;2600av-2500av
+Elinor Dashwood;fictif;Royaume-Uni;1811
+Marianne Dashwood;fictif;Royaume-Uni;1811
+Elizabeth Bennet;fictif;Royaume-Uni;1813
+Mr Darcy;fictif;Royaume-Uni;1813
+Emma Woodhouse;fictif;Royaume-Uni;1815
+Anne Elliot;fictif;Royaume-Uni;1817
+Jane Eyre;fictif;Royaume-Uni;1847
+Edward Rochester;fictif;Royaume-Uni;1847
+Heathcliff;fictif;Royaume-Uni;1847
+Catherine Earnshaw;fictif;Royaume-Uni;1847
+Oliver Twist;fictif;Royaume-Uni;1838
+Ebenezer Scrooge;fictif;Royaume-Uni;1843
+David Copperfield;fictif;Royaume-Uni;1850
+Jo March;fictif;États-Unis;1868
+Anne Shirley;fictif;Canada;1908
+Tom Sawyer;fictif;États-Unis;1876
+Huckleberry Finn;fictif;États-Unis;1884
+Dorian Gray;fictif;Royaume-Uni|Irlande;1890
+Capitaine Achab;fictif;États-Unis;1851
+Jay Gatsby;fictif;États-Unis;1925
+Holden Caulfield;fictif;États-Unis;1951
+Scarlett O'Hara;fictif;États-Unis;1936
+Atticus Finch;fictif;États-Unis;1960
+Lisbeth Salander;fictif;Suède;2005
+Katniss Everdeen;fictif;États-Unis;2008
+Bella Swan;fictif;États-Unis;2005
+Percy Jackson;fictif;États-Unis;2005
+Hermione Granger;fictif;Royaume-Uni;1997-auj
+Jean Valjean;fictif;France;1862
+Cosette;fictif;France;1862
+Quasimodo;fictif;France;1831
+Edmond Dantès;fictif;France;1844
+D'Artagnan;fictif;France;1844
+Emma Bovary;fictif;France;1857
+Julien Sorel;fictif;France;1830
+Gavroche;fictif;France;1862
+Miss Marple;fictif;Royaume-Uni;1927
+Don Quichotte;fictif;Espagne;1605
+Hamlet;fictif;Royaume-Uni;1600
+Roméo et Juliette;fictif;Royaume-Uni;1597
+Matilda Wormwood;fictif;Royaume-Uni;1988
+Daisy Edgar-Jones;acteur;Royaume-Uni;2018-auj
+Florence Pugh;acteur;Royaume-Uni;2014-auj
+Anya Taylor-Joy;acteur;États-Unis|Royaume-Uni;2015-auj
+Jenna Ortega;acteur;États-Unis;2016-auj
+Sydney Sweeney;acteur;États-Unis;2018-auj
+Millie Bobby Brown;acteur;Royaume-Uni;2016-auj
+Tom Holland;acteur;Royaume-Uni;2012-auj
+Paul Mescal;acteur;Irlande;2020-auj
+Jacob Elordi;acteur;Australie;2018-auj
+Emma Mackey;acteur;France|Royaume-Uni;2019-auj
+Lily-Rose Depp;acteur;France|États-Unis;2016-auj
+Joseph Quinn;acteur;Royaume-Uni;2017-auj
+Hunter Schafer;acteur;États-Unis;2019-auj
+Austin Butler;acteur;États-Unis;2011-auj
+Saoirse Ronan;acteur;Irlande;2007-auj
+Emma Watson;acteur;Royaume-Uni;2001-auj
+Daniel Radcliffe;acteur;Royaume-Uni;2001-auj
+Elle Fanning;acteur;États-Unis;2001-auj
+Zac Efron;acteur;États-Unis;2004-auj
+Ana de Armas;acteur;Cuba|Espagne;2006-auj
+Anamaria Vartolomei;acteur|francais;Roumanie|France;2019-auj
+Adèle Exarchopoulos;acteur|francais;France;2013-auj
+Nadia Tereszkiewicz;acteur|francais;France;2021-auj
+Paul Kircher;acteur|francais;France;2022-auj
+Benjamin Voisin;acteur|francais;France;2019-auj
+Félix Lefebvre;acteur|francais;France;2020-auj
+Finn Wolfhard;acteur;Canada;2016-auj
+Sadie Sink;acteur;États-Unis;2016-auj
+Rachel Zegler;acteur;États-Unis;2021-auj
+Jeremy Allen White;acteur;États-Unis;2011-auj
+Barry Keoghan;acteur;Irlande;2014-auj
