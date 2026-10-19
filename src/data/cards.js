@@ -29,7 +29,8 @@ export const countByCategory = Object.fromEntries(Object.entries(byCat).map(([k,
  * Tire `n` cartes jamais tirées (set `used`), pour un choix de vote.
  * - catégorie normale : cartes de cette catégorie, complétées en "mixtes" si elle est épuisée
  * - "random" : une catégorie au hasard (qui a assez de cartes restantes)
- * - "mixtes" : cartes au hasard, chacune avec une de ses catégories
+ * - "mixtes" : cartes au hasard, équilibrées entre catégories (on tire une catégorie, puis une carte de cette catégorie :
+ *   un grand univers comme Pokémon ne noie donc pas les autres)
  * Un nom présent dans plusieurs catégories n'est tiré qu'une fois (set `used` partagé par toute la partie).
  * @returns {{choice:string, resolved:string, cards:{id:string,name:string,cat:string}[]}}
  */
@@ -54,8 +55,16 @@ export function drawPack(choice, used, n = CARDS_PER_VOTE, opts = {}) {
       if (!used.has(card.id)) take(card, catOf(card));
     }
   };
+  const balanced = () => { // une catégorie au hasard (parmi celles qui ont encore des cartes), puis une carte de cette catégorie
+    while (out.length < n) {
+      const open = CATEGORIES.map((c) => [c.id, free(byCat[c.id])]).filter(([, l]) => l.length);
+      if (!open.length) break;
+      const [cat, list] = pick(open);
+      take(pick(list), cat);
+    }
+  };
   if (resolved !== "mixtes") fill(free(byCat[resolved]), () => resolved);
-  if (out.length < n) fill(free(ALL_CARDS), (c) => pick(c.cats));
+  if (out.length < n) balanced();
   if (out.length < n && img) fill(ALL_CARDS, (c) => pick(c.cats)); // plus aucune image disponible : tant pis
   return { choice, resolved, cards: out };
 }

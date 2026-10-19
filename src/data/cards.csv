@@ -1086,3 +1086,610 @@ Sadie Sink;acteur;États-Unis;2016-auj
 Rachel Zegler;acteur;États-Unis;2021-auj
 Jeremy Allen White;acteur;États-Unis;2011-auj
 Barry Keoghan;acteur;Irlande;2014-auj
+
+# ===== Ajouts : univers Pokémon, Les Légendaires, Les Cités d'or, sagas du cinéma, cyclistes =====
+# --- Univers Pokémon : 1re génération (Kanto) ---
+Bulbizarre;pokemon;Japon;1996-auj
+Herbizarre;pokemon;Japon;1996-auj
+Florizarre;pokemon;Japon;1996-auj
+Salamèche;pokemon;Japon;1996-auj
+Reptincel;pokemon;Japon;1996-auj
+Dracaufeu;pokemon;Japon;1996-auj
+Carapuce;pokemon;Japon;1996-auj
+Carabaffe;pokemon;Japon;1996-auj
+Tortank;pokemon;Japon;1996-auj
+Chenipan;pokemon;Japon;1996-auj
+Chrysacier;pokemon;Japon;1996-auj
+Papilusion;pokemon;Japon;1996-auj
+Aspicot;pokemon;Japon;1996-auj
+Coconfort;pokemon;Japon;1996-auj
+Dardargnan;pokemon;Japon;1996-auj
+Roucool;pokemon;Japon;1996-auj
+Roucoups;pokemon;Japon;1996-auj
+Roucarnage;pokemon;Japon;1996-auj
+Rattata;pokemon;Japon;1996-auj
+Rattatac;pokemon;Japon;1996-auj
+Piafabec;pokemon;Japon;1996-auj
+Rapasdepic;pokemon;Japon;1996-auj
+Abo;pokemon;Japon;1996-auj
+Arbok;pokemon;Japon;1996-auj
+Pikachu;pokemon;Japon;1996-auj
+Raichu;pokemon;Japon;1996-auj
+Sabelette;pokemon;Japon;1996-auj
+Sablaireau;pokemon;Japon;1996-auj
+Nidoran;pokemon;Japon;1996-auj
+Nidorina;pokemon;Japon;1996-auj
+Nidoqueen;pokemon;Japon;1996-auj
+Nidorino;pokemon;Japon;1996-auj
+Nidoking;pokemon;Japon;1996-auj
+Mélofée;pokemon;Japon;1996-auj
+Mélodelfe;pokemon;Japon;1996-auj
+Goupix;pokemon;Japon;1996-auj
+Feunard;pokemon;Japon;1996-auj
+Rondoudou;pokemon;Japon;1996-auj
+Grodoudou;pokemon;Japon;1996-auj
+Nosferapti;pokemon;Japon;1996-auj
+Nosferalto;pokemon;Japon;1996-auj
+Mystherbe;pokemon;Japon;1996-auj
+Ortide;pokemon;Japon;1996-auj
+Rafflesia;pokemon;Japon;1996-auj
+Paras;pokemon;Japon;1996-auj
+Parasect;pokemon;Japon;1996-auj
+Mimitoss;pokemon;Japon;1996-auj
+Aéromite;pokemon;Japon;1996-auj
+Taupiqueur;pokemon;Japon;1996-auj
+Triopikeur;pokemon;Japon;1996-auj
+Miaouss;pokemon;Japon;1996-auj
+Persian;pokemon;Japon;1996-auj
+Psykokwak;pokemon;Japon;1996-auj
+Akwakwak;pokemon;Japon;1996-auj
+Férosinge;pokemon;Japon;1996-auj
+Colossinge;pokemon;Japon;1996-auj
+Caninos;pokemon;Japon;1996-auj
+Arcanin;pokemon;Japon;1996-auj
+Ptitard;pokemon;Japon;1996-auj
+Têtarte;pokemon;Japon;1996-auj
+Tartard;pokemon;Japon;1996-auj
+Abra;pokemon;Japon;1996-auj
+Kadabra;pokemon;Japon;1996-auj
+Alakazam;pokemon;Japon;1996-auj
+Machoc;pokemon;Japon;1996-auj
+Machopeur;pokemon;Japon;1996-auj
+Mackogneur;pokemon;Japon;1996-auj
+Chétiflor;pokemon;Japon;1996-auj
+Boustiflor;pokemon;Japon;1996-auj
+Empiflor;pokemon;Japon;1996-auj
+Tentacool;pokemon;Japon;1996-auj
+Tentacruel;pokemon;Japon;1996-auj
+Racaillou;pokemon;Japon;1996-auj
+Gravalanch;pokemon;Japon;1996-auj
+Grolem;pokemon;Japon;1996-auj
+Ponyta;pokemon;Japon;1996-auj
+Galopa;pokemon;Japon;1996-auj
+Ramoloss;pokemon;Japon;1996-auj
+Flagadoss;pokemon;Japon;1996-auj
+Magnéti;pokemon;Japon;1996-auj
+Magnéton;pokemon;Japon;1996-auj
+Canarticho;pokemon;Japon;1996-auj
+Doduo;pokemon;Japon;1996-auj
+Dodrio;pokemon;Japon;1996-auj
+Otaria;pokemon;Japon;1996-auj
+Lamantine;pokemon;Japon;1996-auj
+Tadmorv;pokemon;Japon;1996-auj
+Grotadmorv;pokemon;Japon;1996-auj
+Kokiyas;pokemon;Japon;1996-auj
+Crustabri;pokemon;Japon;1996-auj
+Fantominus;pokemon;Japon;1996-auj
+Spectrum;pokemon;Japon;1996-auj
+Ectoplasma;pokemon;Japon;1996-auj
+Onix;pokemon;Japon;1996-auj
+Soporifik;pokemon;Japon;1996-auj
+Hypnomade;pokemon;Japon;1996-auj
+Krabby;pokemon;Japon;1996-auj
+Krabboss;pokemon;Japon;1996-auj
+Voltorbe;pokemon;Japon;1996-auj
+Électrode;pokemon;Japon;1996-auj
+Noeunoeuf;pokemon;Japon;1996-auj
+Noadkoko;pokemon;Japon;1996-auj
+Osselait;pokemon;Japon;1996-auj
+Ossatueur;pokemon;Japon;1996-auj
+Kicklee;pokemon;Japon;1996-auj
+Tygnon;pokemon;Japon;1996-auj
+Excelangue;pokemon;Japon;1996-auj
+Smogo;pokemon;Japon;1996-auj
+Smogogo;pokemon;Japon;1996-auj
+Rhinocorne;pokemon;Japon;1996-auj
+Rhinoféros;pokemon;Japon;1996-auj
+Leveinard;pokemon;Japon;1996-auj
+Saquedeneu;pokemon;Japon;1996-auj
+Kangourex;pokemon;Japon;1996-auj
+Hypotrempe;pokemon;Japon;1996-auj
+Hypocéan;pokemon;Japon;1996-auj
+Poissirène;pokemon;Japon;1996-auj
+Poissoroy;pokemon;Japon;1996-auj
+Stari;pokemon;Japon;1996-auj
+Staross;pokemon;Japon;1996-auj
+Insécateur;pokemon;Japon;1996-auj
+Lippoutou;pokemon;Japon;1996-auj
+Élektek;pokemon;Japon;1996-auj
+Magmar;pokemon;Japon;1996-auj
+Scarabrute;pokemon;Japon;1996-auj
+Tauros;pokemon;Japon;1996-auj
+Magicarpe;pokemon;Japon;1996-auj
+Léviator;pokemon;Japon;1996-auj
+Lokhlass;pokemon;Japon;1996-auj
+Métamorph;pokemon;Japon;1996-auj
+Évoli;pokemon;Japon;1996-auj
+Aquali;pokemon;Japon;1996-auj
+Voltali;pokemon;Japon;1996-auj
+Pyroli;pokemon;Japon;1996-auj
+Porygon;pokemon;Japon;1996-auj
+Amonita;pokemon;Japon;1996-auj
+Amonistar;pokemon;Japon;1996-auj
+Kabuto;pokemon;Japon;1996-auj
+Kabutops;pokemon;Japon;1996-auj
+Ptéra;pokemon;Japon;1996-auj
+Ronflex;pokemon;Japon;1996-auj
+Artikodin;pokemon;Japon;1996-auj
+Électhor;pokemon;Japon;1996-auj
+Sulfura;pokemon;Japon;1996-auj
+Minidraco;pokemon;Japon;1996-auj
+Draco;pokemon;Japon;1996-auj
+Dracolosse;pokemon;Japon;1996-auj
+Mewtwo;pokemon;Japon;1996-auj
+Mew;pokemon;Japon;1996-auj
+M. Mime;pokemon;Japon;1996-auj
+# --- Univers Pokémon : 5e génération (Noir et Blanc, Unys) ---
+Victini;pokemon;Japon;2010-auj
+Vipélierre;pokemon;Japon;2010-auj
+Lianaja;pokemon;Japon;2010-auj
+Majaspic;pokemon;Japon;2010-auj
+Gruikui;pokemon;Japon;2010-auj
+Grotichon;pokemon;Japon;2010-auj
+Roitiflam;pokemon;Japon;2010-auj
+Moustillon;pokemon;Japon;2010-auj
+Mateloutre;pokemon;Japon;2010-auj
+Clamiral;pokemon;Japon;2010-auj
+Ponchiot;pokemon;Japon;2010-auj
+Ponchien;pokemon;Japon;2010-auj
+Mastouffe;pokemon;Japon;2010-auj
+Chacripan;pokemon;Japon;2010-auj
+Léopardus;pokemon;Japon;2010-auj
+Munna;pokemon;Japon;2010-auj
+Mushana;pokemon;Japon;2010-auj
+Zébibron;pokemon;Japon;2010-auj
+Zéblitz;pokemon;Japon;2010-auj
+Gigalithe;pokemon;Japon;2010-auj
+Rototaupe;pokemon;Japon;2010-auj
+Minotaupe;pokemon;Japon;2010-auj
+Nanméouïe;pokemon;Japon;2010-auj
+Judokrak;pokemon;Japon;2010-auj
+Batracné;pokemon;Japon;2010-auj
+Karaclée;pokemon;Japon;2010-auj
+Venipatte;pokemon;Japon;2010-auj
+Scobolide;pokemon;Japon;2010-auj
+Brutapode;pokemon;Japon;2010-auj
+Chlorobule;pokemon;Japon;2010-auj
+Fragilady;pokemon;Japon;2010-auj
+Bargantua;pokemon;Japon;2010-auj
+Escroco;pokemon;Japon;2010-auj
+Crocorible;pokemon;Japon;2010-auj
+Darumarond;pokemon;Japon;2010-auj
+Darumacho;pokemon;Japon;2010-auj
+Zorua;pokemon;Japon;2010-auj
+Zoroark;pokemon;Japon;2010-auj
+Emolga;pokemon;Japon;2010-auj
+Reshiram;pokemon;Japon;2010-auj
+Zekrom;pokemon;Japon;2010-auj
+Kyurem;pokemon;Japon;2010-auj
+Keldeo;pokemon;Japon;2010-auj
+Meloetta;pokemon;Japon;2010-auj
+Genesect;pokemon;Japon;2010-auj
+Boréas;pokemon;Japon;2010-auj
+Fulguris;pokemon;Japon;2010-auj
+Démétéros;pokemon;Japon;2010-auj
+Cobaltium;pokemon;Japon;2010-auj
+Terrakium;pokemon;Japon;2010-auj
+Viridium;pokemon;Japon;2010-auj
+# --- Univers Pokémon : autres Pokémon emblématiques ---
+Togepi;pokemon;Japon;1999-auj
+Lugia;pokemon;Japon;1999-auj
+Ho-Oh;pokemon;Japon;1999-auj
+Celebi;pokemon;Japon;1999-auj
+Raikou;pokemon;Japon;1999-auj
+Entei;pokemon;Japon;1999-auj
+Suicune;pokemon;Japon;1999-auj
+Rayquaza;pokemon;Japon;2002-auj
+Groudon;pokemon;Japon;2002-auj
+Kyogre;pokemon;Japon;2002-auj
+Lucario;pokemon;Japon;2006-auj
+Dialga;pokemon;Japon;2006-auj
+Palkia;pokemon;Japon;2006-auj
+Giratina;pokemon;Japon;2006-auj
+Arceus;pokemon;Japon;2006-auj
+# --- Univers Pokémon : dresseurs et personnages ---
+Sacha;pokemon;Japon;1997-auj
+Jessie (Team Rocket);pokemon;Japon;1997-auj
+James (Team Rocket);pokemon;Japon;1997-auj
+Professeur Chen;pokemon;Japon;1997-auj
+Infirmière Joëlle;pokemon;Japon;1997-auj
+Régis (rival de Sacha);pokemon;Japon;1997-auj
+Pierre (Pokémon);pokemon;Japon;1996-auj
+Ondine (Pokémon);pokemon;Japon;1996-auj
+Major Bob;pokemon;Japon;1996-auj
+Erika (Pokémon);pokemon;Japon;1996-auj
+Koga;pokemon;Japon;1996-auj
+Morgane (Pokémon);pokemon;Japon;1996-auj
+Auguste (Pokémon);pokemon;Japon;1996-auj
+Giovanni;pokemon;Japon;1996-auj
+Olga (Pokémon);pokemon;Japon;1996-auj
+Aldo (Pokémon);pokemon;Japon;1996-auj
+Agatha (Pokémon);pokemon;Japon;1996-auj
+Peter (Pokémon);pokemon;Japon;1996-auj
+N (Pokémon);pokemon;Japon;2010-auj
+Ghetis;pokemon;Japon;2010-auj
+Bianca (Pokémon);pokemon;Japon;2010-auj
+Tcheren;pokemon;Japon;2010-auj
+Professeur Keteleeria;pokemon;Japon;2010-auj
+Iris (Pokémon);pokemon;Japon;2010-auj
+Team Rocket;pokemon;Japon;1996-auj
+Team Plasma;pokemon;Japon;2010-auj
+# --- Univers Pokémon : lieux et régions ---
+Kanto;pokemon;Japon;1996-auj
+Bourg Palette;pokemon;Japon;1996-auj
+Jadielle;pokemon;Japon;1996-auj
+Argenta;pokemon;Japon;1996-auj
+Azuria;pokemon;Japon;1996-auj
+Carmin sur Mer;pokemon;Japon;1996-auj
+Lavanville;pokemon;Japon;1996-auj
+Céladopole;pokemon;Japon;1996-auj
+Parmanie;pokemon;Japon;1996-auj
+Safrania;pokemon;Japon;1996-auj
+Cramois'Île;pokemon;Japon;1996-auj
+Plateau Indigo;pokemon;Japon;1996-auj
+Mont Sélénite;pokemon;Japon;1996-auj
+Forêt de Jade;pokemon;Japon;1996-auj
+Manoir Pokémon;pokemon;Japon;1996-auj
+Îles Écume;pokemon;Japon;1996-auj
+Johto;pokemon;Japon;1999-auj
+Hoenn;pokemon;Japon;2002-auj
+Sinnoh;pokemon;Japon;2006-auj
+Unys;pokemon;Japon;2010-auj
+Renouet;pokemon;Japon;2010-auj
+Arabelle;pokemon;Japon;2010-auj
+Volucité;pokemon;Japon;2010-auj
+Méanville;pokemon;Japon;2010-auj
+Port Yoneuve;pokemon;Japon;2010-auj
+Flocombe;pokemon;Japon;2010-auj
+Janusia;pokemon;Japon;2010-auj
+Rotombourg;pokemon;Japon;2010-auj
+Pavonnay;pokemon;Japon;2010-auj
+Ville Noire;pokemon;Japon;2010-auj
+Forêt Blanche;pokemon;Japon;2010-auj
+Tour Dragospire;pokemon;Japon;2010-auj
+Palais de N;pokemon;Japon;2010-auj
+Kalos;pokemon;Japon;2013-auj
+Alola;pokemon;Japon;2016-auj
+Galar;pokemon;Japon;2019-auj
+Paldea;pokemon;Japon;2022-auj
+# --- Univers Pokémon : objets, jeux et concepts ---
+Poké Ball;pokemon;Japon;1996-auj
+Master Ball;pokemon;Japon;1996-auj
+Pokédex;pokemon;Japon;1996-auj
+Centre Pokémon;pokemon;Japon;1996-auj
+Ligue Pokémon;pokemon;Japon;1996-auj
+Route Victoire;pokemon;Japon;1996-auj
+Pokémon Rouge et Bleu;pokemon|jeuvideo;Japon;1996-auj
+Pokémon Jaune;pokemon|jeuvideo;Japon;1996-auj
+Pokémon Or et Argent;pokemon|jeuvideo;Japon;1999-auj
+Pokémon Noir et Blanc;pokemon|jeuvideo;Japon;2010-auj
+Pokémon Noir 2 et Blanc 2;pokemon|jeuvideo;Japon;2010-auj
+Pokémon GO;pokemon|jeuvideo;États-Unis|Japon;2016-auj
+# --- Les Légendaires (Patrick Sobral) : personnages ---
+Danaël;legendaires;France;2004-auj
+Jadina;legendaires;France;2004-auj
+Gryf;legendaires;France;2004-auj
+Shimy;legendaires;France;2004-auj
+Razzia;legendaires;France;2004-auj
+Ténébris;legendaires;France;2004-auj
+Amy (Les Légendaires);legendaires;France;2004-auj
+Darkhell;legendaires;France;2004-auj
+Galen;legendaires;France;2004-auj
+Halan;legendaires;France;2004-auj
+Shun-Day;legendaires;France;2004-auj
+Skroa;legendaires;France;2004-auj
+Artémus;legendaires;France;2004-auj
+Kalandre;legendaires;France;2004-auj
+Toopie;legendaires;France;2004-auj
+Shyska;legendaires;France;2004-auj
+Kel-Cha;legendaires;France;2004-auj
+Shamira;legendaires;France;2004-auj
+# --- Les Légendaires : bêtes, peuples et entités ---
+Kréa-Kaos;legendaires;France;2004-auj
+Kilimanshu;legendaires;France;2004-auj
+Anathos;legendaires;France;2004-auj
+Exmakina;legendaires;France;2004-auj
+Kadals;legendaires;France;2004-auj
+Jaguarians;legendaires;France;2004-auj
+Galinas;legendaires;France;2004-auj
+Chiridelles;legendaires;France;2004-auj
+Infernaux;legendaires;France;2004-auj
+# --- Les Légendaires : lieux ---
+Alysia;legendaires;France;2004-auj
+Larbos;legendaires;France;2004-auj
+Orchidia;legendaires;France;2004-auj
+Jaguarys;legendaires;France;2004-auj
+Sabledoray;legendaires;France;2004-auj
+Île de Kasimos;legendaires;France;2004-auj
+Île du Dordogon;legendaires;France;2004-auj
+Cirkarar;legendaires;France;2004-auj
+Darnad;legendaires;France;2004-auj
+# --- Les Légendaires : objets et groupes ---
+Pierre de Jovénia;legendaires;France;2004-auj
+Bâton-Aigle;legendaires;France;2004-auj
+Épée d'or de Danaël;legendaires;France;2004-auj
+Œil de Darnad;legendaires;France;2004-auj
+Source Élémentaire;legendaires;France;2004-auj
+Faucons d'Argent;legendaires;France;2004-auj
+Milices Fantômes;legendaires;France;2004-auj
+Les Légendaires;legendaires;France;2004-auj
+Les Chroniques de Darkhell;legendaires;France;2004-auj
+# --- Les Mystérieuses Cités d'or : personnages ---
+Esteban;citesdor;France|Japon;1982-auj
+Zia;citesdor;France|Japon;1982-auj
+Tao;citesdor;France|Japon;1982-auj
+Mendoza;citesdor;France|Japon;1982-auj
+Sancho;citesdor;France|Japon;1982-auj
+Pedro (Cités d'or);citesdor;France|Japon;1982-auj
+Gomez;citesdor;France|Japon;1982-auj
+Gaspard;citesdor;France|Japon;1982-auj
+Pizarro;citesdor;France|Japon;1982-auj
+Docteur Laguerra;citesdor;France|Japon;1982-auj
+Marinché;citesdor;France|Japon;1982-auj
+Tétéola;citesdor;France|Japon;1982-auj
+Ménator;citesdor;France|Japon;1982-auj
+Calmèque;citesdor;France|Japon;1982-auj
+Papacamayo;citesdor;France|Japon;1982-auj
+Waïna;citesdor;France|Japon;1982-auj
+Pacha (Cités d'or);citesdor;France|Japon;1982-auj
+Ambrosius;citesdor;France|Japon;1982-auj
+Athanaos;citesdor;France|Japon;1982-auj
+# --- Les Mystérieuses Cités d'or : peuples, lieux, objets ---
+Les Mystérieuses Cités d'or;citesdor;France|Japon;1982-auj
+Médaillons du Soleil;citesdor;France|Japon;1982-auj
+Quipu;citesdor;France|Japon;1982-auj
+Le Grand Condor;citesdor;France|Japon;1982-auj
+Le Solaris;citesdor;France|Japon;1982-auj
+L'Esperanza;citesdor;France|Japon;1982-auj
+Le Thallios;citesdor;France|Japon;1982-auj
+Orichalque;citesdor;France|Japon;1982-auj
+Machine volante des Olmèques;citesdor;France|Japon;1982-auj
+Olmèques;citesdor;France|Japon;1982-auj
+Atlantes;citesdor;France|Japon;1982-auj
+Continent de Mu;citesdor;France|Japon;1982-auj
+Village du Nouveau Soleil;citesdor;France|Japon;1982-auj
+Détroit de Magellan;citesdor;France|Japon;1982-auj
+Îles Galápagos;citesdor;France|Japon;1982-auj
+Nazca;citesdor;France|Japon;1982-auj
+# --- Sagas du cinéma ---
+Star Wars;saga|film;États-Unis;1977-auj
+Le Seigneur des anneaux;saga|film;Nouvelle-Zélande|États-Unis;2001-2003
+Le Hobbit;saga|film;Nouvelle-Zélande|États-Unis;2012-2014
+Harry Potter;saga|film;Royaume-Uni|États-Unis;2001-2011
+Les Animaux fantastiques;saga|film;Royaume-Uni|États-Unis;2016-2022
+Indiana Jones;saga|film;États-Unis;1981-2023
+Retour vers le futur;saga|film;États-Unis;1985-1990
+Jurassic Park;saga|film;États-Unis;1993-auj
+Matrix;saga|film;États-Unis|Australie;1999-2021
+Alien;saga|film;Royaume-Uni|États-Unis;1979-auj
+Terminator;saga|film;États-Unis;1984-2019
+Predator;saga|film;États-Unis;1987-auj
+RoboCop;saga|film;États-Unis;1987-2014
+Rocky;saga|film;États-Unis;1976-2018
+Rambo;saga|film;États-Unis;1982-2019
+Die Hard;saga|film;États-Unis;1988-2013
+Mission impossible;saga|film;États-Unis;1996-auj
+James Bond;saga|film;Royaume-Uni;1962-auj
+Jason Bourne;saga|film;États-Unis;2002-2016
+Pirates des Caraïbes;saga|film;États-Unis;2003-2017
+Fast and Furious;saga|film;États-Unis;2001-auj
+Transformers;saga|film;États-Unis;2007-auj
+X-Men;saga|film;États-Unis;2000-2019
+Spider-Man;saga|film;États-Unis;2002-auj
+Batman;saga|film;États-Unis|Royaume-Uni;1989-auj
+Superman;saga|film;États-Unis;1978-auj
+Avengers;saga|film;États-Unis;2012-2019
+Iron Man;saga|film;États-Unis;2008-2013
+Thor;saga|film;États-Unis;2011-2022
+Captain America;saga|film;États-Unis;2011-2016
+Les Gardiens de la Galaxie;saga|film;États-Unis;2014-2023
+Deadpool;saga|film;États-Unis;2016-2024
+Ant-Man;saga|film;États-Unis;2015-2023
+Black Panther;saga|film;États-Unis;2018-2022
+Docteur Strange;saga|film;États-Unis;2016-2022
+Hunger Games;saga|film;États-Unis;2012-2015
+Twilight;saga|film;États-Unis;2008-2012
+Divergente;saga|film;États-Unis;2014-2016
+Le Labyrinthe;saga|film;États-Unis;2014-2018
+Le Monde de Narnia;saga|film;Royaume-Uni|États-Unis;2005-2010
+Percy Jackson;saga|film;États-Unis;2010-2013
+Shrek;saga|film;États-Unis;2001-2010
+Toy Story;saga|film;États-Unis;1995-2019
+Cars;saga|film;États-Unis;2006-2017
+Le Monde de Nemo;saga|film;États-Unis;2003-2016
+Les Indestructibles;saga|film;États-Unis;2004-2018
+Monstres et Cie;saga|film;États-Unis;2001-2013
+L'Âge de glace;saga|film;États-Unis;2002-2022
+Madagascar (film);saga|film;États-Unis;2005-2012
+Kung Fu Panda;saga|film;États-Unis;2008-2024
+Moi, moche et méchant;saga|film;États-Unis|France;2010-auj
+Les Minions;saga|film;États-Unis|France;2015-2022
+Dragons;saga|film;États-Unis;2010-2019
+La Reine des neiges;saga|film;États-Unis;2013-2019
+Taxi;saga|film;France;1998-2018
+Les Visiteurs;saga|film;France;1993-2016
+Le Gendarme de Saint-Tropez;saga|film;France|Italie;1964-1982
+Les Bronzés;saga|film;France;1978-2006
+OSS 117;saga|film;France;2006-2021
+Astérix et Obélix;saga|film;France;1999-2023
+Les Tuche;saga|film;France;2011-2021
+Camping;saga|film;France;2006-2016
+La Boum;saga|film;France;1980-1982
+Fantômas;saga|film;France|Italie;1964-1967
+Le Parrain;saga|film;États-Unis;1972-1990
+Scream;saga|film;États-Unis;1996-auj
+Saw;saga|film;États-Unis|Australie;2004-auj
+Halloween;saga|film;États-Unis;1978-auj
+Vendredi 13;saga|film;États-Unis;1980-2009
+Les Griffes de la nuit;saga|film;États-Unis;1984-2010
+Conjuring;saga|film;États-Unis;2013-2025
+Destination finale;saga|film;États-Unis;2000-2025
+Evil Dead;saga|film;États-Unis;1981-2023
+Insidious;saga|film;États-Unis;2010-2023
+Paranormal Activity;saga|film;États-Unis;2007-2021
+Scary Movie;saga|film;États-Unis;2000-2013
+American Pie;saga|film;États-Unis;1999-2012
+Very Bad Trip;saga|film;États-Unis;2009-2013
+Ocean's Eleven;saga|film;États-Unis;2001-2018
+Men in Black;saga|film;États-Unis;1997-2019
+Jumanji;saga|film;États-Unis;1995-2019
+Austin Powers;saga|film;États-Unis;1997-2002
+La Panthère rose;saga|film;États-Unis|Royaume-Uni;1963-2009
+Les Dents de la mer;saga|film;États-Unis;1975-1987
+Mad Max;saga|film;Australie|États-Unis;1979-2024
+La Planète des singes;saga|film;États-Unis;1968-2024
+Godzilla;saga|film;Japon|États-Unis;1954-auj
+King Kong;saga|film;États-Unis;1933-2021
+Star Trek;saga|film;États-Unis;1979-2016
+SOS Fantômes;saga|film;États-Unis;1984-2024
+Karaté Kid;saga|film;États-Unis;1984-2025
+Gremlins;saga|film;États-Unis;1984-1990
+Dune;saga|film;États-Unis;2021-2024
+Kingsman;saga|film;Royaume-Uni|États-Unis;2014-2025
+John Wick;saga|film;États-Unis;2014-2023
+Taken;saga|film;France|États-Unis;2008-2014
+Les Mercenaires;saga|film;États-Unis;2010-2023
+La Momie;saga|film;États-Unis;1999-2008
+Resident Evil;saga|film;Allemagne|États-Unis;2002-2016
+Underworld;saga|film;États-Unis|Royaume-Uni;2003-2016
+Millénium;saga|film;Suède|États-Unis;2009-2018
+Bridget Jones;saga|film;Royaume-Uni|France|États-Unis;2001-2025
+Rush Hour;saga|film;États-Unis;1998-2007
+Bad Boys;saga|film;États-Unis;1995-2024
+L'Arme fatale;saga|film;États-Unis;1987-1998
+Le Flic de Beverly Hills;saga|film;États-Unis;1984-2024
+Police Academy;saga|film;États-Unis;1984-1994
+Maman, j'ai raté l'avion;saga|film;États-Unis;1990-2012
+La Nuit au musée;saga|film;États-Unis;2006-2014
+Paddington;saga|film;Royaume-Uni|France;2014-2024
+Mamma Mia !;saga|film;Royaume-Uni|États-Unis;2008-2018
+Ip Man;saga|film;Chine;2008-2019
+Blade Runner;saga|film;États-Unis;1982-2017
+Tron;saga|film;États-Unis;1982-2010
+# --- Cyclistes : demandés (hommes et femmes) ---
+# --- Cyclistes : peloton actuel (hommes) ---
+# --- Cyclistes : légendes et générations passées (hommes) ---
+# --- Cyclistes : pistards ---
+# --- Cyclistes : femmes ---
+Michael Matthews;cycliste;Australie;2011-auj
+Joseba Beloki;cycliste;Espagne;1997-2005
+Olav Kooij;cycliste;Pays-Bas;2020-auj
+Florian Lipowitz;cycliste;Allemagne;2022-auj
+Lennard Kämna;cycliste;Allemagne;2017-auj
+Richard Carapaz;cycliste;Équateur;2016-auj
+Lotte Claes;cycliste;Belgique;2019-auj
+Lauren Dickson;cycliste;Royaume-Uni;2023-auj
+Isabella Holmgren;cycliste;Canada;2024-auj
+Mattias Skjelmose;cycliste;Danemark;2021-auj
+Thymen Arensman;cycliste;Pays-Bas;2020-auj
+Tom Pidcock;cycliste;Royaume-Uni;2020-auj
+Ben Healy;cycliste;Irlande;2022-auj
+Enric Mas;cycliste;Espagne;2018-auj
+Juan Ayuso;cycliste;Espagne;2021-auj
+João Almeida;cycliste;Portugal;2019-auj
+Carlos Rodríguez;cycliste;Espagne;2021-auj
+Adam Yates;cycliste;Royaume-Uni;2014-auj
+Simon Yates;cycliste;Royaume-Uni;2014-auj
+Jai Hindley;cycliste;Australie;2017-auj
+Ben O'Connor;cycliste;Australie;2016-auj
+Matteo Jorgenson;cycliste;États-Unis;2020-auj
+Egan Bernal;cycliste;Colombie;2016-auj
+Nairo Quintana;cycliste;Colombie;2010-auj
+Geraint Thomas;cycliste;Royaume-Uni;2007-auj
+Alexander Kristoff;cycliste;Norvège;2008-auj
+Fabio Jakobsen;cycliste;Pays-Bas;2017-auj
+Tim Merlier;cycliste;Belgique;2014-auj
+Dylan Groenewegen;cycliste;Pays-Bas;2013-auj
+Sam Bennett;cycliste;Irlande;2013-auj
+Paul Seixas;cycliste|francais;France;2025-auj
+Lenny Martinez;cycliste|francais;France;2023-auj
+Romain Grégoire;cycliste|francais;France;2022-auj
+Valentin Madouas;cycliste|francais;France;2018-auj
+Christophe Laporte;cycliste|francais;France;2015-auj
+Arnaud Démare;cycliste|francais;France;2013-auj
+Guillaume Martin;cycliste|francais;France;2015-auj
+Tom Boonen;cycliste;Belgique;2002-2017
+Fabian Cancellara;cycliste;Suisse;2000-2016
+Alberto Contador;cycliste;Espagne;2003-2017
+Vincenzo Nibali;cycliste;Italie;2005-2022
+Cadel Evans;cycliste;Australie;1998-2014
+Bradley Wiggins;cycliste;Royaume-Uni;2001-2016
+Jan Ullrich;cycliste;Allemagne;1994-2006
+Alejandro Valverde;cycliste;Espagne;2002-2022
+Philippe Gilbert;cycliste;Belgique;2003-2022
+Tom Dumoulin;cycliste;Pays-Bas;2012-2022
+Marcel Kittel;cycliste;Allemagne;2010-2019
+André Greipel;cycliste;Allemagne;2005-2021
+Joaquim Rodríguez;cycliste;Espagne;2001-2016
+Andy Schleck;cycliste;Luxembourg;2005-2014
+Fränk Schleck;cycliste;Luxembourg;2003-2018
+Laurent Jalabert;cycliste|francais;France;1989-2008
+Sylvain Chavanel;cycliste|francais;France;1999-2018
+Pierre Rolland;cycliste|francais;France;2007-2021
+Louison Bobet;cycliste|francais;France;1947-1961
+Gino Bartali;cycliste;Italie;1935-1954
+Felice Gimondi;cycliste;Italie;1965-1979
+Joop Zoetemelk;cycliste;Pays-Bas;1970-1987
+Sean Kelly;cycliste;Irlande;1977-1994
+Stephen Roche;cycliste;Irlande;1980-1993
+Pedro Delgado;cycliste;Espagne;1982-1994
+Tony Rominger;cycliste;Suisse;1986-1997
+Erik Zabel;cycliste;Allemagne;1993-2008
+Mario Cipollini;cycliste;Italie;1989-2005
+Paolo Bettini;cycliste;Italie;1997-2008
+Johan Museeuw;cycliste;Belgique;1988-2004
+Francesco Moser;cycliste;Italie;1973-1988
+Tom Simpson;cycliste;Royaume-Uni;1959-1967
+Chris Hoy;cycliste;Royaume-Uni;1999-2013
+Jason Kenny;cycliste;Royaume-Uni;2005-2021
+Laura Kenny;cycliste;Royaume-Uni;2008-2022
+Arnaud Tournant;cycliste|francais;France;1993-2008
+Grégory Baugé;cycliste|francais;France;2004-2018
+Lotte Kopecky;cycliste;Belgique;2016-auj
+Demi Vollering;cycliste;Pays-Bas;2018-auj
+Annemiek van Vleuten;cycliste;Pays-Bas;2007-2023
+Pauline Ferrand-Prévot;cycliste|francais;France;2010-auj
+Elisa Longo Borghini;cycliste;Italie;2012-auj
+Lorena Wiebes;cycliste;Pays-Bas;2017-auj
+Anna van der Breggen;cycliste;Pays-Bas;2012-2021
+Kasia Niewiadoma;cycliste;Pologne;2014-auj
+Cecilie Uttrup Ludwig;cycliste;Danemark;2016-auj
+Juliette Labous;cycliste|francais;France;2017-auj
+Évita Muzic;cycliste|francais;France;2018-auj
+Audrey Cordon-Ragot;cycliste|francais;France;2010-auj
+Marion Rousse;cycliste|francais;France;2012-2017
+Grace Brown;cycliste;Australie;2018-auj
+Elisa Balsamo;cycliste;Italie;2016-auj
+Marta Cavalli;cycliste;Italie;2017-auj
+Puck Pieterse;cycliste;Pays-Bas;2021-auj
+Ellen van Dijk;cycliste;Pays-Bas;2007-auj
+Shirin van Anrooij;cycliste;Pays-Bas;2021-auj
+Lizzie Deignan;cycliste;Royaume-Uni;2008-auj
+Kristen Faulkner;cycliste;États-Unis;2021-auj
+Chloé Dygert;cycliste;États-Unis;2016-auj
+Liane Lippert;cycliste;Allemagne;2017-auj
+Lucinda Brand;cycliste;Pays-Bas;2012-auj
+Mischa Bredewold;cycliste;Pays-Bas;2021-auj
+Cédrine Kerbaol;cycliste|francais;France;2023-auj
+Marie Le Net;cycliste|francais;France;2023-auj
+Maëva Squiban;cycliste|francais;France;2023-auj

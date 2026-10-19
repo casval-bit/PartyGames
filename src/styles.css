@@ -841,3 +841,13 @@ button.slot:active { background: rgba(255,255,255,.08); }
 .gaintoast .g2 .a { color: var(--spark); } .gaintoast .g2 .n { color: var(--cream); border: 1px solid var(--fuse); }
 .gaintoast .g3 { display: flex; gap: 8px; } .gaintoast .g3 .btn { flex: 1; }
 @keyframes gainIn { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+/* Qui est-ce ? : une image (et une réponse) par équipe */
+.answers { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.answers.n2, .answers.n3, .answers.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.answers.n3 .answer:first-child { grid-column: 1 / -1; }
+.answers .answer { padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--tc, #888) 22%, transparent); border: 2px solid var(--tc, transparent); min-width: 0; }
+.answers .answer img { max-height: 20vh; }
+.answers.n1 .answer img { max-height: 32vh; }
+.answers:not(.n1) .ansname { font-size: clamp(1.05rem, 5.2vw, 1.5rem); overflow-wrap: anywhere; text-wrap: balance; }
+.answer .ateam { font-weight: 900; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--tc, inherit); }

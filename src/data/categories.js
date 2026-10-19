@@ -34,6 +34,10 @@ const BASE = [
   ["animal", "Animal"],
   ["mythologie", "Mythologie"],
   ["marque", "Marque"],
+  ["pokemon", "Univers Pokémon"],
+  ["legendaires", "Les Légendaires"],
+  ["citesdor", "Les Cités d'or"],
+  ["saga", "Saga du cinéma"],
 ];
 
 export const CATEGORIES = BASE.map(([id, label], i) => ({

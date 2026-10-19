@@ -1,8 +1,8 @@
-export const FAST = import.meta.env.VITE_FAST === "1"; // réservé aux tests automatiques : durées raccourcies
+export const FAST = (import.meta.env && import.meta.env.VITE_FAST) === "1"; // réservé aux tests automatiques : durées raccourcies
 export const APP_NAME = "Party Hub"; // nom de travail de la plateforme ; « Time's Up » est une marque déposée, à renommer avant le Play Store
 
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
-export const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+export const SUPABASE_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || "";
+export const SUPABASE_KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || "";
 export const ONLINE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const TEAMS = [

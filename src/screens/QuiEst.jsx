@@ -14,10 +14,17 @@ const GOOFY = [
   ["1", "Un ! Ça arrive, ça arrive !"],
 ];
 
+// L'image (et la réponse) de l'équipe d'un joueur : chaque équipe a la sienne.
+const slotOf = (room, id) => {
+  const p = room.players.find((x) => x.id === id);
+  return (room.qe && room.qe.t && p && room.qe.t[p.team]) || null;
+};
+
 export default function QuiEst({ room, me, api, onLeave }) {
   const qe = room.qe;
-  // l'image est chargée pendant le tap et le décompte, pour qu'elle apparaisse instantanément
-  useEffect(() => { if (qe && safeUrl(qe.url)) { const i = new Image(); i.referrerPolicy = "no-referrer"; i.src = safeUrl(qe.url); } }, [qe && qe.url]);
+  const mySlot = qe ? slotOf(room, me.id) : null;
+  // l'image de mon équipe est chargée pendant le tap et le décompte, pour qu'elle apparaisse instantanément
+  useEffect(() => { if (mySlot && safeUrl(mySlot.url)) { const i = new Image(); i.referrerPolicy = "no-referrer"; i.src = safeUrl(mySlot.url); } }, [mySlot && mySlot.url]);
   if (!qe) return null;
   switch (room.phase) {
     case "qe_tap": return <Tap room={room} me={me} api={api} />;
@@ -49,7 +56,7 @@ function Tap({ room, me, api }) {
           <>
             <div className="tapring"><i /><i /><b>?</b></div>
             <h2 className="taptxt">Touche l'écran</h2>
-            <p className="muted" style={{ fontWeight: 700 }}>quand tu es prêt à voir l'image</p>
+            <p className="muted" style={{ fontWeight: 700 }}>quand tu es prêt à voir l'image de ton équipe</p>
           </>
         )}
       </div>
@@ -78,6 +85,7 @@ function Count({ room }) {
 /* --------------------- 3. l'image + appui long 3 s --------------------- */
 function Play({ room, me, api }) {
   const qe = room.qe;
+  const slot = slotOf(room, me.id) || { url: "", title: null, why: "" };
   const rank = qe.order.indexOf(me.id) + 1;
   const [prog, setProg] = useState(0);
   const [bad, setBad] = useState(false);
@@ -120,13 +128,13 @@ function Play({ room, me, api }) {
   const left = Math.max(0, (room.deadline || now) - now);
   return (
     <div className="qe-full play" onPointerDown={start} onPointerUp={stop} onPointerCancel={stop} onContextMenu={(e) => e.preventDefault()}>
-      {qe.url && !bad ? (
+      {slot.url && !bad ? (
         <>
-          <img className="bg" src={safeUrl(qe.url)} alt="" draggable="false" referrerPolicy="no-referrer" />
-          <img className="pic" src={safeUrl(qe.url)} alt="Qui est-ce ?" draggable="false" referrerPolicy="no-referrer" onError={() => { setBad(true); api.imageFailed(); }} />
+          <img className="bg" src={safeUrl(slot.url)} alt="" draggable="false" referrerPolicy="no-referrer" />
+          <img className="pic" src={safeUrl(slot.url)} alt="Qui est-ce ?" draggable="false" referrerPolicy="no-referrer" onError={() => { setBad(true); api.imageFailed(); }} />
         </>
       ) : (
-        <Placeholder qe={qe} />
+        <Placeholder slot={slot} />
       )}
       <i className="thin" style={{ width: `${(left / (QE_PLAY_SECONDS * 1000)) * 100}%` }} />
       {prog > 0 && <div className="holdbar" aria-hidden="true"><i style={{ width: `${prog * 100}%` }} /></div>}
@@ -136,12 +144,12 @@ function Play({ room, me, api }) {
 
 // Pas d'image (ou image qui ne charge pas) : on affiche le nom. Le décompte sert déjà à cacher son écran des autres.
 // (Aucune catégorie ni indice : trouver de quoi il s'agit fait partie du jeu.)
-function Placeholder({ qe }) {
-  const len = (qe.title || "").length;
+function Placeholder({ slot }) {
+  const len = (slot.title || "").length;
   return (
     <div className="qe-ph">
-      {qe.title ? <h2 className={"phname " + (len > 22 ? "l" : "")}>{qe.title}</h2> : <b>?</b>}
-      {qe.why === "network" && <small className="phwhy">Wikipédia est injoignable depuis cet écran (l'aperçu bloque le réseau) : le nom s'affiche à la place. Ouvre la vraie appli pour voir les images.</small>}
+      {slot.title ? <h2 className={"phname " + (len > 22 ? "l" : "")}>{slot.title}</h2> : <b>?</b>}
+      {slot.why === "network" && <small className="phwhy">Wikipédia est injoignable depuis cet écran (l'aperçu bloque le réseau) : le nom s'affiche à la place. Ouvre la vraie appli pour voir les images.</small>}
     </div>
   );
 }
@@ -149,19 +157,29 @@ function Placeholder({ qe }) {
 /* ------------------------ 4. la réponse + classement ------------------------ */
 function Result({ room, me }) {
   const qe = room.qe;
-  const cat = BY_ID[qe.cat];
   const byId = Object.fromEntries(room.players.map((p) => [p.id, p]));
   const found = qe.order.map((id) => byId[id]).filter(Boolean);
   const lost = room.players.filter((p) => !qe.order.includes(p.id));
+  const meP = byId[me.id];
+  // une réponse par équipe (la mienne en premier)
+  const teams = Object.keys(qe.t || {}).map(Number).sort((a, b) => (a === (meP && meP.team) ? -1 : b === (meP && meP.team) ? 1 : a - b));
   return (
     <div className="screen">
       <div className="row spread">
         <span className="eyebrow">Image {qe.round} sur {qe.total}</span>
-        {cat && <span className="catchip" style={{ background: cat.color.startsWith("hsl") ? cat.color : "var(--cream-2)" }}>{cat.label}</span>}
       </div>
-      <div className="answer">
-        {safeUrl(qe.url) ? <img src={safeUrl(qe.url)} alt={qe.answer} draggable="false" referrerPolicy="no-referrer" /> : <div className="qe-ph small"><b>?</b></div>}
-        <h2 className="ansname">{qe.answer}</h2>
+      <div className={"answers n" + Math.min(teams.length, 4)}>
+        {teams.map((t) => {
+          const a = qe.t[t], cat = BY_ID[a.cat];
+          return (
+            <div key={t} className="answer" style={teamStyle(t)}>
+              <span className="ateam">Équipe {TEAMS[t].name}</span>
+              {safeUrl(a.url) ? <img src={safeUrl(a.url)} alt={a.answer} draggable="false" referrerPolicy="no-referrer" /> : <div className="qe-ph small"><b>?</b></div>}
+              <h2 className="ansname">{a.answer}</h2>
+              {cat && <span className="catchip" style={{ background: cat.color.startsWith("hsl") ? cat.color : "var(--cream-2)" }}>{cat.label}</span>}
+            </div>
+          );
+        })}
       </div>
       <div className="scroll">
         <ol className="rank">

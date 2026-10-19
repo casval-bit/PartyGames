@@ -105,6 +105,8 @@ par siècle, par décennie et par pays, cartes sans pays ou sans période.
 
 Pays et périodes sont déjà lus et validés, mais ne servent pas encore en partie (seules les catégories pilotent les packs).
 
+**Univers** : `pokemon` (Pokémon, dresseurs, lieux, objets : surtout la 1re génération et Noir/Blanc), `legendaires` (Les Légendaires), `citesdor` (Les Mystérieuses Cités d'or), `saga` (sagas du cinéma, aussi classées en `film`). Le tirage « Mixtes » est équilibré entre catégories : on tire d'abord une catégorie au hasard, puis une carte de cette catégorie, pour qu'un grand univers ne noie pas les autres.
+
 ## 5. Règles déjà codées (mode Classique)
 
 - Répartition des joueurs dans l'ordre d'arrivée, équipes jaune / bleue / rouge / verte (2 à 4). Équipes de 2 joueurs par défaut ; le créateur peut monter jusqu'à 6 par équipe.
@@ -132,11 +134,11 @@ Polices : Fraunces (noms des cartes), Bungee (titres), Figtree (texte).
 Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?** ou **Blind test**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
 À la fin d'une partie, le créateur appuie sur « Retour au lobby » : tout le monde revient au lobby avec ses équipes.
 
-**Qui est-ce ?** : pas de vote, tout est aléatoire pour tout le monde (trouver de quelle catégorie il s'agit fait partie du jeu ; elle n'est révélée qu'avec la réponse). Nombre d'images au choix : 5, 8, 10, 15.
+**Qui est-ce ?** : pas de vote, tout est aléatoire. **Chaque équipe a sa propre image** (et pas forcément le même thème que les autres équipes) ; les coéquipiers voient la même. La catégorie n'est révélée qu'avec la réponse. Nombre d'images au choix : 5, 8, 10, 15.
 Pour chaque image : 1) chacun touche son écran pour dire qu'il est prêt, 2) décompte rigolo 5-4-3-2-1 synchronisé sur tous les téléphones,
-3) l'image s'affiche en plein écran pour tout le monde, 4) quand tu as trouvé tu **maintiens l'écran 3 secondes** : ça te classe (1er, 2e…) et la manche
-continue pour les autres, 5) la réponse s'affiche avec le classement. Points : nombre de joueurs − rang + 1 ; ceux qui n'ont pas trouvé en 45 s ont 0.
-Score final par joueur et par équipe (somme des membres). C'est du déclaratif : personne ne tape la réponse.
+3) l'image de ton équipe s'affiche en plein écran, 4) quand tu as trouvé tu **maintiens l'écran 3 secondes** : ça te classe (1er, 2e…) et la manche
+continue pour les autres, 5) la réponse de chaque équipe s'affiche avec le classement. Points : nombre de joueurs − rang + 1 ; ceux qui n'ont pas trouvé en 45 s ont 0.
+Score final par joueur et par équipe (somme des membres). C'est du déclaratif : personne ne tape la réponse. Comme les images diffèrent d'une équipe à l'autre, la rapidité compte plus que la difficulté de l'image (la difficulté silencieuse S–F pourra servir plus tard à équilibrer).
 
 ### Blind test
 

@@ -3,7 +3,7 @@
 export const COUNTRY_NAMES = [
   "Afrique du Sud", "Algérie", "Allemagne", "Arabie saoudite", "Argentine", "Arménie", "Australie", "Autriche", "Barbade", "Belgique",
   "Brésil", "Bulgarie", "Cameroun", "Canada", "Chili", "Chine", "Colombie", "Congo (RDC)", "Corée du Nord", "Corée du Sud",
-  "Côte d'Ivoire", "Croatie", "Cuba", "Danemark", "Espagne", "Finlande", "France", "Géorgie", "Ghana", "Grèce", "Haïti", "Hongrie",
+  "Côte d'Ivoire", "Croatie", "Cuba", "Danemark", "Espagne", "Équateur", "Finlande", "France", "Géorgie", "Ghana", "Grèce", "Haïti", "Hongrie",
   "Inde", "Indonésie", "Irak", "Iran", "Irlande", "Islande", "Israël", "Italie", "Jamaïque", "Japon", "Kenya", "Koweït", "Liban",
   "Luxembourg", "Madagascar", "Mali", "Maroc", "Mexique", "Mongolie", "Nigeria", "Norvège", "Nouvelle-Zélande", "Pays-Bas", "Pérou",
   "Philippines", "Pologne", "Portugal", "Qatar", "Roumanie", "Royaume-Uni", "Russie", "Serbie", "Slovaquie", "Slovénie", "Suède",

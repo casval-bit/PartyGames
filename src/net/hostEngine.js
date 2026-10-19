@@ -755,15 +755,17 @@ export class HostEngine {
     this.clearTimers();
     this.qeUsed = new Set();
     this.qeToken = 0;
-    this.S.qe = { round: 0, total: this.S.settings.rounds, cat: null, url: "", title: null, answer: null, order: [], gain: {}, scores: Object.fromEntries(this.S.players.map((p) => [p.id, 0])) };
+    this.S.qe = { round: 0, total: this.S.settings.rounds, t: {}, order: [], gain: {}, scores: Object.fromEntries(this.S.players.map((p) => [p.id, 0])) };
     this.nextRound();
   }
+  // Chaque équipe a SA propre image (et pas forcément le même thème que les autres équipes).
+  qeTeams() { return [...new Set(this.S.players.map((p) => p.team))].sort((a, b) => a - b); }
   nextRound() {
     const qe = this.S.qe;
     if (qe.round >= qe.total) return this.finishQuiEst();
     qe.round += 1;
-    Object.assign(qe, { cat: null, url: "", title: null, answer: null, order: [], gain: {} });
-    this.qeCard = null; this.qeResolved = false;
+    Object.assign(qe, { t: {}, order: [], gain: {} });
+    this.qeCards = {}; this.qeCats = {}; this.qeResolved = false;
     this.resetReady();
     this.setPhase("qe_tap", QE_TAP_SECONDS * 1000);
     this.broadcast();
@@ -771,32 +773,50 @@ export class HostEngine {
     this.S.players.filter((p) => p.bot).forEach((b) => this.after(1200 + Math.random() * 3500, () => this.setReady(b.id, true)));
     this.resolveCard(++this.qeToken);
   }
-  // Pendant que les joueurs touchent l'écran, on cherche (sur Wikipédia) une carte tirée au hasard qui a une image.
+  // Pendant que les joueurs touchent l'écran, on cherche (sur Wikipédia) pour chaque équipe une carte tirée au hasard qui a une image.
   async resolveCard(token) {
-    const drawn = drawPack("mixtes", this.qeUsed, 8).cards;
-    this.qeCats = Object.fromEntries(drawn.map((d) => [d.id, d.cat]));
-    this.qeCands = drawn.map((d) => CARD_BY_ID[d.id]);
-    let hit = this.qeCands.find((c) => c.image);
-    hit = hit ? { card: hit, url: hit.image } : null;
-    let why = "";
-    if (!hit) {
-      try {
-        const r = await findFirstWithImage(this.qeCands);
-        if (r && r.error) why = "network"; else if (r) hit = r; else why = "none";
-      } catch { why = "network"; }
-    }
+    const teams = this.qeTeams();
+    const per = teams.map((team) => {
+      const drawn = drawPack("mixtes", this.qeUsed, 8).cards;
+      for (const d of drawn) this.qeCats[d.id] = d.cat;
+      return { team, cands: drawn.map((d) => CARD_BY_ID[d.id]) };
+    });
+    const hits = await Promise.all(per.map(async ({ team, cands }) => {
+      let hit = cands.find((c) => c.image);
+      hit = hit ? { card: hit, url: hit.image } : null;
+      let why = "";
+      if (!hit) {
+        try {
+          const r = await findFirstWithImage(cands);
+          if (r && r.error) why = "network"; else if (r) hit = r; else why = "none";
+        } catch { why = "network"; }
+      }
+      return { team, cands, hit, why };
+    }));
     if (token !== this.qeToken || this.dead) return;
-    this.finishResolve(hit, true, why);
+    this.finishResolve(hits, true);
   }
-  finishResolve(hit, advance = true, why = "") {
+  finishResolve(hits, advance = true) {
     const qe = this.S.qe;
-    const chosen = hit ? hit.card : this.qeCands[0];
-    this.qeCands.filter((c) => c !== chosen).forEach((c) => this.qeUsed.delete(c.id)); // les autres pourront resservir
-    this.qeCard = chosen;
-    const okUrl = hit ? safeUrl(hit.url) : "";
-    qe.url = okUrl;
-    qe.title = okUrl ? null : chosen.name; // pas d'image trouvée : on affichera le nom
-    qe.why = okUrl ? "" : (why || (hit ? "none" : "")); // "network" = Wikipédia injoignable, "none" = pas d'image pour ces cartes
+    if (!hits) { // pas le temps d'attendre la recherche : on prend le premier candidat de chaque équipe
+      hits = this.qeTeams().map((team) => {
+        const drawn = drawPack("mixtes", this.qeUsed, 1).cards;
+        for (const d of drawn) this.qeCats[d.id] = d.cat;
+        return { team, cands: drawn.map((d) => CARD_BY_ID[d.id]), hit: null, why: "" };
+      });
+    }
+    for (const { team, cands, hit, why } of hits) {
+      const chosen = hit ? hit.card : cands[0];
+      cands.filter((c) => c !== chosen).forEach((c) => this.qeUsed.delete(c.id)); // les autres pourront resservir
+      this.qeCards[team] = chosen;
+      const okUrl = hit ? safeUrl(hit.url) : "";
+      qe.t[team] = {
+        url: okUrl,
+        title: okUrl ? null : chosen.name, // pas d'image trouvée : on affichera le nom
+        why: okUrl ? "" : (why || (hit ? "none" : "")), // "network" = Wikipédia injoignable, "none" = pas d'image pour ces cartes
+        answer: null, cat: null,
+      };
+    }
     this.qeResolved = true;
     this.broadcast();
     if (advance) this.checkAdvance();
@@ -823,11 +843,13 @@ export class HostEngine {
       if (Math.random() < 0.75) this.after(4000 + Math.random() * (QE_PLAY_SECONDS * 1000 - 9000), () => this.found(b.id));
     });
   }
-  // Une image ne se charge pas chez quelqu'un : on affiche le nom à la place (pour ceux dont l'image ne marche pas).
-  imageFailed() {
-    const qe = this.S.qe;
-    if (!qe || !["qe_count", "qe_play"].includes(this.S.phase) || qe.title) return;
-    qe.title = this.qeCard.name;
+  // L'image ne se charge pas chez un joueur : on affiche le nom à la place, pour son équipe seulement.
+  imageFailed(id) {
+    const qe = this.S.qe, p = this.player(id);
+    if (!qe || !p || !["qe_count", "qe_play"].includes(this.S.phase)) return;
+    const slot = qe.t[p.team], card = this.qeCards && this.qeCards[p.team];
+    if (!slot || !card || slot.title) return;
+    slot.title = card.name;
     this.broadcast();
   }
   found(id) {
@@ -854,8 +876,12 @@ export class HostEngine {
         if (qe.order[0] === p.id) s.firsts = (s.firsts || 0) + 1;
       }
     }
-    qe.answer = this.qeCard.name;
-    qe.cat = (this.qeCats && this.qeCats[this.qeCard.id]) || this.qeCard.cats[0];
+    for (const [team, card] of Object.entries(this.qeCards || {})) { // la réponse de chaque équipe
+      const slot = qe.t[team];
+      if (!slot) continue;
+      slot.answer = card.name;
+      slot.cat = (this.qeCats && this.qeCats[card.id]) || card.cats[0];
+    }
     this.setPhase("qe_result", QE_RESULT_MS);
     this.broadcast();
     this.after(QE_RESULT_MS, () => this.nextRound());
@@ -945,7 +971,7 @@ export class HostEngine {
       case "found": return this.found(from);
       case "begin": return this.begin(from);
       case "swipe": return this.swipe(from, msg.cardId, msg.ok, msg.seq);
-      case "imgfail": return this.imageFailed();
+      case "imgfail": return this.imageFailed(from);
       case "who": return this.broadcast();
       default:
     }
