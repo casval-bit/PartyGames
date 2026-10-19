@@ -1,16 +1,9 @@
 // Deux transports interchangeables :
 //  - Supabase Realtime (vrai multijoueur, aucune table à créer : seulement Broadcast + Presence)
 //  - Local (BroadcastChannel) : plusieurs onglets du même navigateur, pour tester sans serveur
-import { ONLINE, SUPABASE_URL, SUPABASE_KEY } from "../config.js";
+import { ONLINE } from "../config.js";
 
-let supa = null;
-async function getSupa() {
-  if (!supa) {
-    const { createClient } = await import("@supabase/supabase-js");
-    supa = createClient(SUPABASE_URL, SUPABASE_KEY, { realtime: { params: { eventsPerSecond: 20 } } });
-  }
-  return supa;
-}
+import { getSupa } from "./supa.js";
 
 /* ---------------------------- Supabase ---------------------------- */
 const supabaseTransport = {

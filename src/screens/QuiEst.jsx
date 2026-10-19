@@ -136,6 +136,7 @@ function Play({ room, me, api }) {
       ) : (
         <Placeholder slot={slot} />
       )}
+      {slot.url && !bad && slot.title && <div className={"qe-cap" + (slot.title.length > 24 ? " l" : "")}><span>{slot.title}</span></div>}
       <i className="thin" style={{ width: `${(left / (QE_PLAY_SECONDS * 1000)) * 100}%` }} />
       {prog > 0 && <div className="holdbar" aria-hidden="true"><i style={{ width: `${prog * 100}%` }} /></div>}
     </div>

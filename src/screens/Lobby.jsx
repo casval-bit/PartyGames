@@ -1,21 +1,22 @@
 import { useState } from "react";
 import { PlayerAvatar, teamStyle } from "../ui/parts.jsx";
-import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO } from "../config.js";
-import { importPlaylist, demoPlaylist } from "../data/playlist.js";
+import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS } from "../config.js";
+import { importPlaylist, demoPlaylist, MAX_TRACKS, MAX_TEXT_LINES } from "../data/playlist.js";
 import { safeUrl } from "../lib/safeUrl.js";
 
 /** Blind test : le créateur importe une playlist (Deezer, liste texte, Spotify depuis l'APK) ou prend la démo. */
-function PlaylistPanel({ room, isHost, api }) {
+function PlaylistPanel({ room, isHost, api, spotify }) {
   const [raw, setRaw] = useState("");
   const [busy, setBusy] = useState(false);
   const [prog, setProg] = useState("");
   const [err, setErr] = useState("");
+  const [more, setMore] = useState(false);
   const pl = room.playlist;
   const run = async () => {
     setBusy(true); setErr(""); setProg("");
     try {
       const r = await importPlaylist(raw, (a, b) => setProg(`${a}/${b}`));
-      api.setPlaylist(r); setRaw("");
+      api.setPlaylist(r, pl ? true : false); setRaw(""); setMore(false);
     } catch (e) { setErr(e.message || String(e)); }
     setBusy(false); setProg("");
   };
@@ -29,16 +30,22 @@ function PlaylistPanel({ room, isHost, api }) {
           {isHost && <button className="btn small ghost" onClick={() => api.setPlaylist(null)}>Changer</button>}
         </div>
       )}
-      {!pl && isHost && (
+      {pl && isHost && !more && <button className="btn small ghost" style={{ marginTop: 8 }} onClick={() => setMore(true)}>+ Ajouter une autre playlist</button>}
+      {isHost && (!pl || more) && (
         <>
           <textarea className="plin" rows={3} value={raw} onChange={(e) => setRaw(e.target.value)} disabled={busy} spellCheck={false}
-            placeholder={"Lien d'une playlist Deezer publique\nou une liste, une ligne par morceau :\nDaft Punk - Get Lucky"} aria-label="Playlist à importer" />
+            placeholder={spotify ? "Lien de ta playlist Spotify\nou une liste, une ligne par morceau :\nDaft Punk - Get Lucky" : "Lien d'une playlist Deezer publique\nou une liste, une ligne par morceau :\nDaft Punk - Get Lucky"} aria-label="Playlist à importer" />
           <div className="row" style={{ gap: 8 }}>
-            <button className="btn primary small" disabled={busy || !raw.trim()} onClick={run}>{busy ? `Import… ${prog}` : "Importer"}</button>
-            <button className="btn small ghost" disabled={busy} onClick={() => api.setPlaylist(demoPlaylist())}>Playlist de démo</button>
+            <button className="btn primary small" disabled={busy || !raw.trim()} onClick={run}>{busy ? `Import… ${prog}` : pl ? "Ajouter" : "Importer"}</button>
+            {!pl && <button className="btn small ghost" disabled={busy} onClick={() => api.setPlaylist(demoPlaylist())}>Playlist de démo</button>}
+            {pl && <button className="btn small ghost" disabled={busy} onClick={() => { setMore(false); setErr(""); }}>Annuler</button>}
           </div>
           {err && <p className="plerr" role="alert">{err}</p>}
-          <p className="muted gnote">Spotify : le lien marche dans l'appli Android ; sinon colle une liste « Artiste - Titre ». Les extraits audio viennent de Deezer (30 s).</p>
+          {spotify ? (
+            <p className="muted gnote">Colle le lien de ta playlist Spotify (publique ; il se lit dans l'appli Android, les 100 premiers morceaux : pour en avoir plus, ajoute d'autres playlists ou colle une liste « Artiste - Titre »). L'année de chaque morceau est cherchée sur MusicBrainz ; le son est un extrait de 30 s.</p>
+          ) : (
+          <p className="muted gnote">Jusqu'à {MAX_TRACKS} morceaux par playlist Deezer, {MAX_TEXT_LINES} lignes en liste texte, et tu peux en ajouter autant que tu veux (3 000 au total). Spotify : le lien marche dans l'appli Android (100 premiers morceaux seulement : ajoute-en d'autres ou colle une liste « Artiste - Titre »). Les extraits audio viennent de Deezer (30 s).</p>
+          )}
         </>
       )}
       {!pl && !isHost && <p className="muted gnote">Le créateur choisit la playlist…</p>}
@@ -58,8 +65,9 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
   const myTeam = players.find((p) => p.id === me.id)?.team;
   const teamsUsed = new Set(players.map((p) => p.team)).size;
   const bt = settings.game === "blindtest";
+  const tl = settings.game === "timeline";
   const soloBt = bt && !settings.btTeams;
-  const canStart = bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : players.length >= 2 && teamsUsed >= 2;
+  const canStart = bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : tl ? Boolean(room.playlist) && players.length >= 1 : players.length >= 2 && teamsUsed >= 2;
   const cap = soloBt ? BT_MAX_SOLO : settings.teamCount * settings.perTeam;
   const full = players.length >= cap;
   const biggest = Math.max(...Array.from({ length: settings.teamCount }, (_, t) => players.filter((p) => p.team === t).length));
@@ -101,9 +109,9 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
             </>
           )}
         </div>
-        {bt && <PlaylistPanel room={room} isHost={isHost} api={api} />}
+        {(bt || tl) && <PlaylistPanel room={room} isHost={isHost} api={api} spotify={tl} />}
         {soloBt && (
-          <section className="team solo" style={{ "--tc": "var(--cream)", "--tink": "var(--ink)" }} aria-label="Joueurs">
+          <section className="team solo" style={{ "--tc": "var(--blue)", "--tink": "#fff" }} aria-label="Joueurs">
             <header>Joueurs<small>{players.length}/{cap}</small></header>
             {players.map((p) => (
               <div className={"pl" + (p.id === me.id ? " me" : "")} key={p.id}>
@@ -144,6 +152,13 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
         </div>}
 
         <div className="settings">
+          {tl && (
+            <>
+              <Field label="Objectif : cartes à aligner pour gagner"><Seg value={settings.tlGoal} options={TL_GOAL_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ tlGoal: v })} /></Field>
+              <Field label="Son"><Seg value={settings.tlAudio} options={[["all", "Tous les téléphones"], ["host", "Celui du créateur"]]} disabled={!isHost} onPick={(v) => api.setSettings({ tlAudio: v })} /></Field>
+              <Field label="Morceaux dont l'année est incertaine"><Seg value={settings.tlUncertain} options={[[false, "Écartés"], [true, "Acceptés"]]} disabled={!isHost} onPick={(v) => api.setSettings({ tlUncertain: v })} /></Field>
+            </>
+          )}
           {bt && (
             <>
               <Field label="Morceaux"><Seg value={settings.btSongs} options={BT_SONGS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ btSongs: v })} /></Field>
@@ -166,7 +181,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
                 ))}
               </div>
             </div>
-          ) : bt ? null : (
+          ) : bt || tl ? null : (
             <div>
               <div className="eyebrow" style={{ marginBottom: 6 }}>Temps par manche</div>
               <div className="seg">
@@ -200,7 +215,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
 
       {isHost ? (
         <>
-          {!canStart && <p className="muted" style={{ textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{bt ? (!room.playlist ? "Importe d'abord une playlist." : "Il faut au moins 2 équipes occupées.") : "Il faut au moins 2 joueurs, dans 2 équipes différentes."}</p>}
+          {!canStart && <p className="muted" style={{ textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{bt || tl ? (!room.playlist ? "Importe d'abord une playlist." : "Il faut au moins 2 équipes occupées.") : "Il faut au moins 2 joueurs, dans 2 équipes différentes."}</p>}
           <button className="btn primary" disabled={!canStart} onClick={api.start}>Lancer la partie</button>
         </>
       ) : (

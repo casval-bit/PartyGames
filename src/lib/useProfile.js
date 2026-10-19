@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadProfile, saveProfile } from "./profileStore.js";
-import { recordGame, summarize, levelOf, fixLook } from "../data/profile.js";
+import { recordGame, summarize, levelOf, fixLook, normalizeProfile } from "../data/profile.js";
 
 /** Profil local : apparence, XP, stats. Équiper un élément verrouillé est refusé. */
 export function useProfile() {
@@ -27,8 +27,15 @@ export function useProfile() {
     setGain(r.gain);
   }, [commit]);
 
+  /** Remplace tout le profil (connexion à un compte : profil fusionné ; déconnexion : profil vide). */
+  const replace = useCallback((p) => {
+    const n = normalizeProfile(p);
+    n.look = { ...n.look, ...fixLook(n) };
+    commit(n);
+  }, [commit]);
+
   const clearGain = useCallback(() => setGain(null), []);
-  return { profile, gain, clearGain, equip, record, level: levelOf(profile.xp) };
+  return { profile, gain, clearGain, equip, record, replace, level: levelOf(profile.xp) };
 }
 
 /** À appeler avec la room courante : enregistre la partie dès qu'elle se termine. */

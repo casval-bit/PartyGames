@@ -1,5 +1,5 @@
 // Profil du joueur : avatar, bordure, couleur, niveau, statistiques et succès.
-// Tout est calculé sur le téléphone (aucun compte, rien n'est envoyé à un serveur) : voir lib/profileStore.js.
+// Calculé sur le téléphone (lib/profileStore.js) ; connecté par e-mail, il est aussi sauvegardé sur le compte (lib/useAccount.js).
 // Ce module est « pur » (pas de DOM) pour pouvoir être testé avec Node : node tools/test-profile.js
 
 /* ------------------------------ catalogues ------------------------------ */
@@ -115,7 +115,7 @@ export const ACHIEVEMENTS = [
   { id: "first", name: "Baptême du feu", desc: "Terminer une partie", xp: 20, prog: (s) => [s.played, 1] },
   { id: "games10", name: "Habitué", desc: "Terminer 10 parties", xp: 40, prog: (s) => [s.played, 10] },
   { id: "games50", name: "Marathonien", desc: "Terminer 50 parties", xp: 120, prog: (s) => [s.played, 50] },
-  { id: "allgames", name: "Touche-à-tout", desc: "Jouer aux trois jeux", xp: 50, prog: (s) => [Object.values(s.byGame).filter((g) => g.p > 0).length, 3] },
+  { id: "allgames", name: "Touche-à-tout", desc: "Jouer à trois jeux différents", xp: 50, prog: (s) => [Object.values(s.byGame).filter((g) => g.p > 0).length, 3] },
   { id: "wins5", name: "Habitué des podiums", desc: "Gagner 5 parties", xp: 50, prog: (s) => [s.wins, 5] },
   { id: "wins25", name: "Légende du salon", desc: "Gagner 25 parties", xp: 150, prog: (s) => [s.wins, 25] },
   { id: "streak3", name: "Série de 3", desc: "Gagner 3 parties d'affilée", xp: 60, prog: (s) => [s.bestWinStreak, 3] },
@@ -134,10 +134,11 @@ export const ACH_BY = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
 const zero = () => ({ p: 0, w: 0, l: 0, d: 0, pts: 0, best: 0 });
 export const emptyStats = () => ({
   played: 0, wins: 0, losses: 0, draws: 0, winStreak: 0, bestWinStreak: 0,
-  byGame: { timesup: zero(), quiest: zero(), blindtest: zero() },
+  byGame: { timesup: zero(), quiest: zero(), blindtest: zero(), timeline: zero() },
   tu: { cards: 0, passes: 0, turns: 0, bonusGames: 0 },
   qe: { rounds: 0, found: 0, firsts: 0, msSum: 0, msN: 0, fastest: null },
   bt: { songs: 0, full: 0, half: 0, msSum: 0, msN: 0, fastest: null, bestStreak: 0, perfect: 0 },
+  tl: { turns: 0, hits: 0 },
 });
 export const emptyProfile = () => ({ v: 1, look: { ...DEFAULT_LOOK }, xp: 0, stats: emptyStats(), ach: {}, history: [], seen: [] });
 
@@ -150,7 +151,7 @@ export function normalizeProfile(raw) {
   const st = raw.stats || {};
   merge(base.stats, st);
   for (const g of Object.keys(base.stats.byGame)) merge(base.stats.byGame[g], (st.byGame || {})[g]);
-  for (const k of ["tu", "qe", "bt"]) merge(base.stats[k], st[k]);
+  for (const k of ["tu", "qe", "bt", "tl"]) merge(base.stats[k], st[k]);
   base.xp = Math.max(0, num(raw.xp));
   base.look = { ...DEFAULT_LOOK, ...cleanLook(raw.look) }; delete base.look.lv;
   base.ach = raw.ach && typeof raw.ach === "object" ? Object.fromEntries(Object.entries(raw.ach).filter(([k]) => ACH_BY[k])) : {};
@@ -221,6 +222,12 @@ export function summarize(room, meId) {
     return { key, game: "blindtest", teams: Boolean(bt.teams), ...r,
       bt: { songs: ps.songs || 0, full: ps.full || 0, half: ps.half || 0, msSum: ps.msSum || 0, msN: ps.msN || 0, fastest: ps.fastest ?? null, bestStreak: ps.bestStreak || 0 } };
   }
+  if (room.phase === "tl_final" && room.tl) {
+    const tl = room.tl;
+    const teams = [...new Set(room.players.map((p) => p.team))];
+    const r = rankOf(teams.map((t) => ({ key: "t" + t, pts: (tl.line[t] || []).length })), "t" + me.team);
+    return { key, game: "timeline", ...r, tl: { turns: ps.turns || 0, hits: ps.hits || 0 } };
+  }
   return null;
 }
 
@@ -231,6 +238,7 @@ export function xpFor(s) {
   if (s.game === "blindtest" && s.bt) xp += Math.min(30, s.bt.full * 2);
   if (s.game === "quiest" && s.qe) xp += Math.min(20, s.qe.found * 2);
   if (s.game === "timesup" && s.tu) xp += Math.min(30, s.tu.cards);
+  if (s.game === "timeline" && s.tl) xp += Math.min(30, s.tl.hits * 3);
   return xp;
 }
 
@@ -253,6 +261,8 @@ export function recordGame(profile, sum) {
   } else if (sum.game === "quiest") {
     const q = sum.qe; S.qe.rounds += q.rounds; S.qe.found += q.found; S.qe.firsts += q.firsts; S.qe.msSum += q.msSum; S.qe.msN += q.msN;
     if (q.fastest != null) S.qe.fastest = S.qe.fastest == null ? q.fastest : Math.min(S.qe.fastest, q.fastest);
+  } else if (sum.game === "timeline") {
+    S.tl.turns += sum.tl.turns; S.tl.hits += sum.tl.hits;
   } else if (sum.game === "blindtest") {
     const b = sum.bt, T = S.bt;
     T.songs += b.songs; T.full += b.full; T.half += b.half; T.msSum += b.msSum; T.msN += b.msN; T.bestStreak = Math.max(T.bestStreak, b.bestStreak);

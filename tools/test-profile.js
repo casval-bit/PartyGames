@@ -86,5 +86,15 @@ ok(P.secs(3421) === "3,4 s" && P.secs(null) === "—" && P.pct(1, 3) === 33 && P
 let big = P.emptyProfile();
 for (let i = 0; i < 60; i++) big = P.recordGame(big, P.summarize({ ...tuRoom, gameNo: 1000 + i }, "a")).profile;
 ok(big.history.length === 30 && big.seen.length === 40 && big.stats.played === 60, "historique plafonné à 30, 60 parties comptées");
+// frise musicale
+const tlRoom = { id: "r9", gameNo: 3, phase: "tl_final", players: [{ id: "a", team: 0 }, { id: "b", team: 1 }], pstats: { a: { turns: 6, hits: 4 } },
+  tl: { goal: 10, line: { 0: new Array(10).fill({}), 1: new Array(7).fill({}) }, winner: 0 }, settings: {} };
+const tlSum = P.summarize(tlRoom, "a");
+ok(tlSum && tlSum.game === "timeline" && tlSum.result === "win" && tlSum.pts === 10 && tlSum.tl.hits === 4, "frise : résumé de partie (victoire, 10 cartes, 4 bien placées)");
+ok(P.summarize(tlRoom, "b").result === "loss", "frise : l'autre équipe perd");
+const tlRec = P.recordGame(P.emptyProfile(), tlSum);
+ok(tlRec.profile.stats.byGame.timeline.p === 1 && tlRec.profile.stats.tl.turns === 6 && tlRec.profile.stats.tl.hits === 4 && tlRec.profile.xp > 0, "frise : partie enregistrée (stats + XP)");
+ok(P.recordGame(tlRec.profile, tlSum).gain === null, "frise : jamais comptée deux fois");
+ok(P.normalizeProfile({ v: 1, stats: { byGame: { timesup: { p: 2 } } } }).stats.byGame.timeline.p === 0, "ancien profil sans frise : champs ajoutés à zéro");
 console.log(fail ? `\n${fail} échec(s)` : "\nTout est bon.");
 process.exit(fail ? 1 : 0);

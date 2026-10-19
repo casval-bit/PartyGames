@@ -3,7 +3,7 @@ import { HourglassMark } from "../ui/parts.jsx";
 import { ONLINE } from "../config.js";
 import { Avatar } from "../ui/Avatar.jsx";
 
-export default function Menu({ name, setName, notice, clearNotice, busy, onCreate, onJoinList, look, level, onProfile }) {
+export default function Menu({ name, setName, notice, clearNotice, busy, onCreate, onJoinList, look, level, onProfile, acc, onAccount }) {
   const [roomName, setRoomName] = useState("");
   const clean = name.trim();
   return (
@@ -31,6 +31,13 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
           <span><strong>Mon profil</strong><small>Niveau {level} · avatar, stats et succès</small></span>
           <i aria-hidden="true">›</i>
         </button>
+        {acc && acc.enabled && (
+          <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="menu-account">
+            <span className="accdot" aria-hidden="true">{acc.user ? "✓" : "@"}</span>
+            <span><strong>{acc.user ? "Compte connecté" : "Se connecter"}</strong><small>{acc.user ? acc.user.email : "Sauvegarde ton niveau et tes avatars avec ton e-mail"}</small></span>
+            <i aria-hidden="true">›</i>
+          </button>
+        )}
         <div className="field">
           <label className="eyebrow" htmlFor="pseudo">Ton pseudo</label>
           <input id="pseudo" value={name} maxLength={16} placeholder="Ex. Brice" autoComplete="off" onChange={(e) => setName(e.target.value)} />

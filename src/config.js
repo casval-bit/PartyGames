@@ -30,7 +30,8 @@ export const SHOW_BOT_BUTTON = true; // bouton "+ Bot" dans le lobby (tests en s
 export const GAMES = [
   { id: "timesup", label: "Time's Up", note: "Faire deviner en équipe, 3 manches" },
   { id: "quiest", label: "Qui est-ce ?", note: "Course à l'image : le premier qui trouve gagne" },
-  { id: "blindtest", label: "Blind test", note: "Devine le titre et l'artiste d'une playlist Deezer" },
+  { id: "blindtest", label: "Blind test", note: "Devine le titre et l'artiste d'une playlist" },
+  { id: "timeline", label: "Frise", note: "Replace les chansons dans l'ordre chronologique : une frise par équipe" },
 ];
 export const QE_ROUNDS_OPTIONS = [5, 8, 10, 15];
 export const QE_DEFAULT_ROUNDS = 8;
@@ -64,9 +65,21 @@ export const TIME_BONUS_MS = TIME_BONUS_S * 1000;
 export const SCORE_BONUS_PTS = 3;            // bonus « score » : points rapportés par la carte (au lieu de 1)
 
 // ---- Blind test ----
-export const BT_SONGS_OPTIONS = [5, 10, 15, 20, 30];
+export const QUIT_VOTE_MS = FAST ? 6000 : 30000; // durée du vote « quitter la partie »
+export const BT_SONGS_OPTIONS = [5, 10, 15, 20, 30, 50, 100];
 export const BT_GUESS_OPTIONS = [10, 15, 20, 30];      // secondes pour répondre (les extraits Deezer font 30 s)
 export const BT_BREAK_SECONDS = FAST ? 3 : 15;          // révélation + scores entre deux morceaux
 export const BT_MAX_SOLO = 16;                          // joueurs max sans équipes
 export const BT_PREVIEW_S = 30;                         // durée d'un extrait
 export const BT_DEFAULTS = { btSongs: 10, btGuess: 20, btOneGuess: false, btManual: false, btTeams: false, btScoring: "shared", btAudio: "all" };
+
+// ---- comptes (connexion par e-mail) ----
+export const MOCK_AUTH = (import.meta.env && import.meta.env.VITE_MOCK_AUTH) === "1"; // tests automatiques : faux serveur de comptes, code « 123456 »
+export const ACCOUNTS = ONLINE || MOCK_AUTH;
+
+// ---- Frise musicale ----
+export const TL_GOAL_OPTIONS = FAST ? [3, 10, 15, 20] : [10, 15, 20]; // cartes à aligner pour gagner (choix du créateur)
+export const TL_PLACE_SECONDS = FAST ? 14 : 60;      // temps pour placer la carte
+export const TL_REVEAL_SECONDS = FAST ? 3 : 8;       // révélation de l'année entre deux tours
+export const TL_PREVIEW_S = 30;                      // durée d'un extrait
+export const TL_DEFAULTS = { tlGoal: 10, tlAudio: "all", tlUncertain: false };

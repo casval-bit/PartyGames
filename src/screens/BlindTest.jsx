@@ -73,6 +73,33 @@ export default function BlindTest({ room, me, api, feedback, onLeave }) {
   );
 }
 
+/** Classement compact, visible pendant que l'on répond (les scores bougent dès qu'une réponse est validée). */
+function LiveBoard({ room, me }) {
+  const rows = boardRows(room);
+  const meP = room.players.find((p) => p.id === me.id);
+  const myKey = isTeamUnit(room.bt) ? "t" + (meP ? meP.team : 0) : me.id;
+  const myTeam = meP ? meP.team : -1;
+  const isMine = (r) => r.key === myKey || (!isTeamUnit(room.bt) && room.bt.teams && r.team === myTeam && r.key === "t" + myTeam);
+  const top = rows.slice(0, 5);
+  const mineIdx = rows.findIndex(isMine);
+  const shown = mineIdx > 4 ? [...top.slice(0, 4), rows[mineIdx]] : top;
+  return (
+    <ol className="btlive" aria-label="Classement en direct">
+      {shown.map((r) => {
+        const rank = rows.indexOf(r) + 1;
+        return (
+          <li key={r.key} className={isMine(r) ? "me" : ""} style={r.style}>
+            <span className="rk">{rank}</span>
+            <b>{isMine(r) && !room.bt.teams ? "Toi" : r.label}</b>
+            {r.streak >= 2 && <Flame n={r.streak} />}
+            <strong>{r.pts}</strong>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /* ------------------------------- 1. on écoute et on devine ------------------------------- */
 function Play({ room, me, api, feedback, sound }) {
   const bt = room.bt;
@@ -134,6 +161,8 @@ function Play({ room, me, api, feedback, sound }) {
         <span className={"btchip" + (mine.artist ? " ok" : "")}>Artiste {mine.artist ? "✓" : "?"}</span>
         {flash && <span key={flash.k} className={"btflash " + flash.kind}>{msg}</span>}
       </div>
+
+      <LiveBoard room={room} me={me} />
 
       <div className="scroll">
         <ul className="btfeed">

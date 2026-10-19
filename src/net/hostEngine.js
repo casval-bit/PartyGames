@@ -4,6 +4,7 @@ import { CATEGORIES, BY_ID, rulesFor } from "../data/categories.js";
 import { drawPack, CARD_BY_ID } from "../data/cards.js";
 import { findFirstWithImage } from "../data/wikiImages.js";
 import { freshTrack } from "../data/playlist.js";
+import { resolveYear } from "../data/musicbrainz.js";
 import { judge, cleanTitle, partPoints, streakBonus } from "../data/blindtest.js";
 import { shuffle, pick, uid } from "../lib/util.js";
 import { safeUrl } from "../lib/safeUrl.js";
@@ -14,7 +15,8 @@ import {
   TU_ROUNDS, TU_READY_SECONDS, TU_TURNEND_MS, TU_ROUNDEND_SECONDS, TU_MIN_CARRY_MS, TU_ROUND_RULES, FAST,
   QE_ROUNDS_OPTIONS, QE_DEFAULT_ROUNDS, QE_TAP_SECONDS, QE_COUNT_MS, QE_PLAY_SECONDS, QE_RESULT_MS,
   BONUS_SECONDS, BONUS_SLOTS, TIME_BONUS_MS, SCORE_BONUS_PTS,
-  BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_BREAK_SECONDS, BT_MAX_SOLO, BT_PREVIEW_S, BT_DEFAULTS,
+  BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_BREAK_SECONDS, BT_MAX_SOLO, BT_PREVIEW_S, BT_DEFAULTS, QUIT_VOTE_MS,
+  TL_GOAL_OPTIONS, TL_PLACE_SECONDS, TL_REVEAL_SECONDS, TL_DEFAULTS,
 } from "../config.js";
 
 /** Pseudo : sans caractères de contrôle ni d'inversion de texte, 16 caractères au plus. */
@@ -25,7 +27,7 @@ const VOTE_IDS = new Set([...CATEGORIES.map((c) => c.id), "random", "mixtes"]);
 
 export class HostEngine {
   /** @param {{roomId:string, name:string, host:{id:string,name:string}, emit:(msg:any)=>void}} o */
-  constructor({ roomId, name, host, emit, fresh, signed }) {
+  constructor({ roomId, name, host, emit, fresh, signed, dates }) {
     this.emit = emit;
     this.signed = Boolean(signed);   // vrai : tout message réseau doit être signé par le joueur (voir secure.js)
     this.pks = {};                   // clé publique de chaque joueur : { id: "x.y" }
@@ -33,8 +35,10 @@ export class HostEngine {
     this.buckets = {};               // limiteur de débit par expéditeur
     this.chains = {};                // file d'attente par expéditeur (vérification asynchrone, ordre conservé)
     this.fresh = fresh || freshTrack;
+    this.dates = dates || resolveYear; // frise : année de première sortie d'un morceau (injectable pour les tests)
     this.playlist = [];  // blind test : morceaux importés (restent chez le créateur)
     this.btQueue = [];
+    this.tlQueue = [];   // frise : morceaux restant à tirer (mélangés)
     this.timers = new Set();
     this.deadline = null;
     this.nextColor = 0;
@@ -46,11 +50,13 @@ export class HostEngine {
     this.bonusPicks = {}; // variante Bonus : { joueur: { carte: "time" | "score" } } pendant le choix
     this.bonusMap = {};   // bonus actifs pour la manche : { carte: "time" | "score" }
     this.turnTimer = null;
+    this.quitCool = {};   // dernier vote proposé par joueur (anti-spam)
+    this.quitTimer = null;
     this.state = {
       id: roomId,
       name,
       hostId: host.id,
-      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...BT_DEFAULTS },
+      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...BT_DEFAULTS, ...TL_DEFAULTS },
       players: [],
       phase: "lobby",
       votesCast: {},
@@ -62,6 +68,8 @@ export class HostEngine {
       bonus: null,
       playlist: null,
       bt: null,
+      tl: null,     // frise musicale : voir « Frise musicale » plus bas
+      quit: null,   // vote « retour au lobby » en cours : { by, yes: [ids], no: [ids], until, closed? }
       pstats: {},   // statistiques détaillées de la partie en cours, par joueur (pour les profils)
       gameNo: 0,    // numéro de la partie dans ce lobby (sert à ne compter chaque partie qu'une fois)
       endsIn: null,
@@ -75,6 +83,7 @@ export class HostEngine {
   get rules() { return rulesFor(this.S.settings); }
   get variant() { return this.S.settings.game === "timesup" && this.S.settings.variant === "bonus" ? "bonus" : "classic"; }
   get capacity() { const s = this.S.settings; return s.game === "blindtest" && !s.btTeams ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
+  get minPlayers() { const g = this.S.settings.game; return g === "blindtest" || g === "timeline" ? 1 : 2; }
   after(ms, fn) {
     const t = setTimeout(() => { this.timers.delete(t); fn(); }, ms);
     this.timers.add(t);
@@ -104,6 +113,7 @@ export class HostEngine {
   destroy() {
     this.dead = true;
     this.clearTimers();
+    clearTimeout(this.quitTimer);
     clearInterval(this.hb);
     this.emit({ t: "closed" });
   }
@@ -134,8 +144,10 @@ export class HostEngine {
     this.S.tally = {};
     for (const v of Object.values(this.votes)) for (const c of v) if (c) this.S.tally[c] = (this.S.tally[c] || 0) + 1;
     this.broadcast();
-    if (this.S.phase !== "lobby" && this.S.players.length < (this.S.settings.game === "blindtest" ? 1 : 2)) return this.abort("Il n'y a plus assez de joueurs.");
+    this.quitCheck();
+    if (this.S.phase !== "lobby" && this.S.players.length < this.minPlayers) return this.abort("Il n'y a plus assez de joueurs.");
     if (this.S.phase === "bt_play") this.btCheckDone();
+    if (this.S.phase === "tl_play" && this.S.tl && this.S.tl.turn.pid === id) return this.tlResolve(null, "left");
     if (["tu_ready", "tu_play"].includes(this.S.phase) && this.S.tu && this.S.tu.playerId === id) return this.endTurn("left");
     this.checkAdvance();
   }
@@ -161,7 +173,10 @@ export class HostEngine {
   setSettings(by, patch) {
     if (by !== this.S.hostId || this.S.phase !== "lobby") return;
     const s = this.S.settings;
-    if (patch.game === "timesup" || patch.game === "quiest" || patch.game === "blindtest") s.game = patch.game;
+    if (patch.game === "timesup" || patch.game === "quiest" || patch.game === "blindtest" || patch.game === "timeline") s.game = patch.game;
+    if (TL_GOAL_OPTIONS.includes(patch.tlGoal)) s.tlGoal = patch.tlGoal;
+    if (patch.tlAudio === "all" || patch.tlAudio === "host") s.tlAudio = patch.tlAudio;
+    if (typeof patch.tlUncertain === "boolean") s.tlUncertain = patch.tlUncertain;
     if (BT_SONGS_OPTIONS.includes(patch.btSongs)) s.btSongs = patch.btSongs;
     if (BT_GUESS_OPTIONS.includes(patch.btGuess)) s.btGuess = patch.btGuess;
     for (const k of ["btOneGuess", "btManual", "btTeams"]) if (typeof patch[k] === "boolean") s[k] = patch[k];
@@ -199,6 +214,11 @@ export class HostEngine {
       this.newGame();
       return this.startBlind();
     }
+    if (st.game === "timeline") {
+      if (!this.playlist.length || !this.S.players.length) return;
+      this.newGame();
+      return this.startTimeline();
+    }
     if (this.S.players.length < 2 || teamsUsed < 2) return;
     this.newGame();
     if (this.S.settings.game === "quiest") return this.startQuiEst(); // Qui est-ce ? : pas de vote, tout est aléatoire
@@ -211,21 +231,72 @@ export class HostEngine {
     this.emit({ t: "aborted", reason });
     this.S.phase = "lobby";
     this.deadline = null;
-    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
+    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
     this.broadcast();
   }
-  // Fin de partie (Time's Up ou Qui est-ce ?) : tout le monde retourne au lobby, équipes conservées.
+  // Fin de partie (Time's Up, Qui est-ce ? ou Blind test) : le créateur ramène tout le monde au lobby, équipes conservées.
   backToLobby(by) {
-    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final"].includes(this.S.phase))) return;
+    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final"].includes(this.S.phase))) return;
+    this.forceLobby();
+  }
+  // Retour immédiat au lobby, quelle que soit la phase (fin de partie ou vote des joueurs).
+  forceLobby() {
     this.clearTimers();
+    clearTimeout(this.quitTimer); this.quitTimer = null;
+    this.qeToken = (this.qeToken || 0) + 1; this.btStamp = (this.btStamp || 0) + 1; // résultats asynchrones en cours : ignorés
+    this.btEnding = false;
+    this.tlStamp = (this.tlStamp || 0) + 1; this.tlCard = null; this.tlQueue = []; this.tlNextP = null;
     this.hands = {}; this.dealt = {}; this.discards = {}; this.gameDeck = []; this.votes = {};
-    Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, pstats: {} });
+    Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, tl: null, quit: null, pstats: {} });
     this.btQueue = []; this.btNextP = null;
     this.bonusMap = {}; this.bonusPicks = {};
     this.deck = []; this.allCards = [];
     this.resetReady();
     this.setPhase("lobby", null);
     this.broadcast();
+  }
+
+  /* ------------------- vote « quitter la partie » (majorité) ------------------- */
+  // N'importe quel joueur peut proposer pendant une partie ; la majorité des joueurs humains (les bots ne votent pas) ramène tout le monde au lobby.
+  quitVote(id, v) {
+    const S = this.S, p = this.player(id);
+    if (S.phase === "lobby" || !p || p.bot) return;
+    let q = S.quit;
+    if (q && q.closed) return;
+    if (v === "start" || (!q && v === "yes")) {
+      if (q) v = "yes";
+      else {
+        const now = Date.now();
+        if (now < (this.quitCool[id] || 0)) return; // pas de harcèlement : une proposition toutes les 40 s par joueur
+        this.quitCool[id] = now + 40000;
+        q = S.quit = { by: id, yes: [id], no: [], until: now + QUIT_VOTE_MS };
+        clearTimeout(this.quitTimer);
+        this.quitTimer = setTimeout(() => this.quitEnd(false), QUIT_VOTE_MS);
+      }
+    }
+    if (v === "yes" || v === "no") {
+      q.yes = q.yes.filter((x) => x !== id); q.no = q.no.filter((x) => x !== id);
+      (v === "yes" ? q.yes : q.no).push(id);
+    }
+    this.quitCheck();
+  }
+  quitCheck() {
+    const q = this.S.quit;
+    if (!q || q.closed) return;
+    const hs = this.S.players.filter((p) => !p.bot).map((p) => p.id);
+    q.yes = q.yes.filter((x) => hs.includes(x)); q.no = q.no.filter((x) => hs.includes(x));
+    const need = Math.floor(hs.length / 2) + 1;
+    if (q.yes.length >= need) return this.quitEnd(true);
+    if (q.no.length > hs.length - need) return this.quitEnd(false);
+    this.broadcast();
+  }
+  quitEnd(ok) {
+    clearTimeout(this.quitTimer); this.quitTimer = null;
+    if (!this.S.quit || this.dead) return;
+    if (ok) return this.forceLobby();
+    this.S.quit.closed = "refused"; // le résultat reste affiché 3 s
+    this.broadcast();
+    this.quitTimer = setTimeout(() => { this.quitTimer = null; if (this.S.quit && this.S.quit.closed) { this.S.quit = null; this.broadcast(); } }, 3000);
   }
 
   /* ------------------------------- votes ------------------------------- */
@@ -587,13 +658,27 @@ export class HostEngine {
   // Un extrait de la playlist se joue à un instant aléatoire ; chacun tape titre et/ou artiste. Le créateur seul connaît la réponse
   // (elle n'est envoyée à personne avant la révélation). Chaque partie trouvée (titre, artiste) rapporte la moitié des points :
   // points fixes + vitesse (temps restant) + bonus d'ordre d'arrivée ; la série compte les morceaux trouvés en entier.
-  setPlaylist(by, pl) {
+  // add = true : les morceaux s'ajoutent à la playlist déjà choisie (doublons ignorés) ; sinon elle est remplacée.
+  setPlaylist(by, pl, add = false) {
     if (by !== this.S.hostId || this.S.phase !== "lobby") return;
     // seules les adresses autorisées (Deezer, Wikimedia, démo…) sont gardées : voir lib/safeUrl.js
-    this.playlist = (pl && pl.tracks ? pl.tracks : [])
+    const incoming = (pl && pl.tracks ? pl.tracks : [])
       .map((t) => t && { ...t, preview: safeUrl(t.preview, { allowDemo: true }), cover: safeUrl(t.cover) })
       .filter((t) => t && t.preview);
-    this.S.playlist = this.playlist.length ? { name: String(pl.name || "Playlist").slice(0, 60), count: this.playlist.length, cover: safeUrl(pl.cover), source: String(pl.source || "").slice(0, 20), missing: pl.missing || 0 } : null;
+    const prev = add && this.S.playlist ? this.S.playlist : null;
+    const seen = new Set(prev ? this.playlist.map((t) => t.id) : []);
+    const merged = (prev ? this.playlist : []).concat(incoming.filter((t) => !seen.has(t.id) && seen.add(t.id)));
+    this.playlist = merged.slice(0, 3000);
+    const lists = (prev ? prev.lists || 1 : 0) + (incoming.length ? 1 : 0);
+    this.S.playlist = this.playlist.length ? {
+      name: prev ? (lists > 1 ? `${prev.first || prev.name} + ${lists - 1} autre${lists > 2 ? "s" : ""}` : prev.name) : String(pl.name || "Playlist").slice(0, 60),
+      first: prev ? prev.first || prev.name : String(pl.name || "Playlist").slice(0, 60),
+      lists,
+      count: this.playlist.length,
+      cover: prev ? prev.cover : safeUrl(pl.cover),
+      source: prev ? (prev.source === String(pl.source || "").slice(0, 20) ? prev.source : "Mélange") : String(pl.source || "").slice(0, 20),
+      missing: (prev ? prev.missing || 0 : 0) + (pl.missing || 0),
+    } : null;
     this.broadcast();
   }
   // « unité » qui marque : le joueur (solo, ou équipes avec somme) ou l'équipe (équipes avec score partagé)
@@ -748,6 +833,153 @@ export class HostEngine {
     if (!both && !onlyT && !onlyA) this.after(at(Math.random()), () => this.guess(b.id, "je ne sais pas"));
   }
 
+  /* ---------------------------- Frise musicale ---------------------------- */
+  // Chaque équipe a sa frise : une ligne de cartes rangées par année. À son tour, un joueur de l'équipe écoute un extrait
+  // (titre et année cachés) et choisit où l'insérer. Bien placé (l'ordre des années reste croissant, égalité acceptée) :
+  // la carte rejoint la frise ; sinon elle est défaussée. La première équipe qui atteint l'objectif (10 / 15 / 20) gagne.
+  // Seul le créateur connaît l'année avant la révélation (`this.tlCard`) : elle n'est jamais dans l'état diffusé.
+  tlTeams() { return [...new Set(this.S.players.map((p) => p.team))].sort((a, b) => a - b); }
+  startTimeline() {
+    this.clearTimers();
+    const s = this.S.settings, teams = this.tlTeams();
+    this.tlQueue = shuffle(this.playlist);
+    this.tlNextP = null; this.tlCard = null; this.tlTurns = {}; this.tlSkipped = 0;
+    const stamp = (this.tlStamp = (this.tlStamp || 0) + 1);
+    this.S.tl = { goal: s.tlGoal, audio: s.tlAudio, teams, line: Object.fromEntries(teams.map((t) => [t, []])), n: 0,
+      turn: null, cur: null, preload: null, reveal: null, winner: null, skipped: 0, loading: true };
+    this.setPhase("tl_play", null);
+    this.broadcast();
+    this.tlBegin(stamp, teams);
+  }
+  // Une carte de départ par équipe (année visible), puis le premier tour.
+  async tlBegin(stamp, teams) {
+    for (const t of teams) {
+      const c = await this.tlPickCard();
+      if (this.dead || stamp !== this.tlStamp || !this.S.tl) return;
+      if (!c) return this.abort("Pas assez de morceaux avec une date fiable. Ajoute une autre playlist ou accepte les dates incertaines.");
+      this.S.tl.line[t].push(this.tlPublic(c));
+    }
+    this.S.tl.loading = false;
+    this.tlPrepare();
+    this.tlNextTurn();
+  }
+  tlPublic(c) { return { id: c.id, t: cleanTitle(c.title) || c.title, a: c.artists.join(", "), y: c.year }; }
+  // Prochain morceau utilisable : extrait à jour, année trouvée (MusicBrainz + Deezer). Sans année fiable, il est écarté.
+  async tlPickCard() {
+    while (this.tlQueue.length) {
+      let t = this.tlQueue.shift();
+      try { t = await this.fresh(t); } catch { /* on garde les anciennes données */ }
+      if (!t) continue;
+      t = { ...t, preview: safeUrl(t.preview, { allowDemo: true }), cover: safeUrl(t.cover) };
+      if (!t.preview) continue;
+      let r = null;
+      if (Number.isInteger(t.year)) r = { year: t.year, confident: true };
+      else if (!String(t.preview).startsWith("demo:")) { try { r = await this.dates(t); } catch { r = null; } }
+      if (!r || !r.year || (!r.confident && !this.S.settings.tlUncertain)) { this.tlSkipped++; if (this.S.tl) this.S.tl.skipped = this.tlSkipped; continue; }
+      return { ...t, year: r.year, uncertain: !r.confident };
+    }
+    return null;
+  }
+  // Prépare la carte suivante pendant le tour en cours (les recherches de dates prennent quelques secondes).
+  tlPrepare() {
+    if (!this.S.tl) return;
+    const stamp = this.tlStamp;
+    const p = (this.tlNextP = this.tlPickCard());
+    p.then((c) => { if (this.dead || stamp !== this.tlStamp || this.tlNextP !== p || !this.S.tl) return; this.S.tl.preload = c ? c.preview : null; this.broadcast(); });
+  }
+  async tlNextTurn() {
+    const tl = this.S.tl;
+    if (!tl || this.dead) return;
+    const stamp = this.tlStamp;
+    const p = this.tlNextP || this.tlPickCard();
+    this.tlNextP = null;
+    const card = await p;
+    if (this.dead || stamp !== this.tlStamp || !this.S.tl) return;
+    if (!card) return this.tlFinish();
+    this.clearTimers();
+    // équipe suivante (tour de rôle) puis joueur suivant dans cette équipe
+    const teams = this.tlTeams();
+    if (!teams.length) return;
+    const team = teams[tl.n % teams.length];
+    const members = this.S.players.filter((x) => x.team === team).sort((a, b) => a.joinedAt - b.joinedAt);
+    const idx = (this.tlTurns[team] = (this.tlTurns[team] || 0) + 1) - 1;
+    const pl = members[idx % members.length];
+    for (const t of teams) if (!tl.line[t]) tl.line[t] = [];
+    tl.n += 1;
+    this.tlCard = card;
+    tl.teams = teams;
+    tl.turn = { team, pid: pl.id };
+    tl.cur = { url: card.preview, token: tl.n };
+    tl.reveal = null; tl.preload = null;
+    this.setPhase("tl_play", TL_PLACE_SECONDS * 1000);
+    this.broadcast();
+    this.after(TL_PLACE_SECONDS * 1000, () => this.tlResolve(null, "time"));
+    this.tlPrepare();
+    if (pl.bot) this.tlBotPlace(pl, card);
+  }
+  tlPlace(by, slot) {
+    const tl = this.S.tl;
+    if (this.S.phase !== "tl_play" || !tl || !tl.turn || tl.turn.pid !== by || !this.tlCard) return;
+    const line = tl.line[tl.turn.team];
+    if (!Number.isInteger(slot) || slot < 0 || slot > line.length) return;
+    this.tlResolve(slot, "placed");
+  }
+  tlResolve(slot, reason) {
+    const tl = this.S.tl, card = this.tlCard;
+    if (this.S.phase !== "tl_play" || !tl || !tl.turn || !card) return;
+    this.clearTimers();
+    this.tlCard = null;
+    const { team, pid } = tl.turn, line = tl.line[team], pl = this.player(pid);
+    let ok = false;
+    if (slot != null) ok = (slot === 0 || line[slot - 1].y <= card.year) && (slot === line.length || card.year <= line[slot].y);
+    if (ok) line.splice(slot, 0, this.tlPublic(card));
+    if (pl) { const st = this.ps(pid); st.turns = (st.turns || 0) + 1; if (ok) st.hits = (st.hits || 0) + 1; }
+    if (ok && line.length >= tl.goal) tl.winner = team;
+    tl.cur = null;
+    tl.reveal = { title: cleanTitle(card.title) || card.title, artist: card.artists.join(", "), year: card.year, uncertain: card.uncertain, cover: card.cover || "", slot, ok, team, pid, name: pl ? pl.name : "?", reason, last: tl.winner != null };
+    this.setPhase("tl_reveal", TL_REVEAL_SECONDS * 1000);
+    this.broadcast();
+    this.after(TL_REVEAL_SECONDS * 1000, () => this.tlAfterReveal());
+  }
+  tlAfterReveal() {
+    const tl = this.S.tl;
+    if (this.S.phase !== "tl_reveal" || !tl) return;
+    if (tl.winner != null) return this.tlFinish();
+    this.clearTimers();
+    this.tlNextTurn();
+  }
+  // Le créateur peut passer la pause de révélation.
+  tlSkip(by) {
+    if (by !== this.S.hostId || this.S.phase !== "tl_reveal") return;
+    this.tlAfterReveal();
+  }
+  tlFinish() {
+    const tl = this.S.tl;
+    if (!tl) return;
+    this.clearTimers();
+    tl.cur = null; tl.preload = null; tl.loading = false;
+    if (tl.winner == null) { // plus de morceaux : la frise la plus longue gagne (égalité : pas de vainqueur)
+      const best = Math.max(...tl.teams.map((t) => tl.line[t].length));
+      const top = tl.teams.filter((t) => tl.line[t].length === best);
+      tl.winner = top.length === 1 ? top[0] : null;
+      tl.ended = "deck";
+    }
+    this.setPhase("tl_final", null);
+    this.broadcast();
+  }
+  // Bot de test : place la carte au bon endroit une fois sur deux, au hasard sinon.
+  tlBotPlace(bot, card) {
+    const stamp = this.tlStamp;
+    this.after((FAST ? 1200 : 3500) + Math.random() * 1500, () => {
+      const tl = this.S.tl;
+      if (!tl || stamp !== this.tlStamp || !tl.turn || tl.turn.pid !== bot.id) return;
+      const line = tl.line[tl.turn.team];
+      let slot = Math.floor(Math.random() * (line.length + 1));
+      if (Math.random() < 0.55) { slot = line.findIndex((c) => c.y > card.year); if (slot < 0) slot = line.length; }
+      this.tlPlace(bot.id, slot);
+    });
+  }
+
   /* ------------------------------ Qui est-ce ? ------------------------------ */
   // Une image s'affiche pour tout le monde en même temps ; en maintenant l'écran 3 s on déclare "j'ai trouvé".
   // Classement = ordre d'arrivée des déclarations ; points = nb de joueurs - rang + 1 ; les autres 0.
@@ -812,7 +1044,7 @@ export class HostEngine {
       const okUrl = hit ? safeUrl(hit.url) : "";
       qe.t[team] = {
         url: okUrl,
-        title: okUrl ? null : chosen.name, // pas d'image trouvée : on affichera le nom
+        title: chosen.name, // le nom est toujours affiché avec l'image (sans le nom, c'était trop dur)
         why: okUrl ? "" : (why || (hit ? "none" : "")), // "network" = Wikipédia injoignable, "none" = pas d'image pour ces cartes
         answer: null, cat: null,
       };
@@ -968,10 +1200,13 @@ export class HostEngine {
       case "bonus": return this.setBonus(from, msg.picks, msg.confirm);
       case "guess": return this.guess(from, msg.text);
       case "btnext": return this.btNext(from);
+      case "place": return this.tlPlace(from, msg.slot);
+      case "tlnext": return this.tlSkip(from);
       case "found": return this.found(from);
       case "begin": return this.begin(from);
       case "swipe": return this.swipe(from, msg.cardId, msg.ok, msg.seq);
       case "imgfail": return this.imageFailed(from);
+      case "quit": return this.quitVote(from, msg.v);
       case "who": return this.broadcast();
       default:
     }
@@ -986,9 +1221,11 @@ function sanitize(m) {
   switch (m.t) {
     case "join": return { t: "join", name: cleanName(m.name), look: cleanLook(m.look) };
     case "look": return { t: "look", look: cleanLook(m.look) };
-    case "leave": case "btnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
+    case "leave": case "btnext": case "tlnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
     case "setTeam": return Number.isInteger(m.team) && m.team >= 0 && m.team < 8 ? { t: "setTeam", team: m.team } : null;
     case "vote": { const slots = Array.isArray(m.slots) && m.slots.length <= 5 ? m.slots.map((x) => str(x, 20)) : null; return slots ? { t: "vote", slots } : null; }
+    case "place": return Number.isInteger(m.slot) && m.slot >= 0 && m.slot <= 60 ? { t: "place", slot: m.slot } : null;
+    case "quit": return m.v === "start" || m.v === "yes" || m.v === "no" ? { t: "quit", v: m.v } : null;
     case "ready": return typeof m.v === "boolean" ? { t: "ready", v: m.v } : null;
     case "discard": { const ids = strList(m.ids, 4, 60); return ids ? { t: "discard", ids, confirm: m.confirm === true } : null; }
     case "bonus": {

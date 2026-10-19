@@ -1,7 +1,12 @@
 # Party Hub (nom de travail de la plateforme)
 
-Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Trois jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?** et **Blind test**.
+Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Quatre jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test** et **Frise** (frise musicale).
 « Time's Up » est une marque déposée : le nom de la plateforme et des jeux est à changer avant le Play Store (`APP_NAME` dans `src/config.js`, `capacitor.config.json`, textes de `Splash.jsx` et `Menu.jsx`).
+
+## Look & feel (ambiance Mario Party / Wii Party / Smash)
+Soirée jeux sur console : ciel bleu vif avec rayons et confettis, panneaux blancs très arrondis cernés d'un gros trait bleu nuit, boutons bombés brillants avec une « marche » dessous, titres en autocollants à liseré blanc, couleurs franches (rouge, bleu, jaune, vert). Polices embarquées (fonctionne hors-ligne) : Fredoka (titres, boutons) et Nunito (texte).
+**Animations de clic** (`src/ui/clickfx.js`, installé une fois dans `main.jsx`) : tout bouton s'écrase puis rebondit « façon gélatine » et des étoiles giclent du point touché. Rien à ajouter sur les écrans ; `data-nofx` sur un élément le met à l'écart ; coupé automatiquement si le téléphone demande moins d'animations.
+Tout se règle dans `src/styles.css` : les couleurs sont en tête de fichier (`:root`), et les blocs de thème à la fin surchargent les composants. Les cartes dorées de Time's Up, les boosters et le chrono « mèche » gardent leur look d'origine.
 
 ## 1. Lancer en local (sans serveur)
 
@@ -17,9 +22,38 @@ Sans clés Supabase, l'appli passe en « mode local » : ouvre plusieurs onglets
 2. Project Settings > API : copie « Project URL » et la clé « anon public ».
 3. Copie `.env.example` en `.env` et remplis `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
 
-Aucune table ni SQL : l'appli utilise seulement Realtime (Broadcast + Presence).
+Pour jouer ensemble, aucune table ni SQL : l'appli utilise seulement Realtime (Broadcast + Presence). Les **comptes** (voir 2 ter) demandent une table `profiles`.
 Le créateur du lobby fait tourner la partie sur son téléphone (il distribue les cartes, gère les votes et les chronos).
 S'il quitte, le lobby se ferme. Pas encore de reconnexion en cours de partie.
+
+## 2 ter. Comptes : connexion par e-mail (niveau et avatars sauvegardés)
+
+Dans l'appli : **Se connecter** (menu ou profil) > ton e-mail > un **code** arrive par e-mail > tu le tapes. Pas de mot de passe, pas de lien à ouvrir (un lien ne reviendrait pas dans l'appli Android).
+Le profil (niveau, XP, stats, succès, avatar, bordure, couleur) et le pseudo sont alors sauvegardés sur le compte, pas seulement sur le téléphone : on les retrouve sur un autre téléphone ou après une réinstallation.
+
+**À faire une fois dans Supabase** (sans ça, l'envoi du code échoue) :
+1. *SQL Editor > New query* : colle le contenu de `supabase/profiles.sql` > Run. (Crée la table `profiles` ; chaque joueur ne peut lire/écrire que sa ligne.)
+2. *Authentication > Sign In / Providers* : « Email » doit être activé (c'est le cas par défaut).
+3. *Authentication > Emails > Templates* : dans **Magic Link** ET dans **Confirm signup** (un nouveau joueur reçoit le second), remplace le contenu par quelque chose comme :
+
+       <h2>Ton code Party Hub</h2>
+       <p>Tape ce code dans l'appli :</p>
+       <p style="font-size:28px;letter-spacing:6px"><b>{{ .Token }}</b></p>
+
+   Il faut absolument `{{ .Token }}` (le code) : le modèle par défaut n'envoie qu'un lien. Le code fait 6 chiffres par défaut (réglable ; l'appli accepte 6 à 10 chiffres).
+4. **E-mails : le point qui coince.** Le serveur d'e-mails fourni par défaut par Supabase **n'envoie qu'aux membres de ton projet** et est limité à **2 e-mails par heure** : suffisant pour TES tests, pas pour des amis. Pour que n'importe qui puisse se connecter, branche un SMTP à toi
+   (*Authentication > Emails > SMTP Settings*). Exemple avec Brevo (gratuit) : hôte `smtp-relay.brevo.com`, port 587, identifiant = ton e-mail Brevo, mot de passe = une **clé SMTP** (Brevo > Settings > SMTP & API, pas la clé API) ; l'expéditeur doit être un expéditeur validé dans Brevo, identique à celui saisi dans Supabase. Pour une bonne délivrabilité (sinon : spams), Brevo demande d'authentifier un nom de domaine (enregistrements SPF/DKIM), donc un nom de domaine à toi.
+   Une fois un SMTP perso actif, la limite par défaut passe à 30 e-mails/heure (réglable dans *Authentication > Rate Limits*).
+
+**Comment la synchro se comporte** (`src/lib/useAccount.js`, `src/lib/cloud.js`, `src/data/accountMerge.js`) :
+- À la connexion, le profil du téléphone et celui du compte sont **fusionnés** : le plus avancé (plus d'XP) sert de base, on lui ajoute les succès et l'historique de l'autre. On n'additionne jamais les deux (la même progression peut exister en double, elle serait comptée deux fois).
+  Donc : tu as joué sans compte, tu crées ton compte > ta progression est reprise ; nouveau téléphone > tu récupères ton compte.
+- Ensuite, chaque changement part sur le compte 1,5 s plus tard (et tout de suite quand l'appli passe en arrière-plan). Hors ligne : tout reste sur le téléphone et repart au retour du réseau.
+- **Se déconnecter** n'est possible que si tout est sauvegardé ; le téléphone repart alors d'un profil vide (le compte garde tout), et un autre compte connecté ensuite ne reçoit rien du premier.
+- Le profil reste cosmétique et modifiable par son propriétaire (comme avant) ; la table est protégée par RLS : personne ne peut lire ni écrire le profil d'un autre.
+- Ton pseudo suit aussi : s'il est vide sur un nouveau téléphone, il est repris du compte.
+- Sans clés Supabase, les boutons de compte n'apparaissent pas et le profil reste local. Pour les tests automatiques, `VITE_MOCK_AUTH=1` active un faux serveur (code `123456`, « cloud » dans localStorage) : jamais à activer en vrai.
+Tests : `node tools/test-account.js` (fusion de profils).
 
 ## 2 bis. Sécurité (ce qui est en place, ce qui ne l'est pas)
 
@@ -129,7 +163,7 @@ Elle reste dans les données (colonne facultative `difficulte` de `cards.csv`, `
 pour un futur mode de jeu. Tant que la colonne n'est pas remplie, `PROVISIONAL_TIERS = true` attribue un tier au hasard mais stable par carte.
 Polices : Fraunces (noms des cartes), Bungee (titres), Figtree (texte).
 
-## 7. Plateforme : trois jeux
+## 7. Plateforme : quatre jeux
 
 Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?** ou **Blind test**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
 À la fin d'une partie, le créateur appuie sur « Retour au lobby » : tout le monde revient au lobby avec ses équipes.
@@ -143,9 +177,10 @@ Score final par joueur et par équipe (somme des membres). C'est du déclaratif 
 ### Blind test
 
 Choisis « Blind test » dans le lobby, puis importe une playlist :
-- **Deezer** (recommandé) : colle le lien d'une playlist **publique** (`deezer.com/…/playlist/123…`). Aucun compte ni clé : l'API Deezer est publique et chaque morceau a un extrait audio de 30 s. Les adresses d'extraits expirent : elles sont redemandées juste avant chaque morceau.
-- **Liste texte** : une ligne `Artiste - Titre` par morceau (150 max) ; chaque morceau est retrouvé sur Deezer. C'est aussi la solution pour **Spotify** (export en texte, par ex. avec Exportify) ou pour transférer ta playlist Spotify vers Deezer (Soundiiz, TuneMyMusic).
+- **Deezer** (recommandé) : colle le lien d'une playlist **publique** (`deezer.com/…/playlist/123…`), jusqu'à 2 000 morceaux. Aucun compte ni clé : l'API Deezer est publique et chaque morceau a un extrait audio de 30 s. Les adresses d'extraits expirent : elles sont redemandées juste avant chaque morceau.
+- **Liste texte** : une ligne `Artiste - Titre` par morceau (600 max d'un coup ; si Deezer demande de ralentir, l'appli patiente et réessaie) ; chaque morceau est retrouvé sur Deezer. C'est aussi la solution pour **Spotify** (export en texte, par ex. avec Exportify) ou pour transférer ta playlist Spotify vers Deezer (Soundiiz, TuneMyMusic).
 - **Lien Spotify** : fonctionne seulement dans l'**appli Android** (le lien est lu via la page publique « embed », 100 morceaux max, puis chaque morceau est retrouvé sur Deezer). Spotify ne fournit plus d'extraits audio aux nouvelles applications, donc l'audio vient toujours de Deezer. Fonction expérimentale, non testée en réel.
+- **Plusieurs playlists** : une fois une playlist chargée, « + Ajouter une autre playlist » en fusionne une autre (doublons ignorés, 3 000 morceaux au plus). Pratique pour dépasser les 100 morceaux d'un lien Spotify : ajoute-en plusieurs ou colle une liste texte. Le nombre de morceaux joués par partie va de 5 à 100.
 - **Playlist de démo** : 12 morceaux avec une mélodie synthétique, pour tester sans réseau.
 Dans l'appli Android, `CapacitorHttp` est activé (`capacitor.config.json`) : les requêtes passent par le réseau natif, sans blocage CORS. Sur le web, Deezer est interrogé en JSONP.
 
@@ -153,8 +188,23 @@ Réglages du créateur : nombre de morceaux (5 à 30), temps pour répondre (10 
 - L'extrait démarre à un instant aléatoire (entre 0 et 30 s − temps de réponse) et se lance tout seul sur les téléphones, synchronisé. Une seule zone de saisie : tape le titre, l'artiste ou les deux ; une réponse peut contenir les deux. Les parenthèses, « feat. », « Remastered », accents, apostrophes, tirets, espaces, majuscules, ponctuation et petits mots oubliés (« the », « le », « de »…) sont ignorés. Les petites fautes de frappe sont acceptées et rapportent les points normalement (lettre manquante, en trop, fausse ou deux lettres inversées), selon la longueur de la réponse : 0 faute jusqu'à 4 lettres (« Hole » ≠ « Halo »), 1 faute de 5 à 9 lettres, 2 de 10 à 15, 3 au-delà. Un chiffre faux est refusé (« 21 Guns » ≠ « 22 Guns »). Une faute de plus que la tolérance donne « Presque ! » sans point, et on peut réessayer. Réglage : `typoTolerance` / `closeTolerance` dans `src/data/blindtest.js`.
 - **Points** (`src/data/blindtest.js`) : chaque partie trouvée (titre, artiste) vaut 300 + jusqu'à 200 selon le temps restant + bonus d'ordre d'arrivée (1er +100, 2e +60, 3e +30). Une seule des deux parties = la moitié des points possibles. **Série** : +50 × (série − 1), plafonné à 250, quand on trouve les deux ; une demi-réponse garde la série sans la faire monter, un raté la remet à zéro.
 - **Équipes, score partagé** : l'équipe marque une fois (le titre peut être trouvé par un coéquipier et l'artiste par un autre) ; les coéquipiers ne voient pas les trouvailles de leur équipe et continuent de chercher, sans points en plus. **Somme des joueurs** : chaque joueur marque pour lui, le score de l'équipe est la somme.
-- Fin de morceau : réponse, pochette, qui a trouvé quoi, classement ; fin de partie : podium. Retour au lobby avec la playlist conservée. Tests : `node tools/test-blindtest.js`, `node tools/test-playlist.js`.
+- Fin de morceau : réponse, pochette, qui a trouvé quoi, classement ; fin de partie : podium. Retour au lobby avec la playlist conservée. Pendant l'écoute, un classement compact (top 5 + toi) reste visible en haut et bouge dès qu'une réponse est validée. Tests : `node tools/test-blindtest.js`, `node tools/test-playlist.js`, `npm run test-engine` (vote de départ, fusion de playlists).
+
+### Quitter une partie en cours (vote)
+Dans tous les jeux, le petit bouton ⏏ en haut à gauche propose de retourner au lobby. Un vote s'ouvre chez tous les joueurs (30 s) : **la majorité des joueurs humains** (les bots ne votent pas) ramène tout le monde au lobby, avec les mêmes équipes et la playlist conservée ; sinon la partie continue. Une proposition par joueur toutes les 40 s au maximum. Seul, le bouton quitte tout de suite.
 - Limites : le son d'un navigateur ne démarre qu'après un geste (bouton « Touche pour activer le son » en secours) ; ne mets pas le son sur tous les téléphones si vous êtes dans la même pièce (écho), choisis « Celui du créateur ».
+
+### Frise (frise musicale)
+Une équipe = une frise. À son tour, un joueur de l'équipe (ils tournent) écoute un extrait de 30 s dont il ne sait ni le titre ni l'année, et touche l'endroit de la frise où l'insérer (avant, entre ou après les cartes déjà posées, rangées de la plus ancienne à la plus récente).
+Puis l'année est révélée : bien placé (l'ordre des années reste croissant ; **même année = juste des deux côtés**), la carte rejoint la frise ; sinon elle est défaussée. Chaque équipe démarre avec 1 carte (année visible). La **première équipe qui atteint l'objectif gagne : 10, 15 ou 20 cartes, au choix du créateur**. Si la playlist est épuisée avant, la frise la plus longue gagne. Une frise seule (1 équipe, même 1 joueur) est possible pour s'entraîner.
+- **Source : ta playlist Spotify.** Dans le lobby, le créateur colle le lien de la playlist (même mécanisme que le blind test : lien lu dans l'appli Android, 100 premiers morceaux ; « + Ajouter une autre playlist » ou liste « Artiste - Titre » pour en avoir plus). Le **son** est l'extrait de 30 s du morceau retrouvé sur Deezer (Spotify ne donne plus d'extraits aux nouvelles applis), invisible pour les joueurs.
+- **Années** (`src/data/musicbrainz.js`) : l'année de l'album Spotify/Deezer est fausse pour un remaster ou un best-of. L'appli cherche donc chaque morceau (titre nettoyé de « Remastered », « Live », « feat. »…) sur **MusicBrainz**, ne garde que les enregistrements qui correspondent au titre ET à l'artiste, et prend la **plus ancienne date de sortie**. Si MusicBrainz et Deezer ne sont pas d'accord de façon suspecte, ou si MusicBrainz ne connaît pas le morceau, la date est **incertaine** : le morceau est écarté (réglage « Morceaux dont l'année est incertaine » : écartés / acceptés ; la révélation signale alors « date à vérifier »).
+  La préparation se fait pendant la partie, une carte d'avance (MusicBrainz impose 1 requête par seconde) : un écran « Préparation des cartes… » de quelques secondes au lancement.
+- Le créateur est l'arbitre : seul son téléphone connaît l'année avant la révélation (elle n'est jamais dans l'état diffusé aux autres).
+- Réglages : `TL_GOAL_OPTIONS`, `TL_PLACE_SECONDS` (60 s pour placer), `TL_REVEAL_SECONDS` dans `src/config.js`. Code : `src/net/hostEngine.js` (section « Frise musicale »), `src/screens/Timeline.jsx`.
+- **Non vérifié en réel** : depuis le développement, ni MusicBrainz ni Deezer n'étaient joignables ; la logique des dates est testée avec des réponses simulées (`node tools/test-dates.js`). À tester sur téléphone : lien Spotify réel, dates (le format de réponse de MusicBrainz est celui de sa documentation), son.
+- Idée pour plus tard : jetons (passer un morceau, voler une carte), lecture de playlists Spotify de plus de 100 titres via la connexion Spotify.
+Tests : `npm run test-engine` (moteur : tours, placement, égalité d'année, victoire, dates incertaines, fuite de l'année), `node tools/test-dates.js`, `npm run test-all` (tout).
 
 ## 8. Images des cartes
 
@@ -200,9 +250,8 @@ Déroulement d'un tour : l'écran annonce l'équipe et le joueur actif → seul 
 
 ## 10. Profil, avatars et statistiques
 
-Bouton **Mon profil** dans le menu (et ☺ dans le lobby). Tout est enregistré **sur le téléphone** (localStorage, clé `ph-profile-v1`) : pas de compte,
-rien n'est envoyé à Supabase. Conséquence : le profil ne suit pas d'un téléphone à l'autre et disparaît si on efface les données de l'appli
-(pour un profil qui te suit partout, il faudra des comptes : Supabase Auth + une table, à prévoir plus tard).
+Bouton **Mon profil** dans le menu (et ☺ dans le lobby). Le profil est lu et écrit **sur le téléphone** (localStorage, clé `ph-profile-v1`), même hors ligne.
+Sans compte, il y reste (il disparaît si on efface les données de l'appli) ; **connecté par e-mail** (voir 2 ter), il est aussi sauvegardé sur ton compte et te suit d'un téléphone à l'autre.
 
 - **Apparence** : 25 avatars (icônes), 10 bordures (certaines animées), 16 couleurs. Les autres joueurs voient ton apparence et ton niveau dans le lobby et pendant les parties.
   Tu peux la changer dans le lobby : tout le monde voit le changement tout de suite.

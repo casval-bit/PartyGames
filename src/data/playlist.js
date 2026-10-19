@@ -6,7 +6,9 @@
 // - Liste texte : une ligne « Artiste - Titre » par morceau, retrouvée sur Deezer.
 // - Démo : quelques morceaux avec une mélodie synthétique (aucun réseau), pour tester le jeu.
 
-export const MAX_TRACKS = 500;
+export const MAX_TRACKS = 2000;   // morceaux lus dans une playlist Deezer (pages de 100)
+export const MAX_TEXT_LINES = 600; // lignes « Artiste - Titre » acceptées d'un coup
+export const MAX_TOTAL = 3000;     // total après avoir ajouté plusieurs playlists
 const DZ = "https://api.deezer.com";
 
 /** Quel type d'entrée a-t-on collé ? */
@@ -26,7 +28,7 @@ export function parseInput(raw) {
     return k > 0 ? { artist: l.slice(0, k).trim(), title: l.slice(k).replace(/^\s[-–—]\s/, "").trim() } : null;
   }).filter((x) => x && x.artist && x.title);
   if (!parsed.length) return { kind: "error", msg: "Je ne reconnais rien. Format d'une ligne : Artiste - Titre." };
-  return { kind: "text", lines: parsed.slice(0, 150) };
+  return { kind: "text", lines: parsed.slice(0, MAX_TEXT_LINES) };
 }
 
 /* ------------------------------ réseau ------------------------------ */
@@ -82,7 +84,7 @@ export async function freshTrack(track, getJson = deezerJson) {
   if (!track || String(track.preview || "").startsWith("demo:")) return track;
   try {
     const t = await getJson(`/track/${track.id}`);
-    if (t && t.preview) return { ...track, preview: t.preview, cover: (t.album && (t.album.cover_medium || t.album.cover)) || track.cover };
+    if (t && t.preview) return { ...track, preview: t.preview, cover: (t.album && (t.album.cover_medium || t.album.cover)) || track.cover, release: t.release_date || track.release || "" };
   } catch { /* on garde l'ancienne adresse */ }
   return track;
 }
@@ -93,6 +95,7 @@ export async function searchDeezerTrack({ artist, title }, getJson = deezerJson)
   const q = (txt) => encodeURIComponent(txt);
   const tryQ = async (query) => {
     const r = await getJson(`/search?q=${q(query)}&limit=6`);
+    if (r && r.error && (r.error.code === 4 || /quota/i.test(r.error.message || ""))) throw new Error("quota");
     return ((r && r.data) || []).filter(usable);
   };
   let list = await tryQ(`artist:"${artist}" track:"${title}"`);
@@ -102,16 +105,27 @@ export async function searchDeezerTrack({ artist, title }, getJson = deezerJson)
   const t = list.find((x) => nrm(x.artist && x.artist.name) === a) || list[0];
   return mapTrack(t);
 }
-export async function resolveLines(lines, getJson = deezerJson, onProgress = () => {}) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Cherche un morceau ; si Deezer répond « trop de requêtes » (code 4), on attend et on réessaie. */
+async function searchRetry(line, getJson, pause) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await searchDeezerTrack(line, getJson); }
+    catch (e) {
+      if (attempt >= 3 || e.message !== "quota") throw e; // on ne réessaie que si Deezer demande de ralentir
+      await sleep(pause * 8 * (attempt + 1));
+    }
+  }
+}
+export async function resolveLines(lines, getJson = deezerJson, onProgress = () => {}, pause = 120) {
   const out = [], missing = [];
   let done = 0;
-  const queue = lines.slice(0, 150);
+  const queue = lines.slice(0, MAX_TEXT_LINES);
   const worker = async () => {
     while (queue.length) {
       const l = queue.shift();
-      try { const t = await searchDeezerTrack(l, getJson); if (t) out.push(t); else missing.push(l); } catch { missing.push(l); }
-      onProgress(++done, lines.length);
-      await new Promise((r) => setTimeout(r, 120)); // l'API limite à ~50 requêtes / 5 s
+      try { const t = await searchRetry(l, getJson, pause); if (t) out.push(t); else missing.push(l); } catch { missing.push(l); }
+      onProgress(++done, Math.min(lines.length, MAX_TEXT_LINES));
+      await sleep(pause); // l'API limite à ~50 requêtes / 5 s
     }
   };
   await Promise.all([worker(), worker(), worker()]);
@@ -136,41 +150,41 @@ export function parseSpotifyEmbed(html) {
     lines: list.map((t) => ({ title: String(t.title || "").trim(), artist: String(t.subtitle || "").replace(/ /g, " ").split(/,\s*/)[0].trim() })).filter((x) => x.title && x.artist),
   };
 }
-export async function fetchSpotifyPlaylist(id, onProgress = () => {}, getJson = deezerJson, fetchText = getText) {
+export async function fetchSpotifyPlaylist(id, onProgress = () => {}, getJson = deezerJson, fetchText = getText, pause = 120) {
   let html;
   try { html = await fetchText(`https://open.spotify.com/embed/playlist/${id}`); }
   catch { throw new Error("Spotify n'est lisible que depuis l'appli Android (APK). Sur le web : exporte la liste en texte « Artiste - Titre » ou transfère la playlist sur Deezer."); }
   const { name, lines } = parseSpotifyEmbed(html);
-  const { tracks, missing } = await resolveLines(lines, getJson, onProgress);
+  const { tracks, missing } = await resolveLines(lines, getJson, onProgress, pause);
   return { name, cover: "", source: "Spotify", total: lines.length, tracks, missing: missing.length };
 }
 
 /* ------------------------------ démo (sans réseau) ------------------------------ */
 export const DEMO_TRACKS = [
-  ["Get Lucky (feat. Pharrell Williams & Nile Rodgers) - Radio Edit", ["Daft Punk", "Pharrell Williams"]],
-  ["Bohemian Rhapsody - Remastered 2011", ["Queen"]],
-  ["Rolling in the Deep", ["Adele"]],
-  ["Alors on danse", ["Stromae"]],
-  ["Billie Jean", ["Michael Jackson"]],
-  ["Dernière danse", ["Indila"]],
-  ["Smells Like Teen Spirit", ["Nirvana"]],
-  ["Formidable", ["Stromae"]],
-  ["Shape of You", ["Ed Sheeran"]],
-  ["La Vie en rose", ["Édith Piaf"]],
-  ["Lose Yourself", ["Eminem"]],
+  ["Get Lucky (feat. Pharrell Williams & Nile Rodgers) - Radio Edit", ["Daft Punk", "Pharrell Williams"], 2013],
+  ["Bohemian Rhapsody - Remastered 2011", ["Queen"], 1975],
+  ["Rolling in the Deep", ["Adele"], 2010],
+  ["Alors on danse", ["Stromae"], 2009],
+  ["Billie Jean", ["Michael Jackson"], 1983],
+  ["Dernière danse", ["Indila"], 2013],
+  ["Smells Like Teen Spirit", ["Nirvana"], 1991],
+  ["Formidable", ["Stromae"], 2013],
+  ["Shape of You", ["Ed Sheeran"], 2017],
+  ["La Vie en rose", ["Édith Piaf"], 1947],
+  ["Lose Yourself", ["Eminem"], 2002],
   ["Un jour en France", ["Mylène Farmer"]],
-].map(([title, artists], i) => ({ id: "demo" + i, title, artists, preview: "demo:" + i, cover: "" }));
+].map(([title, artists, year], i) => ({ id: "demo" + i, title, artists, preview: "demo:" + i, cover: "", ...(year ? { year } : {}) }));
 export const demoPlaylist = () => ({ name: "Playlist de démo (mélodies de test)", cover: "", source: "Démo", total: DEMO_TRACKS.length, tracks: DEMO_TRACKS });
 
 /** Point d'entrée : transforme ce que le joueur a collé en playlist. */
-export async function importPlaylist(raw, onProgress = () => {}, getJson = deezerJson) {
+export async function importPlaylist(raw, onProgress = () => {}, getJson = deezerJson, pause = 120) {
   const p = parseInput(raw);
   if (p.kind === "error") throw new Error(p.msg);
   let pl;
   if (p.kind === "deezer") pl = await fetchDeezerPlaylist(p.id, getJson, onProgress);
-  else if (p.kind === "spotify") pl = await fetchSpotifyPlaylist(p.id, onProgress, getJson);
+  else if (p.kind === "spotify") pl = await fetchSpotifyPlaylist(p.id, onProgress, getJson, undefined, pause);
   else {
-    const { tracks, missing } = await resolveLines(p.lines, getJson, onProgress);
+    const { tracks, missing } = await resolveLines(p.lines, getJson, onProgress, pause);
     pl = { name: "Liste collée", cover: "", source: "Liste", total: p.lines.length, tracks, missing: missing.length };
   }
   if (!pl.tracks.length) throw new Error("Aucun morceau jouable (il faut un extrait audio Deezer).");

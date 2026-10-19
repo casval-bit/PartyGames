@@ -10,7 +10,9 @@
     "check-cards": "node tools/check-cards.js",
     "android:sync": "vite build && cap sync android",
     "android:open": "cap open android",
-    "fetch-images": "node tools/fetch-images.js"
+    "fetch-images": "node tools/fetch-images.js",
+    "test-engine": "node tools/run-engine-tests.mjs",
+    "test-all": "node tools/test-profile.js && node tools/test-account.js && node tools/test-dates.js && node tools/test-blindtest.js && node tools/test-playlist.js && node tools/test-secure.js && npm run test-engine"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
@@ -19,6 +21,8 @@
     "@fontsource/cinzel-decorative": "^5.3.0",
     "@fontsource/figtree": "^5.1.0",
     "@fontsource/fraunces": "^5.3.0",
+    "@fontsource/fredoka": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
     "@supabase/supabase-js": "^2.45.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

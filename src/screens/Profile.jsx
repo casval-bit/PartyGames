@@ -4,7 +4,7 @@ import {
   ACHIEVEMENTS, AVATARS, BORDERS, COLORS, isUnlocked, ruleText, rewardsOf, progressOf, pct, secs,
 } from "../data/profile.js";
 
-const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test" };
+const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise musicale" };
 const RESULT = { win: "Victoire", loss: "Défaite", draw: "Égalité", solo: "Solo" };
 const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur" };
 
@@ -22,7 +22,7 @@ const avg = (sum, n) => (n > 0 ? sum / n : null);
 
 function Stats({ s, history }) {
   const rated = s.wins + s.losses + s.draws;
-  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest;
+  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest, F = s.byGame.timeline;
   const rec = (g) => `${g.w} V · ${g.d} N · ${g.l} D`; // victoires · nuls · défaites
   return (
     <>
@@ -74,6 +74,17 @@ function Stats({ s, history }) {
           ["Réponse la plus rapide", secs(s.bt.fastest)],
           ["Meilleure série dans une partie", s.bt.bestStreak],
           ["Parties sans faute", s.bt.perfect],
+        ]} />
+      </section>
+
+      <section className="pgame">
+        <h3>Frise musicale</h3>
+        <Rows rows={[
+          ["Parties jouées", F.p],
+          ["Bilan (victoires · nuls · défaites)", rec(F)],
+          ["Plus longue frise", F.best],
+          ["Tours joués", s.tl.turns],
+          ["Cartes bien placées", `${s.tl.hits}${pct(s.tl.hits, s.tl.turns) == null ? "" : ` (${pct(s.tl.hits, s.tl.turns)} %)`}`],
         ]} />
       </section>
 
@@ -146,7 +157,7 @@ function Achievements({ profile }) {
   );
 }
 
-export default function Profile({ name, profile, equip, onBack }) {
+export default function Profile({ name, profile, equip, onBack, acc, onAccount }) {
   const [tab, setTab] = useState("stats");
   const pr = progressOf(profile.xp);
   return (
@@ -175,7 +186,18 @@ export default function Profile({ name, profile, equip, onBack }) {
         {tab === "stats" && <Stats s={profile.stats} history={profile.history} />}
         {tab === "look" && <Looks profile={profile} equip={equip} />}
         {tab === "ach" && <Achievements profile={profile} />}
-        <p className="muted pnote">Ton profil est enregistré sur ce téléphone uniquement (pas de compte). Il ne suit pas d'un appareil à l'autre.</p>
+        {acc && acc.enabled ? (
+          <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="prof-account">
+            <span className="accdot" aria-hidden="true">{acc.user ? "✓" : "@"}</span>
+            <span>
+              <strong>{acc.user ? "Sauvegardé sur ton compte" : "Profil enregistré sur ce téléphone"}</strong>
+              <small>{acc.user ? acc.user.email : "Connecte-toi par e-mail pour ne pas le perdre"}</small>
+            </span>
+            <i aria-hidden="true">›</i>
+          </button>
+        ) : (
+          <p className="muted pnote">Ton profil est enregistré sur ce téléphone uniquement. Il ne suit pas d'un appareil à l'autre.</p>
+        )}
       </div>
     </div>
   );

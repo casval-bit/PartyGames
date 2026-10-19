@@ -22,33 +22,36 @@ export default function Splash({ onTap }) {
       <div className="bomb">
         <svg viewBox="0 0 200 200" aria-hidden="true">
           <defs>
-            <radialGradient id="bg" cx="38%" cy="32%" r="75%"><stop offset="0" stopColor="#4a3470" /><stop offset="1" stopColor="#1d1330" /></radialGradient>
+            <radialGradient id="bg" cx="38%" cy="32%" r="75%"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#cfe3ff" /></radialGradient>
             <linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff4c4" /><stop offset=".5" stopColor="#e0b552" /><stop offset="1" stopColor="#a8751f" /></linearGradient>
           </defs>
-          <circle cx="100" cy="100" r="92" fill="url(#bg)" stroke="#fff1d6" strokeWidth="5" />
-          <circle cx="100" cy="100" r="78" fill="none" stroke="#433260" strokeWidth="2" strokeDasharray="2 7" />
+          <circle cx="100" cy="100" r="92" fill="url(#bg)" stroke="#1d2457" strokeWidth="8" />
+          <circle cx="100" cy="100" r="78" fill="none" stroke="#7aa6ee" strokeWidth="3" strokeDasharray="1 8" strokeLinecap="round" />
           <g className="orbit">
             {/* sablier : Time's Up */}
-            <g transform="translate(100 34)"><circle r="21" fill="#2a1c42" stroke="#ff7a2f" strokeWidth="3" />
-              <path d="M-8 -11h16c0 7-6 8-6 11s6 4 6 11h-16c0-7 6-8 6-11s-6-4-6-11z" fill="#fff1d6" /></g>
+            <g transform="translate(100 34)"><circle r="22" fill="#ff9d00" stroke="#1d2457" strokeWidth="5" />
+              <path d="M-8 -11h16c0 7-6 8-6 11s6 4 6 11h-16c0-7 6-8 6-11s-6-4-6-11z" fill="#fff" /></g>
             {/* cadre + ? : Qui est-ce ? */}
-            <g transform="translate(157 133)"><circle r="21" fill="#2a1c42" stroke="#4aa8ff" strokeWidth="3" />
-              <rect x="-11" y="-11" width="22" height="22" rx="4" fill="none" stroke="#fff1d6" strokeWidth="2.5" />
-              <text y="7" textAnchor="middle" fontSize="19" fontWeight="900" fill="#fff1d6" fontFamily="Bungee, sans-serif">?</text></g>
+            <g transform="translate(157 133)"><circle r="22" fill="#2f8bff" stroke="#1d2457" strokeWidth="5" />
+              <rect x="-11" y="-11" width="22" height="22" rx="4" fill="none" stroke="#fff" strokeWidth="2.5" />
+              <text y="7" textAnchor="middle" fontSize="19" fontWeight="900" fill="#fff" fontFamily="Fredoka, sans-serif">?</text></g>
             {/* note : Blind test */}
-            <g transform="translate(43 133)"><circle r="21" fill="#2a1c42" stroke="#ff5d9e" strokeWidth="3" />
-              <path d="M-3 -11v14a5 5 0 1 0 3 4.500V-5h8v-6z" fill="#fff1d6" /></g>
+            <g transform="translate(43 133)"><circle r="22" fill="#ff3b6b" stroke="#1d2457" strokeWidth="5" />
+              <path d="M-3 -11v14a5 5 0 1 0 3 4.500V-5h8v-6z" fill="#fff" /></g>
           </g>
           <g className="hubstar">
-            <path d="M100 66l8 21 21 8-21 8-8 21-8-21-21-8 21-8z" fill="url(#gd)" />
+            <path d="M100 62l9 22 23 9-23 9-9 23-9-23-23-9 23-9z" fill="#ffd400" stroke="#1d2457" strokeWidth="4" strokeLinejoin="round" />
             <circle cx="100" cy="95" r="4" fill="#fff" />
           </g>
         </svg>
       </div>
 
       <h1 className="logo" aria-label="Party Hub">
-        <span style={{ animationDelay: ".5s" }}>PARTY</span>
-        <span className="w2" style={{ animationDelay: ".72s" }}>HUB</span>
+        {["PARTY", "HUB"].map((w, wi) => (
+          <b key={w} className="word" aria-hidden="true">
+            {[...w].map((ch, i) => <span key={i} className={"lt c" + ((i + wi * 5) % 4)} style={{ animationDelay: `${0.45 + (i + wi * 5) * 0.07}s` }}>{ch}</span>)}
+          </b>
+        ))}
       </h1>
 
       {ready ? <div className="tap">TOUCHEZ L'ÉCRAN</div> : <div className="loadbar" aria-label="Chargement"><i /></div>}

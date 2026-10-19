@@ -1,5 +1,5 @@
 // node tools/test-playlist.js : import de playlist avec un faux Deezer (aucun réseau)
-import { parseInput, fetchDeezerPlaylist, importPlaylist, parseSpotifyEmbed, fetchSpotifyPlaylist, freshTrack } from "../src/data/playlist.js";
+import { MAX_TEXT_LINES, resolveLines, parseInput, fetchDeezerPlaylist, importPlaylist, parseSpotifyEmbed, fetchSpotifyPlaylist, freshTrack } from "../src/data/playlist.js";
 let bad = 0;
 const eq = (n, g, w) => { if (JSON.stringify(g) !== JSON.stringify(w)) { bad++; console.log("ECHEC", n, JSON.stringify(g), "attendu", JSON.stringify(w)); } };
 
@@ -37,5 +37,26 @@ eq("spotify parse", [sp.name, sp.lines], ["Ma playlist", [{ title: "Get Lucky", 
 const spl = await fetchSpotifyPlaylist("abc", () => {}, fake, async () => html);
 eq("spotify -> deezer", [spl.name, spl.tracks.length, spl.source], ["Ma playlist", 1, "Spotify"]);
 try { await fetchSpotifyPlaylist("abc", () => {}, fake, async () => { throw new Error("cors"); }); bad++; } catch (e) { eq("spotify web", /APK/.test(e.message), true); }
+
+// plus de 100 morceaux : 300 lignes texte acceptées, 600 au maximum
+const many = Array.from({ length: 700 }, (_, i) => `Artiste${i} - Titre${i}`).join("\n");
+eq("texte 700 lignes -> plafond", parseInput(many).lines.length, MAX_TEXT_LINES);
+let calls = 0;
+const searchOk = async (path) => (path.startsWith("/search") ? (calls++, { data: [tr(1000 + calls, "T" + calls, "A")] }) : {});
+const big = await resolveLines(parseInput(many.split("\n").slice(0, 300).join("\n")).lines, searchOk, () => {}, 0);
+eq("300 lignes résolues", big.tracks.length, 300);
+// Deezer répond « quota » (code 4) quelques fois : on réessaie au lieu de perdre le morceau
+let q = 0;
+const quota = async (path) => (path.startsWith("/search") ? (++q <= 2 ? { error: { code: 4, message: "Quota limit exceeded" } } : { data: [tr(5000, "Z", "Y")] }) : {});
+const rq = await resolveLines([{ artist: "Y", title: "Z" }], quota, () => {}, 1);
+eq("quota -> réessai", [rq.tracks.length, rq.missing.length], [1, 0]);
+// playlist Deezer de 350 morceaux (pages de 100)
+const bigAll = Array.from({ length: 350 }, (_, i) => tr(2000 + i, "S" + i, "A" + i));
+const bigFake = async (path) => {
+  if (path === "/playlist/8") return { title: "Grosse", nb_tracks: 350 };
+  if (path.startsWith("/playlist/8/tracks")) { const i = +path.match(/index=(\d+)/)[1]; return { data: bigAll.slice(i, i + 100), next: i + 100 < 350 ? "n" : undefined }; }
+  return {};
+};
+eq("350 morceaux Deezer", (await fetchDeezerPlaylist("8", bigFake)).tracks.length, 350);
 console.log(bad ? bad + " échec(s)" : "playlist : tout est OK");
 process.exit(bad ? 1 : 0);

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRoom } from "./net/useRoom.js";
 import { useProfile, useGameRecorder } from "./lib/useProfile.js";
 import Profile from "./screens/Profile.jsx";
+import Account from "./screens/Account.jsx";
+import { useAccount } from "./lib/useAccount.js";
 import GainToast from "./ui/GainToast.jsx";
 import { store, uid } from "./lib/util.js";
 import Splash from "./screens/Splash.jsx";
@@ -18,7 +20,9 @@ import Bonus from "./screens/Bonus.jsx";
 import TimesUp from "./screens/TimesUp.jsx";
 import QuiEst from "./screens/QuiEst.jsx";
 import BlindTest from "./screens/BlindTest.jsx";
+import Timeline from "./screens/Timeline.jsx";
 import Gallery from "./screens/Gallery.jsx";
+import QuitVote from "./ui/QuitVote.jsx";
 
 export default function App() {
   if (typeof location !== "undefined" && location.search.includes("gallery")) return <Gallery />;
@@ -33,12 +37,21 @@ export default function App() {
     } catch { return "p-" + uid(8); }
   }, []);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   // Profil (avatar, niveau, stats) : enregistré sur le téléphone, chaque partie terminée y est comptée une fois.
   const prof = useProfile();
+  // Compte (connexion par e-mail) : le profil et le pseudo suivent le joueur d'un téléphone à l'autre.
+  const acc = useAccount({ profile: prof.profile, replaceProfile: prof.replace, name, setName });
   const me = useMemo(() => ({ id, name: name.trim() || "Joueur", look: { ...prof.profile.look, lv: prof.level } }), [id, name, prof.profile.look, prof.level]);
   const net = useRoom(me);
   const { room } = net;
   useGameRecorder(room, id, prof.record);
+
+  // Connexion à un compte pendant que l'on est dans un lobby : les autres voient tout de suite l'apparence récupérée.
+  const shown = room && room.phase === "lobby" ? room.players.find((p) => p.id === id) : null;
+  const shownKey = shown && shown.look ? [shown.look.a, shown.look.b, shown.look.c, shown.look.lv].join() : "";
+  const myKey = [me.look.a, me.look.b, me.look.c, me.look.lv].join();
+  useEffect(() => { if (shown && shownKey !== myKey) net.setLook(me.look); }, [shownKey, myKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { store("tu-name", name); }, [name]);
 
@@ -50,8 +63,11 @@ export default function App() {
   const leave = () => { net.leave(); setScreen("menu"); };
 
   let body;
-  if (profileOpen) {
-    body = <Profile name={name} profile={prof.profile} equip={equip} onBack={() => setProfileOpen(false)} />;
+  const overlay = profileOpen || accountOpen;
+  if (accountOpen) {
+    body = <Account acc={acc} profile={prof.profile} onBack={() => setAccountOpen(false)} />;
+  } else if (profileOpen) {
+    body = <Profile name={name} profile={prof.profile} equip={equip} acc={acc} onAccount={() => setAccountOpen(true)} onBack={() => setProfileOpen(false)} />;
   } else if (room) {
     const common = { room, me };
     switch (room.phase) {
@@ -67,6 +83,8 @@ export default function App() {
         body = <QuiEst {...common} api={net} onLeave={leave} />; break;
       case "bt_play": case "bt_reveal": case "bt_final":
         body = <BlindTest {...common} api={net} feedback={net.feedback} onLeave={leave} />; break;
+      case "tl_play": case "tl_reveal": case "tl_final":
+        body = <Timeline {...common} api={net} onLeave={leave} />; break;
       default: body = <TimesUp {...common} api={net} queue={net.queue} onLeave={leave} />;
     }
   } else if (screen === "splash") {
@@ -76,14 +94,15 @@ export default function App() {
   } else {
     body = (
       <Menu name={name} setName={setName} notice={net.notice} clearNotice={net.clearNotice} busy={net.busy}
-        onCreate={net.create} onJoinList={() => { net.clearNotice(); setScreen("list"); }} look={me.look} level={prof.level} onProfile={() => setProfileOpen(true)} />
+        onCreate={net.create} onJoinList={() => { net.clearNotice(); setScreen("list"); }} look={me.look} level={prof.level} onProfile={() => setProfileOpen(true)} acc={acc} onAccount={() => setAccountOpen(true)} />
     );
   }
 
   return (
-    <div className="app">
+    <div className={"app" + (room && room.phase !== "lobby" && !overlay && room.players.some((p) => p.id === id && !p.bot) ? " ingame" : "")}>
       {body}
-      {prof.gain && !profileOpen && <GainToast gain={prof.gain} onClose={prof.clearGain} onOpen={() => { prof.clearGain(); setProfileOpen(true); }} />}
+      {room && room.phase !== "lobby" && !overlay && room.players.some((p) => p.id === id && !p.bot) && <QuitVote room={room} me={me} api={net} />}
+      {prof.gain && !overlay && <GainToast gain={prof.gain} onClose={prof.clearGain} onOpen={() => { prof.clearGain(); setProfileOpen(true); }} />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
-// Le profil vit dans le téléphone (localStorage) : pas de compte, rien n'est envoyé à un serveur.
-// Conséquence : le profil ne suit pas d'un téléphone à l'autre, et se perd si on efface les données de l'appli.
+// Copie locale du profil (localStorage) : c'est elle que l'appli lit et écrit, même hors ligne.
+// Sans compte, elle ne vit que sur ce téléphone. Connecté par e-mail, elle est synchronisée avec le cloud
+// (voir lib/useAccount.js) : le niveau, les stats et l'avatar suivent le joueur d'un téléphone à l'autre.
 import { emptyProfile, normalizeProfile, fixLook } from "../data/profile.js";
 
 const KEY = "ph-profile-v1";
