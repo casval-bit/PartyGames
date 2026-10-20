@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PlayerAvatar, teamStyle } from "../ui/parts.jsx";
 import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, QE_MODES, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS, MG_ROUNDS_OPTIONS, BD_ROUNDS_OPTIONS, PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS } from "../config.js";
+import SpotifyPicker from "./SpotifyPicker.jsx";
 import { importPlaylist, demoPlaylist, MAX_TRACKS, MAX_TEXT_LINES } from "../data/playlist.js";
 import { safeUrl } from "../lib/safeUrl.js";
 
@@ -43,6 +44,7 @@ function PlaylistPanel({ room, isHost, api, spotify }) {
             {!pl && <button className="btn small ghost" disabled={busy} onClick={() => api.setPlaylist(demoPlaylist())}>Playlist de démo</button>}
             {pl && <button className="btn small ghost" disabled={busy} onClick={() => { setMore(false); setErr(""); }}>Annuler</button>}
           </div>
+          <SpotifyPicker disabled={busy} onImported={(r) => { api.setPlaylist(r, pl ? true : false); setMore(false); setErr(""); }} />
           {err && <p className="plerr" role="alert">{err}</p>}
           <p className="muted gnote">Colle le lien d'une playlist <b>Deezer</b> publique (jusqu'à {MAX_TRACKS} morceaux, extraits audio de 30 s), une liste « Artiste - Titre » ({MAX_TEXT_LINES} lignes max) ou un export CSV d'Exportify. Lien <b>Spotify</b> : lisible dans l'appli Android, mais Spotify ne donne que les <b>100 premiers morceaux</b>. Pour une grande playlist Spotify : sur ordinateur, ouvre-la, fais <b>Ctrl+A puis Ctrl+C</b> et colle ici (tous les liens de morceaux sont lus, sans limite de 100), ou transfère-la sur Deezer (tunemymusic.com). Tu peux ajouter autant de playlists que tu veux ({MAX_TOTAL_LABEL} morceaux au total).{spotify ? " L'année de chaque morceau est cherchée sur MusicBrainz." : ""}</p>
         </>

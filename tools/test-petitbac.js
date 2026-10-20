@@ -15,7 +15,7 @@ const mk = (rounds = 3, extra = {}) => {
 };
 const six = (f) => PB_CLASSIC.map((_, i) => f(i));
 /** Démarre, impose la lettre B et passe directement à l'écriture. */
-const toPlay = (e, letter = "B") => { e.start("h"); e.S.pb.letter = letter; e.pbPlay(); };
+const toPlay = (e, letter = "B") => { e.start("h"); e.S.pb.letter = letter; e.pbLetters = e.pbLetters.filter((l) => l !== letter); e.pbPlay(); }; // la lettre imposée ne doit pas ressortir au tirage suivant
 
 // ---------- données et comparaison
 eq("lettres : 19, sans K Q W X Y Z U", [PB_LETTERS.length, PB_LETTERS.some((l) => "KQWXYZU".includes(l))], [19, false]);

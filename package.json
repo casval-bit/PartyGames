@@ -12,7 +12,7 @@
     "android:open": "cap open android",
     "fetch-images": "node tools/fetch-images.js",
     "test-engine": "node tools/run-engine-tests.mjs",
-    "test-all": "node tools/test-profile.js && node tools/test-account.js && node tools/test-dates.js && node tools/test-blindtest.js && node tools/test-playlist.js && node tools/test-secure.js && npm run test-engine"
+    "test-all": "node tools/test-profile.js && node tools/test-account.js && node tools/test-dates.js && node tools/test-blindtest.js && node tools/test-playlist.js && node tools/test-spotify.js && node tools/test-secure.js && npm run test-engine"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",

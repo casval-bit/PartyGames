@@ -1,6 +1,9 @@
 export const FAST = (import.meta.env && import.meta.env.VITE_FAST) === "1"; // réservé aux tests automatiques : durées raccourcies
 export const APP_NAME = "Party Hub"; // nom de travail de la plateforme ; « Time's Up » est une marque déposée, à renommer avant le Play Store
 
+// Connexion Spotify (facultative) : identifiant PUBLIC de l'appli créée sur developer.spotify.com (ce n'est pas un secret).
+export const SPOTIFY_CLIENT_ID = (import.meta.env && import.meta.env.VITE_SPOTIFY_CLIENT_ID) || "9f78b94528334c31bd44c57248bd8068";
+export const SPOTIFY_REDIRECT = (import.meta.env && import.meta.env.VITE_SPOTIFY_REDIRECT) || "https://casval-bit.github.io/PartyGames/spotify.html";
 export const SUPABASE_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || "";
 export const SUPABASE_KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || "";
 export const ONLINE = Boolean(SUPABASE_URL && SUPABASE_KEY);
@@ -87,6 +90,7 @@ export const ACCOUNTS = ONLINE || MOCK_AUTH;
 export const TL_GOAL_OPTIONS = FAST ? [3, 10, 15, 20] : [10, 15, 20]; // cartes à aligner pour gagner (choix du créateur)
 export const TL_PLACE_SECONDS = FAST ? 14 : 60;      // temps pour placer la carte
 export const TL_REVEAL_SECONDS = FAST ? 3 : 8;       // révélation de l'année entre deux tours
+export const TL_MAX_OFFSET_S = 10;                  // Frise : l'extrait démarre à un point aléatoire des 10 premières secondes
 export const TL_PREVIEW_S = 30;                      // durée d'un extrait
 export const TL_DEFAULTS = { tlGoal: 10, tlAudio: "all", tlUncertain: false };
 

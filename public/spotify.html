@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Party Hub · Connexion Spotify</title>
+<style>
+  :root{--bg:#eceef4;--card:#fff;--fg:#1b1f3b;--muted:#5c6290;--accent:#ffb400}
+  @media (prefers-color-scheme:dark){:root{--bg:#15172b;--card:#22254a;--fg:#f3f4ff;--muted:#a8acd6}}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,sans-serif;padding:16px;box-sizing:border-box}
+  main{max-width:420px;width:100%;background:var(--card);border-radius:20px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+  h1{margin:0 0 8px;font-size:1.3rem} p{margin:0 0 14px;color:var(--muted)}
+  textarea{width:100%;box-sizing:border-box;height:110px;border-radius:12px;border:2px solid var(--muted);background:transparent;color:var(--fg);font:14px ui-monospace,monospace;padding:10px;resize:none}
+  button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:14px;background:var(--accent);color:#1b1f3b;font-weight:800;font-size:1rem}
+  .err{color:#d6336c;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="t">Connexion Spotify</h1>
+  <p id="p">Un instant…</p>
+  <textarea id="c" readonly hidden></textarea>
+  <button id="b" hidden>Copier le code</button>
+</main>
+<script>
+  var q = new URLSearchParams(location.search), t = document.getElementById("t"), p = document.getElementById("p"), c = document.getElementById("c"), b = document.getElementById("b");
+  if (q.get("code")) {
+    t.textContent = "Dernière étape";
+    p.textContent = "Copie ce code, retourne dans Party Hub et colle-le dans « Code Spotify ».";
+    c.value = q.get("code") + "~" + (q.get("state") || ""); c.hidden = false; b.hidden = false;
+    b.onclick = function () {
+      c.select();
+      (navigator.clipboard ? navigator.clipboard.writeText(c.value) : Promise.reject()).then(function () { b.textContent = "Copié ✓"; }, function () { document.execCommand("copy"); b.textContent = "Copié ✓"; });
+    };
+  } else {
+    t.textContent = "Connexion refusée";
+    p.textContent = q.get("error") ? "Spotify a répondu : " + q.get("error") + ". Retourne dans Party Hub et recommence." : "Cette page sert uniquement au retour de Spotify.";
+    p.className = "err";
+  }
+</script>
+</body>
+</html>

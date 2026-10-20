@@ -63,7 +63,7 @@ export default function Timeline({ room, me, api, onLeave }) {
   const token = tl && tl.cur ? tl.cur.token : 0;
 
   useEffect(() => { player.current.onBlocked(() => setBlocked(true)); return () => player.current.stop(); }, []);
-  const start = () => { if (tl && tl.cur) player.current.play(tl.cur.url, 0, TL_PREVIEW_S); };
+  const start = () => { if (tl && tl.cur) { const o = Math.max(0, Math.min(tl.cur.offset || 0, 25)); player.current.play(tl.cur.url, o, TL_PREVIEW_S - o); } };
   useEffect(() => {
     if (!shouldPlay) return;
     if (room.phase === "tl_play" && token) { setBlocked(false); start(); } else player.current.stop();
