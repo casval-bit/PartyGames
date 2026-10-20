@@ -35,6 +35,7 @@ export const GAMES = [
   { id: "quiest", label: "Qui est-ce ?", note: "Course à l'image : le premier qui trouve gagne" },
   { id: "blindtest", label: "Blind test", note: "Devine le titre et l'artiste d'une playlist" },
   { id: "timeline", label: "Frise", note: "Replace les chansons dans l'ordre chronologique : une frise par équipe" },
+  { id: "celeb", label: "Célébrité", note: "Une photo pixellisée se dévoile à chaque essai : trouve la célébrité en un minimum de coups, comme au golf" },
   { id: "petitbac", label: "Petit bac", note: "Une lettre, six catégories : sois le plus rapide et le plus original" },
   { id: "board", label: "Plateau", note: "Jeu de plateau : dé, cases, objets, gemmes… et un mini-jeu à chaque tour" },
   { id: "party", label: "Mini-jeux", note: "Mini-jeux sur chaque téléphone et tests d'amitié : le meilleur total gagne" },
@@ -130,5 +131,12 @@ export const PB_GRACE_MS = 1500;                    // marge de réseau : derni�
 export const PB_STOP_MS = FAST ? 3000 : 8000;       // temps laissé aux autres quand quelqu'un crie STOP
 export const PB_VOTE_SECONDS = FAST ? 15 : 60;      // contestation des réponses
 export const PB_RESULT_SECONDS = FAST ? 5 : 15;     // points de la manche
+// ---- Célébrité (golf) ----
+export const CC_ROUNDS_OPTIONS = [5, 10, 15];
+export const CC_LOAD_MS = FAST ? 5000 : 10000;            // temps max pour trouver une photo sur Wikipédia avant de réessayer
+export const CC_PLAY_SECONDS = FAST ? 25 : 90;            // temps d'une manche (tous les joueurs jouent en même temps, chacun à son rythme)
+export const CC_AFTER_FIRST_SECONDS = FAST ? 8 : 30;      // quand quelqu'un a fini, les autres ont encore ce temps
+export const CC_RESULT_SECONDS = FAST ? 4 : 10;           // révélation de la célébrité + coups de la manche
+export const CC_DEFAULTS = { ccRounds: 10, ccHint: true };
 export const PB_DEFAULTS = { pbRounds: 5, pbSeconds: 90, pbCats: "classic" };
 export const PB_PLAY_SECONDS = (s) => (FAST ? Math.min(s, 20) : s);

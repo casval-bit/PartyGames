@@ -10,6 +10,7 @@ import Splash from "./screens/Splash.jsx";
 import Menu from "./screens/Menu.jsx";
 import LobbyList from "./screens/LobbyList.jsx";
 import Lobby from "./screens/Lobby.jsx";
+import Celeb from "./screens/Celeb.jsx";
 import Vote from "./screens/Vote.jsx";
 import Reveal from "./screens/Reveal.jsx";
 import Booster from "./screens/Booster.jsx";
@@ -93,6 +94,8 @@ export default function App() {
         body = <BlindTest {...common} api={net} feedback={net.feedback} onLeave={leave} />; break;
       case "tl_play": case "tl_reveal": case "tl_final":
         body = <Timeline {...common} api={net} onLeave={leave} />; break;
+      case "cc_load": case "cc_play": case "cc_result": case "cc_final":
+        body = <Celeb {...common} api={net} onLeave={leave} />; break;
       case "pb_intro": case "pb_play": case "pb_vote": case "pb_result": case "pb_final":
         body = <PetitBac {...common} api={net} onLeave={leave} />; break;
       case "bd_turn": case "bd_final":

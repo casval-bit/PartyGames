@@ -203,6 +203,8 @@ export function useRoom(me) {
     pbReject: (c, p, v) => act({ t: "pbrej", c, p, v }),
     pbOk: () => act({ t: "pbok" }),
     pbNext: () => act({ t: "pbnext" }),
+    ccGuess: (text) => act({ t: "ccguess", text }),
+    ccNext: () => act({ t: "ccnext" }),
     quitVote: (v) => act({ t: "quit", v }),
     setPlaylist: host((e, pl, add) => e.setPlaylist(me.id, pl, add === true)),
     found: () => act({ t: "found" }),

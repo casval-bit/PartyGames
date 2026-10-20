@@ -27,7 +27,7 @@ export default function LobbyList({ busy, notice, clearNotice, onBack, onJoin })
           <div className="lobby-row" key={l.roomId} style={{ animationDelay: `${Math.min(i, 5) * 60}ms` }}>
             <div className="info">
               <strong>{l.name}</strong>
-              <span className="muted" style={{ fontSize: ".85rem", fontWeight: 700 }}>{({ quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac" })[l.game] || "Time's Up"} · par {l.hostName} · {l.count}/{l.max}</span>
+              <span className="muted" style={{ fontSize: ".85rem", fontWeight: 700 }}>{({ quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité" })[l.game] || "Time's Up"} · par {l.hostName} · {l.count}/{l.max}</span>
               <div className="meter"><i style={{ width: `${(l.count / l.max) * 100}%` }} /></div>
             </div>
             <button className="btn primary small" disabled={busy || l.count >= l.max} onClick={() => onJoin(l.roomId)}>

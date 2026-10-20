@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PlayerAvatar, teamStyle } from "../ui/parts.jsx";
-import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, QE_MODES, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS, MG_ROUNDS_OPTIONS, BD_ROUNDS_OPTIONS, PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS } from "../config.js";
+import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, QE_MODES, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS, MG_ROUNDS_OPTIONS, BD_ROUNDS_OPTIONS, PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS, CC_ROUNDS_OPTIONS } from "../config.js";
 import SpotifyPicker from "./SpotifyPicker.jsx";
 import { importPlaylist, demoPlaylist, MAX_TRACKS, MAX_TEXT_LINES } from "../data/playlist.js";
 import { safeUrl } from "../lib/safeUrl.js";
@@ -69,7 +69,8 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
   const tl = settings.game === "timeline";
   const board = settings.game === "board";
   const pbac = settings.game === "petitbac";
-  const party = settings.game === "party" || board || pbac; // jeux sans équipes
+  const celeb = settings.game === "celeb";
+  const party = settings.game === "party" || board || pbac || celeb; // jeux sans équipes
   const soloBt = (bt && !settings.btTeams) || party; // pas d'équipes : liste de joueurs seule
   const canStart = pbac ? players.length >= 2 : party ? players.length >= 1 : bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : tl ? Boolean(room.playlist) && players.length >= 1 : players.length >= 2 && teamsUsed >= 2;
   const cap = soloBt ? BT_MAX_SOLO : settings.teamCount * settings.perTeam;
@@ -158,6 +159,13 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
         <div className="settings">
           {settings.game === "party" && (
             <Field label="Nombre de manches"><Seg value={settings.mgRounds} options={MG_ROUNDS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ mgRounds: v })} /></Field>
+          )}
+          {celeb && (
+            <>
+              <Field label="Nombre de célébrités à deviner"><Seg value={settings.ccRounds} options={CC_ROUNDS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ ccRounds: v })} /></Field>
+              <Field label="Indice (type de célébrité)"><Seg value={settings.ccHint !== false} options={[[true, "Oui"], [false, "Non, plus dur"]]} disabled={!isHost} onPick={(v) => api.setSettings({ ccHint: v })} /></Field>
+              <p className="muted" style={{ fontSize: ".85rem", margin: 0 }}>La photo est très pixellisée et devient plus nette à chaque proposition. Trouvée du premier coup = 1 coup… pas trouvée = 10 coups de pénalité. Le moins de coups gagne, comme au golf. Chacun joue seul.</p>
+            </>
           )}
           {pbac && (
             <>

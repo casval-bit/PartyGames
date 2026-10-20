@@ -40,6 +40,10 @@ try { await finishAuth("BAD~" + state, { clientId: "CID", redirect: "r", storage
 eq("pas connecté avant", isConnected(st), false);
 await finishAuth(` GOOD~${state} `, { clientId: "CID", redirect: "r", storage: st, fetchFn: server });
 eq("connecté après", isConnected(st), true);
+// adresse complète collée (page de retour en 404 : le code est quand même dans la barre d'adresse)
+const st2 = mem(); const u2 = new URL(await startAuth({ clientId: "CID", redirect: "r", storage: st2 })); const s2state = u2.searchParams.get("state");
+await finishAuth(`https://casval-bit.github.io/PartyGames/spotify.html?code=GOOD&state=${encodeURIComponent(s2state)}&ubi=xyz%3D%3D`, { clientId: "CID", redirect: "r", storage: st2, fetchFn: server });
+eq("adresse complète acceptée", isConnected(st2), true);
 
 const pls = await myPlaylists(o);
 eq("playlists : les miennes + collaboration, pas celles des autres", pls.map((p) => [p.id, p.total]), [["p1", 242], ["p3", 5]]);

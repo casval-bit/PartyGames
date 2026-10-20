@@ -39,7 +39,10 @@ async function tokenCall(body, storage, fetchFn) {
 
 /** Échange le texte affiché par la page de retour (« code~state ») contre un jeton. */
 export async function finishAuth(pasted, { clientId, redirect, storage = localStorage, fetchFn = fetch }) {
-  const [code, state] = String(pasted).trim().split("~");
+  // on accepte le code « code~state » affiché par la page, OU l'adresse complète de cette page (même si la page affiche une erreur 404)
+  const txt = String(pasted).trim();
+  const mc = txt.match(/[?&]code=([^&\s#]+)/), ms = txt.match(/[?&]state=([^&\s#]+)/);
+  const [code, state] = mc ? [decodeURIComponent(mc[1]), ms ? decodeURIComponent(ms[1]) : ""] : txt.split("~");
   const pending = read(storage).pending;
   if (!code || !pending) throw new Error("Code illisible : copie-le en entier sur la page Spotify, puis recommence « Se connecter ».");
   if (state !== pending.state) throw new Error("Ce code ne correspond pas à la connexion en cours. Recommence « Se connecter ».");

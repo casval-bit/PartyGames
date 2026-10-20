@@ -1,6 +1,6 @@
 # Party Hub (nom de travail de la plateforme)
 
-Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Sept jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test**, **Frise** (frise musicale), **Petit bac**, **Plateau** (façon Mario Party) et **Mini-jeux** (2D et 3D).
+Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Huit jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test**, **Frise** (frise musicale), **Célébrité** (photo pixellisée, façon golf), **Petit bac**, **Plateau** (façon Mario Party) et **Mini-jeux** (2D et 3D).
 « Time's Up » est une marque déposée : le nom de la plateforme et des jeux est à changer avant le Play Store (`APP_NAME` dans `src/config.js`, `capacitor.config.json`, textes de `Splash.jsx` et `Menu.jsx`).
 
 ## Look & feel (ambiance Mario Party / Wii Party / Smash)
@@ -165,7 +165,7 @@ Polices : Fraunces (noms des cartes), Bungee (titres), Figtree (texte).
 
 ## 7. Plateforme : sept jeux
 
-Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Petit bac**, **Plateau** ou **Mini-jeux**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
+Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Célébrité**, **Petit bac**, **Plateau** ou **Mini-jeux**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
 À la fin d'une partie, le créateur appuie sur « Retour au lobby » : tout le monde revient au lobby avec ses équipes.
 
 **Qui est-ce ?** : pas de vote. Trois modes d'image dans le lobby : **Mixte** (une catégorie au hasard, puis une carte de cette catégorie : équilibré), **Tout au hasard** (une carte parmi toutes celles qui existent) et **Choisi par un adversaire** (avant chaque image, un joueur choisit la catégorie de l'image d'un autre ; à 2 équipes chacun choisit pour l'autre, à 3 ou 4 le cycle est retiré au hasard à chaque manche ; sans choix à temps, catégorie au hasard). **Chaque équipe a sa propre image** (et pas forcément le même thème que les autres équipes) ; les coéquipiers voient la même. La catégorie n'est révélée qu'avec la réponse. Nombre d'images au choix : 5, 8, 10, 15.
@@ -195,6 +195,14 @@ Réglages du créateur : nombre de morceaux (5 à 30), temps pour répondre (10 
 ### Quitter une partie en cours (vote)
 Dans tous les jeux, le petit bouton ⏏ en haut à gauche propose de retourner au lobby. Un vote s'ouvre chez tous les joueurs (30 s) : **la majorité des joueurs humains** (les bots ne votent pas) ramène tout le monde au lobby, avec les mêmes équipes et la playlist conservée ; sinon la partie continue. Une proposition par joueur toutes les 40 s au maximum. Seul, le bouton quitte tout de suite.
 - Limites : le son d'un navigateur ne démarre qu'après un geste (bouton « Touche pour activer le son » en secours) ; ne mets pas le son sur tous les téléphones si vous êtes dans la même pièce (écho), choisis « Celui du créateur ».
+
+### Célébrité (golf)
+Chacun pour soi, 1 à 16 joueurs. Le créateur règle le **nombre de célébrités (5, 10 ou 15)** et l'**indice** (le type de célébrité : acteur, sportif, personnage fictif…). À chaque manche, **tout le monde voit la même photo, très pixellisée** ; chaque proposition fausse (ou « Je sèche ») la rend plus nette **pour celui qui l'a faite** (6 niveaux, `CELEB_LEVELS` dans `src/data/celeb.js`).
+- **Score façon golf, le plus bas gagne** : trouvée à la n-ième proposition = n coups (1 = « Trou en un », 3 = « Birdie », 4 = « Par »…) ; pas trouvée en 6 essais, ou à la fin du temps = **10 coups de pénalité** (`CELEB_PENALTY`). Égalités = même rang.
+- **Uniquement des célébrités et des personnages fictifs** : la liste (≈ 660 cartes de `cards.csv`) est filtrée par `isCeleb` dans `src/data/celeb.js` — catégories de personnes (acteurs, sportifs, politiques, historiques, internet, rappeurs, peintres, compositeurs, K-pop, dessins animés, jeux vidéo, mythologie, personnages fictifs, personnalités françaises) ; chanteurs, réalisateurs et auteurs seulement s'ils sont dans la liste `ALLOW` ; jamais d'albums, films, séries, groupes, pays, marques, animaux, Pokémon, etc. (`EXCLUDE` retire les groupes/titres qui passeraient entre les mailles). Pour ajouter ou retirer quelqu'un : `ALLOW` / `EXCLUDE`.
+- **Réponses acceptées** (`celebCheck`) : le nom entier (accents, majuscules, tirets, fautes de frappe tolérées), ou le **nom de famille seul** (« Macron », « Potter »), pas le prénom seul ; « Louis 14 » = « Louis XIV » ; ce qui est entre parenthèses est ignoré (« Steve (Minecraft) » → « Steve »). « Jaden Smith » n'est pas « Will Smith ». Un « presque » ne compte pas comme trouvé.
+- La photo est cherchée sur Wikipédia par le téléphone du créateur (comme Qui est-ce ?) ; la suivante est préparée pendant la manche. Quand quelqu'un a fini, les autres n'ont plus que 30 s. La réponse reste chez le créateur jusqu'à la fin de la manche.
+- Réglages `CC_*` dans `src/config.js`. Code : `src/net/hostEngine.js` (section « Célébrité »), `src/screens/Celeb.jsx` (pixellisation sur `<canvas>`), `src/data/celeb.js`. Tests : `tools/test-celeb.js`. Profil : stats Célébrité + succès « Flair de star ».
 
 ### Petit bac (jeu classique)
 Chacun pour soi, 2 à 16 joueurs (avec un bot pour tester seul). Le créateur règle le **nombre de manches (3, 5 ou 8)**, le **temps pour écrire (60, 90 ou 120 s)** et les **catégories** (« Classiques » : prénom, animal, pays, métier, fruit ou légume, objet ; ou « Mélangées » : 6 tirées parmi 16, `src/data/petitbac.js`).
@@ -301,7 +309,7 @@ Sans compte, il y reste (il disparaît si on efface les données de l'appli) ; *
   Toucher un cadenas indique comment le débloquer.
 - **Stats** : parties, victoires / défaites / égalités, % de victoires, série en cours et meilleure série, et par jeu :
   Time's Up (cartes trouvées/passées, précision, tours joués, parties Bonus), Qui est-ce ? (images trouvées, premier à trouver, temps moyen, record),
-  Blind test (morceaux trouvés en entier, titre ou artiste seulement, **temps de réponse moyen**, réponse la plus rapide, meilleure série, parties sans faute), Petit bac (réponses valides et uniques), et les 10 dernières parties.
+  Blind test (morceaux trouvés en entier, titre ou artiste seulement, **temps de réponse moyen**, réponse la plus rapide, meilleure série, parties sans faute), Petit bac (réponses valides et uniques), Célébrité (trouvées, moyenne de coups, trous en un), et les 10 dernières parties.
 
 Comment ça marche : le créateur du lobby mesure les statistiques détaillées pendant la partie (`pstats` dans l'état, `gameNo` = numéro de partie) ;
 à l'écran de fin, chaque téléphone calcule son propre résultat (`summarize`) et l'ajoute à son profil (`recordGame`), une seule fois par partie.

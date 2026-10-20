@@ -3,7 +3,7 @@ import { build } from "esbuild";
 import { spawnSync } from "node:child_process";
 import { unlinkSync } from "node:fs";
 
-const tests = ["tools/test-quit.js", "tools/test-timeline.js", "tools/test-party.js", "tools/test-board.js", "tools/test-petitbac.js", "tools/test-quiest.js"];
+const tests = ["tools/test-quit.js", "tools/test-timeline.js", "tools/test-party.js", "tools/test-board.js", "tools/test-petitbac.js", "tools/test-quiest.js", "tools/test-celeb.js"];
 let failed = 0;
 for (const t of tests) {
   const out = `.tmp-${t.split("/").pop().replace(".js", "")}.mjs`;

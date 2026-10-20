@@ -51,8 +51,8 @@ export default function SpotifyPicker({ onImported, disabled }) {
           <button className="btn primary small" disabled={Boolean(busy)} onClick={connect}>Se connecter à Spotify</button>
           {waiting && (
             <>
-              <p className="muted gnote">Autorise l'accès sur la page Spotify, copie le code qu'elle affiche, reviens ici et colle-le.</p>
-              <textarea className="plin" rows={2} value={pasted} onChange={(e) => setPasted(e.target.value)} spellCheck={false} placeholder="Code Spotify" aria-label="Code Spotify" />
+              <p className="muted gnote">Autorise l'accès sur la page Spotify. Elle affiche un code (ou une erreur 404, ce n'est pas grave) : copie le code, ou toute l'adresse de la page, reviens ici et colle-le.</p>
+              <textarea className="plin" rows={2} value={pasted} onChange={(e) => setPasted(e.target.value)} spellCheck={false} placeholder="Code ou adresse de la page" aria-label="Code Spotify" />
               <button className="btn primary small" disabled={!pasted.trim() || Boolean(busy)} onClick={validate}>{busy || "Valider le code"}</button>
             </>
           )}

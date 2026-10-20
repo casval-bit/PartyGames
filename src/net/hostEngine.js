@@ -1,7 +1,7 @@
 // Le créateur du lobby fait tourner ce moteur : il est la source de vérité.
 // Les autres joueurs lui envoient des actions, il diffuse l'état public et envoie à chacun ses cartes en privé.
 import { CATEGORIES, BY_ID, rulesFor } from "../data/categories.js";
-import { drawPack, CARD_BY_ID } from "../data/cards.js";
+import { drawPack, CARD_BY_ID, ALL_CARDS } from "../data/cards.js";
 import { findFirstWithImage } from "../data/wikiImages.js";
 import { freshTrack } from "../data/playlist.js";
 import { resolveYear } from "../data/musicbrainz.js";
@@ -19,7 +19,9 @@ import {
   TL_GOAL_OPTIONS, TL_MAX_OFFSET_S, TL_PLACE_SECONDS, TL_REVEAL_SECONDS, TL_DEFAULTS,
   GAMES, BD_ROUNDS_OPTIONS, BD_START_COINS, BD_GEM_COST, BD_DIE, BD_COLOR_COINS, BD_MINI_WIN, BD_ORDER_MS, bdSprintTurns, BD_MAX_ITEMS, BD_PRE_SECONDS, BD_CHOICE_SECONDS, BD_STEP_MS, BD_END_MS, BD_DEFAULTS, MG_ROUNDS_OPTIONS, MG_INTRO_MS, MG_RESULT_MS, MG_ASK_SECONDS, MG_QREVEAL_MS, MG_FRIEND_QS, MG_FRIEND_EVERY, MG_FRIEND_PTS, MG_DEFAULTS,
   PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS, PB_INTRO_MS, PB_GRACE_MS, PB_STOP_MS, PB_VOTE_SECONDS, PB_RESULT_SECONDS, PB_DEFAULTS, PB_PLAY_SECONDS,
+  CC_ROUNDS_OPTIONS, CC_LOAD_MS, CC_PLAY_SECONDS, CC_AFTER_FIRST_SECONDS, CC_RESULT_SECONDS, CC_DEFAULTS,
 } from "../config.js";
+import { isCeleb, celebCheck, celebHint, rankStrokes, CELEB_MAX_TRIES, CELEB_PENALTY } from "../data/celeb.js";
 import { PB_LETTERS, PB_CATS, PB_CLASSIC, PB_CAT_COUNT, PB_UNIQUE, PB_SHARED, cleanAnswer, answerKey, startsWith, filled } from "../data/petitbac.js";
 import { MINIGAMES, MG_BY, playSeconds, rankPoints, MG_GRACE_S, randomTeams, modeOf, teamAvg } from "../minigames/meta.js";
 import { FRIEND_QS } from "../data/friendQs.js";
@@ -62,7 +64,7 @@ export class HostEngine {
       id: roomId,
       name,
       hostId: host.id,
-      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...QE_DEFAULTS, ...BT_DEFAULTS, ...TL_DEFAULTS, ...MG_DEFAULTS, ...BD_DEFAULTS, ...PB_DEFAULTS },
+      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...QE_DEFAULTS, ...BT_DEFAULTS, ...TL_DEFAULTS, ...MG_DEFAULTS, ...BD_DEFAULTS, ...PB_DEFAULTS, ...CC_DEFAULTS },
       players: [],
       phase: "lobby",
       votesCast: {},
@@ -78,6 +80,7 @@ export class HostEngine {
       mg: null,     // mini-jeux : voir « Mini-jeux » plus bas
       bd: null,     // plateau : voir « Plateau » plus bas
       pb: null,     // petit bac : voir « Petit bac » plus bas
+      cc: null,     // célébrité (golf) : voir « Célébrité » plus bas
       quit: null,   // vote « retour au lobby » en cours : { by, yes: [ids], no: [ids], until, closed? }
       pstats: {},   // statistiques détaillées de la partie en cours, par joueur (pour les profils)
       gameNo: 0,    // numéro de la partie dans ce lobby (sert à ne compter chaque partie qu'une fois)
@@ -91,8 +94,8 @@ export class HostEngine {
   get S() { return this.state; }
   get rules() { return rulesFor(this.S.settings); }
   get variant() { return this.S.settings.game === "timesup" && this.S.settings.variant === "bonus" ? "bonus" : "classic"; }
-  get capacity() { const s = this.S.settings; return (s.game === "blindtest" && !s.btTeams) || s.game === "party" || s.game === "board" || s.game === "petitbac" ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
-  get minPlayers() { const g = this.S.settings.game; return g === "blindtest" || g === "timeline" || g === "party" || g === "board" ? 1 : 2; }
+  get capacity() { const s = this.S.settings; return (s.game === "blindtest" && !s.btTeams) || s.game === "party" || s.game === "board" || s.game === "petitbac" || s.game === "celeb" ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
+  get minPlayers() { const g = this.S.settings.game; return g === "blindtest" || g === "timeline" || g === "party" || g === "board" || g === "celeb" ? 1 : 2; }
   after(ms, fn) {
     const t = setTimeout(() => { this.timers.delete(t); fn(); }, ms);
     this.timers.add(t);
@@ -158,6 +161,7 @@ export class HostEngine {
     if (this.S.phase === "bt_play") this.btCheckDone();
     if (this.S.phase === "tl_play" && this.S.tl && this.S.tl.turn.pid === id) return this.tlResolve(null, "left");
     if (this.S.phase === "bd_turn" && this.S.bd && this.S.bd.cur === id) return this.bdNextTurn();
+    if (this.S.phase === "cc_play" && this.S.cc) { delete this.S.cc.prog[id]; this.broadcast(); return this.ccCheckDone(); }
     if (this.S.phase === "pb_vote" && this.S.pb) { this.pbPurge(id); return this.pbCheckVote(); }
     if (this.S.phase === "mg_play") return this.mgCheckPlay();
     if (this.S.phase === "mg_ask" && this.S.mg && this.S.mg.q) return this.S.mg.q.subject === id ? this.mgAskEnd() : this.mgCheckAsk();
@@ -188,6 +192,8 @@ export class HostEngine {
     const s = this.S.settings;
     if (GAMES.some((g) => g.id === patch.game)) s.game = patch.game;
     if (MG_ROUNDS_OPTIONS.includes(patch.mgRounds)) s.mgRounds = patch.mgRounds;
+    if (CC_ROUNDS_OPTIONS.includes(patch.ccRounds)) s.ccRounds = patch.ccRounds;
+    if (typeof patch.ccHint === "boolean") s.ccHint = patch.ccHint;
     if (PB_ROUNDS_OPTIONS.includes(patch.pbRounds)) s.pbRounds = patch.pbRounds;
     if (PB_SECONDS_OPTIONS.includes(patch.pbSeconds)) s.pbSeconds = patch.pbSeconds;
     if (patch.pbCats === "classic" || patch.pbCats === "mix") s.pbCats = patch.pbCats;
@@ -238,6 +244,11 @@ export class HostEngine {
       this.newGame();
       return this.startTimeline();
     }
+    if (st.game === "celeb") {
+      if (!this.S.players.length) return;
+      this.newGame();
+      return this.startCeleb();
+    }
     if (st.game === "petitbac") {
       if (this.S.players.length < 2) return;
       this.newGame();
@@ -265,12 +276,12 @@ export class HostEngine {
     this.emit({ t: "aborted", reason });
     this.S.phase = "lobby";
     this.deadline = null;
-    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.S.mg = null; this.S.bd = null; this.S.pb = null; this.pbAns = {}; this.pbRej = {}; this.bdTraps = {}; this.mgSub = {}; this.mgAns = {}; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
+    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.S.mg = null; this.S.bd = null; this.S.pb = null; this.S.cc = null; this.ccReset(); this.pbAns = {}; this.pbRej = {}; this.bdTraps = {}; this.mgSub = {}; this.mgAns = {}; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
     this.broadcast();
   }
   // Fin de partie (Time's Up, Qui est-ce ? ou Blind test) : le créateur ramène tout le monde au lobby, équipes conservées.
   backToLobby(by) {
-    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final", "mg_final", "bd_final", "pb_final"].includes(this.S.phase))) return;
+    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final", "mg_final", "bd_final", "pb_final", "cc_final"].includes(this.S.phase))) return;
     this.forceLobby();
   }
   // Retour immédiat au lobby, quelle que soit la phase (fin de partie ou vote des joueurs).
@@ -281,7 +292,8 @@ export class HostEngine {
     this.btEnding = false;
     this.tlStamp = (this.tlStamp || 0) + 1; this.tlCard = null; this.tlQueue = []; this.tlNextP = null;
     this.hands = {}; this.dealt = {}; this.discards = {}; this.gameDeck = []; this.votes = {};
-    Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, tl: null, mg: null, bd: null, pb: null, quit: null, pstats: {} });
+    Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, tl: null, mg: null, bd: null, pb: null, cc: null, quit: null, pstats: {} });
+    this.ccReset();
     this.pbAns = {}; this.pbRej = {};
     this.bdTraps = {};
     this.mgSub = {}; this.mgAns = {};
@@ -1187,6 +1199,171 @@ export class HostEngine {
     this.after(FAST ? 1500 + Math.random() * 3000 : 8000 + Math.random() * 20000, () => { if (this.S.pb && this.S.pb.round === stamp) this.pbAnswers(b.id, ans); });
   }
 
+  /* ------------------------------ Célébrité (golf) ------------------------------ */
+  // 10 célébrités (ou personnages fictifs) tirées au hasard. Chaque manche, tout le monde voit la même photo, très pixellisée ;
+  // chaque proposition fausse la rend plus nette (pour celui qui l'a faite). Trouvée à la n-ième proposition = n coups ; pas trouvée
+  // après CELEB_MAX_TRIES propositions (ou à la fin du temps) = CELEB_PENALTY coups. Le total le plus BAS gagne, comme au golf.
+  // La réponse reste chez le créateur (this.ccCard) jusqu'à la fin de la manche.
+  ccReset() {
+    this.ccGame = (this.ccGame || 0) + 1; // résultats asynchrones d'une partie précédente : ignorés
+    this.ccCard = null; this.ccNextHit = null; this.ccUsed = new Set(); this.ccEndT = null; this.ccShort = false; this.ccFails = 0;
+  }
+  startCeleb() {
+    this.clearTimers();
+    this.ccReset();
+    const total = this.S.settings.ccRounds;
+    this.ccPool = ALL_CARDS.filter(isCeleb);
+    this.S.cc = { round: 0, total, url: null, hint: null, showHint: this.S.settings.ccHint !== false, prog: {}, end: null, past: [], hist: {}, totals: {}, final: null, tries: CELEB_MAX_TRIES, penalty: CELEB_PENALTY };
+    for (const p of this.S.players) { this.S.cc.hist[p.id] = []; this.S.cc.totals[p.id] = 0; }
+    this.ccNextRound();
+  }
+  // Cherche (sur Wikipédia, depuis le téléphone du créateur) une célébrité de la liste qui a une photo.
+  async ccFind(game) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let free = this.ccPool.filter((c) => !this.ccUsed.has(c.id));
+      if (free.length < 8) { this.ccUsed = new Set(); free = this.ccPool; } // toute la liste a servi : on recommence
+      const cands = shuffle(free).slice(0, 8);
+      let hit = cands.find((c) => c.image && safeUrl(c.image));
+      hit = hit ? { card: hit, url: hit.image } : null;
+      if (!hit) {
+        try {
+          const r = await findFirstWithImage(cands);
+          if (r && r.error) return null;
+          hit = r;
+        } catch { return null; }
+      }
+      if (game !== this.ccGame || this.dead) return null;
+      for (const c of cands) this.ccUsed.add(c.id); // les 8 candidats ne reviendront pas de sitôt (même ceux sans photo)
+      if (hit && safeUrl(hit.url)) return hit;
+    }
+    return null;
+  }
+  ccNextRound() {
+    const cc = this.S.cc;
+    if (!cc || this.dead) return;
+    this.clearTimers();
+    if (cc.round >= cc.total) return this.ccFinish();
+    cc.round += 1;
+    cc.url = null; cc.hint = null; cc.end = null; cc.prog = {};
+    for (const p of this.S.players) cc.prog[p.id] = { tries: 0, got: null, res: null };
+    this.ccShort = false;
+    this.setPhase("cc_load", CC_LOAD_MS);
+    this.broadcast();
+    const game = this.ccGame, round = cc.round;
+    const ready = this.ccNextHit; this.ccNextHit = null;
+    const retry = () => {
+      if (game !== this.ccGame || this.S.phase !== "cc_load" || !this.S.cc || this.S.cc.round !== round) return;
+      this.ccFails += 1;
+      if (this.ccFails >= 3) return this.abort("Impossible de trouver des photos (Wikipédia injoignable ?).");
+      cc.round -= 1; // on refait la même manche
+      this.ccNextRound();
+    };
+    this.after(CC_LOAD_MS, retry);
+    (ready ? Promise.resolve(ready) : this.ccFind(game)).then((hit) => {
+      if (game !== this.ccGame || this.S.phase !== "cc_load" || !this.S.cc || this.S.cc.round !== round) return;
+      if (!hit) return retry();
+      this.ccFails = 0;
+      this.ccPlay(hit);
+    });
+  }
+  ccPlay(hit) {
+    const cc = this.S.cc;
+    this.clearTimers();
+    this.ccCard = hit.card;
+    cc.url = safeUrl(hit.url);
+    cc.hint = cc.showHint ? celebHint(hit.card) : null;
+    const ms = CC_PLAY_SECONDS * 1000;
+    this.setPhase("cc_play", ms);
+    this.broadcast();
+    this.ccEndT = this.after(ms, () => this.ccEndRound());
+    // pendant que les joueurs cherchent, on prépare déjà la photo de la manche suivante
+    if (cc.round < cc.total) { const game = this.ccGame; this.ccFind(game).then((h) => { if (game === this.ccGame && h) this.ccNextHit = h; }); }
+    for (const b of this.S.players.filter((p) => p.bot)) this.ccBot(b);
+  }
+  ccGuess(id, text) {
+    const cc = this.S.cc, pr = cc && cc.prog[id];
+    if (this.S.phase !== "cc_play" || !pr || pr.got != null || !this.ccCard || !this.player(id)) return;
+    text = String(text || "").trim().slice(0, 80);
+    pr.tries += 1;
+    const r = text ? celebCheck(text, this.ccCard.name) : null;
+    if (r === "full") { pr.got = pr.tries; pr.res = "ok"; }
+    else if (pr.tries >= CELEB_MAX_TRIES) { pr.got = CELEB_PENALTY; pr.res = "out"; }
+    else pr.res = r === "close" ? "close" : text ? "wrong" : "pass";
+    const st = this.ps(id);
+    st.ccTries = (st.ccTries || 0) + 1;
+    this.broadcast();
+    if (pr.got != null) this.ccAfterDone();
+  }
+  // Quelqu'un a fini : s'il y en a d'autres, ils n'ont plus que quelques secondes ; si tout le monde a fini, on passe au résultat.
+  ccAfterDone() {
+    const cc = this.S.cc;
+    if (this.ccCheckDone()) return;
+    if (!this.ccShort && cc.round && Object.values(cc.prog).some((x) => x.got != null)) {
+      this.ccShort = true;
+      const left = this.deadline ? this.deadline - Date.now() : Infinity;
+      const ms = CC_AFTER_FIRST_SECONDS * 1000;
+      if (left > ms) {
+        if (this.ccEndT) { clearTimeout(this.ccEndT); this.timers.delete(this.ccEndT); }
+        this.deadline = Date.now() + ms;
+        this.ccEndT = this.after(ms, () => this.ccEndRound());
+        this.broadcast();
+      }
+    }
+  }
+  ccCheckDone() {
+    const cc = this.S.cc;
+    if (this.S.phase !== "cc_play" || !cc) return false;
+    const rows = Object.values(cc.prog);
+    if (rows.length && rows.every((x) => x.got != null)) { this.after(1200, () => this.ccEndRound()); return true; }
+    if (!rows.length) { this.ccEndRound(); return true; }
+    return false;
+  }
+  ccEndRound() {
+    const cc = this.S.cc;
+    if (this.S.phase !== "cc_play" || !cc || !this.ccCard) return;
+    this.clearTimers();
+    for (const p of this.S.players) {
+      const pr = cc.prog[p.id] || (cc.prog[p.id] = { tries: 0, got: null, res: null });
+      if (pr.got == null) { pr.got = CELEB_PENALTY; pr.res = "time"; }
+      (cc.hist[p.id] ||= []).push(pr.got);
+      cc.totals[p.id] = (cc.totals[p.id] || 0) + pr.got;
+      const st = this.ps(p.id);
+      st.ccRounds = (st.ccRounds || 0) + 1;
+      if (pr.got < CELEB_PENALTY) { st.ccFound = (st.ccFound || 0) + 1; st.ccStrokes = (st.ccStrokes || 0) + pr.got; if (pr.got === 1) st.ccAces = (st.ccAces || 0) + 1; }
+    }
+    cc.end = { name: this.ccCard.name, url: cc.url };
+    cc.past.push({ name: this.ccCard.name, url: cc.url });
+    this.setPhase("cc_result", CC_RESULT_SECONDS * 1000);
+    this.broadcast();
+    this.after(CC_RESULT_SECONDS * 1000, () => this.ccNextRound());
+  }
+  ccNext(by) {
+    if (by !== this.S.hostId || this.S.phase !== "cc_result") return;
+    this.ccNextRound();
+  }
+  ccFinish() {
+    const cc = this.S.cc;
+    this.clearTimers();
+    cc.final = rankStrokes(this.S.players.map((p) => ({ id: p.id, total: cc.totals[p.id] || 0 })));
+    cc.url = null; cc.hint = null;
+    this.setPhase("cc_final", null);
+    this.broadcast();
+  }
+  // Bot de test : trouve (ou pas) la célébrité après un nombre d'essais tiré au hasard.
+  ccBot(b) {
+    const cc = this.S.cc, round = cc.round, game = this.ccGame;
+    const fail = Math.random() < 0.2, target = fail ? CELEB_MAX_TRIES + 1 : 1 + Math.floor(Math.random() * CELEB_MAX_TRIES);
+    let n = 0;
+    const step = () => {
+      if (game !== this.ccGame || this.S.phase !== "cc_play" || !this.S.cc || this.S.cc.round !== round || !this.player(b.id)) return;
+      n += 1;
+      this.ccGuess(b.id, n === target ? this.ccCard.name : "zzz");
+      const pr = this.S.cc.prog[b.id];
+      if (pr && pr.got == null) this.after((FAST ? 500 : 3000) + Math.random() * (FAST ? 1200 : 7000), step);
+    };
+    this.after((FAST ? 600 : 4000) + Math.random() * (FAST ? 1500 : 8000), step);
+  }
+
   /* ------------------------------ Mini-jeux (« Party ») ------------------------------ */
   // Chaque manche est soit un mini-jeu (tout le monde joue la même partie en même temps ; chacun pour soi, ou en équipes
   // 2 contre 2 / 1 contre 3 / 1 contre 2 : score d'équipe = moyenne), soit un test d'amitié (quelques questions « plutôt… ? »
@@ -1987,6 +2164,8 @@ export class HostEngine {
       case "mgscore": return this.mgSubmit(from, msg.step, msg.s);
       case "mgans": return this.mgAnswer(from, msg.step, msg.i);
       case "mgnext": return this.mgSkip(from);
+      case "ccguess": return this.ccGuess(from, msg.text);
+      case "ccnext": return this.ccNext(from);
       case "pbans": return this.pbAnswers(from, msg.a);
       case "pbstop": return this.pbStop(from);
       case "pbrej": return this.pbReject(from, msg.c, msg.p, msg.v);
@@ -2015,13 +2194,14 @@ function sanitize(m) {
   switch (m.t) {
     case "join": return { t: "join", name: cleanName(m.name), look: cleanLook(m.look) };
     case "look": return { t: "look", look: cleanLook(m.look) };
-    case "leave": case "btnext": case "tlnext": case "mgnext": case "pbstop": case "pbok": case "pbnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
+    case "leave": case "btnext": case "tlnext": case "mgnext": case "pbstop": case "ccnext": case "pbok": case "pbnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
     case "setTeam": return Number.isInteger(m.team) && m.team >= 0 && m.team < 8 ? { t: "setTeam", team: m.team } : null;
     case "vote": { const slots = Array.isArray(m.slots) && m.slots.length <= 5 ? m.slots.map((x) => str(x, 20)) : null; return slots ? { t: "vote", slots } : null; }
     case "place": return Number.isInteger(m.slot) && m.slot >= 0 && m.slot <= 60 ? { t: "place", slot: m.slot } : null;
     case "mgscore": return Number.isInteger(m.step) && m.step >= 0 && m.step < 1e6 && Number.isFinite(m.s) ? { t: "mgscore", step: m.step, s: Math.max(0, Math.min(1e6, Math.round(m.s))) } : null;
     case "mgans": return Number.isInteger(m.step) && m.step >= 0 && m.step < 1e6 && Number.isInteger(m.i) && m.i >= 0 && m.i < 6 ? { t: "mgans", step: m.step, i: m.i } : null;
     case "bdroll": return { t: "bdroll", item: Number.isInteger(m.item) && m.item >= -1 && m.item < 4 ? m.item : -1, target: str(m.target, 32) };
+    case "ccguess": return typeof m.text === "string" ? { t: "ccguess", text: m.text.slice(0, 80) } : null;
     case "pbans": { const a = strList(m.a, 8, 60); return a ? { t: "pbans", a } : null; }
     case "pbrej": return Number.isInteger(m.c) && m.c >= 0 && m.c < 8 && str(m.p, 32) !== null && typeof m.v === "boolean" ? { t: "pbrej", c: m.c, p: m.p, v: m.v } : null;
     case "qepick": return str(m.cat, 20) !== null && m.cat ? { t: "qepick", cat: m.cat } : null;

@@ -4,7 +4,7 @@ import {
   ACHIEVEMENTS, AVATARS, BORDERS, COLORS, isUnlocked, ruleText, rewardsOf, progressOf, pct, secs,
 } from "../data/profile.js";
 
-const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac" };
+const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité" };
 const RESULT = { win: "Victoire", loss: "Défaite", draw: "Égalité", solo: "Solo" };
 const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur" };
 
@@ -22,7 +22,7 @@ const avg = (sum, n) => (n > 0 ? sum / n : null);
 
 function Stats({ s, history }) {
   const rated = s.wins + s.losses + s.draws;
-  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest, F = s.byGame.timeline, M = s.byGame.party, Pl = s.byGame.board, PB = s.byGame.petitbac;
+  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest, F = s.byGame.timeline, M = s.byGame.party, Pl = s.byGame.board, PB = s.byGame.petitbac, CE = s.byGame.celeb;
   const rec = (g) => `${g.w} V · ${g.d} N · ${g.l} D`; // victoires · nuls · défaites
   return (
     <>
@@ -109,6 +109,17 @@ function Stats({ s, history }) {
           ["Manches jouées", s.pb.rounds],
           ["Réponses valides", s.pb.valid],
           ["Réponses uniques (10 pts)", `${s.pb.unique}${pct(s.pb.unique, s.pb.valid) == null ? "" : ` (${pct(s.pb.unique, s.pb.valid)} %)`}`],
+        ]} />
+      </section>
+
+      <section className="pgame">
+        <h3>Célébrité</h3>
+        <Rows rows={[
+          ["Parties jouées", CE.p],
+          ["Bilan (victoires · nuls · défaites)", rec(CE)],
+          ["Célébrités trouvées", `${s.cc.found}${pct(s.cc.found, s.cc.rounds) == null ? "" : ` (${pct(s.cc.found, s.cc.rounds)} %)`}`],
+          ["Moyenne de coups (quand trouvée)", s.cc.found ? (s.cc.strokes / s.cc.found).toFixed(1) : "—"],
+          ["Trouvées au 1er coup", s.cc.aces],
         ]} />
       </section>
 
