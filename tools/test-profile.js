@@ -96,5 +96,34 @@ const tlRec = P.recordGame(P.emptyProfile(), tlSum);
 ok(tlRec.profile.stats.byGame.timeline.p === 1 && tlRec.profile.stats.tl.turns === 6 && tlRec.profile.stats.tl.hits === 4 && tlRec.profile.xp > 0, "frise : partie enregistrée (stats + XP)");
 ok(P.recordGame(tlRec.profile, tlSum).gain === null, "frise : jamais comptée deux fois");
 ok(P.normalizeProfile({ v: 1, stats: { byGame: { timesup: { p: 2 } } } }).stats.byGame.timeline.p === 0, "ancien profil sans frise : champs ajoutés à zéro");
+// mini-jeux
+const mgRoom = { id: "r10", gameNo: 1, phase: "mg_final", players: [{ id: "a" }, { id: "b" }, { id: "c" }], pstats: { a: { mgRounds: 6, mgWins: 3, fqTotal: 4, fqRight: 3 } },
+  mg: { final: [{ id: "a", pts: 52, wins: 3, rank: 1 }, { id: "b", pts: 40, wins: 2, rank: 2 }, { id: "c", pts: 40, wins: 1, rank: 2 }] }, settings: {} };
+const mgSum = P.summarize(mgRoom, "a");
+ok(mgSum && mgSum.game === "party" && mgSum.result === "win" && mgSum.pts === 52 && mgSum.mg.wins === 3, "mini-jeux : résumé de partie (victoire, 52 pts, 3 manches gagnées)");
+ok(P.summarize(mgRoom, "b").result === "loss", "mini-jeux : les autres perdent");
+const mgRec = P.recordGame(P.emptyProfile(), mgSum);
+ok(mgRec.profile.stats.byGame.party.p === 1 && mgRec.profile.stats.mg.rounds === 6 && mgRec.profile.stats.mg.fqRight === 3 && mgRec.profile.xp > 0, "mini-jeux : partie enregistrée (stats + XP)");
+ok(P.recordGame(mgRec.profile, mgSum).gain === null, "mini-jeux : jamais comptée deux fois");
+ok(P.normalizeProfile({ v: 1, stats: { byGame: { timesup: { p: 2 } } } }).stats.mg.wins === 0, "ancien profil sans mini-jeux : champs ajoutés à zéro");
+// plateau
+const bdRoom = { id: "r11", gameNo: 1, phase: "bd_final", players: [{ id: "a" }, { id: "b" }], pstats: { a: { mgRounds: 5, mgWins: 2 } },
+  bd: { final: [{ id: "a", gems: 3, coins: 4, rank: 1 }, { id: "b", gems: 3, coins: 9, rank: 1 }] }, settings: {} };
+ok(P.summarize(bdRoom, "a").result === "loss" && P.summarize(bdRoom, "b").result === "win", "plateau : à égalité de gemmes, les pièces départagent");
+const bdSum = P.summarize(bdRoom, "b");
+ok(bdSum.game === "board" && bdSum.pts === 3, "plateau : les points affichés sont les gemmes");
+const bdRec = P.recordGame(P.emptyProfile(), P.summarize(bdRoom, "a"));
+ok(bdRec.profile.stats.byGame.board.p === 1 && bdRec.profile.stats.byGame.board.best === 3 && bdRec.profile.stats.mg.wins === 2, "plateau : partie enregistrée");
+// petit bac
+const pbRoom = { id: "r12", gameNo: 1, phase: "pb_final", players: [{ id: "a" }, { id: "b" }], pstats: { a: { pbRounds: 5, pbValid: 24, pbUnique: 26 } },
+  pb: { final: [{ id: "a", pts: 210, rank: 1 }, { id: "b", pts: 180, rank: 2 }] }, settings: {} };
+const pbSum = P.summarize(pbRoom, "a");
+ok(pbSum && pbSum.game === "petitbac" && pbSum.result === "win" && pbSum.pts === 210 && pbSum.pb.unique === 26, "petit bac : résumé de partie");
+ok(P.summarize(pbRoom, "b").result === "loss", "petit bac : l'autre perd");
+const pbRec = P.recordGame(P.emptyProfile(), pbSum);
+ok(pbRec.profile.stats.byGame.petitbac.p === 1 && pbRec.profile.stats.byGame.petitbac.best === 210 && pbRec.profile.stats.pb.rounds === 5 && pbRec.profile.stats.pb.unique === 26 && pbRec.profile.xp > 0, "petit bac : partie enregistrée (stats + XP)");
+ok(Boolean(pbRec.profile.ach.pbUnique25), "petit bac : succès « Esprit original » (25 réponses uniques)");
+ok(P.recordGame(pbRec.profile, pbSum).gain === null, "petit bac : jamais comptée deux fois");
+ok(P.normalizeProfile({ v: 1, stats: { byGame: { timesup: { p: 2 } } } }).stats.pb.unique === 0 && P.normalizeProfile({ v: 1 }).stats.byGame.petitbac.p === 0, "ancien profil sans petit bac : champs ajoutés à zéro");
 console.log(fail ? `\n${fail} échec(s)` : "\nTout est bon.");
 process.exit(fail ? 1 : 0);

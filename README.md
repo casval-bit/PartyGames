@@ -1,6 +1,6 @@
 # Party Hub (nom de travail de la plateforme)
 
-Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Quatre jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test** et **Frise** (frise musicale).
+Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Sept jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test**, **Frise** (frise musicale), **Petit bac**, **Plateau** (façon Mario Party) et **Mini-jeux** (2D et 3D).
 « Time's Up » est une marque déposée : le nom de la plateforme et des jeux est à changer avant le Play Store (`APP_NAME` dans `src/config.js`, `capacitor.config.json`, textes de `Splash.jsx` et `Menu.jsx`).
 
 ## Look & feel (ambiance Mario Party / Wii Party / Smash)
@@ -163,12 +163,12 @@ Elle reste dans les données (colonne facultative `difficulte` de `cards.csv`, `
 pour un futur mode de jeu. Tant que la colonne n'est pas remplie, `PROVISIONAL_TIERS = true` attribue un tier au hasard mais stable par carte.
 Polices : Fraunces (noms des cartes), Bungee (titres), Figtree (texte).
 
-## 7. Plateforme : quatre jeux
+## 7. Plateforme : sept jeux
 
-Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?** ou **Blind test**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
+Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Petit bac**, **Plateau** ou **Mini-jeux**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
 À la fin d'une partie, le créateur appuie sur « Retour au lobby » : tout le monde revient au lobby avec ses équipes.
 
-**Qui est-ce ?** : pas de vote, tout est aléatoire. **Chaque équipe a sa propre image** (et pas forcément le même thème que les autres équipes) ; les coéquipiers voient la même. La catégorie n'est révélée qu'avec la réponse. Nombre d'images au choix : 5, 8, 10, 15.
+**Qui est-ce ?** : pas de vote. Trois modes d'image dans le lobby : **Mixte** (une catégorie au hasard, puis une carte de cette catégorie : équilibré), **Tout au hasard** (une carte parmi toutes celles qui existent) et **Choisi par un adversaire** (avant chaque image, un joueur choisit la catégorie de l'image d'un autre ; à 2 équipes chacun choisit pour l'autre, à 3 ou 4 le cycle est retiré au hasard à chaque manche ; sans choix à temps, catégorie au hasard). **Chaque équipe a sa propre image** (et pas forcément le même thème que les autres équipes) ; les coéquipiers voient la même. La catégorie n'est révélée qu'avec la réponse. Nombre d'images au choix : 5, 8, 10, 15.
 Pour chaque image : 1) chacun touche son écran pour dire qu'il est prêt, 2) décompte rigolo 5-4-3-2-1 synchronisé sur tous les téléphones,
 3) l'image de ton équipe s'affiche en plein écran, 4) quand tu as trouvé tu **maintiens l'écran 3 secondes** : ça te classe (1er, 2e…) et la manche
 continue pour les autres, 5) la réponse de chaque équipe s'affiche avec le classement. Points : nombre de joueurs − rang + 1 ; ceux qui n'ont pas trouvé en 45 s ont 0.
@@ -179,8 +179,9 @@ Score final par joueur et par équipe (somme des membres). C'est du déclaratif 
 Choisis « Blind test » dans le lobby, puis importe une playlist :
 - **Deezer** (recommandé) : colle le lien d'une playlist **publique** (`deezer.com/…/playlist/123…`), jusqu'à 2 000 morceaux. Aucun compte ni clé : l'API Deezer est publique et chaque morceau a un extrait audio de 30 s. Les adresses d'extraits expirent : elles sont redemandées juste avant chaque morceau.
 - **Liste texte** : une ligne `Artiste - Titre` par morceau (600 max d'un coup ; si Deezer demande de ralentir, l'appli patiente et réessaie) ; chaque morceau est retrouvé sur Deezer. C'est aussi la solution pour **Spotify** (export en texte, par ex. avec Exportify) ou pour transférer ta playlist Spotify vers Deezer (Soundiiz, TuneMyMusic).
-- **Lien Spotify** : fonctionne seulement dans l'**appli Android** (le lien est lu via la page publique « embed », 100 morceaux max, puis chaque morceau est retrouvé sur Deezer). Spotify ne fournit plus d'extraits audio aux nouvelles applications, donc l'audio vient toujours de Deezer. Fonction expérimentale, non testée en réel.
-- **Plusieurs playlists** : une fois une playlist chargée, « + Ajouter une autre playlist » en fusionne une autre (doublons ignorés, 3 000 morceaux au plus). Pratique pour dépasser les 100 morceaux d'un lien Spotify : ajoute-en plusieurs ou colle une liste texte. Le nombre de morceaux joués par partie va de 5 à 100.
+- **Lien Spotify** : fonctionne seulement dans l'**appli Android** (le lien est lu via la page publique « embed », 100 morceaux max : limite de Spotify, puis chaque morceau est retrouvé sur Deezer). Spotify ne fournit plus d'extraits audio aux nouvelles applications, donc l'audio vient toujours de Deezer. Fonction expérimentale, non testée en réel.
+- **Liens de morceaux Spotify (sans limite de 100)** : sur ordinateur, ouvre la playlist dans Spotify, **Ctrl+A puis Ctrl+C**, colle dans la zone d'import. Chaque lien `open.spotify.com/track/…` est lu (page publique du morceau : titre + artiste, appli Android uniquement) puis retrouvé sur Deezer pour l'extrait audio.
+- **Plusieurs playlists** : une fois une playlist chargée, « + Ajouter une autre playlist » en fusionne une autre (doublons ignorés, 3 000 morceaux au plus). Pratique pour dépasser les 100 morceaux d'un lien Spotify : ajoute-en plusieurs, colle une liste texte (1 500 lignes) ou un export CSV d'exportify.net, ou transfère la playlist sur Deezer (tunemymusic.com, gratuit) et colle le lien Deezer (jusqu'à 2 000 morceaux). Le nombre de morceaux joués par partie va de 5 à 100.
 - **Playlist de démo** : 12 morceaux avec une mélodie synthétique, pour tester sans réseau.
 Dans l'appli Android, `CapacitorHttp` est activé (`capacitor.config.json`) : les requêtes passent par le réseau natif, sans blocage CORS. Sur le web, Deezer est interrogé en JSONP.
 
@@ -193,6 +194,45 @@ Réglages du créateur : nombre de morceaux (5 à 30), temps pour répondre (10 
 ### Quitter une partie en cours (vote)
 Dans tous les jeux, le petit bouton ⏏ en haut à gauche propose de retourner au lobby. Un vote s'ouvre chez tous les joueurs (30 s) : **la majorité des joueurs humains** (les bots ne votent pas) ramène tout le monde au lobby, avec les mêmes équipes et la playlist conservée ; sinon la partie continue. Une proposition par joueur toutes les 40 s au maximum. Seul, le bouton quitte tout de suite.
 - Limites : le son d'un navigateur ne démarre qu'après un geste (bouton « Touche pour activer le son » en secours) ; ne mets pas le son sur tous les téléphones si vous êtes dans la même pièce (écho), choisis « Celui du créateur ».
+
+### Petit bac (jeu classique)
+Chacun pour soi, 2 à 16 joueurs (avec un bot pour tester seul). Le créateur règle le **nombre de manches (3, 5 ou 8)**, le **temps pour écrire (60, 90 ou 120 s)** et les **catégories** (« Classiques » : prénom, animal, pays, métier, fruit ou légume, objet ; ou « Mélangées » : 6 tirées parmi 16, `src/data/petitbac.js`).
+- **Une manche** : une lettre tirée au hasard (19 lettres, sans K Q W X Y Z U ; jamais deux fois la même dans une partie), annoncée en grand ; chacun écrit **en secret** un mot par catégorie. Le champ devient vert quand la réponse commence par la bonne lettre, rouge sinon. On voit seulement la progression des autres (ex. 4/6), jamais leurs mots : ils restent sur le téléphone du créateur jusqu'à la fin.
+- **STOP** : celui qui a tout rempli (avec la bonne lettre) peut appuyer sur STOP ; les autres ont alors 8 secondes pour finir. Sinon, la manche s'arrête à la fin du chrono.
+- **Contestation** : toutes les réponses sont dévoilées, catégorie par catégorie. Touche ✋ pour contester la réponse d'un autre ; **si plus de la moitié des autres joueurs la conteste, elle est refusée** (0 point). Quand tout le monde a appuyé sur « Valider » (ou après 60 s), les points tombent.
+- **Points** : réponse valide **unique = 10**, **identique à celle d'un autre joueur = 5**, vide / mauvaise lettre / refusée = 0. Les réponses sont comparées sans accents, sans majuscules, sans article ni pluriel simple (« L'éléphant » = « elephants »). Le meilleur total gagne.
+- Tout est calculé par le créateur (réponses cachées, contestations, points). Réglages `PB_*` dans `src/config.js`. Code : `src/net/hostEngine.js` (section « Petit bac »), `src/screens/PetitBac.jsx`, `src/data/petitbac.js`. Tests : `tools/test-petitbac.js`.
+- Limite : c'est le groupe qui juge si un mot « existe » (pas de dictionnaire). Si un joueur n'est pas d'accord, il conteste.
+
+### Plateau (jeu de plateau façon Mario Party)
+Chacun pour soi (1 à 16 joueurs), plateau en boucle de **32 cases** (`src/data/board.js`). Le créateur choisit le nombre de **tours de table : 5, 8, 10 ou 12**. Chacun démarre avec **10 pièces**. Règles calquées sur Mario Party :
+- **Ordre de jeu** : au départ, chacun lance un dé ; le plus haut joue en premier.
+- **Un tour** : (facultatif) utiliser un objet, puis lancer le dé (1 à 10) ; le pion avance et la case agit. Au bout de 30 s sans jouer, le dé est lancé tout seul.
+- **Cases** : 🔵 bleue +3 pièces · 🔴 rouge −3 pièces · 🎁 objet · ❓ événement · 🛒 boutique · 🏴‍☠️ marché noir (objets vicieux) · 🎰 coup de chance (roulette) · 👹 Gredin (case du boss) · 🏁 départ. Pas de pièces en passant par le départ.
+- **Gemme** 💎 (l'étoile de Mario Party) : en t'arrêtant ou en passant dessus avec **20 pièces**, tu peux l'acheter ; elle change alors de case (au moins 8 cases plus loin).
+- **Dernière ligne droite** : les 5 derniers tours (3 ou 2 sur un plateau court) sont en « sprint » : les cases bleues et rouges comptent **double**.
+- **Mini-jeu après chaque tour de table** : la couleur de la dernière case bleue ou rouge de chacun décide du camp ; les modes sont ceux de Mario Party : **chacun pour soi**, **2 contre 2**, **1 contre 3**, **1 contre 2**. En chacun pour soi, seul le vainqueur gagne 10 pièces (égalité : tous les premiers) ; en équipes, **chaque membre de l'équipe gagnante gagne 10 pièces** (égalité 5, défaite 0).
+- **Objets (3 maximum)** : 19 objets. Boutique : 🎲 double dé, 🎲 triple dé, 👟 bottes de vitesse, 🛡️ bouclier, 🪤 piège, 🌀 téléporteur, 🪔 lampe magique, 🧲 aimant à gemmes, 🎒 sac à surprises. Marché noir (pour embêter les autres) : 🍄 champignon toxique, ↩️ dé à l'envers, 🦹 voleur, 🔄 échange, 🧰 coffre pilleur, 📞 téléphone du Gredin, 🦖 costume de monstre, 👻 fantôme voleur. Raretés (trouvées, jamais vendues) : ⌛ sablier, 🔁 troc. Prix, effets et cases sont expliqués dans le « ? » du plateau et dans `ITEMS` (`src/data/board.js`).
+- **Gemmes bonus en fin de partie** (comme les étoiles bonus de Mario Party, dès 2 joueurs) : 🎮 le plus de mini-jeux gagnés, 🪙 la plus grosse fortune à un moment de la partie, ❓ le plus de surprises. +1 gemme pour le meilleur de chaque catégorie (ex æquo : partagé).
+- **Classement** : le plus de gemmes, puis le plus de pièces, puis un lancer de dé pour départager les égalités parfaites.
+- Tout est calculé par le créateur du lobby (dés, pièces, pièges cachés). Réglages dans `src/config.js` (`BD_*`). Code : `src/net/hostEngine.js` (section « Plateau »), `src/screens/Board.jsx`. Tests : `tools/test-board.js` (~100 vérifications : dés truqués, tous les objets, cases, bonus).
+- **Pas encore codé** : cases Duel / Banque / Combat de Mario Party, objet « gant de duel », plusieurs plateaux, chemins qui se séparent.
+
+### Mini-jeux (façon Wii Party / Mario Party)
+Pas de lobby en équipes : chacun pour soi à l'écran des réglages (1 à 16 joueurs, un joueur seul peut s'entraîner). Le créateur choisit **5, 8, 10 ou 15 manches**. Une manche est :
+- un **mini-jeu** : présentation + décompte, puis **tout le monde joue la même partie en même temps sur son téléphone** (même graine aléatoire, donc même difficulté pour tous). Chaque mini-jeu donne un score (plus haut = mieux) ; classement de la manche : **10 points au premier**, puis décroissant (`rankPoints` dans `src/minigames/meta.js`), égalité = mêmes points, pas fini = 0 ;
+- un **test d'amitié** (une manche sur trois, dès 2 joueurs) : 3 questions « Plutôt… ? » (`src/data/friendQs.js`), chacune sur un joueur tiré au sort. Il répond pour lui, les autres devinent en même temps ; **3 points par bonne devinette**, et le joueur visé gagne 1 point par personne qui l'a bien deviné (5 max). La réponse reste secrète tant que tout le monde n'a pas répondu.
+- **Modes d'équipe** (à partir de 3 joueurs, tirés au sort à chaque mini-jeu, annoncés à l'écran de présentation) : **2 contre 2**, **1 contre 3**, **1 contre 2** (et 2 contre 3 à 5 joueurs…). Le score d'une équipe est **la moyenne** des scores de ses membres (pas de jeu coopératif en direct : chacun joue sur son téléphone). L'équipe gagnante : 10 points chacun, égalité 5, défaite 0. Un camp vidé par des départs bascule en chacun pour soi (`MG_SIDES`, `randomTeams`, `teamAvg` dans `src/minigames/meta.js`).
+Le meilleur total gagne (podium à la fin). Chaque mini-jeu n'apparaît qu'une fois avant que tous soient passés.
+**31 mini-jeux** dont **9 en 3D** (avec ton avatar en haricot façon Fall Guys) : 
+- **2D (22)** : Tape-tape, Réflexe, Taupes, Simon, Pile au centre, Compte-les !, Calcul mental, Couleur ou mot ?, Paires, Rattrape-les, Esquive, Chrono à l'aveugle, L'intrus, Dans l'ordre, Cibles, Envol, Saute-obstacles, Mémo-grille, Le plus grand, Flèches, Pierre-feuille-ciseaux, Rythme.
+- **3D (9)** : Course de haricots (couloir à obstacles), Plancher fragile (dalles qui s'effondrent), Sumo bonbon (arène qui rétrécit, on pousse les autres), Barre tournante (saut de corde géant), Chasse aux pièces (boulets rouges à éviter), Tunnel champêtre (on tourne autour d'un tube), Cueillette de champis (type « mousse pousse » : on cueille quand ça brille), Safari photo (type « safari » : on photographie le bon animal), Bowling bonbon.
+  Les noms et règles des jeux inspirés de Mario Party sont des **créations originales** (pas de copie).
+- **Technique 3D** : `three` (v0.169) chargé à la demande (la bibliothèque n'est téléchargée qu'au premier mini-jeu 3D) ; `src/minigames/three/kit3d.jsx` (scène bonbon, haricot animé, joystick, boutons) et `gamesA.jsx` / `gamesB.jsx`. Si l'appareil ne sait pas faire de 3D (WebGL), le jeu affiche un message et compte 0.
+- **Ajouter un mini-jeu** : (1) une ligne dans `MINIGAMES` (`src/minigames/meta.js` : identifiant, titre, règle, durée, score maximum, affichage du score), (2) un composant `({ seed, seconds, onFinish, color })` dans `src/minigames/games*.jsx` ou `three/games*.jsx` qui appelle `onFinish(score)` (entier ≥ 0, plus haut = mieux) et utilise `rng(seed)` pour tout ce qui est aléatoire, (3) une ligne dans `src/minigames/index.js`. Pour la 3D, partir de `Stage3D` + `makeBean` de `kit3d.jsx`.
+- **Salle d'essai** : ouvre l'appli avec `?minilab` à la fin de l'adresse (ex. `.../PartyGames/?minilab`) pour jouer seul à chaque mini-jeu, sans lobby.
+- **Honnêteté** : le score est calculé sur le téléphone du joueur ; le créateur le limite au maximum possible de chaque jeu, mais un joueur modifié pourrait tricher à l'intérieur de cette limite. Entre amis, ça suffit. Les jeux 3D n'ont pas encore été essayés sur un vrai téléphone (fluidité, difficulté à régler).
+- Réglages dans `src/config.js` (`MG_*`). Code : `src/net/hostEngine.js` (section « Mini-jeux »), `src/screens/MiniGames.jsx`. Tests : `node tools/run-engine-tests.mjs` (`tools/test-party.js`).
 
 ### Frise (frise musicale)
 Une équipe = une frise. À son tour, un joueur de l'équipe (ils tournent) écoute un extrait de 30 s dont il ne sait ni le titre ni l'année, et touche l'endroit de la frise où l'insérer (avant, entre ou après les cartes déjà posées, rangées de la plus ancienne à la plus récente).
@@ -253,14 +293,14 @@ Déroulement d'un tour : l'écran annonce l'équipe et le joueur actif → seul 
 Bouton **Mon profil** dans le menu (et ☺ dans le lobby). Le profil est lu et écrit **sur le téléphone** (localStorage, clé `ph-profile-v1`), même hors ligne.
 Sans compte, il y reste (il disparaît si on efface les données de l'appli) ; **connecté par e-mail** (voir 2 ter), il est aussi sauvegardé sur ton compte et te suit d'un téléphone à l'autre.
 
-- **Apparence** : 25 avatars (icônes), 10 bordures (certaines animées), 16 couleurs. Les autres joueurs voient ton apparence et ton niveau dans le lobby et pendant les parties.
+- **Apparence** : 26 avatars (icônes), 10 bordures (certaines animées), 16 couleurs. Les autres joueurs voient ton apparence et ton niveau dans le lobby et pendant les parties.
   Tu peux la changer dans le lobby : tout le monde voit le changement tout de suite.
 - **Niveaux** : de l'XP à chaque partie terminée (20 de base, +30 victoire, +10 égalité, + un bonus selon les cartes/images/morceaux trouvés). Niveau max : 50.
-- **Déblocages** : par niveau (ex. Flamme niv. 2, Couronne niv. 20) ou par **succès** (15 succès : séries de victoires, 20 morceaux trouvés, être le premier 10 fois, etc.).
+- **Déblocages** : par niveau (ex. Flamme niv. 2, Couronne niv. 20) ou par **succès** (18 succès : séries de victoires, 20 morceaux trouvés, être le premier 10 fois, etc.).
   Toucher un cadenas indique comment le débloquer.
 - **Stats** : parties, victoires / défaites / égalités, % de victoires, série en cours et meilleure série, et par jeu :
   Time's Up (cartes trouvées/passées, précision, tours joués, parties Bonus), Qui est-ce ? (images trouvées, premier à trouver, temps moyen, record),
-  Blind test (morceaux trouvés en entier, titre ou artiste seulement, **temps de réponse moyen**, réponse la plus rapide, meilleure série, parties sans faute), et les 10 dernières parties.
+  Blind test (morceaux trouvés en entier, titre ou artiste seulement, **temps de réponse moyen**, réponse la plus rapide, meilleure série, parties sans faute), Petit bac (réponses valides et uniques), et les 10 dernières parties.
 
 Comment ça marche : le créateur du lobby mesure les statistiques détaillées pendant la partie (`pstats` dans l'état, `gameNo` = numéro de partie) ;
 à l'écran de fin, chaque téléphone calcule son propre résultat (`summarize`) et l'ajoute à son profil (`recordGame`), une seule fois par partie.

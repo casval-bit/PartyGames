@@ -3,7 +3,7 @@ import { HourglassMark } from "../ui/parts.jsx";
 import { ONLINE } from "../config.js";
 import { Avatar } from "../ui/Avatar.jsx";
 
-export default function Menu({ name, setName, notice, clearNotice, busy, onCreate, onJoinList, look, level, onProfile, acc, onAccount }) {
+export default function Menu({ name, setName, notice, clearNotice, busy, onCreate, onJoinList, look, level, onProfile, acc, onAccount, onLab }) {
   const [roomName, setRoomName] = useState("");
   const clean = name.trim();
   return (
@@ -54,6 +54,7 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
           <strong>Rejoindre une partie</strong>
           <span>Voir les lobbys ouverts autour de toi</span>
         </button>
+        {onLab && <button className="btn small ghost" data-testid="menu-lab" onClick={onLab}>🎮 S'entraîner aux mini-jeux (seul)</button>}
       </div>
     </div>
   );

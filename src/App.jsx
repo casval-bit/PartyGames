@@ -21,11 +21,16 @@ import TimesUp from "./screens/TimesUp.jsx";
 import QuiEst from "./screens/QuiEst.jsx";
 import BlindTest from "./screens/BlindTest.jsx";
 import Timeline from "./screens/Timeline.jsx";
+import MiniGames from "./screens/MiniGames.jsx";
+import Board from "./screens/Board.jsx";
+import PetitBac from "./screens/PetitBac.jsx";
+import MiniLab from "./screens/MiniLab.jsx";
 import Gallery from "./screens/Gallery.jsx";
 import QuitVote from "./ui/QuitVote.jsx";
 
 export default function App() {
   if (typeof location !== "undefined" && location.search.includes("gallery")) return <Gallery />;
+  if (typeof location !== "undefined" && location.search.includes("minilab")) return <MiniLab />;
   const [screen, setScreen] = useState("splash"); // splash | menu | list
   const [name, setName] = useState(() => store("tu-name") || "");
   const id = useMemo(() => {
@@ -38,6 +43,7 @@ export default function App() {
   }, []);
   const [profileOpen, setProfileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [labOpen, setLabOpen] = useState(false);
   // Profil (avatar, niveau, stats) : enregistré sur le téléphone, chaque partie terminée y est comptée une fois.
   const prof = useProfile();
   // Compte (connexion par e-mail) : le profil et le pseudo suivent le joueur d'un téléphone à l'autre.
@@ -63,8 +69,10 @@ export default function App() {
   const leave = () => { net.leave(); setScreen("menu"); };
 
   let body;
-  const overlay = profileOpen || accountOpen;
-  if (accountOpen) {
+  const overlay = profileOpen || accountOpen || labOpen;
+  if (labOpen) {
+    body = <MiniLab onBack={() => setLabOpen(false)} />;
+  } else if (accountOpen) {
     body = <Account acc={acc} profile={prof.profile} onBack={() => setAccountOpen(false)} />;
   } else if (profileOpen) {
     body = <Profile name={name} profile={prof.profile} equip={equip} acc={acc} onAccount={() => setAccountOpen(true)} onBack={() => setProfileOpen(false)} />;
@@ -79,12 +87,18 @@ export default function App() {
       case "discard": body = <Discard {...common} cards={net.dealt} api={net} />; break;
       case "bonus": body = <Bonus key={room.bonus ? room.bonus.round : 0} {...common} cards={net.dealt} api={net} />; break;
       case "countdown": body = <Countdown {...common} />; break;
-      case "qe_tap": case "qe_count": case "qe_play": case "qe_result": case "qe_final":
+      case "qe_pick": case "qe_tap": case "qe_count": case "qe_play": case "qe_result": case "qe_final":
         body = <QuiEst {...common} api={net} onLeave={leave} />; break;
       case "bt_play": case "bt_reveal": case "bt_final":
         body = <BlindTest {...common} api={net} feedback={net.feedback} onLeave={leave} />; break;
       case "tl_play": case "tl_reveal": case "tl_final":
         body = <Timeline {...common} api={net} onLeave={leave} />; break;
+      case "pb_intro": case "pb_play": case "pb_vote": case "pb_result": case "pb_final":
+        body = <PetitBac {...common} api={net} onLeave={leave} />; break;
+      case "bd_turn": case "bd_final":
+        body = <Board {...common} api={net} onLeave={leave} />; break;
+      case "mg_intro": case "mg_play": case "mg_result": case "mg_ask": case "mg_qreveal": case "mg_final":
+        body = <MiniGames {...common} api={net} onLeave={leave} />; break;
       default: body = <TimesUp {...common} api={net} queue={net.queue} onLeave={leave} />;
     }
   } else if (screen === "splash") {
@@ -94,7 +108,7 @@ export default function App() {
   } else {
     body = (
       <Menu name={name} setName={setName} notice={net.notice} clearNotice={net.clearNotice} busy={net.busy}
-        onCreate={net.create} onJoinList={() => { net.clearNotice(); setScreen("list"); }} look={me.look} level={prof.level} onProfile={() => setProfileOpen(true)} acc={acc} onAccount={() => setAccountOpen(true)} />
+        onCreate={net.create} onJoinList={() => { net.clearNotice(); setScreen("list"); }} look={me.look} level={prof.level} onProfile={() => setProfileOpen(true)} acc={acc} onAccount={() => setAccountOpen(true)} onLab={() => setLabOpen(true)} />
     );
   }
 

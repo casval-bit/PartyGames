@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { BY_ID } from "../data/categories.js";
+import { BY_ID, CATEGORIES, SPECIALS } from "../data/categories.js";
 import { PlayerAvatar, Fuse, teamStyle, useNow } from "../ui/parts.jsx";
-import { QE_COUNT_MS, QE_HOLD_MS, QE_PLAY_SECONDS, QE_RESULT_MS, QE_TAP_SECONDS, TEAMS } from "../config.js";
+import { QE_COUNT_MS, QE_HOLD_MS, QE_PICK_SECONDS, QE_PLAY_SECONDS, QE_RESULT_MS, QE_TAP_SECONDS, TEAMS } from "../config.js";
 import { vibrate } from "../lib/util.js";
 import { safeUrl } from "../lib/safeUrl.js";
 
@@ -27,12 +27,53 @@ export default function QuiEst({ room, me, api, onLeave }) {
   useEffect(() => { if (mySlot && safeUrl(mySlot.url)) { const i = new Image(); i.referrerPolicy = "no-referrer"; i.src = safeUrl(mySlot.url); } }, [mySlot && mySlot.url]);
   if (!qe) return null;
   switch (room.phase) {
+    case "qe_pick": return <Pick key={qe.round} room={room} me={me} api={api} />;
     case "qe_tap": return <Tap room={room} me={me} api={api} />;
     case "qe_count": return <Count room={room} />;
     case "qe_play": return <Play key={qe.round} room={room} me={me} api={api} />;
     case "qe_result": return <Result room={room} me={me} />;
     default: return <Final room={room} me={me} api={api} onLeave={onLeave} />;
   }
+}
+
+/* ------------- 0. mode « choisi par un adversaire » : on choisit la catégorie d'un autre ------------- */
+const names = (room, team) => room.players.filter((p) => p.team === team).map((p) => p.name).join(" & ");
+function Pick({ room, me, api }) {
+  const qe = room.qe, pk = qe.pick || { pairs: [], done: [] };
+  const meP = room.players.find((p) => p.id === me.id);
+  const mine = pk.pairs.find((x) => x.picker === me.id);
+  const sent = pk.done.includes(me.id);
+  const aboutMe = pk.pairs.find((x) => meP && x.team === meP.team);
+  const who = (id) => (room.players.find((p) => p.id === id) || { name: "?" }).name;
+  const choose = (id) => { if (sent) return; vibrate(20); api.qePick(id); };
+  const tile = (c, wide) => (
+    <button key={c.id} className={"cat" + (wide ? " wide" : "")} style={{ background: c.color }} onClick={() => choose(c.id)} disabled={sent} aria-label={`Choisir ${c.label}`}>
+      <span className="lbl">{c.label}</span>
+    </button>
+  );
+  return (
+    <div className="screen">
+      <div className="row spread"><span className="eyebrow">Image {qe.round} sur {qe.total}</span></div>
+      {mine && !sent ? (
+        <>
+          <div>
+            <h2 style={{ fontSize: "1.3rem" }}>Choisis la catégorie de {names(room, mine.team)}</h2>
+            <p className="muted" style={{ fontWeight: 700 }}>Il verra une image de cette catégorie et devra la deviner.</p>
+          </div>
+          <div className="scroll"><div className="cats">{SPECIALS.filter((c) => c.id === "mixtes").map((c) => tile({ ...c, label: "Au hasard" }, true))}{CATEGORIES.map((c) => tile(c))}</div></div>
+        </>
+      ) : (
+        <div className="qe-mid" style={{ flex: 1 }}>
+          {mine && sent ? <div className="tapdone">Choix envoyé ✓</div>
+            : aboutMe ? <h2 className="taptxt">{who(aboutMe.picker)} choisit la catégorie de ton image…</h2>
+            : <h2 className="taptxt">Les catégories se choisissent…</h2>}
+          <div className="waitlist">{pk.pairs.map((x) => <span key={x.picker} className={pk.done.includes(x.picker) ? "ok" : ""}>{who(x.picker)} → {names(room, x.team)}{pk.done.includes(x.picker) ? " ✓" : ""}</span>)}</div>
+          <div className="wait" role="status">En attente<i /><i /><i /></div>
+        </div>
+      )}
+      <Fuse deadline={room.deadline} total={QE_PICK_SECONDS} />
+    </div>
+  );
 }
 
 /* ---------------------------- 1. touche l'écran ---------------------------- */
@@ -177,6 +218,7 @@ function Result({ room, me }) {
               <span className="ateam">Équipe {TEAMS[t].name}</span>
               {safeUrl(a.url) ? <img src={safeUrl(a.url)} alt={a.answer} draggable="false" referrerPolicy="no-referrer" /> : <div className="qe-ph small"><b>?</b></div>}
               <h2 className="ansname">{a.answer}</h2>
+              {a.by && <small className="muted">catégorie choisie par {(byId[a.by] || { name: "un joueur" }).name}</small>}
               {cat && <span className="catchip" style={{ background: cat.color.startsWith("hsl") ? cat.color : "var(--cream-2)" }}>{cat.label}</span>}
             </div>
           );

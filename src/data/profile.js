@@ -32,6 +32,9 @@ export const AVATARS = [
   { id: "trophy", name: "Trophée", rule: ach("wins5"), d: "M7 3h10v5a5 5 0 0 1-10 0zM5 4H2v2a4 4 0 0 0 4 4zM19 4h3v2a4 4 0 0 1-4 4zM11 13h2v4h3v3H8v-3h3z" },
   { id: "eq", name: "Égaliseur", rule: ach("btSongs20"), d: "M3 9h3v6H3zM8 5h3v14H8zM13 8h3v8h-3zM18 11h3v2h-3z" },
   { id: "eye", name: "Œil de lynx", rule: ach("qeFirst10"), d: "M12 5C6 5 2 12 2 12s4 7 10 7 10-7 10-7-4-7-10-7zM12 8a4 4 0 1 1-.01 0zM12 10.200a1.800 1.800 0 1 0 .01 0z" },
+  { id: "gamepad", name: "Manette", rule: ach("mgWins10"), d: "M6 8h12a4 4 0 0 1 4 4v4a3 3 0 0 1-5 2l-1.500-2h-7L7 18a3 3 0 0 1-5-2v-4a4 4 0 0 1 4-4zM7 11v1.500H5.500V14H7v1.500h1.500V14H10v-1.500H8.500V11zM16 11.500a1 1 0 1 0 .01 0zM18.500 13.500a1 1 0 1 0 .01 0z" },
+  { id: "bff", name: "Cœur d'ami", rule: ach("friend15"), d: "M12 21s-8-5.200-8-11a4.500 4.500 0 0 1 8-2.800A4.500 4.500 0 0 1 20 10c0 5.800-8 11-8 11z" },
+  { id: "pencil", name: "Crayon", rule: ach("pbUnique25"), d: "M3 17.250V21h3.750L17.810 9.940l-3.750-3.750zM20.710 7.040a1 1 0 0 0 0-1.410l-2.340-2.340a1 1 0 0 0-1.410 0l-1.830 1.830 3.750 3.750z" },
   { id: "hourglass", name: "Sablier", rule: ach("tuCards50"), d: "M6 2h12v2c0 4-4 5-4 8s4 4 4 8v2H6v-2c0-4 4-5 4-8S6 8 6 4z" },
   { id: "skull", name: "Crâne", rule: ach("streak3"), d: "M12 2a8 8 0 0 0-8 8c0 2.800 1.400 4.500 3 5.500V20h3v-2h4v2h3v-4.500c1.600-1 3-2.700 3-5.500a8 8 0 0 0-8-8zM9 9.200a1.800 1.800 0 1 0 .01 0zM15 9.200a1.800 1.800 0 1 0 .01 0z" },
 ];
@@ -125,6 +128,9 @@ export const ACHIEVEMENTS = [
   { id: "btStreak5", name: "Sur une lancée", desc: "Série de 5 morceaux trouvés d'affilée (blind test)", xp: 80, prog: (s) => [s.bt.bestStreak, 5] },
   { id: "btPerfect", name: "Sans faute", desc: "Trouver tous les morceaux d'une partie de 5+ (blind test)", xp: 100, prog: (s) => [s.bt.perfect, 1] },
   { id: "qeFirst10", name: "Œil de lynx", desc: "Être le premier à trouver 10 fois (Qui est-ce ?)", xp: 70, prog: (s) => [s.qe.firsts, 10] },
+  { id: "mgWins10", name: "Roi des mini-jeux", desc: "Gagner 10 manches de mini-jeux", xp: 70, prog: (s) => [s.mg.wins, 10] },
+  { id: "friend15", name: "Meilleur ami", desc: "Deviner 15 réponses de tes amis (test d'amitié)", xp: 60, prog: (s) => [s.mg.fqRight, 15] },
+  { id: "pbUnique25", name: "Esprit original", desc: "Donner 25 réponses uniques (petit bac)", xp: 60, prog: (s) => [s.pb.unique, 25] },
   { id: "tuCards50", name: "Maître des mimes", desc: "Faire deviner 50 cartes (Time's Up)", xp: 70, prog: (s) => [s.tu.cards, 50] },
   { id: "bonus3", name: "Joueur de bonus", desc: "Jouer 3 parties en mode Bonus", xp: 50, prog: (s) => [s.tu.bonusGames, 3] },
 ];
@@ -134,11 +140,13 @@ export const ACH_BY = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
 const zero = () => ({ p: 0, w: 0, l: 0, d: 0, pts: 0, best: 0 });
 export const emptyStats = () => ({
   played: 0, wins: 0, losses: 0, draws: 0, winStreak: 0, bestWinStreak: 0,
-  byGame: { timesup: zero(), quiest: zero(), blindtest: zero(), timeline: zero() },
+  byGame: { timesup: zero(), quiest: zero(), blindtest: zero(), timeline: zero(), party: zero(), board: zero(), petitbac: zero() },
   tu: { cards: 0, passes: 0, turns: 0, bonusGames: 0 },
   qe: { rounds: 0, found: 0, firsts: 0, msSum: 0, msN: 0, fastest: null },
   bt: { songs: 0, full: 0, half: 0, msSum: 0, msN: 0, fastest: null, bestStreak: 0, perfect: 0 },
   tl: { turns: 0, hits: 0 },
+  mg: { rounds: 0, wins: 0, fqTotal: 0, fqRight: 0 },
+  pb: { rounds: 0, valid: 0, unique: 0 },
 });
 export const emptyProfile = () => ({ v: 1, look: { ...DEFAULT_LOOK }, xp: 0, stats: emptyStats(), ach: {}, history: [], seen: [] });
 
@@ -151,7 +159,7 @@ export function normalizeProfile(raw) {
   const st = raw.stats || {};
   merge(base.stats, st);
   for (const g of Object.keys(base.stats.byGame)) merge(base.stats.byGame[g], (st.byGame || {})[g]);
-  for (const k of ["tu", "qe", "bt", "tl"]) merge(base.stats[k], st[k]);
+  for (const k of ["tu", "qe", "bt", "tl", "mg", "pb"]) merge(base.stats[k], st[k]);
   base.xp = Math.max(0, num(raw.xp));
   base.look = { ...DEFAULT_LOOK, ...cleanLook(raw.look) }; delete base.look.lv;
   base.ach = raw.ach && typeof raw.ach === "object" ? Object.fromEntries(Object.entries(raw.ach).filter(([k]) => ACH_BY[k])) : {};
@@ -228,6 +236,19 @@ export function summarize(room, meId) {
     const r = rankOf(teams.map((t) => ({ key: "t" + t, pts: (tl.line[t] || []).length })), "t" + me.team);
     return { key, game: "timeline", ...r, tl: { turns: ps.turns || 0, hits: ps.hits || 0 } };
   }
+  if (room.phase === "mg_final" && room.mg && room.mg.final) {
+    const r = rankOf(room.mg.final.map((x) => ({ key: x.id, pts: x.pts })), meId);
+    return { key, game: "party", ...r, mg: { rounds: ps.mgRounds || 0, wins: ps.mgWins || 0, fqTotal: ps.fqTotal || 0, fqRight: ps.fqRight || 0 } };
+  }
+  if (room.phase === "pb_final" && room.pb && room.pb.final) {
+    const r = rankOf(room.pb.final.map((x) => ({ key: x.id, pts: x.pts })), meId);
+    return { key, game: "petitbac", ...r, pb: { rounds: ps.pbRounds || 0, valid: ps.pbValid || 0, unique: ps.pbUnique || 0 } };
+  }
+  if (room.phase === "bd_final" && room.bd && room.bd.final) {
+    const F = room.bd.final, gems = Object.fromEntries(F.map((x) => [x.id, x.gems]));
+    const r = rankOf(F.map((x) => ({ key: x.id, pts: x.gems * 1000 + x.coins })), meId);
+    return { key, game: "board", ...r, pts: gems[meId] || 0, mg: { rounds: ps.mgRounds || 0, wins: ps.mgWins || 0, fqTotal: 0, fqRight: 0 }, bd: { gems: gems[meId] || 0 } };
+  }
   return null;
 }
 
@@ -239,6 +260,9 @@ export function xpFor(s) {
   if (s.game === "quiest" && s.qe) xp += Math.min(20, s.qe.found * 2);
   if (s.game === "timesup" && s.tu) xp += Math.min(30, s.tu.cards);
   if (s.game === "timeline" && s.tl) xp += Math.min(30, s.tl.hits * 3);
+  if (s.game === "party" && s.mg) xp += Math.min(30, s.mg.wins * 5 + s.mg.fqRight * 2);
+  if (s.game === "petitbac" && s.pb) xp += Math.min(30, s.pb.unique + Math.floor(s.pb.valid / 2));
+  if (s.game === "board" && s.bd) xp += Math.min(30, s.bd.gems * 6 + s.mg.wins * 3);
   return xp;
 }
 
@@ -263,6 +287,12 @@ export function recordGame(profile, sum) {
     if (q.fastest != null) S.qe.fastest = S.qe.fastest == null ? q.fastest : Math.min(S.qe.fastest, q.fastest);
   } else if (sum.game === "timeline") {
     S.tl.turns += sum.tl.turns; S.tl.hits += sum.tl.hits;
+  } else if (sum.game === "petitbac") {
+    S.pb.rounds += sum.pb.rounds; S.pb.valid += sum.pb.valid; S.pb.unique += sum.pb.unique;
+  } else if (sum.game === "board") {
+    S.mg.rounds += sum.mg.rounds; S.mg.wins += sum.mg.wins;
+  } else if (sum.game === "party") {
+    S.mg.rounds += sum.mg.rounds; S.mg.wins += sum.mg.wins; S.mg.fqTotal += sum.mg.fqTotal; S.mg.fqRight += sum.mg.fqRight;
   } else if (sum.game === "blindtest") {
     const b = sum.bt, T = S.bt;
     T.songs += b.songs; T.full += b.full; T.half += b.half; T.msSum += b.msSum; T.msN += b.msN; T.bestStreak = Math.max(T.bestStreak, b.bestStreak);

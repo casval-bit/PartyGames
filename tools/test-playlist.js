@@ -1,5 +1,5 @@
 // node tools/test-playlist.js : import de playlist avec un faux Deezer (aucun réseau)
-import { MAX_TEXT_LINES, resolveLines, parseInput, fetchDeezerPlaylist, importPlaylist, parseSpotifyEmbed, fetchSpotifyPlaylist, freshTrack } from "../src/data/playlist.js";
+import { MAX_TEXT_LINES, parseCsvTracks, spotifyTrackIds, parseSpotifyTrackPage, fetchSpotifyTracks, resolveLines, parseInput, fetchDeezerPlaylist, importPlaylist, parseSpotifyEmbed, fetchSpotifyPlaylist, freshTrack } from "../src/data/playlist.js";
 let bad = 0;
 const eq = (n, g, w) => { if (JSON.stringify(g) !== JSON.stringify(w)) { bad++; console.log("ECHEC", n, JSON.stringify(g), "attendu", JSON.stringify(w)); } };
 
@@ -39,8 +39,13 @@ eq("spotify -> deezer", [spl.name, spl.tracks.length, spl.source], ["Ma playlist
 try { await fetchSpotifyPlaylist("abc", () => {}, fake, async () => { throw new Error("cors"); }); bad++; } catch (e) { eq("spotify web", /APK/.test(e.message), true); }
 
 // plus de 100 morceaux : 300 lignes texte acceptées, 600 au maximum
-const many = Array.from({ length: 700 }, (_, i) => `Artiste${i} - Titre${i}`).join("\n");
-eq("texte 700 lignes -> plafond", parseInput(many).lines.length, MAX_TEXT_LINES);
+const many = Array.from({ length: MAX_TEXT_LINES + 100 }, (_, i) => `Artiste${i} - Titre${i}`).join("\n");
+eq("texte au-dessus du maximum -> plafond", parseInput(many).lines.length, MAX_TEXT_LINES);
+// export CSV d'Exportify : guillemets, virgules dans un titre, plusieurs artistes séparés par « ; »
+const csvIn = 'Track URI,Track Name,Artist URI(s),Artist Name(s),Album Name\nspotify:track:1,"Hello, World",x,Adele;Someone,A\nspotify:track:2,Linger,y,The Cranberries,B\n';
+eq("CSV Exportify", parseCsvTracks(csvIn), [{ title: "Hello, World", artist: "Adele" }, { title: "Linger", artist: "The Cranberries" }]);
+eq("CSV via parseInput", parseInput(csvIn).kind === "text" && parseInput(csvIn).lines.length, 2);
+eq("texte simple n'est pas un CSV", parseCsvTracks("Daft Punk - Get Lucky\nQueen - Bohemian Rhapsody"), null);
 let calls = 0;
 const searchOk = async (path) => (path.startsWith("/search") ? (calls++, { data: [tr(1000 + calls, "T" + calls, "A")] }) : {});
 const big = await resolveLines(parseInput(many.split("\n").slice(0, 300).join("\n")).lines, searchOk, () => {}, 0);
@@ -58,5 +63,22 @@ const bigFake = async (path) => {
   return {};
 };
 eq("350 morceaux Deezer", (await fetchDeezerPlaylist("8", bigFake)).tracks.length, 350);
+// liens de morceaux Spotify collés (Ctrl+A, Ctrl+C dans une playlist) : lus un par un, sans limite de 100
+const IDS = Array.from({ length: 250 }, (_, i) => "T" + String(i).padStart(21, "0"));
+const pasted = IDS.map((id) => "https://open.spotify.com/track/" + id).join("\n") + "\nhttps://open.spotify.com/intl-fr/track/" + IDS[0] + "?si=x";
+const pin = parseInput(pasted);
+eq("liens morceaux : 250 uniques", [pin.kind, pin.ids.length], ["spotifytracks", 250]);
+eq("lien unique d'un morceau", parseInput("https://open.spotify.com/track/" + IDS[3] + "?si=abc").ids, [IDS[3]]);
+eq("spotify:track:", spotifyTrackIds("spotify:track:" + IDS[5]), [IDS[5]]);
+eq("playlist prioritaire sur morceaux", parseInput("https://open.spotify.com/playlist/AbC123").kind, "spotify");
+const page = (id) => { const n = +id.slice(1); return `<head><meta property="og:title" content="Titre &amp; Co ${n}"/><meta property="og:description" content="Artiste${n}, Autre · Album · Song · 1994"/><meta name="music:musician_description" content="Artiste${n}"/></head>`; };
+eq("page morceau", parseSpotifyTrackPage(page(IDS[7])), { title: "Titre & Co 7", artist: "Artiste7" });
+eq("page sans infos", parseSpotifyTrackPage("<html></html>"), null);
+let seenUrls = 0;
+const fetched = await fetchSpotifyTracks(IDS, () => {}, async (u) => { seenUrls++; if (u.endsWith(IDS[10])) throw new Error("HTTP 429"); return page(u.split("/").pop()); });
+eq("250 pages lues, 1 échec, ordre conservé", [seenUrls, fetched.lines.length, fetched.failed, fetched.lines[0].title, fetched.lines[10].title], [250, 249, 1, "Titre & Co 0", "Titre & Co 11"]);
+try { await fetchSpotifyTracks(IDS.slice(0, 5), () => {}, async () => { throw new Error("Failed to fetch"); }); bad++; console.log("ECHEC web"); } catch (e) { eq("web : APK uniquement", /APK/.test(e.message), true); }
+const spt = await importPlaylist(IDS.slice(0, 3).map((i) => "https://open.spotify.com/track/" + i).join("\n"), () => {}, fake, 1, async (u) => page(u.split("/").pop()));
+eq("import morceaux Spotify -> Deezer", [spt.source, spt.total, spt.tracks.length], ["Spotify", 3, 1]); // le faux Deezer renvoie toujours le même morceau (dédoublonné)
 console.log(bad ? bad + " échec(s)" : "playlist : tout est OK");
 process.exit(bad ? 1 : 0);

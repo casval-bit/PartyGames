@@ -13,11 +13,17 @@ import { cleanLook, randomFreeLook } from "../data/profile.js";
 import {
   DEFAULT_PER_TEAM, VOTE_SECONDS, DISCARD_SECONDS, BOOSTER_SECONDS, REVEAL_MS, SHUFFLE_MS, COUNTDOWN_MS, HAND_SIZE,
   TU_ROUNDS, TU_READY_SECONDS, TU_TURNEND_MS, TU_ROUNDEND_SECONDS, TU_MIN_CARRY_MS, TU_ROUND_RULES, FAST,
-  QE_ROUNDS_OPTIONS, QE_DEFAULT_ROUNDS, QE_TAP_SECONDS, QE_COUNT_MS, QE_PLAY_SECONDS, QE_RESULT_MS,
+  QE_ROUNDS_OPTIONS, QE_DEFAULT_ROUNDS, QE_TAP_SECONDS, QE_PICK_SECONDS, QE_DEFAULTS, QE_COUNT_MS, QE_PLAY_SECONDS, QE_RESULT_MS,
   BONUS_SECONDS, BONUS_SLOTS, TIME_BONUS_MS, SCORE_BONUS_PTS,
   BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_BREAK_SECONDS, BT_MAX_SOLO, BT_PREVIEW_S, BT_DEFAULTS, QUIT_VOTE_MS,
   TL_GOAL_OPTIONS, TL_PLACE_SECONDS, TL_REVEAL_SECONDS, TL_DEFAULTS,
+  GAMES, BD_ROUNDS_OPTIONS, BD_START_COINS, BD_GEM_COST, BD_DIE, BD_COLOR_COINS, BD_MINI_WIN, BD_ORDER_MS, bdSprintTurns, BD_MAX_ITEMS, BD_PRE_SECONDS, BD_CHOICE_SECONDS, BD_STEP_MS, BD_END_MS, BD_DEFAULTS, MG_ROUNDS_OPTIONS, MG_INTRO_MS, MG_RESULT_MS, MG_ASK_SECONDS, MG_QREVEAL_MS, MG_FRIEND_QS, MG_FRIEND_EVERY, MG_FRIEND_PTS, MG_DEFAULTS,
+  PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS, PB_INTRO_MS, PB_GRACE_MS, PB_STOP_MS, PB_VOTE_SECONDS, PB_RESULT_SECONDS, PB_DEFAULTS, PB_PLAY_SECONDS,
 } from "../config.js";
+import { PB_LETTERS, PB_CATS, PB_CLASSIC, PB_CAT_COUNT, PB_UNIQUE, PB_SHARED, cleanAnswer, answerKey, startsWith, filled } from "../data/petitbac.js";
+import { MINIGAMES, MG_BY, playSeconds, rankPoints, MG_GRACE_S, randomTeams, modeOf, teamAvg } from "../minigames/meta.js";
+import { FRIEND_QS } from "../data/friendQs.js";
+import { BD_SIZE, BD_LAYOUT, ITEMS, SPACE_INFO, HAPPENING, SHOP_POOL, randomItem } from "../data/board.js";
 
 /** Pseudo : sans caractères de contrôle ni d'inversion de texte, 16 caractères au plus. */
 export const cleanName = (n) => String(n ?? "").replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff<>]/g, "").trim().slice(0, 16) || "Joueur";
@@ -56,7 +62,7 @@ export class HostEngine {
       id: roomId,
       name,
       hostId: host.id,
-      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...BT_DEFAULTS, ...TL_DEFAULTS },
+      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...QE_DEFAULTS, ...BT_DEFAULTS, ...TL_DEFAULTS, ...MG_DEFAULTS, ...BD_DEFAULTS, ...PB_DEFAULTS },
       players: [],
       phase: "lobby",
       votesCast: {},
@@ -69,6 +75,9 @@ export class HostEngine {
       playlist: null,
       bt: null,
       tl: null,     // frise musicale : voir « Frise musicale » plus bas
+      mg: null,     // mini-jeux : voir « Mini-jeux » plus bas
+      bd: null,     // plateau : voir « Plateau » plus bas
+      pb: null,     // petit bac : voir « Petit bac » plus bas
       quit: null,   // vote « retour au lobby » en cours : { by, yes: [ids], no: [ids], until, closed? }
       pstats: {},   // statistiques détaillées de la partie en cours, par joueur (pour les profils)
       gameNo: 0,    // numéro de la partie dans ce lobby (sert à ne compter chaque partie qu'une fois)
@@ -82,8 +91,8 @@ export class HostEngine {
   get S() { return this.state; }
   get rules() { return rulesFor(this.S.settings); }
   get variant() { return this.S.settings.game === "timesup" && this.S.settings.variant === "bonus" ? "bonus" : "classic"; }
-  get capacity() { const s = this.S.settings; return s.game === "blindtest" && !s.btTeams ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
-  get minPlayers() { const g = this.S.settings.game; return g === "blindtest" || g === "timeline" ? 1 : 2; }
+  get capacity() { const s = this.S.settings; return (s.game === "blindtest" && !s.btTeams) || s.game === "party" || s.game === "board" || s.game === "petitbac" ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
+  get minPlayers() { const g = this.S.settings.game; return g === "blindtest" || g === "timeline" || g === "party" || g === "board" ? 1 : 2; }
   after(ms, fn) {
     const t = setTimeout(() => { this.timers.delete(t); fn(); }, ms);
     this.timers.add(t);
@@ -148,6 +157,10 @@ export class HostEngine {
     if (this.S.phase !== "lobby" && this.S.players.length < this.minPlayers) return this.abort("Il n'y a plus assez de joueurs.");
     if (this.S.phase === "bt_play") this.btCheckDone();
     if (this.S.phase === "tl_play" && this.S.tl && this.S.tl.turn.pid === id) return this.tlResolve(null, "left");
+    if (this.S.phase === "bd_turn" && this.S.bd && this.S.bd.cur === id) return this.bdNextTurn();
+    if (this.S.phase === "pb_vote" && this.S.pb) { this.pbPurge(id); return this.pbCheckVote(); }
+    if (this.S.phase === "mg_play") return this.mgCheckPlay();
+    if (this.S.phase === "mg_ask" && this.S.mg && this.S.mg.q) return this.S.mg.q.subject === id ? this.mgAskEnd() : this.mgCheckAsk();
     if (["tu_ready", "tu_play"].includes(this.S.phase) && this.S.tu && this.S.tu.playerId === id) return this.endTurn("left");
     this.checkAdvance();
   }
@@ -173,7 +186,12 @@ export class HostEngine {
   setSettings(by, patch) {
     if (by !== this.S.hostId || this.S.phase !== "lobby") return;
     const s = this.S.settings;
-    if (patch.game === "timesup" || patch.game === "quiest" || patch.game === "blindtest" || patch.game === "timeline") s.game = patch.game;
+    if (GAMES.some((g) => g.id === patch.game)) s.game = patch.game;
+    if (MG_ROUNDS_OPTIONS.includes(patch.mgRounds)) s.mgRounds = patch.mgRounds;
+    if (PB_ROUNDS_OPTIONS.includes(patch.pbRounds)) s.pbRounds = patch.pbRounds;
+    if (PB_SECONDS_OPTIONS.includes(patch.pbSeconds)) s.pbSeconds = patch.pbSeconds;
+    if (patch.pbCats === "classic" || patch.pbCats === "mix") s.pbCats = patch.pbCats;
+    if (BD_ROUNDS_OPTIONS.includes(patch.bdRounds)) s.bdRounds = patch.bdRounds;
     if (TL_GOAL_OPTIONS.includes(patch.tlGoal)) s.tlGoal = patch.tlGoal;
     if (patch.tlAudio === "all" || patch.tlAudio === "host") s.tlAudio = patch.tlAudio;
     if (typeof patch.tlUncertain === "boolean") s.tlUncertain = patch.tlUncertain;
@@ -184,6 +202,7 @@ export class HostEngine {
     if (patch.btAudio === "all" || patch.btAudio === "host") s.btAudio = patch.btAudio;
     if (patch.variant === "classic" || patch.variant === "bonus") s.variant = patch.variant;
     if (QE_ROUNDS_OPTIONS.includes(patch.rounds)) s.rounds = patch.rounds;
+    if (patch.qeMode === "mixed" || patch.qeMode === "all" || patch.qeMode === "choose") s.qeMode = patch.qeMode;
     if (patch.roundSeconds) s.roundSeconds = patch.roundSeconds;
     if (patch.perTeam) {
       const n = Math.max(2, Math.min(6, patch.perTeam));
@@ -219,6 +238,21 @@ export class HostEngine {
       this.newGame();
       return this.startTimeline();
     }
+    if (st.game === "petitbac") {
+      if (this.S.players.length < 2) return;
+      this.newGame();
+      return this.startPetitBac();
+    }
+    if (st.game === "board") {
+      if (!this.S.players.length) return;
+      this.newGame();
+      return this.startBoard();
+    }
+    if (st.game === "party") {
+      if (!this.S.players.length) return;
+      this.newGame();
+      return this.startParty();
+    }
     if (this.S.players.length < 2 || teamsUsed < 2) return;
     this.newGame();
     if (this.S.settings.game === "quiest") return this.startQuiEst(); // Qui est-ce ? : pas de vote, tout est aléatoire
@@ -231,12 +265,12 @@ export class HostEngine {
     this.emit({ t: "aborted", reason });
     this.S.phase = "lobby";
     this.deadline = null;
-    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
+    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.S.mg = null; this.S.bd = null; this.S.pb = null; this.pbAns = {}; this.pbRej = {}; this.bdTraps = {}; this.mgSub = {}; this.mgAns = {}; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
     this.broadcast();
   }
   // Fin de partie (Time's Up, Qui est-ce ? ou Blind test) : le créateur ramène tout le monde au lobby, équipes conservées.
   backToLobby(by) {
-    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final"].includes(this.S.phase))) return;
+    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final", "mg_final", "bd_final", "pb_final"].includes(this.S.phase))) return;
     this.forceLobby();
   }
   // Retour immédiat au lobby, quelle que soit la phase (fin de partie ou vote des joueurs).
@@ -247,7 +281,10 @@ export class HostEngine {
     this.btEnding = false;
     this.tlStamp = (this.tlStamp || 0) + 1; this.tlCard = null; this.tlQueue = []; this.tlNextP = null;
     this.hands = {}; this.dealt = {}; this.discards = {}; this.gameDeck = []; this.votes = {};
-    Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, tl: null, quit: null, pstats: {} });
+    Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, tl: null, mg: null, bd: null, pb: null, quit: null, pstats: {} });
+    this.pbAns = {}; this.pbRej = {};
+    this.bdTraps = {};
+    this.mgSub = {}; this.mgAns = {};
     this.btQueue = []; this.btNextP = null;
     this.bonusMap = {}; this.bonusPicks = {};
     this.deck = []; this.allCards = [];
@@ -334,6 +371,7 @@ export class HostEngine {
     const ph = this.S.phase;
     if (ph === "tu_roundend" && this.S.players.length && this.allReady()) return this.afterRoundEnd();
     if (ph === "qe_play" && this.S.players.length && this.S.players.every((p) => this.S.qe.order.includes(p.id))) return this.endRound();
+    if (ph === "qe_pick") return this.checkPick();
     if (!this.S.players.length || !this.allReady()) return;
     if (ph === "qe_tap") return this.startCount();
     if (ph === "voting") this.endVoting();
@@ -980,13 +1018,708 @@ export class HostEngine {
     });
   }
 
+  /* ------------------------------ Petit bac ------------------------------ */
+  // Chaque manche : une lettre, six catégories. Tout le monde écrit en secret (les réponses restent chez le créateur jusqu'à la
+  // fin) ; celui qui a tout rempli peut crier STOP (les autres ont alors quelques secondes). Puis toutes les réponses sont
+  // dévoilées et chacun peut en contester : si plus de la moitié des AUTRES joueurs conteste une réponse, elle est refusée.
+  // Réponse valide commençant par la lettre : 10 points si elle est unique, 5 si un autre joueur a la même, 0 sinon.
+  startPetitBac() {
+    this.clearTimers();
+    const s = this.S.settings;
+    const cats = s.pbCats === "mix" ? shuffle(PB_CATS.map((c) => c.id)).slice(0, PB_CAT_COUNT) : [...PB_CLASSIC];
+    this.pbAns = {}; this.pbRej = {}; this.pbEndT = null; this.pbLetters = shuffle(PB_LETTERS);
+    this.S.pb = { round: 0, total: s.pbRounds, cats, letter: null, seconds: PB_PLAY_SECONDS(s.pbSeconds), stop: null, prog: {}, rows: null, rej: {}, ok: [],
+      scores: Object.fromEntries(this.S.players.map((p) => [p.id, 0])), last: null, final: null };
+    this.pbNextRound();
+  }
+  pbNextRound() {
+    const pb = this.S.pb;
+    if (!pb || this.dead) return;
+    this.clearTimers();
+    if (pb.round >= pb.total) return this.pbFinish();
+    pb.round += 1;
+    pb.letter = this.pbLetters.pop();
+    pb.stop = null; pb.prog = {}; pb.rows = null; pb.rej = {}; pb.ok = []; pb.last = null;
+    this.pbAns = {}; this.pbRej = {};
+    this.setPhase("pb_intro", PB_INTRO_MS);
+    this.broadcast();
+    this.after(PB_INTRO_MS, () => this.pbPlay());
+  }
+  pbPlay() {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_intro" || !pb) return;
+    const ms = pb.seconds * 1000;
+    this.setPhase("pb_play", ms);
+    this.broadcast();
+    this.pbEndT = this.after(ms + PB_GRACE_MS, () => this.pbEndPlay());
+    for (const b of this.S.players.filter((p) => p.bot)) this.pbBot(b);
+  }
+  // Un joueur envoie l'ensemble de ses réponses (la dernière version remplace la précédente).
+  pbAnswers(id, a) {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_play" || !pb || !this.player(id)) return;
+    const list = pb.cats.map((_, i) => cleanAnswer(Array.isArray(a) ? a[i] : ""));
+    this.pbAns[id] = list;
+    const n = list.filter((x) => filled(x) && startsWith(x, pb.letter)).length;
+    if (pb.prog[id] !== n) { pb.prog[id] = n; this.broadcast(); }
+  }
+  pbComplete(id) { const pb = this.S.pb, l = this.pbAns[id]; return Boolean(pb && l && l.length === pb.cats.length && l.every((x) => filled(x) && startsWith(x, pb.letter))); }
+  // STOP : seulement si toutes les catégories sont remplies avec la bonne lettre. Les autres ont PB_STOP_MS pour finir.
+  pbStop(by) {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_play" || !pb || pb.stop || !this.pbComplete(by)) return;
+    const p = this.player(by);
+    pb.stop = { by, name: p ? p.name : "?" };
+    const left = this.deadline ? this.deadline - Date.now() : PB_STOP_MS;
+    if (left > PB_STOP_MS) {
+      this.deadline = Date.now() + PB_STOP_MS;
+      if (this.pbEndT) { clearTimeout(this.pbEndT); this.timers.delete(this.pbEndT); }
+      this.pbEndT = this.after(PB_STOP_MS + PB_GRACE_MS, () => this.pbEndPlay());
+    }
+    this.broadcast();
+  }
+  pbEndPlay() {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_play" || !pb) return;
+    this.clearTimers();
+    this.pbEndT = null;
+    pb.rej = {}; pb.ok = []; this.pbRej = {};
+    this.pbRefresh();
+    this.setPhase("pb_vote", PB_VOTE_SECONDS * 1000);
+    this.broadcast();
+    this.after(PB_VOTE_SECONDS * 1000, () => this.pbEndVote());
+  }
+  // Une réponse est refusée si plus de la moitié des autres joueurs la conteste.
+  pbRejected(c, pid) {
+    const set = this.pbRej[c + ":" + pid];
+    if (!set) return false;
+    const votes = [...set].filter((v) => v !== pid && this.player(v)).length, others = this.S.players.length - 1;
+    return others > 0 && votes * 2 > others;
+  }
+  /** Statut et points de chaque réponse : { c, items: [{ id, a, st: "ok" | "dup" | "empty" | "letter" | "out", pts }] } par catégorie. */
+  pbCompute() {
+    const pb = this.S.pb;
+    return pb.cats.map((_, c) => {
+      const items = this.S.players.map((p) => {
+        const a = (this.pbAns[p.id] || [])[c] || "";
+        const st = !filled(a) ? "empty" : !startsWith(a, pb.letter) ? "letter" : this.pbRejected(c, p.id) ? "out" : "ok";
+        return { id: p.id, a, st, key: answerKey(a), pts: 0 };
+      });
+      const valid = items.filter((i) => i.st === "ok");
+      for (const it of valid) { const same = valid.filter((v) => v.key === it.key).length; it.st = same > 1 ? "dup" : "ok"; it.pts = same > 1 ? PB_SHARED : PB_UNIQUE; }
+      return { c, items: items.map(({ key, ...r }) => r) };
+    });
+  }
+  pbRefresh() {
+    const pb = this.S.pb;
+    pb.rows = this.pbCompute();
+    pb.rej = Object.fromEntries(Object.entries(this.pbRej).filter(([, v]) => v.size).map(([k, v]) => [k, [...v]]));
+  }
+  pbReject(by, c, pid, v) {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_vote" || !pb || !this.player(by) || !this.player(pid) || by === pid || !Number.isInteger(c) || c < 0 || c >= pb.cats.length) return;
+    const a = (this.pbAns[pid] || [])[c] || "";
+    if (!filled(a) || !startsWith(a, pb.letter)) return; // rien à contester : déjà refusée
+    const set = (this.pbRej[c + ":" + pid] ||= new Set());
+    if (v) set.add(by); else set.delete(by);
+    this.pbRefresh();
+    this.broadcast();
+  }
+  pbOk(by) {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_vote" || !pb || !this.player(by) || pb.ok.includes(by)) return;
+    pb.ok.push(by);
+    this.broadcast();
+    this.pbCheckVote();
+  }
+  pbCheckVote() {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_vote" || !pb) return;
+    if (this.S.players.filter((p) => !p.bot).every((p) => pb.ok.includes(p.id))) this.pbEndVote();
+  }
+  // Un joueur part pendant la contestation : ses réponses et ses contestations disparaissent.
+  pbPurge(id) {
+    const pb = this.S.pb;
+    delete this.pbAns[id];
+    for (const k of Object.keys(this.pbRej)) { if (k.endsWith(":" + id)) delete this.pbRej[k]; else this.pbRej[k].delete(id); }
+    pb.ok = pb.ok.filter((x) => x !== id);
+    this.pbRefresh();
+    this.broadcast();
+  }
+  pbEndVote() {
+    const pb = this.S.pb;
+    if (this.S.phase !== "pb_vote" || !pb) return;
+    this.clearTimers();
+    const rows = this.pbCompute(), gain = {};
+    for (const p of this.S.players) {
+      let g = 0, valid = 0, uniq = 0;
+      for (const r of rows) { const it = r.items.find((i) => i.id === p.id); if (it && it.pts) { g += it.pts; valid++; if (it.pts === PB_UNIQUE) uniq++; } }
+      gain[p.id] = g; pb.scores[p.id] = (pb.scores[p.id] || 0) + g;
+      const st = this.ps(p.id); st.pbRounds = (st.pbRounds || 0) + 1; st.pbValid = (st.pbValid || 0) + valid; st.pbUnique = (st.pbUnique || 0) + uniq;
+    }
+    pb.rows = rows;
+    pb.last = { letter: pb.letter, rows, gain, stop: pb.stop };
+    this.setPhase("pb_result", PB_RESULT_SECONDS * 1000);
+    this.broadcast();
+    this.after(PB_RESULT_SECONDS * 1000, () => this.pbNextRound());
+  }
+  pbNext(by) {
+    if (by !== this.S.hostId || this.S.phase !== "pb_result") return;
+    this.pbNextRound();
+  }
+  pbFinish() {
+    const pb = this.S.pb;
+    if (!pb) return;
+    this.clearTimers();
+    const rows = this.S.players.map((p) => ({ id: p.id, pts: pb.scores[p.id] || 0 })).sort((a, b) => b.pts - a.pts);
+    let rank = 0, prev = null;
+    rows.forEach((r, i) => { if (r.pts !== prev) { rank = i + 1; prev = r.pts; } r.rank = rank; });
+    pb.final = rows; pb.letter = null;
+    this.setPhase("pb_final", null);
+    this.broadcast();
+  }
+  // Bot de test : remplit une partie des catégories avec des mots inventés commençant par la bonne lettre.
+  pbBot(b) {
+    const pb = this.S.pb, L = pb.letter, syl = ["ra", "mi", "lo", "ta", "ne", "ba", "su", "do", "pi", "ka"];
+    const pickSyl = () => syl[Math.floor(Math.random() * syl.length)];
+    const ans = pb.cats.map(() => (Math.random() < 0.75 ? L + pickSyl() + pickSyl() : ""));
+    const stamp = pb.round;
+    this.after(FAST ? 1500 + Math.random() * 3000 : 8000 + Math.random() * 20000, () => { if (this.S.pb && this.S.pb.round === stamp) this.pbAnswers(b.id, ans); });
+  }
+
+  /* ------------------------------ Mini-jeux (« Party ») ------------------------------ */
+  // Chaque manche est soit un mini-jeu (tout le monde joue la même partie en même temps ; chacun pour soi, ou en équipes
+  // 2 contre 2 / 1 contre 3 / 1 contre 2 : score d'équipe = moyenne), soit un test d'amitié (quelques questions « plutôt… ? »
+  // sur un joueur ; les autres devinent sa réponse).
+  startParty() {
+    this.clearTimers();
+    const total = this.S.settings.mgRounds;
+    let bag = [];
+    const draw = () => { if (!bag.length) bag = shuffle(MINIGAMES.map((g) => g.id)); return bag.pop(); };
+    this.mgPlan = Array.from({ length: total }, (_, r) => (this.S.players.length >= 2 && total >= MG_FRIEND_EVERY && r % MG_FRIEND_EVERY === MG_FRIEND_EVERY - 1 ? { kind: "friend" } : { kind: "mini", game: draw() }));
+    this.mgSpare = draw;
+    this.mgSub = {}; this.mgAns = {};
+    this.S.mg = { round: 0, total, step: 0, kind: null, game: null, seed: 0, mode: "ffa", teams: null, done: [], scores: Object.fromEntries(this.S.players.map((p) => [p.id, 0])), wins: {}, last: null, q: null, fq: null, final: null };
+    this.mgNextRound();
+  }
+  mgNextRound() {
+    const mg = this.S.mg;
+    if (!mg || this.dead) return;
+    this.clearTimers();
+    if (mg.round >= mg.total) return this.mgFinish();
+    const plan = this.mgPlan[mg.round];
+    mg.round += 1;
+    if (plan.kind === "friend" && this.S.players.length >= 2) return this.mgStartFriend();
+    this.mgSetup(plan.game || this.mgSpare(), this.mgTeams());
+  }
+  /** Répartition en équipes d'un mini-jeu hors plateau (au hasard ; remplaçable dans les tests). */
+  mgTeams() { return randomTeams(this.S.players.map((p) => p.id)); }
+  /** Prépare un mini-jeu (graine commune, équipes éventuelles) et lance la présentation. */
+  mgSetup(game, teams) {
+    const mg = this.S.mg, ids = this.S.players.map((p) => p.id);
+    mg.kind = "mini"; mg.game = game; mg.seed = Math.floor(Math.random() * 2147483647);
+    mg.mode = modeOf(teams, ids); mg.teams = mg.mode === "ffa" ? null : Object.fromEntries(ids.map((id) => [id, teams[id]]));
+    mg.step += 1; mg.done = []; mg.last = null; mg.q = null; mg.fq = null;
+    this.mgSub = {};
+    this.setPhase("mg_intro", MG_INTRO_MS);
+    this.broadcast();
+    this.after(MG_INTRO_MS, () => this.mgPlay());
+  }
+  mgPlay() {
+    const mg = this.S.mg;
+    if (!mg || this.S.phase !== "mg_intro") return;
+    const g = MG_BY[mg.game], secs = playSeconds(g), ms = (secs + MG_GRACE_S) * 1000;
+    this.setPhase("mg_play", ms);
+    this.broadcast();
+    this.after(ms, () => this.mgPlayEnd());
+    for (const b of this.S.players.filter((p) => p.bot)) {
+      this.after(secs * 1000 * (0.4 + Math.random() * 0.5), () => this.mgSubmit(b.id, mg.step, g.max * (0.1 + Math.random() * 0.55)));
+    }
+    this.mgCheckPlay();
+  }
+  mgSubmit(id, step, s) {
+    const mg = this.S.mg;
+    if (this.S.phase !== "mg_play" || !mg || step !== mg.step || !this.player(id) || id in this.mgSub) return;
+    this.mgSub[id] = Math.max(0, Math.min(MG_BY[mg.game].max, Math.round(Number(s)) || 0));
+    mg.done.push(id);
+    this.broadcast();
+    this.mgCheckPlay();
+  }
+  mgCheckPlay() {
+    if (this.S.phase !== "mg_play" || !this.S.mg) return;
+    if (this.S.players.every((p) => p.id in this.mgSub)) this.mgPlayEnd();
+  }
+  mgPlayEnd() {
+    const mg = this.S.mg;
+    if (this.S.phase !== "mg_play" || !mg) return;
+    this.clearTimers();
+    const ids = this.S.players.map((p) => p.id), n = ids.length;
+    const mode = modeOf(mg.teams, ids); // un camp peut s'être vidé (joueurs partis) : on retombe sur « chacun pour soi »
+    let rows, teams = null, winners = new Set();
+    if (mode === "ffa") {
+      rows = ids.map((id) => ({ id, s: this.mgSub[id] ?? 0, dnf: !(id in this.mgSub) }));
+      rows.sort((a, b) => (a.dnf - b.dnf) || (b.s - a.s));
+      const played = rows.filter((r) => !r.dnf).length, top = rows.length ? rows[0].s : 0;
+      let rank = 0, prev = null;
+      rows.forEach((r, i) => {
+        if (r.dnf) { r.rank = played + 1; r.pts = 0; r.coins = 0; return; }
+        if (r.s !== prev) { rank = i + 1; prev = r.s; }
+        r.rank = rank; r.pts = rankPoints(rank, n);
+        r.coins = rank === 1 && top > 0 ? BD_MINI_WIN : 0; // Mario Party : seul le gagnant empoche les pièces
+        if (rank === 1 && n >= 2 && top > 0) winners.add(r.id);
+      });
+    } else {
+      const sides = [0, 1].map((t) => ids.filter((id) => mg.teams[id] === t));
+      const avg = sides.map((s) => teamAvg(s, this.mgSub));
+      const win = avg[0] === avg[1] ? -1 : avg[0] > avg[1] ? 0 : 1;
+      teams = sides.map((s, t) => ({ t, ids: s, avg: Math.round(avg[t] * 10) / 10, result: win === -1 ? "tie" : win === t ? "win" : "lose" }));
+      rows = ids.map((id) => {
+        const t = mg.teams[id], res = teams[t].result;
+        const pts = res === "win" ? BD_MINI_WIN : res === "tie" && avg[0] > 0 ? BD_MINI_WIN / 2 : 0;
+        if (res === "win") winners.add(id);
+        return { id, s: this.mgSub[id] ?? 0, dnf: !(id in this.mgSub), team: t, rank: res === "lose" ? 2 : 1, pts, coins: pts };
+      });
+      rows.sort((a, b) => (a.rank - b.rank) || (a.team - b.team) || (a.dnf - b.dnf) || (b.s - a.s));
+    }
+    for (const r of rows) {
+      mg.scores[r.id] = (mg.scores[r.id] || 0) + r.pts;
+      const st = this.ps(r.id);
+      st.mgRounds = (st.mgRounds || 0) + 1;
+      if (winners.has(r.id) && !r.dnf) { mg.wins[r.id] = (mg.wins[r.id] || 0) + 1; st.mgWins = (st.mgWins || 0) + 1; }
+    }
+    mg.last = { game: mg.game, mode, teams, rows: rows.map(({ id, s, rank, pts, coins, dnf, team }) => ({ id, s, rank, pts, coins, dnf, ...(team != null ? { team } : null) })) };
+    const bd = this.S.bd;
+    if (bd) { // plateau : les gagnants du mini-jeu empochent des pièces
+      for (const r of rows) if (r.id in bd.coins) { bd.coins[r.id] += r.coins; bd.stat.mini[r.id] = (bd.stat.mini[r.id] || 0) + r.coins; }
+      this.bdTouch();
+    }
+    this.setPhase("mg_result", MG_RESULT_MS);
+    this.broadcast();
+    this.after(MG_RESULT_MS, () => this.mgAfter());
+  }
+  // Test d'amitié : N questions, chacune sur un joueur différent (tirage à tour de rôle).
+  mgStartFriend() {
+    const mg = this.S.mg;
+    const ids = shuffle(this.S.players.map((p) => p.id));
+    const qs = shuffle(FRIEND_QS).slice(0, MG_FRIEND_QS);
+    this.mgFriend = { qs: qs.map(([text, opts], i) => ({ text, opts, subject: ids[i % ids.length] })), i: -1 };
+    mg.kind = "friend"; mg.game = null; mg.last = null; mg.mode = "ffa"; mg.teams = null;
+    mg.fq = { n: this.mgFriend.qs.length, i: 0 };
+    this.mgAskNext();
+  }
+  mgAskNext() {
+    const mg = this.S.mg, f = this.mgFriend;
+    if (!mg || !f || this.dead) return;
+    this.clearTimers();
+    f.i += 1;
+    if (f.i >= f.qs.length || this.S.players.length < 2) return this.mgNextRound();
+    const q = f.qs[f.i];
+    if (!this.player(q.subject)) q.subject = pick(this.S.players).id;
+    mg.step += 1; mg.done = []; mg.fq.i = f.i + 1;
+    mg.q = { text: q.text, opts: q.opts, subject: q.subject, reveal: null };
+    this.mgAns = {};
+    this.setPhase("mg_ask", MG_ASK_SECONDS * 1000);
+    this.broadcast();
+    this.after(MG_ASK_SECONDS * 1000, () => this.mgAskEnd());
+    for (const b of this.S.players.filter((p) => p.bot)) {
+      this.after(800 + Math.random() * (MG_ASK_SECONDS * 400), () => this.mgAnswer(b.id, mg.step, Math.floor(Math.random() * q.opts.length)));
+    }
+  }
+  mgAnswer(id, step, i) {
+    const mg = this.S.mg;
+    if (this.S.phase !== "mg_ask" || !mg || !mg.q || step !== mg.step || !this.player(id) || id in this.mgAns) return;
+    if (!Number.isInteger(i) || i < 0 || i >= mg.q.opts.length) return;
+    this.mgAns[id] = i;
+    mg.done.push(id);
+    this.broadcast();
+    this.mgCheckAsk();
+  }
+  mgCheckAsk() {
+    if (this.S.phase !== "mg_ask" || !this.S.mg) return;
+    if (this.S.players.every((p) => p.id in this.mgAns)) this.mgAskEnd();
+  }
+  mgAskEnd() {
+    const mg = this.S.mg;
+    if (this.S.phase !== "mg_ask" || !mg || !mg.q) return;
+    this.clearTimers();
+    const q = mg.q, sub = q.subject, ans = this.mgAns, voided = !(sub in ans) || !this.player(sub);
+    const right = [], gain = {};
+    if (!voided) {
+      for (const p of this.S.players) if (p.id !== sub && ans[p.id] === ans[sub]) { right.push(p.id); gain[p.id] = MG_FRIEND_PTS; }
+      if (right.length) gain[sub] = Math.min(5, right.length);
+      for (const p of this.S.players) {
+        if (p.id === sub) continue;
+        const st = this.ps(p.id);
+        st.fqTotal = (st.fqTotal || 0) + 1;
+        if (right.includes(p.id)) st.fqRight = (st.fqRight || 0) + 1;
+      }
+    }
+    for (const [id, v] of Object.entries(gain)) mg.scores[id] = (mg.scores[id] || 0) + v;
+    q.reveal = { answer: voided ? null : ans[sub], picks: voided ? {} : { ...ans }, right, gain, voided };
+    this.setPhase("mg_qreveal", MG_QREVEAL_MS);
+    this.broadcast();
+    this.after(MG_QREVEAL_MS, () => this.mgAskNext());
+  }
+  // Le créateur peut passer les pauses (classement, révélation).
+  mgSkip(by) {
+    if (by !== this.S.hostId) return;
+    if (this.S.phase === "mg_result") this.mgAfter();
+    else if (this.S.phase === "mg_qreveal") this.mgAskNext();
+  }
+  mgAfter() { if (this.S.bd) this.bdNextRound(); else this.mgNextRound(); }
+  mgFinish() {
+    const mg = this.S.mg;
+    if (!mg) return;
+    this.clearTimers();
+    const rows = this.S.players.map((p) => ({ id: p.id, pts: mg.scores[p.id] || 0, wins: mg.wins[p.id] || 0 })).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+    let rank = 0, prev = null;
+    rows.forEach((r, i) => { if (r.pts !== prev) { rank = i + 1; prev = r.pts; } r.rank = rank; });
+    mg.final = rows; mg.kind = null; mg.q = null;
+    this.setPhase("mg_final", null);
+    this.broadcast();
+  }
+
+  /* ------------------------------ Plateau ------------------------------ */
+  // Règles « à la Mario Party » : dé de 1 à 10, case bleue +3 / rouge −3, la gemme (étoile) coûte 20 pièces et change de case,
+  // la couleur de la dernière case bleue/rouge de chacun décide du mini-jeu qui suit chaque tour de table (tous pareils : chacun
+  // pour soi ; 2/2 ; 1/3), le gagnant du mini-jeu empoche 10 pièces, sprint final (pièces ×2), 3 gemmes bonus en fin de partie
+  // (mini-jeux, pièces, surprises), départage aux gemmes puis aux pièces puis au dé.
+  startBoard() {
+    this.clearTimers();
+    const total = this.S.settings.bdRounds, ids = this.S.players.map((p) => p.id);
+    let bag = [];
+    this.mgSpare = () => { if (!bag.length) bag = shuffle(MINIGAMES.map((g) => g.id)); return bag.pop(); };
+    this.mgSub = {}; this.mgAns = {}; this.bdTraps = {}; this.bdK = 0; this.bdRemain = 0; this.bdDir = 1; this.bdSuit = false;
+    this.S.mg = { round: 0, total, step: 0, kind: null, game: null, seed: 0, mode: "ffa", teams: null, done: [], scores: Object.fromEntries(ids.map((id) => [id, 0])), wins: {}, last: null, q: null, fq: null, final: null };
+    // ordre de jeu : chacun lance le dé, le plus haut joue en premier
+    const rolls = Object.fromEntries(ids.map((id) => [id, 1 + Math.floor(Math.random() * BD_DIE)]));
+    const order = shuffle(ids).sort((a, b) => rolls[b] - rolls[a]);
+    this.S.bd = {
+      round: 0, total, order, rolls, idx: -1, cur: null, sub: "order", spaces: BD_LAYOUT, gemAt: 0, n: 0, sprint: false, forceSprint: false,
+      pos: Object.fromEntries(ids.map((id) => [id, 0])), coins: Object.fromEntries(ids.map((id) => [id, BD_START_COINS])), gems: Object.fromEntries(ids.map((id) => [id, 0])),
+      items: Object.fromEntries(ids.map((id) => [id, []])), shield: {}, curse: {}, col: Object.fromEntries(ids.map((id) => [id, Math.random() < 0.5 ? 0 : 1])),
+      stat: { mini: {}, peak: Object.fromEntries(ids.map((id) => [id, BD_START_COINS])), hap: {} },
+      roll: null, shop: null, shopKind: null, msg: null, feed: [], final: null, bonus: null,
+    };
+    this.bdMoveGem();
+    this.setPhase("bd_turn", null);
+    this.broadcast();
+    this.after(BD_ORDER_MS, () => this.bdNextRound());
+  }
+  bdMoveGem() {
+    const bd = this.S.bd, far = [];
+    for (let i = 1; i < BD_SIZE; i++) if (i !== bd.gemAt && Math.min((i - bd.gemAt + BD_SIZE) % BD_SIZE, (bd.gemAt - i + BD_SIZE) % BD_SIZE) >= 8) far.push(i);
+    bd.gemAt = pick(far);
+  }
+  bdSay(text) {
+    const bd = this.S.bd, k = (this.bdK = (this.bdK || 0) + 1);
+    bd.msg = { text, k };
+    bd.feed = [...(bd.feed || []), { text, k }].slice(-4);
+  }
+  bdName(id) { const p = this.player(id); return p ? p.name : "?"; }
+  /** Met à jour le record de pièces possédées (gemme bonus « pièces »). */
+  bdTouch() {
+    const bd = this.S.bd;
+    if (!bd) return;
+    for (const id of Object.keys(bd.coins)) bd.stat.peak[id] = Math.max(bd.stat.peak[id] || 0, bd.coins[id]);
+  }
+  bdNextRound() {
+    const bd = this.S.bd;
+    if (!bd || this.dead) return;
+    bd.round += 1;
+    if (bd.round > bd.total) return this.bdFinish();
+    const sprint = bd.forceSprint || bd.round > bd.total - bdSprintTurns(bd.total);
+    if (sprint && !bd.sprint) this.bdSay("🔥 Sprint final ! Les cases bleues et rouges comptent double.");
+    bd.sprint = sprint;
+    bd.idx = -1;
+    this.bdNextTurn();
+  }
+  bdNextTurn() {
+    const bd = this.S.bd;
+    if (!bd || this.dead) return;
+    this.clearTimers();
+    bd.idx += 1;
+    while (bd.idx < bd.order.length && !this.player(bd.order[bd.idx])) bd.idx += 1;
+    if (bd.idx >= bd.order.length) return this.bdStartMini();
+    bd.cur = bd.order[bd.idx]; bd.sub = "pre"; bd.roll = null; bd.shop = null; bd.n += 1;
+    this.bdSuit = false;
+    this.setPhase("bd_turn", BD_PRE_SECONDS * 1000);
+    this.broadcast();
+    const who = bd.cur;
+    this.after(BD_PRE_SECONDS * 1000, () => this.bdRoll(who, -1, null));
+    if (this.player(who).bot) this.after(900 + Math.random() * 1200, () => this.bdBotTurn(who));
+  }
+  bdBotTurn(id) {
+    const bd = this.S.bd;
+    if (!bd || bd.cur !== id || bd.sub !== "pre") return;
+    let item = -1, target = null;
+    const inv = bd.items[id];
+    if (inv.length && Math.random() < 0.55) {
+      item = Math.floor(Math.random() * inv.length);
+      if (ITEMS[inv[item]].target) { const o = this.S.players.filter((p) => p.id !== id); if (o.length) target = pick(o).id; else item = -1; }
+    }
+    this.bdRoll(id, item, target);
+  }
+  /** Perd des pièces (le bouclier les protège une fois). */
+  bdLose(id, n, why) {
+    const bd = this.S.bd;
+    if (this.bdBlocked(id, why)) return 0;
+    const lost = Math.min(n, bd.coins[id]);
+    bd.coins[id] -= lost;
+    return lost;
+  }
+  /** Le bouclier de `id` bloque-t-il cette attaque ? (il est alors consommé) */
+  bdBlocked(id, why) {
+    const bd = this.S.bd;
+    if (!bd.shield[id]) return false;
+    delete bd.shield[id];
+    this.bdSay(`🛡️ Le bouclier de ${this.bdName(id)} bloque : ${why}`);
+    return true;
+  }
+  bdGive(id, forced) {
+    const bd = this.S.bd, it = forced || randomItem();
+    if (bd.items[id].length >= BD_MAX_ITEMS) { bd.coins[id] += 2; return null; }
+    bd.items[id].push(it);
+    return it;
+  }
+  /** Camp (0 bleu, 1 rouge) de chaque joueur d'après sa dernière case colorée (remplaçable dans les tests). */
+  bdColors() { const bd = this.S.bd; return Object.fromEntries(this.S.players.map((p) => [p.id, bd.col[p.id] === 1 ? 1 : 0])); }
+  bdOthers(id) { return this.S.players.filter((p) => p.id !== id); }
+  bdRoll(by, itemIdx, target) {
+    const bd = this.S.bd;
+    if (this.S.phase !== "bd_turn" || !bd || bd.sub !== "pre" || by !== bd.cur) return;
+    this.clearTimers();
+    const inv = bd.items[by], me = this.bdName(by), D = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+    const curse = bd.curse[by]; delete bd.curse[by];
+    let count = 1, lo = 1, hi = BD_DIE, used = null, lamp = false;
+    if (Number.isInteger(itemIdx) && itemIdx >= 0 && itemIdx < inv.length) {
+      const id = inv[itemIdx], meta = ITEMS[id], tp = this.player(target);
+      if (!meta.target || (tp && target !== by)) {
+        inv.splice(itemIdx, 1); used = id;
+        const who = tp ? tp.name : "";
+        if (id === "double") count = 2;
+        else if (id === "triple") count = 3;
+        else if (id === "speed") { lo = 8; hi = 10; }
+        else if (id === "shield") { bd.shield[by] = true; this.bdSay(`${me} lève son bouclier 🛡️`); }
+        else if (id === "trap") { this.bdTraps[bd.pos[by]] = by; this.bdSay(`${me} pose un piège 🪤`); }
+        else if (id === "warp") {
+          const o = this.bdOthers(by);
+          if (o.length) { const t = pick(o).id; [bd.pos[by], bd.pos[t]] = [bd.pos[t], bd.pos[by]]; this.bdSay(`🌀 ${me} se téléporte à la place de ${this.bdName(t)}`); }
+        }
+        else if (id === "swap") { [bd.pos[by], bd.pos[target]] = [bd.pos[target], bd.pos[by]]; this.bdSay(`🔄 ${me} échange sa place avec ${who}`); }
+        else if (id === "lamp") { bd.pos[by] = bd.gemAt; lamp = true; this.bdSay(`🪔 Le génie emmène ${me} jusqu'à la gemme !`); }
+        else if (id === "magnet") { bd.gemAt = (bd.pos[by] + D(3, 10)) % BD_SIZE || 1; this.bdSay(`🧲 ${me} attire la gemme vers lui`); }
+        else if (id === "bag") { let n = 0; while (bd.items[by].length < BD_MAX_ITEMS && n < 3) { bd.items[by].push(randomItem()); n++; } this.bdSay(`🎒 ${me} fouille son sac : ${n} objet${n > 1 ? "s" : ""}`); }
+        else if (id === "poison" || id === "reverse") {
+          if (!this.bdBlocked(target, "malédiction évitée")) { bd.curse[target] = id === "poison" ? "slow" : "reverse"; this.bdSay(`${ITEMS[id].emoji} ${me} jette un sort à ${who}`); }
+        }
+        else if (id === "thief") { const got = this.bdLose(target, 5, "vol raté"); if (got) { bd.coins[by] += got; this.bdSay(`🦹 ${me} vole ${got} pièce${got > 1 ? "s" : ""} à ${who}`); } }
+        else if (id === "plunder") {
+          const loot = bd.items[target];
+          if (loot.length && !this.bdBlocked(target, "pillage évité")) { const k = D(0, loot.length - 1), [it] = loot.splice(k, 1); bd.items[by].push(it); this.bdSay(`🧰 ${me} pille ${ITEMS[it].emoji} ${ITEMS[it].name} chez ${who}`); }
+          else if (!loot.length) this.bdSay(`🧰 ${who} n'a rien à piller`);
+        }
+        else if (id === "ghost") {
+          if (bd.gems[target] > 0 && !this.bdBlocked(target, "fantôme repoussé")) { bd.gems[target] -= 1; bd.gems[by] += 1; this.bdSay(`👻 ${me} vole une gemme à ${who} !`); }
+          else if (bd.gems[target] <= 0) this.bdSay(`👻 ${who} n'a aucune gemme`);
+        }
+        else if (id === "phone") { this.bdSay(`📞 ${me} appelle le Gredin chez ${who}…`); this.bdBossEffect(target); }
+        else if (id === "suit") { this.bdSuit = true; this.bdSay(`🦖 ${me} enfile le costume de monstre`); }
+        else if (id === "watch") { bd.forceSprint = true; bd.sprint = true; this.bdSay("⌛ Le sablier se retourne : sprint final ! Pièces ×2"); }
+        else if (id === "barter") { [bd.items[by], bd.items[target]] = [bd.items[target], bd.items[by]]; this.bdSay(`🔁 ${me} troque ses objets avec ${who}`); }
+      }
+    }
+    if (curse === "slow") { lo = 1; hi = 3; }
+    const dice = lamp ? [] : Array.from({ length: count }, () => D(lo, hi));
+    const steps = dice.reduce((a, b) => a + b, 0);
+    this.bdDir = curse === "reverse" && !lamp ? -1 : 1;
+    bd.roll = { dice, steps, bonus: 0, item: used, back: this.bdDir < 0, curse: curse || null, k: bd.n };
+    bd.sub = "moving";
+    if (curse) this.bdSay(curse === "slow" ? `🍄 ${me} est affaibli : dé de 1 à 3` : `↩️ ${me} doit reculer !`);
+    this.setPhase("bd_turn", null);
+    this.broadcast();
+    this.bdRemain = steps;
+    const wait = used === "swap" || used === "warp" || lamp ? BD_STEP_MS * 3 : BD_STEP_MS * 2;
+    if (lamp) this.after(wait, () => (bd.coins[by] >= BD_GEM_COST ? this.bdOfferGem() : this.bdMove()));
+    else this.after(wait, () => this.bdMove());
+  }
+  bdMove() {
+    const bd = this.S.bd;
+    if (!bd || bd.sub !== "moving") return;
+    if (this.bdRemain <= 0) return this.bdLand();
+    const id = bd.cur;
+    bd.pos[id] = (bd.pos[id] + this.bdDir + BD_SIZE) % BD_SIZE;
+    this.bdRemain -= 1;
+    if (this.bdSuit) {
+      for (const p of this.bdOthers(id)) if (bd.pos[p.id] === bd.pos[id]) {
+        const got = this.bdLose(p.id, 3, "costume repoussé");
+        if (got) { bd.coins[id] += got; this.bdSay(`🦖 ${this.bdName(id)} croque ${got} pièce${got > 1 ? "s" : ""} à ${p.name}`); }
+      }
+    }
+    if (bd.pos[id] === bd.gemAt && bd.coins[id] >= BD_GEM_COST) return this.bdOfferGem();
+    this.broadcast();
+    this.after(BD_STEP_MS, () => this.bdMove());
+  }
+  bdOfferGem() {
+    const bd = this.S.bd, id = bd.cur;
+    bd.sub = "gem";
+    this.setPhase("bd_turn", BD_CHOICE_SECONDS * 1000);
+    this.broadcast();
+    this.after(BD_CHOICE_SECONDS * 1000, () => this.bdGem(id, false));
+    if (this.player(id).bot) this.after(700, () => this.bdGem(id, true));
+  }
+  bdGem(by, v) {
+    const bd = this.S.bd;
+    if (this.S.phase !== "bd_turn" || !bd || bd.sub !== "gem" || by !== bd.cur) return;
+    this.clearTimers();
+    if (v === true && bd.coins[by] >= BD_GEM_COST) {
+      bd.coins[by] -= BD_GEM_COST; bd.gems[by] += 1;
+      this.bdSay(`💎 ${this.bdName(by)} achète une gemme !`);
+      this.bdMoveGem();
+    }
+    bd.sub = "moving";
+    this.setPhase("bd_turn", null);
+    this.broadcast();
+    this.after(BD_STEP_MS, () => this.bdMove());
+  }
+  bdLand() {
+    const bd = this.S.bd, id = bd.cur, pos = bd.pos[id], type = bd.spaces[pos], name = this.bdName(id), k = bd.sprint ? 2 : 1, c3 = BD_COLOR_COINS * k;
+    bd.sub = "land";
+    if (this.bdTraps[pos] && this.bdTraps[pos] !== id) {
+      const owner = this.bdTraps[pos]; delete this.bdTraps[pos];
+      const lost = this.bdLose(id, 6, "piège évité");
+      if (lost) this.bdSay(`🪤 ${name} tombe dans le piège de ${this.bdName(owner)} : −${lost}`);
+      return this.bdEnd();
+    }
+    if (HAPPENING.has(type)) {
+      bd.stat.hap[id] = (bd.stat.hap[id] || 0) + 1;
+      if (type === "event") bd.col[id] = Math.random() < 0.5 ? 0 : 1; // comme dans Mario Party : une case « ? » compte au hasard bleue ou rouge
+    }
+    if (type === "blue") { bd.col[id] = 0; bd.coins[id] += c3; this.bdSay(`🔵 ${name} gagne ${c3} pièces`); }
+    else if (type === "red") { bd.col[id] = 1; const l = this.bdLose(id, c3, "case rouge évitée"); if (l) this.bdSay(`🔴 ${name} perd ${l} pièce${l > 1 ? "s" : ""}`); }
+    else if (type === "item") { const it = this.bdGive(id); this.bdSay(it ? `🎁 ${name} trouve : ${ITEMS[it].emoji} ${ITEMS[it].name}` : `🎁 Poches pleines : ${name} reçoit 2 pièces`); }
+    else if (type === "event") return this.bdEvent();
+    else if (type === "chance") this.bdChance();
+    else if (type === "boss") { this.bdSay(`👹 Le Gredin surgit devant ${name} !`); this.bdBossEffect(id); }
+    else if (type === "shop" || type === "shop2") {
+      const kind = type === "shop" ? "a" : "b", offer = shuffle(SHOP_POOL[kind]).slice(0, 4), cheapest = Math.min(...offer.map((x) => ITEMS[x].price));
+      if (bd.coins[id] < cheapest || bd.items[id].length >= BD_MAX_ITEMS) { this.bdSay(`${SPACE_INFO[type].emoji} ${name} passe devant le magasin (${bd.items[id].length >= BD_MAX_ITEMS ? "poches pleines" : "pas assez de pièces"})`); return this.bdEnd(); }
+      bd.shop = offer; bd.shopKind = kind; bd.sub = "shop";
+      this.setPhase("bd_turn", BD_CHOICE_SECONDS * 1000);
+      this.broadcast();
+      this.after(BD_CHOICE_SECONDS * 1000, () => this.bdShop(id, -1));
+      if (this.player(id).bot) this.after(900, () => { const aff = offer.map((x, i) => i).filter((i) => ITEMS[offer[i]].price <= bd.coins[id]); this.bdShop(id, aff.length && Math.random() < 0.7 ? pick(aff) : -1); });
+      return;
+    }
+    this.bdEnd();
+  }
+  bdShop(by, i) {
+    const bd = this.S.bd;
+    if (this.S.phase !== "bd_turn" || !bd || bd.sub !== "shop" || by !== bd.cur) return;
+    this.clearTimers();
+    const it = Number.isInteger(i) && i >= 0 && i < bd.shop.length ? bd.shop[i] : null;
+    if (it && bd.coins[by] >= ITEMS[it].price && bd.items[by].length < BD_MAX_ITEMS) {
+      bd.coins[by] -= ITEMS[it].price; bd.items[by].push(it);
+      this.bdSay(`🛒 ${this.bdName(by)} achète ${ITEMS[it].emoji} ${ITEMS[it].name}`);
+    }
+    bd.shop = null; bd.shopKind = null;
+    this.bdEnd();
+  }
+  /** Roulette de la case « coup de chance ». */
+  bdChance() {
+    const bd = this.S.bd, id = bd.cur, name = this.bdName(id), others = this.bdOthers(id);
+    const k = Math.floor(Math.random() * 5);
+    if (!others.length && k < 2) { bd.coins[id] += 12; return this.bdSay(`🎰 ${name} gagne le jackpot : +12 pièces`); }
+    if (k === 0) { const o = pick(others); if (!this.bdBlocked(o.id, "échange refusé")) { [bd.coins[id], bd.coins[o.id]] = [bd.coins[o.id], bd.coins[id]]; this.bdSay(`🎰 ${name} échange toutes ses pièces avec ${o.name} !`); } }
+    else if (k === 1) { const rich = others.reduce((a, b) => (bd.coins[b.id] > bd.coins[a.id] ? b : a)); const got = this.bdLose(rich.id, 8, "vol évité"); if (got) { bd.coins[id] += got; this.bdSay(`🎰 ${name} reçoit ${got} pièces de ${rich.name}, le plus riche`); } }
+    else if (k === 2) { bd.coins[id] += 12; this.bdSay(`🎰 Jackpot : ${name} gagne 12 pièces !`); }
+    else if (k === 3) { const poor = others.length ? others.reduce((a, b) => (bd.coins[b.id] < bd.coins[a.id] ? b : a)) : null; const given = Math.min(5, bd.coins[id]); if (poor && given) { bd.coins[id] -= given; bd.coins[poor.id] += given; this.bdSay(`🎰 ${name} offre ${given} pièces à ${poor.name}, le plus pauvre`); } else this.bdSay("🎰 Rien de spécial…"); }
+    else { const it = this.bdGive(id); this.bdSay(it ? `🎰 Un objet pour ${name} : ${ITEMS[it].emoji} ${ITEMS[it].name}` : `🎰 Poches pleines : ${name} reçoit 2 pièces`); }
+  }
+  /** Événement du Gredin (case ou téléphone) sur le joueur `id`. */
+  bdBossEffect(id) {
+    const bd = this.S.bd, name = this.bdName(id), r = Math.random();
+    if (r < 0.4) { const l = this.bdLose(id, 10, "le Gredin repart bredouille"); if (l) this.bdSay(`👹 Le Gredin vole ${l} pièces à ${name} !`); }
+    else if (r < 0.6) {
+      const all = this.S.players.map((p) => p.id), tot = all.reduce((a, x) => a + bd.coins[x], 0), each = Math.floor(tot / all.length);
+      for (const x of all) bd.coins[x] = each;
+      this.bdSay(`👹 Le Gredin redistribue tout : ${each} pièces pour chacun !`);
+    }
+    else if (r < 0.8) { bd.coins[id] += 6; this.bdSay(`👹 Le Gredin est de bonne humeur : +6 pièces pour ${name}`); }
+    else if (bd.items[id].length) { if (!this.bdBlocked(id, "confiscation évitée")) { const n = bd.items[id].length; bd.items[id] = []; this.bdSay(`👹 Le Gredin confisque ${n} objet${n > 1 ? "s" : ""} à ${name} !`); } }
+    else { bd.coins[id] += 4; this.bdSay(`👹 Le Gredin n'a rien à confisquer à ${name} et lui laisse 4 pièces`); }
+  }
+  bdEvent() {
+    const bd = this.S.bd, id = bd.cur, name = this.bdName(id), all = this.S.players.map((p) => p.id);
+    const k = Math.floor(Math.random() * 7);
+    if (k === 0) { bd.coins[id] += 8; this.bdSay(`❓ ${name} trouve un trésor : +8 pièces`); }
+    else if (k === 1) { const l = this.bdLose(id, 5, "mauvaise surprise évitée"); if (l) this.bdSay(`❓ ${name} se fait dévaliser : −${l} pièces`); }
+    else if (k === 2) { for (const x of all) bd.coins[x] += 3; this.bdSay("❓ Pluie de pièces : tout le monde gagne 3 pièces !"); }
+    else if (k === 3) { const it = this.bdGive(id); this.bdSay(it ? `❓ Un objet tombe du ciel : ${ITEMS[it].emoji} ${ITEMS[it].name}` : "❓ Poches pleines : +2 pièces"); }
+    else if (k === 4) { bd.pos[id] = (bd.pos[id] + 3) % BD_SIZE; this.bdSay(`❓ Un coup de vent pousse ${name} de 3 cases !`); }
+    else if (k === 5) { bd.pos[id] = (bd.pos[id] + BD_SIZE - 2) % BD_SIZE; this.bdSay(`❓ ${name} trébuche : recule de 2 cases`); }
+    else {
+      const last = all.reduce((a, b) => (bd.coins[b] < bd.coins[a] ? b : a), all[0]);
+      bd.coins[last] += 8; this.bdSay(`❓ Coup de pouce : ${this.bdName(last)} (dernier) gagne 8 pièces`);
+    }
+    this.bdEnd();
+  }
+  bdEnd() {
+    const bd = this.S.bd;
+    bd.sub = "end";
+    this.bdTouch();
+    this.setPhase("bd_turn", null);
+    this.broadcast();
+    this.after(BD_END_MS, () => this.bdNextTurn());
+  }
+  bdStartMini() {
+    const bd = this.S.bd, mg = this.S.mg;
+    bd.cur = null; bd.sub = "mini";
+    mg.round = bd.round; mg.total = bd.total;
+    this.mgSetup(this.mgSpare(), this.bdColors()); // la couleur de chacun décide du mode
+  }
+  bdFinish() {
+    const bd = this.S.bd;
+    if (!bd) return;
+    this.clearTimers();
+    this.bdTouch();
+    const ids = this.S.players.map((p) => p.id);
+    // gemmes bonus (comme les étoiles bonus) : celui qui a le plus de… en reçoit une (égalité : chacun la sienne ; rien si personne n'a rien fait)
+    const best = (map) => { const v = Math.max(0, ...ids.map((id) => map[id] || 0)); return v > 0 ? { v, ids: ids.filter((id) => (map[id] || 0) === v) } : { v: 0, ids: [] }; };
+    const bonus = ids.length < 2 ? [] : [
+      { key: "mini", emoji: "🎮", name: "Gemme des mini-jeux", desc: "le plus de pièces gagnées en mini-jeux", ...best(bd.stat.mini) },
+      { key: "coins", emoji: "🪙", name: "Gemme de la fortune", desc: "le plus de pièces possédées à un moment", ...best(bd.stat.peak) },
+      { key: "hap", emoji: "❓", name: "Gemme des surprises", desc: "le plus de cases « ? », chance et Gredin", ...best(bd.stat.hap) },
+    ];
+    for (const b of bonus) for (const id of b.ids) bd.gems[id] += 1;
+    bd.bonus = bonus;
+    // classement : gemmes, puis pièces, puis dé (jamais d'égalité)
+    const rows = ids.map((id) => ({ id, gems: bd.gems[id] || 0, coins: bd.coins[id] || 0 })).sort((a, b) => b.gems - a.gems || b.coins - a.coins);
+    for (let i = 0; i < rows.length;) {
+      let j = i + 1;
+      while (j < rows.length && rows[j].gems === rows[i].gems && rows[j].coins === rows[i].coins) j++;
+      if (j - i > 1) {
+        const grp = rows.slice(i, j);
+        for (let t = 0; t < 30; t++) { grp.forEach((r) => (r.tb = 1 + Math.floor(Math.random() * BD_DIE))); if (new Set(grp.map((r) => r.tb)).size === grp.length) break; }
+        if (new Set(grp.map((r) => r.tb)).size < grp.length) grp.forEach((r, x) => (r.tb = 100 - x));
+        grp.sort((a, b) => b.tb - a.tb);
+        grp.forEach((r, x) => (rows[i + x] = r));
+      }
+      i = j;
+    }
+    rows.forEach((r, i) => { r.rank = i + 1; });
+    bd.final = rows; bd.sub = "final"; bd.cur = null;
+    this.setPhase("bd_final", null);
+    this.broadcast();
+  }
+
   /* ------------------------------ Qui est-ce ? ------------------------------ */
   // Une image s'affiche pour tout le monde en même temps ; en maintenant l'écran 3 s on déclare "j'ai trouvé".
   // Classement = ordre d'arrivée des déclarations ; points = nb de joueurs - rang + 1 ; les autres 0.
   startQuiEst() {
     this.clearTimers();
     this.qeUsed = new Set();
-    this.qeToken = 0;
+    this.qeToken = 0; this.qePicks = {};
     this.S.qe = { round: 0, total: this.S.settings.rounds, t: {}, order: [], gain: {}, scores: Object.fromEntries(this.S.players.map((p) => [p.id, 0])) };
     this.nextRound();
   }
@@ -996,8 +1729,14 @@ export class HostEngine {
     const qe = this.S.qe;
     if (qe.round >= qe.total) return this.finishQuiEst();
     qe.round += 1;
-    Object.assign(qe, { t: {}, order: [], gain: {} });
-    this.qeCards = {}; this.qeCats = {}; this.qeResolved = false;
+    Object.assign(qe, { t: {}, order: [], gain: {}, pick: null });
+    this.qeCards = {}; this.qeCats = {}; this.qeResolved = false; this.qePicks = {};
+    if (this.S.settings.qeMode === "choose" && this.qeTeams().length >= 2) return this.startPick();
+    this.beginTap();
+  }
+  beginTap() {
+    const qe = this.S.qe;
+    qe.pick = null;
     this.resetReady();
     this.setPhase("qe_tap", QE_TAP_SECONDS * 1000);
     this.broadcast();
@@ -1005,11 +1744,53 @@ export class HostEngine {
     this.S.players.filter((p) => p.bot).forEach((b) => this.after(1200 + Math.random() * 3500, () => this.setReady(b.id, true)));
     this.resolveCard(++this.qeToken);
   }
+  // Mode « choisi par un adversaire » : avant chaque image, une équipe choisit la catégorie de la suivante (cycle tiré au hasard à chaque
+  // manche : à 2 équipes A choisit pour B et B pour A). Dans l'équipe qui choisit, un joueur tiré au hasard s'en charge.
+  startPick() {
+    const teams = shuffle(this.qeTeams());
+    const pairs = teams.map((team, i) => {
+      const from = teams[(i + teams.length - 1) % teams.length];
+      return { picker: pick(this.S.players.filter((p) => p.team === from)).id, team };
+    });
+    this.S.qe.pick = { pairs, done: [] };
+    this.resetReady();
+    this.setPhase("qe_pick", QE_PICK_SECONDS * 1000);
+    this.broadcast();
+    this.after(QE_PICK_SECONDS * 1000, () => this.endPick());
+    const ids = [...CATEGORIES.map((c) => c.id), "mixtes"];
+    for (const pr of pairs) if (this.player(pr.picker).bot) this.after(800 + Math.random() * 3000, () => this.qePick(pr.picker, pick(ids)));
+  }
+  qePick(id, cat) {
+    const qe = this.S.qe, pk = qe && qe.pick;
+    if (this.S.phase !== "qe_pick" || !pk || !this.player(id) || pk.done.includes(id)) return;
+    const pair = pk.pairs.find((x) => x.picker === id);
+    if (!pair || !(cat === "mixtes" || CATEGORIES.some((c) => c.id === cat))) return;
+    this.qePicks[pair.team] = { cat, by: id };
+    pk.done.push(id);
+    this.broadcast();
+    this.checkPick();
+  }
+  checkPick() {
+    const pk = this.S.phase === "qe_pick" && this.S.qe.pick;
+    if (pk && pk.pairs.every((x) => pk.done.includes(x.picker) || !this.player(x.picker))) this.endPick();
+  }
+  endPick() {
+    if (this.S.phase !== "qe_pick") return;
+    this.clearTimers();
+    for (const { team } of this.S.qe.pick.pairs) if (!this.qePicks[team]) this.qePicks[team] = { cat: "random", by: null }; // pas de choix : au hasard
+    this.beginTap();
+  }
+  // Tirage de n cartes pour une équipe selon le mode (catégorie choisie par l'adversaire, tout au hasard, ou mixte équilibré).
+  qeDraw(team, n) {
+    const pk = this.qePicks && this.qePicks[team];
+    if (pk) return drawPack(pk.cat, this.qeUsed, n);
+    return drawPack("mixtes", this.qeUsed, n, this.S.settings.qeMode === "all" ? { flat: true } : {});
+  }
   // Pendant que les joueurs touchent l'écran, on cherche (sur Wikipédia) pour chaque équipe une carte tirée au hasard qui a une image.
   async resolveCard(token) {
     const teams = this.qeTeams();
     const per = teams.map((team) => {
-      const drawn = drawPack("mixtes", this.qeUsed, 8).cards;
+      const drawn = this.qeDraw(team, 8).cards;
       for (const d of drawn) this.qeCats[d.id] = d.cat;
       return { team, cands: drawn.map((d) => CARD_BY_ID[d.id]) };
     });
@@ -1032,7 +1813,7 @@ export class HostEngine {
     const qe = this.S.qe;
     if (!hits) { // pas le temps d'attendre la recherche : on prend le premier candidat de chaque équipe
       hits = this.qeTeams().map((team) => {
-        const drawn = drawPack("mixtes", this.qeUsed, 1).cards;
+        const drawn = this.qeDraw(team, 1).cards;
         for (const d of drawn) this.qeCats[d.id] = d.cat;
         return { team, cands: drawn.map((d) => CARD_BY_ID[d.id]), hit: null, why: "" };
       });
@@ -1047,6 +1828,7 @@ export class HostEngine {
         title: chosen.name, // le nom est toujours affiché avec l'image (sans le nom, c'était trop dur)
         why: okUrl ? "" : (why || (hit ? "none" : "")), // "network" = Wikipédia injoignable, "none" = pas d'image pour ces cartes
         answer: null, cat: null,
+        by: (this.qePicks && this.qePicks[team] && this.qePicks[team].by) || null, // qui a choisi la catégorie (mode adversaire)
       };
     }
     this.qeResolved = true;
@@ -1202,7 +1984,19 @@ export class HostEngine {
       case "btnext": return this.btNext(from);
       case "place": return this.tlPlace(from, msg.slot);
       case "tlnext": return this.tlSkip(from);
+      case "mgscore": return this.mgSubmit(from, msg.step, msg.s);
+      case "mgans": return this.mgAnswer(from, msg.step, msg.i);
+      case "mgnext": return this.mgSkip(from);
+      case "pbans": return this.pbAnswers(from, msg.a);
+      case "pbstop": return this.pbStop(from);
+      case "pbrej": return this.pbReject(from, msg.c, msg.p, msg.v);
+      case "pbok": return this.pbOk(from);
+      case "pbnext": return this.pbNext(from);
+      case "bdroll": return this.bdRoll(from, msg.item, msg.target);
+      case "bdgem": return this.bdGem(from, msg.v);
+      case "bdshop": return this.bdShop(from, msg.i);
       case "found": return this.found(from);
+      case "qepick": return this.qePick(from, msg.cat);
       case "begin": return this.begin(from);
       case "swipe": return this.swipe(from, msg.cardId, msg.ok, msg.seq);
       case "imgfail": return this.imageFailed(from);
@@ -1221,10 +2015,18 @@ function sanitize(m) {
   switch (m.t) {
     case "join": return { t: "join", name: cleanName(m.name), look: cleanLook(m.look) };
     case "look": return { t: "look", look: cleanLook(m.look) };
-    case "leave": case "btnext": case "tlnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
+    case "leave": case "btnext": case "tlnext": case "mgnext": case "pbstop": case "pbok": case "pbnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
     case "setTeam": return Number.isInteger(m.team) && m.team >= 0 && m.team < 8 ? { t: "setTeam", team: m.team } : null;
     case "vote": { const slots = Array.isArray(m.slots) && m.slots.length <= 5 ? m.slots.map((x) => str(x, 20)) : null; return slots ? { t: "vote", slots } : null; }
     case "place": return Number.isInteger(m.slot) && m.slot >= 0 && m.slot <= 60 ? { t: "place", slot: m.slot } : null;
+    case "mgscore": return Number.isInteger(m.step) && m.step >= 0 && m.step < 1e6 && Number.isFinite(m.s) ? { t: "mgscore", step: m.step, s: Math.max(0, Math.min(1e6, Math.round(m.s))) } : null;
+    case "mgans": return Number.isInteger(m.step) && m.step >= 0 && m.step < 1e6 && Number.isInteger(m.i) && m.i >= 0 && m.i < 6 ? { t: "mgans", step: m.step, i: m.i } : null;
+    case "bdroll": return { t: "bdroll", item: Number.isInteger(m.item) && m.item >= -1 && m.item < 4 ? m.item : -1, target: str(m.target, 32) };
+    case "pbans": { const a = strList(m.a, 8, 60); return a ? { t: "pbans", a } : null; }
+    case "pbrej": return Number.isInteger(m.c) && m.c >= 0 && m.c < 8 && str(m.p, 32) !== null && typeof m.v === "boolean" ? { t: "pbrej", c: m.c, p: m.p, v: m.v } : null;
+    case "qepick": return str(m.cat, 20) !== null && m.cat ? { t: "qepick", cat: m.cat } : null;
+    case "bdgem": return typeof m.v === "boolean" ? { t: "bdgem", v: m.v } : null;
+    case "bdshop": return Number.isInteger(m.i) && m.i >= -1 && m.i < 4 ? { t: "bdshop", i: m.i } : null;
     case "quit": return m.v === "start" || m.v === "yes" || m.v === "no" ? { t: "quit", v: m.v } : null;
     case "ready": return typeof m.v === "boolean" ? { t: "ready", v: m.v } : null;
     case "discard": { const ids = strList(m.ids, 4, 60); return ids ? { t: "discard", ids, confirm: m.confirm === true } : null; }

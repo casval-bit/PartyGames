@@ -4,7 +4,7 @@ import {
   ACHIEVEMENTS, AVATARS, BORDERS, COLORS, isUnlocked, ruleText, rewardsOf, progressOf, pct, secs,
 } from "../data/profile.js";
 
-const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise musicale" };
+const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac" };
 const RESULT = { win: "Victoire", loss: "Défaite", draw: "Égalité", solo: "Solo" };
 const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur" };
 
@@ -22,7 +22,7 @@ const avg = (sum, n) => (n > 0 ? sum / n : null);
 
 function Stats({ s, history }) {
   const rated = s.wins + s.losses + s.draws;
-  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest, F = s.byGame.timeline;
+  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest, F = s.byGame.timeline, M = s.byGame.party, Pl = s.byGame.board, PB = s.byGame.petitbac;
   const rec = (g) => `${g.w} V · ${g.d} N · ${g.l} D`; // victoires · nuls · défaites
   return (
     <>
@@ -78,13 +78,46 @@ function Stats({ s, history }) {
       </section>
 
       <section className="pgame">
-        <h3>Frise musicale</h3>
+        <h3>Frise</h3>
         <Rows rows={[
           ["Parties jouées", F.p],
           ["Bilan (victoires · nuls · défaites)", rec(F)],
           ["Plus longue frise", F.best],
           ["Tours joués", s.tl.turns],
           ["Cartes bien placées", `${s.tl.hits}${pct(s.tl.hits, s.tl.turns) == null ? "" : ` (${pct(s.tl.hits, s.tl.turns)} %)`}`],
+        ]} />
+      </section>
+
+      <section className="pgame">
+        <h3>Mini-jeux</h3>
+        <Rows rows={[
+          ["Parties jouées", M.p],
+          ["Bilan (victoires · nuls · défaites)", rec(M)],
+          ["Meilleur total", M.best],
+          ["Manches de mini-jeux jouées", s.mg.rounds],
+          ["Manches gagnées", s.mg.wins],
+          ["Amis bien devinés", `${s.mg.fqRight}${pct(s.mg.fqRight, s.mg.fqTotal) == null ? "" : ` (${pct(s.mg.fqRight, s.mg.fqTotal)} %)`}`],
+        ]} />
+      </section>
+
+      <section className="pgame">
+        <h3>Petit bac</h3>
+        <Rows rows={[
+          ["Parties jouées", PB.p],
+          ["Bilan (victoires · nuls · défaites)", rec(PB)],
+          ["Meilleur score", PB.best],
+          ["Manches jouées", s.pb.rounds],
+          ["Réponses valides", s.pb.valid],
+          ["Réponses uniques (10 pts)", `${s.pb.unique}${pct(s.pb.unique, s.pb.valid) == null ? "" : ` (${pct(s.pb.unique, s.pb.valid)} %)`}`],
+        ]} />
+      </section>
+
+      <section className="pgame">
+        <h3>Plateau</h3>
+        <Rows rows={[
+          ["Parties jouées", Pl.p],
+          ["Bilan (victoires · nuls · défaites)", rec(Pl)],
+          ["Plus de gemmes dans une partie", Pl.best],
         ]} />
       </section>
 

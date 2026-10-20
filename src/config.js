@@ -32,6 +32,9 @@ export const GAMES = [
   { id: "quiest", label: "Qui est-ce ?", note: "Course à l'image : le premier qui trouve gagne" },
   { id: "blindtest", label: "Blind test", note: "Devine le titre et l'artiste d'une playlist" },
   { id: "timeline", label: "Frise", note: "Replace les chansons dans l'ordre chronologique : une frise par équipe" },
+  { id: "petitbac", label: "Petit bac", note: "Une lettre, six catégories : sois le plus rapide et le plus original" },
+  { id: "board", label: "Plateau", note: "Jeu de plateau : dé, cases, objets, gemmes… et un mini-jeu à chaque tour" },
+  { id: "party", label: "Mini-jeux", note: "Mini-jeux sur chaque téléphone et tests d'amitié : le meilleur total gagne" },
 ];
 export const QE_ROUNDS_OPTIONS = [5, 8, 10, 15];
 export const QE_DEFAULT_ROUNDS = 8;
@@ -39,6 +42,9 @@ export const QE_TAP_SECONDS = FAST ? 8 : 25;   // si quelqu'un ne touche pas l'�
 export const QE_COUNT_MS = 5700;    // décompte rigolo 5-4-3-2-1 + "REGARDE !"
 export const QE_PLAY_SECONDS = FAST ? 12 : 45;  // temps max pour trouver
 export const QE_RESULT_MS = FAST ? 3000 : 7000;   // révélation de la réponse entre deux images
+export const QE_MODES = [["mixed", "Mixte"], ["all", "Tout au hasard"], ["choose", "Choisi par un adversaire"]];
+export const QE_DEFAULTS = { qeMode: "mixed" };
+export const QE_PICK_SECONDS = FAST ? 6 : 20;  // mode « choisi par un adversaire » : temps pour choisir la catégorie
 export const QE_HOLD_MS = 3000;     // durée d'appui pour dire "j'ai trouvé"
 
 // ---- manches de Time's Up ----
@@ -83,3 +89,42 @@ export const TL_PLACE_SECONDS = FAST ? 14 : 60;      // temps pour placer la car
 export const TL_REVEAL_SECONDS = FAST ? 3 : 8;       // révélation de l'année entre deux tours
 export const TL_PREVIEW_S = 30;                      // durée d'un extrait
 export const TL_DEFAULTS = { tlGoal: 10, tlAudio: "all", tlUncertain: false };
+
+// ---- Mini-jeux (« Party ») ----
+export const MG_ROUNDS_OPTIONS = FAST ? [2, 3, 5, 8, 10, 15] : [5, 8, 10, 15]; // manches au choix du créateur
+export const MG_INTRO_MS = FAST ? 1200 : 5500;        // présentation du mini-jeu + décompte
+export const MG_RESULT_MS = FAST ? 1500 : 7000;       // classement de la manche
+export const MG_ASK_SECONDS = FAST ? 6 : 15;          // temps pour répondre à une question d'amitié
+export const MG_QREVEAL_MS = FAST ? 1200 : 5500;      // révélation de la réponse
+export const MG_FRIEND_QS = FAST ? 2 : 3;             // questions par test d'amitié
+export const MG_FRIEND_EVERY = 3;                     // un test d'amitié toutes les 3 manches
+export const MG_FRIEND_PTS = 3;                       // points par bonne devinette
+export const MG_DEFAULTS = { mgRounds: 8 };
+
+// ---- Plateau ----
+export const BD_ROUNDS_OPTIONS = FAST ? [2, 3, 5, 8] : [5, 8, 10, 12]; // tours de table au choix du créateur
+export const BD_START_COINS = 10;
+export const BD_GEM_COST = 20;       // prix d'une gemme (la gemme change de case après chaque achat)
+export const BD_DIE = 10;            // dé de 1 à 10, comme dans Mario Party
+export const BD_COLOR_COINS = 3;     // case bleue +3, rouge −3 (doublé pendant le sprint final)
+export const BD_MINI_WIN = 10;       // pièces pour le(s) gagnant(s) d'un mini-jeu
+export const BD_MAX_ITEMS = 3;
+export const BD_PRE_SECONDS = FAST ? 8 : 30;      // temps pour jouer son tour (sinon le dé est lancé tout seul)
+export const BD_CHOICE_SECONDS = FAST ? 6 : 15;   // acheter une gemme / choisir à la boutique
+export const BD_STEP_MS = FAST ? 120 : 420;       // vitesse du pion
+export const BD_END_MS = FAST ? 500 : 1500;       // pause après l'effet d'une case
+export const BD_ORDER_MS = FAST ? 600 : 3500;     // dés qui décident de l'ordre de jeu au début
+export const BD_DEFAULTS = { bdRounds: 8 };
+/** Nombre de derniers tours en « sprint final » (pièces ×2). */
+export const bdSprintTurns = (total) => (total >= 10 ? 5 : total >= 8 ? 3 : 2);
+
+// ---- Petit bac ----
+export const PB_ROUNDS_OPTIONS = [3, 5, 8];
+export const PB_SECONDS_OPTIONS = [60, 90, 120];
+export const PB_INTRO_MS = FAST ? 1500 : 3500;      // « Lettre X ! » avant que l'écriture commence
+export const PB_GRACE_MS = 1500;                    // marge de réseau : dernières réponses acceptées après la fin du chrono
+export const PB_STOP_MS = FAST ? 3000 : 8000;       // temps laissé aux autres quand quelqu'un crie STOP
+export const PB_VOTE_SECONDS = FAST ? 15 : 60;      // contestation des réponses
+export const PB_RESULT_SECONDS = FAST ? 5 : 15;     // points de la manche
+export const PB_DEFAULTS = { pbRounds: 5, pbSeconds: 90, pbCats: "classic" };
+export const PB_PLAY_SECONDS = (s) => (FAST ? Math.min(s, 20) : s);

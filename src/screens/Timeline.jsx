@@ -96,7 +96,7 @@ function Play({ room, me, api, sound }) {
   if (!turn) {
     return (
       <div className="screen tlplay">
-        <div><div className="eyebrow">Frise musicale</div><h2 style={{ fontSize: "1.3rem" }}>Préparation des cartes…</h2></div>
+        <div><div className="eyebrow">Frise</div><h2 style={{ fontSize: "1.3rem" }}>Préparation des cartes…</h2></div>
         <div className="wait" role="status">On cherche l'année de sortie de chaque morceau<i /><i /><i /></div>
         <p className="muted btnote">Chaque morceau est vérifié sur MusicBrainz : ça prend quelques secondes.</p>
       </div>

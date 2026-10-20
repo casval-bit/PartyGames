@@ -18,5 +18,5 @@ export function store(key, val) {
   }
 }
 export function vibrate(p) {
-  try { navigator.vibrate && navigator.vibrate(p); } catch { /* ignore */ }
+  try { if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return; navigator.vibrate && navigator.vibrate(p); } catch { /* ignore */ }
 }

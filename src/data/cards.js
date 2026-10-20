@@ -63,6 +63,7 @@ export function drawPack(choice, used, n = CARDS_PER_VOTE, opts = {}) {
       take(pick(list), cat);
     }
   };
+  if (opts.flat) { fill(free(ALL_CARDS), (c) => pick(c.cats)); return { choice, resolved: "all", cards: out }; } // une carte parmi TOUTES, sans équilibrer les catégories
   if (resolved !== "mixtes") fill(free(byCat[resolved]), () => resolved);
   if (out.length < n) balanced();
   if (out.length < n && img) fill(ALL_CARDS, (c) => pick(c.cats)); // plus aucune image disponible : tant pis

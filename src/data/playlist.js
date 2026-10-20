@@ -7,9 +7,39 @@
 // - Démo : quelques morceaux avec une mélodie synthétique (aucun réseau), pour tester le jeu.
 
 export const MAX_TRACKS = 2000;   // morceaux lus dans une playlist Deezer (pages de 100)
-export const MAX_TEXT_LINES = 600; // lignes « Artiste - Titre » acceptées d'un coup
+export const MAX_TEXT_LINES = 1500; // lignes « Artiste - Titre » acceptées d'un coup
 export const MAX_TOTAL = 3000;     // total après avoir ajouté plusieurs playlists
 const DZ = "https://api.deezer.com";
+
+/** Identifiants de morceaux Spotify trouvés dans un texte collé (liens open.spotify.com/track/… ou spotify:track:…). */
+export function spotifyTrackIds(raw) {
+  const ids = [];
+  for (const m of String(raw).matchAll(/(?:open\.spotify\.com\/(?:intl-[a-z-]+\/)?track\/|spotify:track:)([A-Za-z0-9]{22})/g)) if (!ids.includes(m[1])) ids.push(m[1]);
+  return ids;
+}
+export const SPOTIFY_EMBED_MAX = 100; // la page « embed » de Spotify ne contient que les 100 premiers morceaux
+
+/** Export CSV d'Exportify (ou tout CSV avec colonnes « Track Name » / « Artist Name(s) ») -> lignes { artist, title }. */
+export function parseCsvTracks(s) {
+  const rows = [];
+  let row = [], cell = "", q = false;
+  const text = String(s).replace(/^\uFEFF/, "");
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); cell = ""; if (row.some(Boolean)) rows.push(row); row = []; }
+    else cell += c;
+  }
+  row.push(cell); if (row.some(Boolean)) rows.push(row);
+  if (rows.length < 2) return null;
+  const head = rows[0].map((h) => h.trim().toLowerCase());
+  const ti = head.findIndex((h) => /^(track name|titre|title|track)$/.test(h));
+  const ai = head.findIndex((h) => /^(artist name\(s\)|artist names?|artist|artiste)$/.test(h));
+  if (ti < 0 || ai < 0) return null;
+  return rows.slice(1).map((r) => ({ title: (r[ti] || "").trim(), artist: (r[ai] || "").split(";")[0].trim() })).filter((x) => x.title && x.artist);
+}
 
 /** Quel type d'entrée a-t-on collé ? */
 export function parseInput(raw) {
@@ -21,7 +51,11 @@ export function parseInput(raw) {
   if (/(deezer\.page\.link|link\.deezer\.com)/i.test(s)) return { kind: "error", msg: "Lien court Deezer : ouvre-le dans le navigateur et copie l'adresse complète (deezer.com/…/playlist/123…)." };
   m = s.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?playlist\/([A-Za-z0-9]+)/i) || s.match(/spotify:playlist:([A-Za-z0-9]+)/i);
   if (m) return { kind: "spotify", id: m[1] };
-  if (/^https?:\/\//i.test(s)) return { kind: "error", msg: "Adresse non reconnue. Playlists acceptées : Deezer et Spotify." };
+  if (/^https?:\/\//i.test(s) && !spotifyTrackIds(s).length) return { kind: "error", msg: "Adresse non reconnue. Playlists acceptées : Deezer et Spotify." };
+  const sids = spotifyTrackIds(s);
+  if (sids.length) return { kind: "spotifytracks", ids: sids.slice(0, MAX_TEXT_LINES) };
+  const csv = parseCsvTracks(s);
+  if (csv && csv.length) return { kind: "text", lines: csv.slice(0, MAX_TEXT_LINES) };
   const lines = s.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const parsed = lines.map((l) => {
     const k = l.search(/\s[-–—]\s/);
@@ -156,7 +190,44 @@ export async function fetchSpotifyPlaylist(id, onProgress = () => {}, getJson = 
   catch { throw new Error("Spotify n'est lisible que depuis l'appli Android (APK). Sur le web : exporte la liste en texte « Artiste - Titre » ou transfère la playlist sur Deezer."); }
   const { name, lines } = parseSpotifyEmbed(html);
   const { tracks, missing } = await resolveLines(lines, getJson, onProgress, pause);
-  return { name, cover: "", source: "Spotify", total: lines.length, tracks, missing: missing.length };
+  return { name, cover: "", source: "Spotify", total: lines.length, tracks, missing: missing.length, capped: lines.length >= SPOTIFY_EMBED_MAX };
+}
+
+/* ------------- Spotify : liens de morceaux collés (Ctrl+A, Ctrl+C dans une playlist Spotify) ------------- */
+const decodeEntities = (s) => String(s).replace(/&(#x[0-9a-f]+|#\d+|amp|quot|apos|lt|gt);/gi, (_, e) => {
+  const k = e.toLowerCase();
+  if (k === "amp") return "&"; if (k === "quot") return '"'; if (k === "apos") return "'"; if (k === "lt") return "<"; if (k === "gt") return ">";
+  return String.fromCodePoint(k[1] === "x" ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10));
+});
+const metaContent = (html, key) => {
+  const re = new RegExp(`<meta[^>]+(?:property|name)=["']${key}["'][^>]*>`, "i");
+  const tag = (String(html).match(re) || [])[0];
+  const c = tag && tag.match(/content=("([^"]*)"|'([^']*)')/i);
+  return c ? decodeEntities(c[2] !== undefined ? c[2] : c[3]).trim() : "";
+};
+/** Page publique d'un morceau Spotify -> { title, artist }. */
+export function parseSpotifyTrackPage(html) {
+  const title = metaContent(html, "og:title");
+  const desc = metaContent(html, "og:description"); // « Artiste, Artiste 2 · Album · Song · 2013 »
+  const artist = (metaContent(html, "music:musician_description") || desc.split(" · ")[0] || "").split(/,\s*/)[0].trim();
+  return title && artist ? { title, artist } : null;
+}
+export async function fetchSpotifyTracks(ids, onProgress = () => {}, fetchText = getText) {
+  const queue = ids.slice();
+  const lines = [];
+  let done = 0, failed = 0, webBlocked = false;
+  const worker = async () => {
+    while (queue.length && !webBlocked) {
+      const id = queue.shift();
+      try { const l = parseSpotifyTrackPage(await fetchText(`https://open.spotify.com/track/${id}`)); if (l) lines.push({ ...l, order: ids.indexOf(id) }); else failed++; }
+      catch (e) { if (done === 0 && /Failed to fetch|NetworkError|Load failed/i.test(String(e && e.message))) webBlocked = true; failed++; }
+      onProgress(++done, ids.length);
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  if (webBlocked) throw new Error("Les liens de morceaux Spotify ne se lisent que depuis l'appli Android (APK). Sur le web : exporte la liste en texte « Artiste - Titre » ou transfère la playlist sur Deezer.");
+  lines.sort((a, b) => a.order - b.order);
+  return { lines: lines.map(({ title, artist }) => ({ title, artist })), failed };
 }
 
 /* ------------------------------ démo (sans réseau) ------------------------------ */
@@ -177,12 +248,18 @@ export const DEMO_TRACKS = [
 export const demoPlaylist = () => ({ name: "Playlist de démo (mélodies de test)", cover: "", source: "Démo", total: DEMO_TRACKS.length, tracks: DEMO_TRACKS });
 
 /** Point d'entrée : transforme ce que le joueur a collé en playlist. */
-export async function importPlaylist(raw, onProgress = () => {}, getJson = deezerJson, pause = 120) {
+export async function importPlaylist(raw, onProgress = () => {}, getJson = deezerJson, pause = 120, fetchText = getText) {
   const p = parseInput(raw);
   if (p.kind === "error") throw new Error(p.msg);
   let pl;
   if (p.kind === "deezer") pl = await fetchDeezerPlaylist(p.id, getJson, onProgress);
   else if (p.kind === "spotify") pl = await fetchSpotifyPlaylist(p.id, onProgress, getJson, undefined, pause);
+  else if (p.kind === "spotifytracks") {
+    const { lines, failed } = await fetchSpotifyTracks(p.ids, (a, b) => onProgress(a, b * 2), fetchText);
+    if (!lines.length) throw new Error("Aucun morceau lu : ces liens Spotify ne répondent pas (appli Android uniquement).");
+    const { tracks, missing } = await resolveLines(lines, getJson, (a, b) => onProgress(p.ids.length + a, p.ids.length * 2), pause);
+    pl = { name: "Morceaux Spotify collés", cover: "", source: "Spotify", total: p.ids.length, tracks, missing: missing.length + failed };
+  }
   else {
     const { tracks, missing } = await resolveLines(p.lines, getJson, onProgress, pause);
     pl = { name: "Liste collée", cover: "", source: "Liste", total: p.lines.length, tracks, missing: missing.length };

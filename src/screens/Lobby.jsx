@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { PlayerAvatar, teamStyle } from "../ui/parts.jsx";
-import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS } from "../config.js";
+import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, QE_MODES, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS, MG_ROUNDS_OPTIONS, BD_ROUNDS_OPTIONS, PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS } from "../config.js";
 import { importPlaylist, demoPlaylist, MAX_TRACKS, MAX_TEXT_LINES } from "../data/playlist.js";
 import { safeUrl } from "../lib/safeUrl.js";
 
 /** Blind test : le créateur importe une playlist (Deezer, liste texte, Spotify depuis l'APK) ou prend la démo. */
+const MAX_TOTAL_LABEL = "3 000";
+const SPOTIFY_CAP_MSG = "Spotify ne donne que les 100 premiers morceaux d'une playlist. Pour tout avoir : ouvre la playlist Spotify sur ordinateur, Ctrl+A puis Ctrl+C, et colle ici ; ou transfère-la sur Deezer (tunemymusic.com) et colle le lien Deezer.";
 function PlaylistPanel({ room, isHost, api, spotify }) {
   const [raw, setRaw] = useState("");
   const [busy, setBusy] = useState(false);
@@ -17,6 +19,7 @@ function PlaylistPanel({ room, isHost, api, spotify }) {
     try {
       const r = await importPlaylist(raw, (a, b) => setProg(`${a}/${b}`));
       api.setPlaylist(r, pl ? true : false); setRaw(""); setMore(false);
+      if (r.capped) setErr(SPOTIFY_CAP_MSG);
     } catch (e) { setErr(e.message || String(e)); }
     setBusy(false); setProg("");
   };
@@ -34,18 +37,14 @@ function PlaylistPanel({ room, isHost, api, spotify }) {
       {isHost && (!pl || more) && (
         <>
           <textarea className="plin" rows={3} value={raw} onChange={(e) => setRaw(e.target.value)} disabled={busy} spellCheck={false}
-            placeholder={spotify ? "Lien de ta playlist Spotify\nou une liste, une ligne par morceau :\nDaft Punk - Get Lucky" : "Lien d'une playlist Deezer publique\nou une liste, une ligne par morceau :\nDaft Punk - Get Lucky"} aria-label="Playlist à importer" />
+            placeholder={"Lien Deezer ou Spotify\nou une liste, une ligne par morceau :\nDaft Punk - Get Lucky"} aria-label="Playlist à importer" />
           <div className="row" style={{ gap: 8 }}>
             <button className="btn primary small" disabled={busy || !raw.trim()} onClick={run}>{busy ? `Import… ${prog}` : pl ? "Ajouter" : "Importer"}</button>
             {!pl && <button className="btn small ghost" disabled={busy} onClick={() => api.setPlaylist(demoPlaylist())}>Playlist de démo</button>}
             {pl && <button className="btn small ghost" disabled={busy} onClick={() => { setMore(false); setErr(""); }}>Annuler</button>}
           </div>
           {err && <p className="plerr" role="alert">{err}</p>}
-          {spotify ? (
-            <p className="muted gnote">Colle le lien de ta playlist Spotify (publique ; il se lit dans l'appli Android, les 100 premiers morceaux : pour en avoir plus, ajoute d'autres playlists ou colle une liste « Artiste - Titre »). L'année de chaque morceau est cherchée sur MusicBrainz ; le son est un extrait de 30 s.</p>
-          ) : (
-          <p className="muted gnote">Jusqu'à {MAX_TRACKS} morceaux par playlist Deezer, {MAX_TEXT_LINES} lignes en liste texte, et tu peux en ajouter autant que tu veux (3 000 au total). Spotify : le lien marche dans l'appli Android (100 premiers morceaux seulement : ajoute-en d'autres ou colle une liste « Artiste - Titre »). Les extraits audio viennent de Deezer (30 s).</p>
-          )}
+          <p className="muted gnote">Colle le lien d'une playlist <b>Deezer</b> publique (jusqu'à {MAX_TRACKS} morceaux, extraits audio de 30 s), une liste « Artiste - Titre » ({MAX_TEXT_LINES} lignes max) ou un export CSV d'Exportify. Lien <b>Spotify</b> : lisible dans l'appli Android, mais Spotify ne donne que les <b>100 premiers morceaux</b>. Pour une grande playlist Spotify : sur ordinateur, ouvre-la, fais <b>Ctrl+A puis Ctrl+C</b> et colle ici (tous les liens de morceaux sont lus, sans limite de 100), ou transfère-la sur Deezer (tunemymusic.com). Tu peux ajouter autant de playlists que tu veux ({MAX_TOTAL_LABEL} morceaux au total).{spotify ? " L'année de chaque morceau est cherchée sur MusicBrainz." : ""}</p>
         </>
       )}
       {!pl && !isHost && <p className="muted gnote">Le créateur choisit la playlist…</p>}
@@ -66,8 +65,11 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
   const teamsUsed = new Set(players.map((p) => p.team)).size;
   const bt = settings.game === "blindtest";
   const tl = settings.game === "timeline";
-  const soloBt = bt && !settings.btTeams;
-  const canStart = bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : tl ? Boolean(room.playlist) && players.length >= 1 : players.length >= 2 && teamsUsed >= 2;
+  const board = settings.game === "board";
+  const pbac = settings.game === "petitbac";
+  const party = settings.game === "party" || board || pbac; // jeux sans équipes
+  const soloBt = (bt && !settings.btTeams) || party; // pas d'équipes : liste de joueurs seule
+  const canStart = pbac ? players.length >= 2 : party ? players.length >= 1 : bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : tl ? Boolean(room.playlist) && players.length >= 1 : players.length >= 2 && teamsUsed >= 2;
   const cap = soloBt ? BT_MAX_SOLO : settings.teamCount * settings.perTeam;
   const full = players.length >= cap;
   const biggest = Math.max(...Array.from({ length: settings.teamCount }, (_, t) => players.filter((p) => p.team === t).length));
@@ -152,6 +154,19 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
         </div>}
 
         <div className="settings">
+          {settings.game === "party" && (
+            <Field label="Nombre de manches"><Seg value={settings.mgRounds} options={MG_ROUNDS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ mgRounds: v })} /></Field>
+          )}
+          {pbac && (
+            <>
+              <Field label="Nombre de manches (une lettre par manche)"><Seg value={settings.pbRounds} options={PB_ROUNDS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ pbRounds: v })} /></Field>
+              <Field label="Temps pour écrire"><Seg value={settings.pbSeconds} options={PB_SECONDS_OPTIONS.map((n) => [n, n + " s"])} disabled={!isHost} onPick={(v) => api.setSettings({ pbSeconds: v })} /></Field>
+              <Field label="Catégories"><Seg value={settings.pbCats} options={[["classic", "Classiques (prénom, animal, pays…)"], ["mix", "Mélangées"]]} disabled={!isHost} onPick={(v) => api.setSettings({ pbCats: v })} /></Field>
+            </>
+          )}
+          {board && (
+            <Field label="Tours de table (un mini-jeu après chaque tour)"><Seg value={settings.bdRounds} options={BD_ROUNDS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ bdRounds: v })} /></Field>
+          )}
           {tl && (
             <>
               <Field label="Objectif : cartes à aligner pour gagner"><Seg value={settings.tlGoal} options={TL_GOAL_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ tlGoal: v })} /></Field>
@@ -173,6 +188,13 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
             </>
           )}
           {settings.game === "quiest" ? (
+            <>
+            <Field label="Image à deviner">
+              <Seg value={settings.qeMode || "mixed"} options={QE_MODES} disabled={!isHost} onPick={(v) => api.setSettings({ qeMode: v })} />
+              <p className="muted gnote">{(settings.qeMode || "mixed") === "choose"
+                ? "Avant chaque image, un joueur choisit la catégorie de l'image d'un autre (tiré au hasard à chaque manche). Il faut au moins 2 équipes."
+                : (settings.qeMode || "mixed") === "all" ? "Une carte tirée au hasard parmi toutes celles qui existent." : "Une catégorie au hasard, puis une carte de cette catégorie (équilibré)."}</p>
+            </Field>
             <div>
               <div className="eyebrow" style={{ marginBottom: 6 }}>Nombre d'images</div>
               <div className="seg">
@@ -181,7 +203,8 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
                 ))}
               </div>
             </div>
-          ) : bt || tl ? null : (
+            </>
+          ) : bt || tl || party ? null : (
             <div>
               <div className="eyebrow" style={{ marginBottom: 6 }}>Temps par manche</div>
               <div className="seg">
@@ -191,7 +214,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
               </div>
             </div>
           )}
-          {(!bt || settings.btTeams) && <><div>
+          {!party && (!bt || settings.btTeams) && <><div>
             <div className="eyebrow" style={{ marginBottom: 6 }}>Joueurs par équipe</div>
             <div className="seg">
               {PER_TEAM_OPTIONS.map((n) => (
@@ -215,7 +238,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
 
       {isHost ? (
         <>
-          {!canStart && <p className="muted" style={{ textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{bt || tl ? (!room.playlist ? "Importe d'abord une playlist." : "Il faut au moins 2 équipes occupées.") : "Il faut au moins 2 joueurs, dans 2 équipes différentes."}</p>}
+          {!canStart && <p className="muted" style={{ textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{pbac ? "Il faut au moins 2 joueurs (ajoute un bot pour tester seul)." : bt || tl ? (!room.playlist ? "Importe d'abord une playlist." : "Il faut au moins 2 équipes occupées.") : "Il faut au moins 2 joueurs, dans 2 équipes différentes."}</p>}
           <button className="btn primary" disabled={!canStart} onClick={api.start}>Lancer la partie</button>
         </>
       ) : (
