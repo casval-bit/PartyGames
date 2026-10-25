@@ -1,7 +1,7 @@
 // Mini-jeux 3D (1/2) : course d'obstacles, plancher qui s'effondre, arène de sumo, barre tournante, chasse aux pièces.
 import { useRef } from "react";
 import {
-  Stage3D, useReady, candyWorld, plastic, withOutline, box, makeBean, textSprite, bindKeys, bindStick, HoldBtn, beanColor, BOT_COLORS,
+  Stage3D, useReady, candyWorld, plastic, withOutline, box, makeBean, textSprite, bindKeys, bindStick, HoldBtn, beanColor, BOT_COLORS, botLook,
   clamp, lerp, wrapPi, rng, ri, useFinish, useScore, useClock, TimeBar, vib,
 } from "./kit3d.jsx";
 
@@ -22,14 +22,14 @@ const swipeDir = (el, on) => {
 
 /* ============================ 1. Course de haricots ============================ */
 const LANES = [-2.2, 0, 2.2];
-export function FgRun({ seed, seconds, onFinish, color }) {
+export function FgRun({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ dist: 0, over: false }).current, act = useRef({}).current;
   const rd = useReady();
   const clock = useClock(seconds, () => finish(Math.round(S.dist)), rd.ready);
   const setup = ({ THREE, scene, camera, el }) => {
     candyWorld(THREE, scene, { sky: 0x9fe3ff, fog: [28, 70] });
-    const r = rng(seed), bean = makeBean(THREE, color || beanColor());
+    const r = rng(seed), bean = makeBean(THREE, color || beanColor(), look);
     scene.add(bean.group);
     const road = new THREE.Group(); scene.add(road);
     const tiles = [];
@@ -109,7 +109,7 @@ export function FgRun({ seed, seconds, onFinish, color }) {
 }
 
 /* ============================ 2. Plancher fragile ============================ */
-export function HexFall({ seed, seconds, onFinish, color }) {
+export function HexFall({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ t: 0, alive: true }).current;
   const rd = useReady();
@@ -127,9 +127,9 @@ export function HexFall({ seed, seconds, onFinish, color }) {
     }
     const at = (x, z) => { const i = Math.round((x + half) / SZ), j = Math.round((z + half) / SZ); return i < 0 || j < 0 || i >= N || j >= N ? null : tiles[i * N + j]; };
     const warn = (t, dur = 0.7) => { if (t && t.state === 0) { t.state = 1; t.timer = dur; } };
-    const bean = makeBean(THREE, color || beanColor()); scene.add(bean.group);
+    const bean = makeBean(THREE, color || beanColor(), look); scene.add(bean.group);
     const P = { x: 0, z: 0, y: 0, vy: 0, fall: false, face: 0, vx: 0, vz: 0 };
-    const bots = BOT_COLORS.slice(0, 3).map((c, k) => { const b = makeBean(THREE, c); scene.add(b.group); const o = { b, x: (k - 1) * 5, z: -4 + k * 3, y: 0, vy: 0, fall: false, tx: 0, tz: 0, wait: 0, face: 0 }; b.group.position.set(o.x, 0, o.z); return o; });
+    const bots = BOT_COLORS.slice(0, 3).map((c, k) => { const b = makeBean(THREE, c, botLook(k)); scene.add(b.group); const o = { b, x: (k - 1) * 5, z: -4 + k * 3, y: 0, vy: 0, fall: false, tx: 0, tz: 0, wait: 0, face: 0 }; b.group.position.set(o.x, 0, o.z); return o; });
     const vec = { x: 0, y: 0 }, keys = {}, offKeys = bindKeys(keys), offStick = bindStick(el, vec);
     let acc = 0;
     return {
@@ -189,7 +189,7 @@ export function HexFall({ seed, seconds, onFinish, color }) {
 }
 
 /* ============================ 3. Arène de sumo ============================ */
-export function Sumo({ seed, seconds, onFinish, color }) {
+export function Sumo({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ t: 0, kills: 0, alive: true }).current, act = useRef({}).current;
   const calc = () => Math.round(S.t * 10) + S.kills * 40 + (S.alive ? 60 : 0);
@@ -203,9 +203,9 @@ export function Sumo({ seed, seconds, onFinish, color }) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 8, 48), plastic(THREE, COL.yellow)); ring.rotation.x = Math.PI / 2; ring.position.y = 0.01;
     ARENA.add(plat, ring);
     const W = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ color: 0x5fb6ff })); W.rotation.x = -Math.PI / 2; W.position.y = -6; scene.add(W);
-    const mk = (c, x, z, bot) => { const b = makeBean(THREE, c); b.group.scale.setScalar(1.25); scene.add(b.group); return { b, x, z, vx: 0, vz: 0, y: 0, vy: 0, out: false, hidden: false, dash: 0, cd: 0, face: 0, bot, last: null, lastT: -9, think: 0, tx: 0, tz: 0 }; };
-    const me = mk(color || beanColor(), 0, 3.2, false);
-    const foes = [mk(BOT_COLORS[0], -3, -2.4, true), mk(BOT_COLORS[1], 3, -2.4, true), mk(BOT_COLORS[3], 0, -4.4, true)];
+    const mk = (c, x, z, bot, lk) => { const b = makeBean(THREE, c, lk); b.group.scale.setScalar(1.25); scene.add(b.group); return { b, x, z, vx: 0, vz: 0, y: 0, vy: 0, out: false, hidden: false, dash: 0, cd: 0, face: 0, bot, last: null, lastT: -9, think: 0, tx: 0, tz: 0 }; };
+    const me = mk(color || beanColor(), 0, 3.2, false, look);
+    const foes = [mk(BOT_COLORS[0], -3, -2.4, true, botLook(0)), mk(BOT_COLORS[1], 3, -2.4, true, botLook(1)), mk(BOT_COLORS[3], 0, -4.4, true, botLook(3))];
     const all = [me, ...foes];
     const vec = { x: 0, y: 0 }, keys = {}, offKeys = bindKeys(keys), offStick = bindStick(el, vec);
     const dash = (o) => { if (o.cd > 0 || o.out) return; o.dash = 0.28; o.cd = 1.3; const s = Math.hypot(o.vx, o.vz) || 1; const dx = Math.hypot(o.vx, o.vz) > 0.5 ? o.vx / s : Math.sin(o.face), dz = Math.hypot(o.vx, o.vz) > 0.5 ? o.vz / s : Math.cos(o.face); o.vx = dx * 12; o.vz = dz * 12; if (!o.bot) vib(12); };
@@ -285,7 +285,7 @@ export function Sumo({ seed, seconds, onFinish, color }) {
 }
 
 /* ============================ 4. Barre tournante ============================ */
-export function JumpClub({ seed, seconds, onFinish, color }) {
+export function JumpClub({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ passes: 0, out: false }).current, act = useRef({}).current;
   const rd = useReady();
@@ -299,9 +299,9 @@ export function JumpClub({ seed, seconds, onFinish, color }) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.4, 14), plastic(THREE, COL.pink)); pole.position.y = 0.7; withOutline(THREE, pole, 1.08); scene.add(pole);
     const arm = new THREE.Group(); arm.position.y = 0.52; scene.add(arm);
     for (let i = 0; i < 6; i++) { const seg = box(THREE, 2 * RAD / 6 - 0.04, 0.5, 0.5, i % 2 ? COL.white : COL.red); seg.position.x = -RAD + RAD / 6 + i * (2 * RAD / 6); arm.add(seg); }
-    const PH = 0, RB = 3.6, mkAt = (a, c) => { const b = makeBean(THREE, c); b.group.position.set(Math.sin(a) * RB, 0, Math.cos(a) * RB); b.group.rotation.y = a + Math.PI; scene.add(b.group); return { b, a, x: Math.sin(a) * RB, z: Math.cos(a) * RB, y: 0, vy: 0, out: false, vx: 0, vz: 0, skill: 0.75 + r() * 0.2 }; };
-    const me = mkAt(PH, color || beanColor());
-    const foes = [1.3, 2.3, 3.4, 4.5, 5.4].map((a, k) => mkAt(a, BOT_COLORS[k % BOT_COLORS.length]));
+    const PH = 0, RB = 3.6, mkAt = (a, c, lk) => { const b = makeBean(THREE, c, lk); b.group.position.set(Math.sin(a) * RB, 0, Math.cos(a) * RB); b.group.rotation.y = a + Math.PI; scene.add(b.group); return { b, a, x: Math.sin(a) * RB, z: Math.cos(a) * RB, y: 0, vy: 0, out: false, vx: 0, vz: 0, skill: 0.75 + r() * 0.2 }; };
+    const me = mkAt(PH, color || beanColor(), look);
+    const foes = [1.3, 2.3, 3.4, 4.5, 5.4].map((a, k) => mkAt(a, BOT_COLORS[k % BOT_COLORS.length], botLook(k)));
     let th = 0, dir = 1, omega = 1.6, nextFlip = 5 + r() * 3, t = 0, lastK = Math.floor((0 - me.a) / Math.PI);
     const jump = (o) => { if (o.y <= 0.001 && !o.out) { o.vy = 8.4; if (o === me) vib(8); } };
     act.jump = () => jump(me);
@@ -357,7 +357,7 @@ export function JumpClub({ seed, seconds, onFinish, color }) {
 }
 
 /* ============================ 5. Chasse aux pièces ============================ */
-export function CoinChase({ seed, seconds, onFinish, color }) {
+export function CoinChase({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ coins: 0 }).current;
   const rd = useReady();
@@ -371,7 +371,7 @@ export function CoinChase({ seed, seconds, onFinish, color }) {
     const gold = plastic(THREE, 0xffc928, { rough: 0.25, emissive: 0x6b4a00 }), silver = plastic(THREE, 0xffd76a, { rough: 0.3 });
     const coins = [];
     const place = (c) => { let ok = false; for (let k = 0; k < 20 && !ok; k++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * (R - 0.9); c.x = Math.cos(a) * d; c.z = Math.sin(a) * d; ok = Math.hypot(c.x - P.x, c.z - P.z) > 2; } c.big = r() < 0.12; c.m.scale.setScalar(c.big ? 1.5 : 1); c.m.material = c.big ? gold : silver; c.m.visible = true; };
-    const bean = makeBean(THREE, color || beanColor()); bean.group.scale.setScalar(1.2); scene.add(bean.group);
+    const bean = makeBean(THREE, color || beanColor(), look); bean.group.scale.setScalar(1.2); scene.add(bean.group);
     const P = { x: 0, z: 0, vx: 0, vz: 0, face: 0, stun: 0 };
     for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(coinGeo, silver); withOutline(THREE, m, 1.1); m.rotation.x = Math.PI / 2; const holder = new THREE.Group(); holder.add(m); scene.add(holder); const c = { m: holder, x: 0, z: 0, big: false, ph: r() * 6 }; holder.children[0].rotation.x = Math.PI / 2; coins.push(c); place(c); }
     const rocks = [0, 1, 2].map((k) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.75, 16, 12), plastic(THREE, COL.red)); withOutline(THREE, m, 1.06); scene.add(m); const a = r() * 6.28; return { m, x: Math.cos(a) * 4, z: Math.sin(a) * 4, vx: Math.cos(a + 1.7) * (3 + k * 0.7), vz: Math.sin(a + 1.7) * (3 + k * 0.7) }; });

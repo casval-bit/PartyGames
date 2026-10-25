@@ -2,6 +2,8 @@
 // Calculé sur le téléphone (lib/profileStore.js) ; connecté par e-mail, il est aussi sauvegardé sur le compte (lib/useAccount.js).
 // Ce module est « pur » (pas de DOM) pour pouvoir être testé avec Node : node tools/test-profile.js
 
+import { SLOTS, PART_ITEMS, cleanX, decodeX, encodeX, legacyX, randomX } from "../avatar3d/schema.js";
+
 /* ------------------------------ catalogues ------------------------------ */
 // rule : null = gratuit · { lv } = niveau minimum · { ach } = succès à obtenir
 const lv = (n) => ({ lv: n });
@@ -84,18 +86,28 @@ export const CO_BY = Object.fromEntries(COLORS.map((x) => [x.id, x]));
 export function cleanLook(l) {
   const o = l && typeof l === "object" ? l : {};
   const n = Number.isInteger(o.lv) ? Math.max(1, Math.min(99, o.lv)) : 1;
-  return {
+  const out = {
     a: typeof o.a === "string" && AV_IDS.has(o.a) ? o.a : DEFAULT_LOOK.a,
     b: typeof o.b === "string" && BD_IDS.has(o.b) ? o.b : DEFAULT_LOOK.b,
     c: typeof o.c === "string" && CO_IDS.has(o.c) ? o.c : DEFAULT_LOOK.c,
     lv: n,
   };
+  // x : le personnage 3D (une chaîne de 32 caractères, voir avatar3d/schema.js) ; absent chez les anciens profils
+  if (typeof o.x === "string" && o.x.length > 0 && o.x.length <= 64) out.x = cleanX(o.x);
+  return out;
+}
+/** Chaîne du personnage 3D d'un joueur ; sans elle (ancien profil), un personnage habillé de sa couleur d'avatar. */
+export function xOf(look) {
+  const L = look && typeof look === "object" ? look : {};
+  if (typeof L.x === "string" && L.x) return cleanX(L.x);
+  const co = CO_BY[L.c] || CO_BY[DEFAULT_LOOK.c], m = /#[0-9a-f]{6}/i.exec(co.bg);
+  return legacyX(m ? m[0] : null);
 }
 /** Apparence aléatoire parmi les éléments gratuits (bots de test). */
 export function randomFreeLook(rnd = Math.random) {
   const free = (l) => l.filter((x) => !x.rule);
   const p = (l) => free(l)[(rnd() * free(l).length) | 0].id;
-  return { a: p(AVATARS), b: p(BORDERS), c: p(COLORS), lv: 1 + ((rnd() * 4) | 0) };
+  return { a: p(AVATARS), b: p(BORDERS), c: p(COLORS), x: randomX(rnd, (r) => !r), lv: 1 + ((rnd() * 4) | 0) };
 }
 
 /* -------------------------------- niveaux -------------------------------- */
@@ -178,6 +190,7 @@ export function ruleText(rule) {
 }
 const allItems = () => [
   ...AVATARS.map((x) => ({ kind: "avatar", ...x })), ...BORDERS.map((x) => ({ kind: "border", ...x })), ...COLORS.map((x) => ({ kind: "color", ...x })),
+  ...PART_ITEMS,   // pièces du personnage 3D soumises à une condition
 ];
 const unlockedKeys = (p) => new Set(allItems().filter((i) => isUnlocked(p, i.rule)).map((i) => i.kind + ":" + i.id));
 
@@ -190,8 +203,17 @@ export function fixLook(p) {
   if (!isUnlocked(p, AV_BY[L.a]?.rule)) L.a = DEFAULT_LOOK.a;
   if (!isUnlocked(p, BD_BY[L.b]?.rule)) L.b = DEFAULT_LOOK.b;
   if (!isUnlocked(p, CO_BY[L.c]?.rule)) L.c = DEFAULT_LOOK.c;
+  if (typeof L.x === "string") L.x = fixX(p, L.x);
   return L;
 }
+/** Pièces du personnage 3D encore verrouillées → remplacées par la valeur de départ de leur emplacement. */
+export function fixX(p, x) {
+  const a = decodeX(x);
+  SLOTS.forEach((s, i) => { if (!isUnlocked(p, s.opts[a[i]].rule)) a[i] = s.def; });
+  return encodeX(a);
+}
+/** Une pièce du personnage est-elle utilisable par ce profil ? */
+export const partOpen = (p, slot, idx) => isUnlocked(p, slot.opts[idx].rule);
 
 /* ------------------------ résumé d'une partie terminée ------------------------ */
 const rankOf = (rows, key) => {

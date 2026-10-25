@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { GAME_COMPONENTS, MINIGAMES, MG_BY, playSeconds } from "../minigames/index.js";
+import { loadProfile } from "../lib/profileStore.js";
+import { beanColor } from "../minigames/three/kit3d.jsx";
 
 /** Salle d'essai (adresse « ?minilab ») : jouer seul à chaque mini-jeu, sans lobby. Sert aussi aux tests automatiques. */
 export default function MiniLab({ onBack }) {
   const [sel, setSel] = useState(() => { try { return new URLSearchParams(location.search).get("g") || ""; } catch { return ""; } });
   const [res, setRes] = useState(null), [run, setRun] = useState(0);
+  const [look] = useState(() => { try { return loadProfile().look; } catch { return null; } });
   const g = MG_BY[sel], Game = g && GAME_COMPONENTS[sel];
   if (g) {
     return (
       <div className={onBack ? "" : "app"}><div className="screen mgplay" data-testid="lab-game">
         <div className="row spread"><button className="iconbtn" onClick={() => { setSel(""); setRes(null); }} aria-label="Retour">←</button><div className="mgtitle">{g.emoji} {g.title}</div><span /></div>
         <p className="muted btnote">{g.rule}</p>
-        {res == null ? <div className="mgstage"><Game key={run} seed={12345 + run} seconds={playSeconds(g)} onFinish={setRes} /></div>
+        {res == null ? <div className="mgstage"><Game key={run} seed={12345 + run} seconds={playSeconds(g)} onFinish={setRes} color={look ? beanColor(look) : undefined} look={look || undefined} /></div>
           : <div className="mgdone" data-testid="lab-result" data-score={res}><div className="mgemo">✔️</div><h2>{g.fmt(res)}</h2><p className="muted">Score brut : {res} (max {g.max})</p>
             <button className="btn primary" onClick={() => { setRes(null); setRun(run + 1); }}>Rejouer</button></div>}
       </div></div>

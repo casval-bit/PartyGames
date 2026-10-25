@@ -100,7 +100,7 @@ function Play({ room, me, api }) {
         {mg.mode !== "ffa" && mg.teams && mg.teams[me.id] != null ? <span className="mgteamchip" style={{ "--sc": MG_SIDES[mg.teams[me.id]].color, "--sink": MG_SIDES[mg.teams[me.id]].ink }} data-testid="mg-myteam">{MG_SIDES[mg.teams[me.id]].emoji} {modeLabel(mg.mode)}</span> : <span className="eyebrow">{mg.round}/{mg.total}</span>}
       </div>
       {score == null ? (
-        <div className="mgstage"><Game seed={mg.seed} seconds={playSeconds(g)} onFinish={finish} color={beanColor((room.players.find((p) => p.id === me.id) || {}).look)} /></div>
+        <div className="mgstage"><Game seed={mg.seed} seconds={playSeconds(g)} onFinish={finish} color={beanColor((room.players.find((p) => p.id === me.id) || {}).look)} look={(room.players.find((p) => p.id === me.id) || {}).look} /></div>
       ) : (
         <div className="mgdone" role="status" data-testid="mg-done">
           <div className="mgemo" aria-hidden="true">✔️</div>

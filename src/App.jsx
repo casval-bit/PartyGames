@@ -26,12 +26,16 @@ import MiniGames from "./screens/MiniGames.jsx";
 import Board from "./screens/Board.jsx";
 import PetitBac from "./screens/PetitBac.jsx";
 import MiniLab from "./screens/MiniLab.jsx";
+import AvatarLab from "./screens/AvatarLab.jsx";
+import Board3DLab from "./board3d/Board3DLab.jsx";
 import Gallery from "./screens/Gallery.jsx";
 import QuitVote from "./ui/QuitVote.jsx";
 
 export default function App() {
   if (typeof location !== "undefined" && location.search.includes("gallery")) return <Gallery />;
   if (typeof location !== "undefined" && location.search.includes("minilab")) return <MiniLab />;
+  if (typeof location !== "undefined" && location.search.includes("avlab")) return <AvatarLab />;
+  if (typeof location !== "undefined" && location.search.includes("bd3dlab")) return <Board3DLab />;
   const [screen, setScreen] = useState("splash"); // splash | menu | list
   const [name, setName] = useState(() => store("tu-name") || "");
   const id = useMemo(() => {
@@ -56,8 +60,8 @@ export default function App() {
 
   // Connexion à un compte pendant que l'on est dans un lobby : les autres voient tout de suite l'apparence récupérée.
   const shown = room && room.phase === "lobby" ? room.players.find((p) => p.id === id) : null;
-  const shownKey = shown && shown.look ? [shown.look.a, shown.look.b, shown.look.c, shown.look.lv].join() : "";
-  const myKey = [me.look.a, me.look.b, me.look.c, me.look.lv].join();
+  const shownKey = shown && shown.look ? [shown.look.a, shown.look.b, shown.look.c, shown.look.x, shown.look.lv].join() : "";
+  const myKey = [me.look.a, me.look.b, me.look.c, me.look.x, me.look.lv].join();
   useEffect(() => { if (shown && shownKey !== myKey) net.setLook(me.look); }, [shownKey, myKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { store("tu-name", name); }, [name]);

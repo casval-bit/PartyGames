@@ -1,8 +1,19 @@
-import { useState } from "react";
+import { Component, lazy, Suspense, useState } from "react";
 import { PlayerAvatar, Fuse, playerColor } from "../ui/parts.jsx";
 import { BD_SIZE, SPACE_INFO, ITEMS } from "../data/board.js";
 import { BD_PRE_SECONDS, BD_CHOICE_SECONDS, BD_GEM_COST, BD_MAX_ITEMS, BD_MINI_WIN, BD_DIE } from "../config.js";
 import { MG_SIDES } from "../minigames/meta.js";
+
+// Le plateau 3D est chargé à la demande (three.js pèse lourd) ; s'il ne peut pas s'afficher (pas de WebGL, chargement raté) : la grille 2D.
+const Board3D = lazy(() => import("../board3d/Board3D.jsx"));
+const read2d = () => { try { return /[?&]bd2d/.test(location.search) || localStorage.getItem("bd-2d") === "1"; } catch { return false; } };
+const save2d = (v) => { try { v ? localStorage.setItem("bd-2d", "1") : localStorage.removeItem("bd-2d"); } catch { /* stockage indisponible */ } };
+class Catch3D extends Component {
+  state = { bad: false };
+  static getDerivedStateFromError() { return { bad: true }; }
+  componentDidCatch(e) { console.error(e); this.props.onBad(); }
+  render() { return this.state.bad ? null : this.props.children; }
+}
 
 const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const ord = (n) => (n === 1 ? "1er" : `${n}e`);
@@ -19,12 +30,40 @@ function Token({ p, on }) {
   return <i className={"bdtok" + (on ? " on" : "")} style={{ background: playerColor(p.ci) }} title={p.name}>{(p.name || "?").trim().charAt(0).toUpperCase()}</i>;
 }
 
+/** Le centre du plateau : ordre de départ, tour en cours, dés, message. Même contenu en 2D (au milieu de la grille) et en 3D (par-dessus la scène). */
+function Mid({ room, me, round = true }) {
+  const bd = room.bd, roll = bd.roll;
+  if (bd.sub === "order") {
+    return (
+      <div className="bdorder" data-testid="bd-order">
+        <b>Qui commence ?</b>
+        {bd.order.map((id, k) => <span key={id}><em>{k + 1}</em>{nameOf(room, me, id)}<i className="die">{bd.rolls[id]}</i></span>)}
+      </div>
+    );
+  }
+  return (
+    <>
+      {round && <small>Tour {Math.min(bd.round, bd.total)}/{bd.total}{bd.sprint ? " · 🔥 sprint ×2" : ""}</small>}
+      {roll && bd.sub !== "pre" ? (
+        <div className="bddice" key={roll.k} aria-label={`Dé : ${roll.steps}`}>
+          {roll.dice.map((d, k) => <span key={k} className="die">{d}</span>)}
+          {roll.dice.length > 1 ? <b>= {roll.steps}</b> : null}
+          {roll.back ? <em>↩️ recule</em> : null}
+          {!roll.dice.length && roll.item ? <em>{ITEMS[roll.item].emoji}</em> : null}
+        </div>
+      ) : (
+        <div className="bdwho">{bd.cur ? (bd.cur === me.id ? "À toi !" : `Tour de ${nameOf(room, me, bd.cur)}`) : ""}</div>
+      )}
+      {bd.msg && <p className="bdmsg" key={bd.msg.k} role="status" data-testid="bd-msg">{bd.msg.text}</p>}
+    </>
+  );
+}
+
 function BoardGrid({ room, me }) {
   const bd = room.bd;
   const at = {};
   for (const p of room.players) (at[bd.pos[p.id]] ||= []).push(p);
   const cur = bd.cur;
-  const roll = bd.roll;
   return (
     <div className="bdboard" role="img" aria-label="Plateau de jeu">
       {Array.from({ length: BD_SIZE }, (_, i) => {
@@ -36,29 +75,7 @@ function BoardGrid({ room, me }) {
           </div>
         );
       })}
-      <div className="bdmid">
-        {bd.sub === "order" ? (
-          <div className="bdorder" data-testid="bd-order">
-            <b>Qui commence ?</b>
-            {bd.order.map((id, k) => <span key={id}><em>{k + 1}</em>{nameOf(room, me, id)}<i className="die">{bd.rolls[id]}</i></span>)}
-          </div>
-        ) : (
-          <>
-            <small>Tour {Math.min(bd.round, bd.total)}/{bd.total}{bd.sprint ? " · 🔥 sprint ×2" : ""}</small>
-            {roll && bd.sub !== "pre" ? (
-              <div className="bddice" key={roll.k} aria-label={`Dé : ${roll.steps}`}>
-                {roll.dice.map((d, k) => <span key={k} className="die">{d}</span>)}
-                {roll.dice.length > 1 ? <b>= {roll.steps}</b> : null}
-                {roll.back ? <em>↩️ recule</em> : null}
-                {!roll.dice.length && roll.item ? <em>{ITEMS[roll.item].emoji}</em> : null}
-              </div>
-            ) : (
-              <div className="bdwho">{cur ? (cur === me.id ? "À toi !" : `Tour de ${nameOf(room, me, cur)}`) : ""}</div>
-            )}
-            {bd.msg && <p className="bdmsg" key={bd.msg.k} role="status" data-testid="bd-msg">{bd.msg.text}</p>}
-          </>
-        )}
-      </div>
+      <div className="bdmid"><Mid room={room} me={me} /></div>
     </div>
   );
 }
@@ -170,9 +187,23 @@ function Feed({ bd }) {
   return <ul className="bdfeed" aria-label="Derniers événements">{f.map((m) => <li key={m.k}>{m.text}</li>)}</ul>;
 }
 
+/** Le plateau : en 3D par défaut, en 2D si l'appareil ne sait pas afficher la 3D (ou si le joueur l'a demandé : bouton « 2D » ou adresse ?bd2d). */
+function BoardView({ room, me, flat, setFlat }) {
+  const [broken, setBroken] = useState(false);
+  if (flat || broken) return <BoardGrid room={room} me={me} />;
+  return (
+    <Catch3D onBad={() => setBroken(true)}>
+      <Suspense fallback={<div className="bdboard b3d" data-testid="bd-3d-loading"><div className="b3load">Chargement du plateau<i /><i /><i /></div></div>}>
+        <Board3D room={room} center={<Mid room={room} me={me} round={false} />} onFail={() => setBroken(true)} onFlat={() => { save2d(true); setFlat(true); }} />
+      </Suspense>
+    </Catch3D>
+  );
+}
+
 export default function Board({ room, me, api, onLeave }) {
   const bd = room.bd;
   const [help, setHelp] = useState(false);
+  const [flat, setFlat] = useState(read2d);
   if (!bd) return null;
   if (room.phase === "bd_final") return <Final room={room} me={me} api={api} onLeave={onLeave} />;
   const timed = ["pre", "gem", "shop"].includes(bd.sub);
@@ -180,12 +211,15 @@ export default function Board({ room, me, api, onLeave }) {
     <div className="screen bdroot">
       <div className="row spread">
         <div className="eyebrow">Plateau · tour {bd.round}/{bd.total}</div>
-        <button className="iconbtn" onClick={() => setHelp(!help)} aria-label="Règles" aria-pressed={help}>?</button>
+        <div className="row" style={{ gap: 6 }}>
+          {flat && <button className="iconbtn" data-testid="bd-3d-on" onClick={() => { save2d(false); setFlat(false); }} aria-label="Afficher le plateau en 3D">3D</button>}
+          <button className="iconbtn" onClick={() => setHelp(!help)} aria-label="Règles" aria-pressed={help}>?</button>
+        </div>
       </div>
       <div className="scroll bdscroll">
         {help ? <Legend /> : (
           <>
-            <BoardGrid room={room} me={me} />
+            <BoardView room={room} me={me} flat={flat} setFlat={setFlat} />
             {timed && <Fuse deadline={room.deadline} total={bd.sub === "pre" ? BD_PRE_SECONDS : BD_CHOICE_SECONDS} />}
             <Actions room={room} me={me} api={api} />
             <Feed bd={bd} />

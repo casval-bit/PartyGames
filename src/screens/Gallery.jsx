@@ -8,6 +8,17 @@ export default function Gallery() {
   const cards = pick.map((c) => ({ id: c.id, name: c.name, cat: c.cats[0] }));
   const big = new URLSearchParams(location.search).get("gallery") === "big";
   const mode = new URLSearchParams(location.search).get("gallery");
+  if (mode && mode.startsWith("names")) {   // noms difficiles : mots larges, très longs, courts, ponctuation
+    const NAMES = ["Muhammad Ali", "Catherine Deneuve", "Neutral Milk Hotel", "WWW", "Mamma Mia !", "Jean-Baptiste Poquelin", "Tchaïkovski", "Le Seigneur des anneaux : la communauté de l'anneau", "Wolfgang Amadeus Mozart", "Kim Kardashian", "Jean-Claude Van Damme", "IL", "Mississippi", "Schwarzenegger", "Hermione Granger", "Charlotte Gainsbourg"];
+    const cols = Number(mode.slice(5)) || 2;
+    return (
+      <div style={{ padding: 12, overflow: "auto", height: "100dvh" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 10 }}>
+          {NAMES.map((n, i) => <GameCard key={n} card={{ id: "n" + i, name: n }} up className="static" i={i} bonus={i % 5 === 3 ? "time" : i % 5 === 4 ? "score" : undefined} />)}
+        </div>
+      </div>
+    );
+  }
   if (mode === "bonus") {
     const demo = cards.slice(0, 8);
     const kinds = ["time", "score", undefined, "time", "score", undefined, "score", "time"];

@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Avatar } from "../ui/Avatar.jsx";
+import { AvatarLive } from "../avatar3d/Avatar3D.jsx";
+import { SLOTS } from "../avatar3d/schema.js";
+const AvatarEditor = lazy(() => import("../avatar3d/AvatarEditor.jsx"));
 import {
-  ACHIEVEMENTS, AVATARS, BORDERS, COLORS, isUnlocked, ruleText, rewardsOf, progressOf, pct, secs,
+  ACHIEVEMENTS, BORDERS, COLORS, isUnlocked, ruleText, rewardsOf, progressOf, pct, secs, xOf,
 } from "../data/profile.js";
 
 const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité" };
 const RESULT = { win: "Victoire", loss: "Défaite", draw: "Égalité", solo: "Solo" };
-const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur" };
+const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur", part: "Pièce" };
 
 const Lock = () => (
   <svg className="lock" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z" /></svg>
@@ -150,9 +153,10 @@ function Stats({ s, history }) {
   );
 }
 
-function Looks({ profile, equip }) {
+function Looks({ profile, equip, onEdit, editing }) {
   const [hint, setHint] = useState("");
   const cur = profile.look;
+  const parts = SLOTS.filter((s) => !s.color), total = parts.reduce((n, s) => n + s.opts.length, 0), owned = parts.reduce((n, s) => n + s.opts.filter((o) => isUnlocked(profile, o.rule)).length, 0);
   const grid = (title, list, key, kind) => (
     <section className="pgame">
       <h3>{title}<small>{list.filter((x) => isUnlocked(profile, x.rule)).length}/{list.length}</small></h3>
@@ -173,10 +177,14 @@ function Looks({ profile, equip }) {
   );
   return (
     <>
-      <p className="phint" role="status">{hint || "Touche un élément pour l'équiper. Les cadenas se débloquent en montant de niveau ou avec des succès."}</p>
-      {grid("Avatars", AVATARS, "a", "av")}
+      <section className="pgame lookcard">
+        <div className="lookstage">{!editing && <AvatarLive x={xOf(cur)} focus="body" turn />}</div>
+        <button className="btn primary" onClick={onEdit} data-testid="prof-customize">Personnaliser mon personnage</button>
+        <p className="muted pnote">{owned}/{total} pièces débloquées · de nouvelles pièces arrivent avec les niveaux et les succès.</p>
+      </section>
+      <p className="phint" role="status">{hint || "Choisis la couleur et la bordure de ta pastille (visible dans le lobby et les classements)."}</p>
       {grid("Bordures", BORDERS, "b", "bd")}
-      {grid("Couleurs", COLORS, "c", "co")}
+      {grid("Couleurs de fond", COLORS, "c", "co")}
     </>
   );
 }
@@ -202,10 +210,11 @@ function Achievements({ profile }) {
 }
 
 export default function Profile({ name, profile, equip, onBack, acc, onAccount }) {
-  const [tab, setTab] = useState("stats");
+  const [tab, setTab] = useState("stats"), [editing, setEditing] = useState(false);
   const pr = progressOf(profile.xp);
   return (
     <div className="screen prof">
+      {editing && <Suspense fallback={null}><AvatarEditor profile={profile} equip={equip} onClose={() => setEditing(false)} /></Suspense>}
       <div className="row" style={{ gap: 10 }}>
         <button className="iconbtn" onClick={onBack} aria-label="Retour">←</button>
         <div><div className="eyebrow">Profil</div><h2 style={{ fontSize: "1.25rem" }}>{name || "Joueur"}</h2></div>
@@ -228,7 +237,7 @@ export default function Profile({ name, profile, equip, onBack, acc, onAccount }
 
       <div className="scroll">
         {tab === "stats" && <Stats s={profile.stats} history={profile.history} />}
-        {tab === "look" && <Looks profile={profile} equip={equip} />}
+        {tab === "look" && <Looks profile={profile} equip={equip} onEdit={() => setEditing(true)} editing={editing} />}
         {tab === "ach" && <Achievements profile={profile} />}
         {acc && acc.enabled ? (
           <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="prof-account">

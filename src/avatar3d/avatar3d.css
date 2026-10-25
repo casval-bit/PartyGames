@@ -1,0 +1,60 @@
+/* Avatar 3D : vue vivante + miniatures */
+.av3live { position: relative; width: 100%; height: 100%; min-height: 120px; overflow: hidden; }
+.av3fail { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: #fff; opacity: .8; font-size: .9rem; }
+.av3img { display: block; width: 100%; height: auto; max-width: 100%; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+
+/* ---------------------------- éditeur de personnage ---------------------------- */
+.ave { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; background: var(--ink); padding-top: var(--safe-t); animation: screenIn .3s cubic-bezier(.2,.8,.2,1) both; }
+.avehead { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px 8px; }
+.avetitle { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.avetitle b { font-family: var(--display); font-weight: 600; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aveact { display: flex; gap: 8px; }
+.avebtn { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 1.2rem; font-weight: 800; background: var(--ink-3); border: 2px solid var(--line); transition: transform .12s, opacity .2s; }
+.avebtn:active:not(:disabled) { transform: scale(.94); }
+.avebtn:disabled { opacity: .35; }
+.avebtn[aria-pressed="true"] { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+.avestage { position: relative; flex: 0 0 clamp(250px, 42vh, 400px); margin: 0 14px; border-radius: 22px; overflow: hidden; border: 2px solid var(--line);
+  background: radial-gradient(70% 60% at 50% 42%, rgba(255,255,255,.16), transparent 72%), radial-gradient(90% 40% at 50% 100%, rgba(0,0,0,.28), transparent 70%), var(--ink-3); }
+.avelook { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
+.avetabs { flex: none; display: flex; gap: 6px; padding: 10px 14px 0; overflow-x: auto; scrollbar-width: none; }
+.avetabs::-webkit-scrollbar { display: none; }
+.avetabs button { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 1px 6px; border-radius: 14px; background: var(--ink-3); border: 2px solid var(--line); font-size: 1.15rem; line-height: 1.1; }
+.avetabs button i { font-style: normal; font-size: .6rem; font-weight: 800; letter-spacing: 0; white-space: nowrap; color: var(--muted); }
+.avetabs button.on { background: var(--cream); border-color: var(--cream); }
+.avetabs button.on i { color: var(--ink); }
+.avepanel { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 10px 14px calc(var(--safe-b) + 20px); scrollbar-width: none; }
+.avepanel::-webkit-scrollbar { display: none; }
+.avehint { font-size: .8rem; font-weight: 700; color: var(--spark); min-height: 2.4em; }
+.avs h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; font-family: var(--display); font-weight: 600; font-size: .98rem; }
+.avs h4 small { font-family: var(--body); font-weight: 800; font-size: .72rem; color: var(--muted); text-align: right; }
+.avopts { display: flex; flex-wrap: wrap; gap: 6px; }
+.avch { position: relative; padding: 8px 12px; border-radius: 12px; background: var(--ink-3); border: 2px solid var(--line); font-weight: 800; font-size: .84rem; line-height: 1.15; text-align: left; }
+.avch.on { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+.avch.locked, .avsw.locked, .avitm.locked { opacity: .5; }
+.avlock { width: 12px; height: 12px; margin-right: 5px; vertical-align: -1px; }
+.avopts.col { gap: 9px; }
+.avsw { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--sw, #888); border: 3px solid rgba(0,0,0,.28); box-shadow: inset 0 3px 0 rgba(255,255,255,.28); }
+.avsw.auto { background: conic-gradient(#ff6fae, #ffd23a, #3ee0b0, #4fb6ff, #9b5cf0, #ff6fae); }
+.avsw.same { background: linear-gradient(135deg, #fff 50%, #3478f6 50%); }
+.avsw.on { box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--cream); }
+.avsw .avlock { position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; color: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+.avopts.bgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 8px; }
+.avitm { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 4px 7px; border-radius: 14px; background: var(--ink-3); border: 2px solid var(--line); min-width: 0; }
+.avitm span { font-size: .68rem; font-weight: 800; text-align: center; line-height: 1.1; }
+.avitm.on { border-color: var(--cream); box-shadow: 0 0 0 2px var(--cream); }
+.avitm .avlock { position: absolute; top: 6px; right: 6px; margin: 0; }
+.avreset { align-self: center; margin-top: 4px; padding: 10px 16px; border-radius: 12px; border: 2px dashed var(--line); font-weight: 800; font-size: .85rem; color: var(--muted); }
+/* carte du profil : le personnage en grand */
+.lookcard { display: flex; flex-direction: column; gap: 10px; }
+.lookstage { position: relative; height: clamp(250px, 40vh, 360px); border-radius: 16px; overflow: hidden; border: 2px solid var(--line);
+  background: radial-gradient(70% 60% at 50% 42%, rgba(255,255,255,.16), transparent 72%), radial-gradient(90% 40% at 50% 100%, rgba(0,0,0,.28), transparent 70%), var(--ink-3); }
+
+/* ---- sélecteur de personnage ---- */
+.avchars { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.avchar { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px 8px; border-radius: 14px; background: var(--ink-3); border: 2px solid var(--line); min-width: 0; }
+.avchar img, .avcharph { width: 100%; max-width: 92px; aspect-ratio: 1; object-fit: contain; display: block; }
+.avchar span:last-child { font-family: var(--display); font-size: .82rem; line-height: 1.05; text-align: center; letter-spacing: .02em; }
+.avchar.on { border-color: var(--yellow); box-shadow: 0 0 0 2px var(--yellow); background: var(--ink-2); }
+.avchar.locked img { filter: grayscale(.75) brightness(.7); }
+.avchar .avlock { position: absolute; top: 6px; right: 6px; margin: 0; }
+.avs.fixed .avopts { opacity: .38; pointer-events: none; }

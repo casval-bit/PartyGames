@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { ACH_BY } from "../data/profile.js";
 
-const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur" };
+const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur", part: "Pièce" };
 const TITLE = { win: "Victoire !", loss: "Partie terminée", draw: "Égalité", solo: "Partie terminée" };
 
 /** Bandeau de fin de partie : XP gagnée, niveau, succès et éléments débloqués. */

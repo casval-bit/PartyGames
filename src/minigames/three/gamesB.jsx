@@ -1,7 +1,7 @@
 // Mini-jeux 3D (2/2) : tunnel, cueillette de champis, safari photo, bowling.
 import { useRef, useState } from "react";
 import {
-  Stage3D, useReady, candyWorld, plastic, withOutline, box, makeBean, textSprite, bindKeys, bindStick, HoldBtn, beanColor, BOT_COLORS,
+  Stage3D, useReady, candyWorld, plastic, withOutline, box, makeBean, textSprite, bindKeys, bindStick, HoldBtn, beanColor, BOT_COLORS, botLook,
   clamp, lerp, wrapPi, rng, ri, rpick, useFinish, useScore, useClock, TimeBar, vib,
 } from "./kit3d.jsx";
 
@@ -9,7 +9,7 @@ const COL = { pink: 0xff7eb6, yellow: 0xffd23f, cyan: 0x4cc9f0, purple: 0xb185ff
 const easeOutBack = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
 
 /* ============================ 1. Tunnel ============================ */
-export function Tunnel({ seed, seconds, onFinish, color }) {
+export function Tunnel({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ dist: 0 }).current, hold = useRef({ l: false, r: false }).current;
   const rd = useReady();
@@ -43,7 +43,7 @@ export function Tunnel({ seed, seconds, onFinish, color }) {
       if (n > 6 && r() < 0.4) { const a = base + Math.PI; const m = box(THREE, 1.4, 1.4, 1.2, COL.purple); const p = at(a); m.position.set(p.x, p.y, z + 7); m.rotation.z = a; scene.add(m); obs.push({ z: z + 7, a, half: 0.28, mesh: m }); }
       z += Math.max(9, 17 - n * 0.3) + r() * 3; n++;
     }
-    const bean = makeBean(THREE, color || beanColor()); scene.add(bean.group);
+    const bean = makeBean(THREE, color || beanColor(), look); scene.add(bean.group);
     const pop = textSprite(THREE, "Aïe !", { color: "#ffd23f" }); pop.visible = false; scene.add(pop);
     const P = { z: 0, a: 0, va: 0, speed: 0, stun: 0, inv: 0, t: 0 };
     const vec = { x: 0, y: 0 }, keys = {}, offKeys = bindKeys(keys), offStick = bindStick(el, vec);
@@ -94,7 +94,7 @@ export function Tunnel({ seed, seconds, onFinish, color }) {
 }
 
 /* ============================ 2. Cueillette de champis ============================ */
-export function Shroom({ seed, seconds, onFinish, color }) {
+export function Shroom({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ pts: 0 }).current;
   const rd = useReady();
@@ -124,7 +124,7 @@ export function Shroom({ seed, seconds, onFinish, color }) {
     while (t < seconds - 2.5) { plan.push({ t, gold: r() < 0.12, grow: 1.8 + r() * 1.5, win: 0.95 }); t += 0.5 + r() * 0.5; }
     const alive = [];
     let pi = 0;
-    const bean = makeBean(THREE, color || beanColor()); bean.group.position.set(0, 0, 4.6); bean.group.rotation.y = Math.PI; scene.add(bean.group);
+    const bean = makeBean(THREE, color || beanColor(), look); bean.group.position.set(0, 0, 4.6); bean.group.rotation.y = Math.PI; scene.add(bean.group);
     let react = 0, reactKind = "";
     const flash = (txt, col, x, z) => { const sp = textSprite(THREE, txt, { color: col }); sp.position.set(x, 2.1, z); sp.userData.t = 0.8; scene.add(sp); alive.push({ sprite: sp }); };
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -187,7 +187,7 @@ const ANIMALS = [
   { id: "zebra", emoji: "🦓", name: "le zèbre" },
   { id: "lion", emoji: "🦁", name: "le lion" },
 ];
-export function Safari({ seed, seconds, onFinish, color }) {
+export function Safari({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ pts: 0 }).current;
   const [target, setTarget] = useState(ANIMALS[0]);
@@ -321,7 +321,7 @@ export function Safari({ seed, seconds, onFinish, color }) {
 }
 
 /* ============================ 4. Bowling ============================ */
-export function Bowling({ seed, seconds, onFinish, color }) {
+export function Bowling({ seed, seconds, onFinish, color, look }) {
   const finish = useFinish(onFinish), sc = useScore();
   const S = useRef({ pts: 0, done: false }).current;
   const [hint, setHint] = useState("Touche pour fixer la direction");
@@ -342,7 +342,7 @@ export function Bowling({ seed, seconds, onFinish, color }) {
     const ball = withOutline(THREE, new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), plastic(THREE, COL.navy, { rough: 0.15 })), 1.06); ball.position.set(0, 0.34, Z0 + 1.2); scene.add(ball);
     for (let i = 0; i < 3; i++) { const h = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), new THREE.MeshBasicMaterial({ color: 0x000000 })); h.position.set((i - 1) * 0.1, 0.27 + (i === 1 ? 0.06 : 0), 0.28); ball.add(h); }
     const arrow = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.8 })); arrow.rotation.x = -Math.PI / 2; arrow.position.y = 0.03; scene.add(arrow);
-    const bean = makeBean(THREE, color || beanColor()); bean.group.position.set(-3.5, 0, 13); bean.group.rotation.y = 0.9; scene.add(bean.group);
+    const bean = makeBean(THREE, color || beanColor(), look); bean.group.position.set(-3.5, 0, 13); bean.group.rotation.y = 0.9; scene.add(bean.group);
     // état de la manche
     const G = { state: "aim", roll: 0, ang: 0, pw: 0, t: 0, aimV: 0, bx: 0, drift: 0, ballT: 0, hitDone: false, after: 0, knocked: 0, cheer: 0 };
     const act = () => {

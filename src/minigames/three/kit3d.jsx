@@ -1,10 +1,21 @@
 // Outils communs des mini-jeux en 3D : chargement de three.js à la demande, scène, haricots à la Fall Guys, commandes tactiles.
 import { useEffect, useRef, useState } from "react";
 import { CO_BY, cleanLook } from "../../data/profile.js";
+import { loadKit } from "../../avatar3d/render.js";
+import { randomX, cleanX } from "../../avatar3d/schema.js";
 
 let threeP = null;
 /** three.js n'est téléchargé (et analysé) qu'à la première partie 3D. */
 export const loadThree = () => (threeP ||= import("three"));
+/** Le kit du personnage 3D (corps haricot + costumes, avatar3d/) : chargé avec three.js ; `makeBean` s'en sert dès qu'il est prêt. */
+let avKit = null;
+export const loadAvatarKit = () => loadKit().then((M) => (avKit = M), () => null);
+/** Apparence (chaîne x) d'un bot : toujours la même pour un numéro donné, avec costume possible. */
+export function botLook(i) {
+  let s = (i * 2654435761 + 97) >>> 0;
+  const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  return { x: randomX(rnd, (r) => !r) };
+}
 
 /** Couleur du haricot d'un joueur : la couleur de son avatar (la première teinte si c'est un dégradé). */
 export function beanColor(look) {
@@ -36,6 +47,7 @@ export function Stage3D({ setup, label, onFail, onReady }) {
     (async () => {
       let THREE;
       try { THREE = await loadThree(); } catch { return fail(); }
+      await loadAvatarKit();                  // le personnage 3D est prêt avant que le jeu ne construise ses haricots
       if (dead) return;
       const el = box.current;
       if (!el) return;
@@ -122,7 +134,12 @@ export function box(THREE, w, h, d, color, outline = true) {
  * Haricot à la Fall Guys (corps capsule, yeux, bras et jambes qui bougent), orienté vers +Z.
  * `bean.anim({ run, air, stun, fall, cheer, t })` règle la pose ; `bean.group` se place dans la scène.
  */
-export function makeBean(THREE, color = "#8b5cf6") {
+export function makeBean(THREE, color = "#8b5cf6", look) {
+  // avec une apparence : le vrai personnage du joueur (même corps et mêmes costumes que l'éditeur), même interface
+  const ax = look && (typeof look === "string" ? look : look.x);
+  if (ax && avKit && avKit.THREE === THREE) {
+    try { const fig = avKit.makeFigure(avKit, cleanX(ax), { shadow: true }); fig.color = color; return fig; } catch (e) { console.error(e); }
+  }
   const group = new THREE.Group();
   const body = new THREE.Group();
   group.add(body);
