@@ -11,7 +11,7 @@ import {
   VenetianMask, Dice3, TriangleExclamationPoint, ArrowLeftRight, Handshake, HandCoins, Phone, PawPrint, FlaskConical, Search, OctagonX, Map as MapIcon, Globe,
   Briefcase, Apple, Building, Tag, Volleyball, UtensilsCrossed, Locate, OctagonExclamationPoint,
   Umbrella, ToyBrick, Wind, Castle, Scroll, EyeOff, Sprout, BookOpen, Sparkle, WandSparkles, Theater,
-  Lightbulb, Bike, Radio, Copy, ClipboardList, ImageOff, Dog,
+  Lightbulb, Bike, Radio, Copy, ClipboardList, ImageOff, Dog, Crop,
 } from "lucide-react";
 
 const MAP = {
@@ -34,7 +34,7 @@ const MAP = {
   flask: FlaskConical, search: Search, stop: OctagonExclamationPoint, cross: OctagonX, map: MapIcon, globe: Globe, briefcase: Briefcase, apple: Apple,
   building: Building, tag: Tag, ball: Volleyball, food: UtensilsCrossed, locate: Locate,
   umbrella: Umbrella, toy: ToyBrick, wind: Wind, castle: Castle, scroll: Scroll, eyeoff: EyeOff, sprout: Sprout, book: BookOpen, sparkle: Sparkle, wandsp: WandSparkles, theater: Theater,
-  bulb: Lightbulb, bike: Bike, radio: Radio, copy: Copy, cliplist: ClipboardList, imageoff: ImageOff, dog: Dog,
+  bulb: Lightbulb, bike: Bike, radio: Radio, copy: Copy, cliplist: ClipboardList, imageoff: ImageOff, dog: Dog, crop: Crop,
 };
 
 /** Icône par nom (`back`, `trophy`, `gem`…). size en px, stroke = épaisseur du trait (fin par défaut). */

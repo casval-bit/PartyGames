@@ -6,6 +6,8 @@ import { Icon } from "../ui/Icon.jsx";
 import AchTree from "../ui/AchTree.jsx";
 import { ACHIEVEMENTS, BORDERS, COLORS, isUnlocked, ruleText, progressOf, pct, secs, xOf } from "../data/profile.js";
 import { sfx } from "../lib/sfx.js";
+import { APPAREIL, DESKTOP, desktop } from "../lib/device.js";
+import { useFullscreen } from "../lib/orientation.js";
 
 const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité", trone: "Trône des Mondes", loupgarou: "Loup-garou" };
 const GICON = { timesup: "hourglass", quiest: "eye", blindtest: "music", timeline: "history", party: "gamepad", board: "dice", petitbac: "edit", celeb: "image", trone: "crown", loupgarou: "moon" };
@@ -150,11 +152,11 @@ export default function Profile({ name, profile, equip, onBack, acc, onAccount, 
         {acc && acc.enabled ? (
           <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="prof-account">
             <span className="accdot" aria-hidden="true"><Icon name={acc.user ? "check" : "mail"} size={18} /></span>
-            <span><strong>{acc.user ? "Sauvegardé sur ton compte" : "Profil enregistré sur ce téléphone"}</strong><small>{acc.user ? acc.user.email : "Connecte-toi par e-mail pour ne pas le perdre"}</small></span>
+            <span><strong>{acc.user ? "Sauvegardé sur ton compte" : `Profil enregistré sur ${APPAREIL.ce}`}</strong><small>{acc.user ? acc.user.email : "Connecte-toi par e-mail pour ne pas le perdre"}</small></span>
             <Icon name="next" />
           </button>
         ) : (
-          <p className="muted pnote">Ton profil est enregistré sur ce téléphone uniquement. Il ne suit pas d'un appareil à l'autre.</p>
+          <p className="muted pnote">Ton profil est enregistré sur {APPAREIL.ce} uniquement. Il ne suit pas d'un appareil à l'autre.</p>
         )}
       </div>
     </div>
@@ -166,6 +168,8 @@ function Settings() {
   const [open, setOpen] = useState(false), [on, setOn] = useState(sfx.on);
   const [red, setRed] = useState(() => { try { return localStorage.getItem("ph-shell") === "red"; } catch { return false; } });
   const shell = (v) => { setRed(v); try { localStorage.setItem("ph-shell", v ? "red" : "dark"); } catch { /* rien */ } window.dispatchEvent(new Event("ph-shell")); };
+  const full = useFullscreen();
+  const setFullscreenOn = (v) => { const d = desktop(); if (d) d.setFullscreen(v); };
   return (
     <>
       <button className="iconbtn" onClick={() => { setOpen(true); sfx.open(); }} aria-label="Réglages"><Icon name="settings" /></button>
@@ -174,7 +178,9 @@ function Settings() {
           <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Réglages">
             <div className="row spread"><h3>Réglages</h3><button className="iconbtn" onClick={() => setOpen(false)} aria-label="Fermer"><Icon name="close" /></button></div>
             <div className="setrow"><span><Icon name={on ? "sound" : "mute"} /> Sons d'interface</span><div className="seg"><button aria-pressed={on} onClick={() => { sfx.set(true); setOn(true); sfx.select(); }}>Oui</button><button aria-pressed={!on} onClick={() => { sfx.set(false); setOn(false); }}>Non</button></div></div>
-            <div className="setrow"><span><Icon name="tablet" /> Coque (grand écran)</span><div className="seg"><button aria-pressed={!red} onClick={() => shell(false)}>Noire</button><button aria-pressed={red} onClick={() => shell(true)}>Rouge et blanche</button></div></div>
+            {DESKTOP
+              ? <div className="setrow"><span><Icon name="scan" /> Plein écran (F11)</span><div className="seg"><button aria-pressed={full} onClick={() => setFullscreenOn(true)}>Oui</button><button aria-pressed={!full} onClick={() => setFullscreenOn(false)}>Non</button></div></div>
+              : <div className="setrow"><span><Icon name="tablet" /> Coque (grand écran)</span><div className="seg"><button aria-pressed={!red} onClick={() => shell(false)}>Noire</button><button aria-pressed={red} onClick={() => shell(true)}>Rouge et blanche</button></div></div>}
           </div>
         </div>
       )}

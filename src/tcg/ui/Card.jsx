@@ -86,6 +86,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
       {d.type === "char" && <span className={"tc-str" + (s > d.str ? " up" : s < d.str ? " down" : "")}>{s}</span>}
       {d.st && <span className="tc-st">Exclusive</span>}
       {isNew && <span className="tc-new">NEW</span>}
+      {foil && !missing && <span className="tc-shine" aria-hidden="true" />}
       {own && <span className="tc-own">{own}</span>}
       {children}
     </Tag>

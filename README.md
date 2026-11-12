@@ -5,7 +5,7 @@ Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en te
 
 ## Look & feel (« Tablette de virtualisation »)
 Tablette high-tech nuit bleue : fond marine très sombre avec deux halos (bleu, cyan) et une grille cyan très fine, panneaux arrondis en dégradé marine, pastilles, barres de progression arrondies (vertes, orange quand il reste peu), contours lumineux cyan pour la sélection. Polices embarquées : **Sora** (titres, cartes, chiffres) et **Noto Sans KR** (texte). **Aucune émoji** : toutes les icônes sont des traits fins Lucide (`src/ui/Icon.jsx`, `<Icon name="trophy" />` ; `src/ui/iconPaint.js` les dessine aussi sur les textures 3D).
-Sur une grande tablette (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone, plein écran. Variante de coque rouge et blanche dans les réglages du profil.
+Dans un navigateur sur grand écran (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone et dans l'appli PC, plein écran, sans cadre. Variante de coque rouge et blanche dans les réglages du profil (navigateur).
 **Matérialisation** (`src/ui/Materialize.jsx`) : à chaque changement d'écran, un damier de blocs s'allume du centre vers les bords, flashe et disparaît de bas en haut. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
 **Cartes** : cartes holographiques (grille, coins lumineux, nom en Sora) ; boosters en « cartouche de données ». Les mini-jeux se jouent dans des **secteurs virtuels** (sol sombre quadrillé, horizon en grille, colonnes de lumière) à la couleur de leur zone : forêt (vert), désert (orange), banquise (bleu-blanc), montagne (gris-violet), noyau (cyan) — `candyWorld(THREE, scene, { zone })` dans `src/minigames/three/kit3d.jsx`.
 Tout le thème est dans `src/tablet.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
@@ -106,6 +106,33 @@ Pour essayer le jeu (images Wikipédia comprises) sans fabriquer d'APK : 1) Sett
 (ou simple push sur `main`). L'adresse est `https://<ton-pseudo>.github.io/<dépôt>/`, ouvre-la sur ton téléphone. Pour avoir les images embarquées,
 lance d'abord « Chercher les images des cartes » (§8).
 
+## 3 ter. Appli PC (Windows)
+
+La même appli que l'APK, dans une fenêtre d'ordinateur (Electron, dossier `desktop/`). Elle s'ouvre **en plein écran** la première fois
+(**F11** pour passer en fenêtre ou revenir en plein écran, aussi dans Profil > Réglages), puis reprend la taille de la dernière fois.
+Pas de fausse tablette autour : l'appli occupe tout l'écran, et l'interface grandit avec la fenêtre (**Ctrl +** / **Ctrl −** pour l'ajuster,
+**Ctrl 0** pour revenir à la taille normale). Le profil, les decks et les illustrations restent sur l'ordinateur ; connecté par e-mail,
+on retrouve son compte comme sur le téléphone. Comme dans l'APK, les liens Spotify (playlist, morceaux) et Deezer marchent sans blocage.
+La partie du Trône des Mondes ne pivote pas sur PC, même dans une fenêtre plus haute que large.
+
+### Option A : GitHub Actions (rien à installer)
+À chaque push sur `main` (ou Actions > « Appli PC (Windows) » > Run workflow), avec les mêmes secrets que l'APK :
+Actions > « Appli PC (Windows) » > dernier run > Artifacts > `party-hub-windows`. Le zip contient :
+- `Party-Hub-Setup-x.y.z.exe` : installateur (raccourcis Bureau et menu Démarrer, désinstallable depuis les paramètres de Windows) ;
+- `Party-Hub-x.y.z-portable.exe` : version sans installation, à lancer directement (démarrage un peu plus lent).
+
+L'appli n'est pas signée : au premier lancement, Windows SmartScreen affiche « Windows a protégé votre ordinateur » >
+**Informations complémentaires** > **Exécuter quand même**.
+
+### Option B : en local
+    npm install                 # une seule fois (si ce n'est pas déjà fait)
+    npm run desktop:install     # une seule fois : Electron (environ 100 Mo)
+    npm run desktop             # construit l'appli web et l'ouvre dans une fenêtre
+    npm run desktop:exe         # fabrique l'installateur et la version portable dans desktop/release/
+
+Le mode en ligne utilise le `.env` à la racine, comme `npm run build`. Pour numéroter une nouvelle version, change `version`
+dans `desktop/package.json` (elle apparaît dans le nom des fichiers).
+
 ## 4. Ta liste de cartes
 
 Tout est dans `src/data/cards.csv`, une ligne par carte, 4 colonnes séparées par `;` (Excel / Google Sheets : enregistre en
@@ -181,12 +208,12 @@ Score final par joueur et par équipe (somme des membres). C'est du déclaratif 
 Choisis « Blind test » dans le lobby, puis importe une playlist :
 - **Deezer** (recommandé) : colle le lien d'une playlist **publique** (`deezer.com/…/playlist/123…`), jusqu'à 2 000 morceaux. Aucun compte ni clé : l'API Deezer est publique et chaque morceau a un extrait audio de 30 s. Les adresses d'extraits expirent : elles sont redemandées juste avant chaque morceau.
 - **Liste texte** : une ligne `Artiste - Titre` par morceau (600 max d'un coup ; si Deezer demande de ralentir, l'appli patiente et réessaie) ; chaque morceau est retrouvé sur Deezer. C'est aussi la solution pour **Spotify** (export en texte, par ex. avec Exportify) ou pour transférer ta playlist Spotify vers Deezer (Soundiiz, TuneMyMusic).
-- **Lien Spotify** : fonctionne seulement dans l'**appli Android** (le lien est lu via la page publique « embed », 100 morceaux max : limite de Spotify, puis chaque morceau est retrouvé sur Deezer). Spotify ne fournit plus d'extraits audio aux nouvelles applications, donc l'audio vient toujours de Deezer. Fonction expérimentale, non testée en réel.
-- **Liens de morceaux Spotify (sans limite de 100)** : sur ordinateur, ouvre la playlist dans Spotify, **Ctrl+A puis Ctrl+C**, colle dans la zone d'import. Chaque lien `open.spotify.com/track/…` est lu (page publique du morceau : titre + artiste, appli Android uniquement) puis retrouvé sur Deezer pour l'extrait audio.
+- **Lien Spotify** : fonctionne seulement dans l'**appli Android** et l'**appli PC** (le lien est lu via la page publique « embed », 100 morceaux max : limite de Spotify, puis chaque morceau est retrouvé sur Deezer). Spotify ne fournit plus d'extraits audio aux nouvelles applications, donc l'audio vient toujours de Deezer. Fonction expérimentale, non testée en réel.
+- **Liens de morceaux Spotify (sans limite de 100)** : sur ordinateur, ouvre la playlist dans Spotify, **Ctrl+A puis Ctrl+C**, colle dans la zone d'import. Chaque lien `open.spotify.com/track/…` est lu (page publique du morceau : titre + artiste, appli Android ou PC uniquement) puis retrouvé sur Deezer pour l'extrait audio.
 - **Connexion Spotify (facultative)** : bouton « Mes playlists Spotify » dans le lobby, visible tant qu'un Client ID est renseigné (par défaut celui de l'appli Spotify « Party Hub », dans `src/config.js` ; surchargeable avec `VITE_SPOTIFY_CLIENT_ID`). Flux PKCE sans secret : la page `public/spotify.html` (sur GitHub Pages) affiche un code que le joueur colle dans l'appli ; le jeton est gardé sur le téléphone. Importe une playlist entière (pages de 50), mais Spotify (mode développement) ne laisse lire que les playlists dont on est propriétaire ou collaborateur, limite l'appli à 5 utilisateurs et exige un compte Premium pour le propriétaire de l'appli. Une grande playlist (ex. 1950 morceaux = 39 pages) est lue avec une pause de 0,25 s entre deux pages ; les pannes passagères de Spotify (erreurs 429 et 500 à 504, ex. « 503 service indisponible ») sont réessayées automatiquement (6 fois : 0,7 s, 1,8 s, 4 s, 8 s, 15 s, 25 s, ou le délai demandé par Spotify ; l'écran dit « Spotify est lent, nouvel essai dans X s ») avant d'afficher « Spotify est momentanément indisponible ». Si Spotify lâche quand même, la lecture **reprend à la page où elle s'est arrêtée** : retouche la playlist (le bouton affiche « reprendre (600 lus) »). Les erreurs d'accès (401, 403) ne sont jamais réessayées. La lecture directe de Spotify accepte jusqu'à 3 000 morceaux (le texte collé reste limité à 1 500 lignes).
 - **Plusieurs playlists** : une fois une playlist chargée, « + Ajouter une autre playlist » en fusionne une autre (doublons ignorés, 3 000 morceaux au plus). Pratique pour dépasser les 100 morceaux d'un lien Spotify : ajoute-en plusieurs, colle une liste texte (1 500 lignes) ou un export CSV d'exportify.net, ou transfère la playlist sur Deezer (tunemymusic.com, gratuit) et colle le lien Deezer (jusqu'à 2 000 morceaux). Le nombre de morceaux joués par partie va de 5 à 100.
 - **Playlist de démo** : 12 morceaux avec une mélodie synthétique, pour tester sans réseau.
-Dans l'appli Android, `CapacitorHttp` est activé (`capacitor.config.json`) : les requêtes passent par le réseau natif, sans blocage CORS. Sur le web, Deezer est interrogé en JSONP.
+Dans l'appli Android, `CapacitorHttp` est activé (`capacitor.config.json`) : les requêtes passent par le réseau natif, sans blocage CORS ; l'appli PC fait de même (`desktop/main.cjs`). Sur le web, Deezer est interrogé en JSONP.
 
 Réglages du créateur : nombre de morceaux (5 à 30), temps pour répondre (10 à 30 s), réponses **illimitées** (défaut, on peut spammer) ou **une seule**, pause entre morceaux **automatique** (15 s de révélation + scores) ou **manuelle** (le créateur touche l'écran pour lancer la suite), son sur **tous les téléphones** ou celui du créateur seulement, **chacun pour soi** ou **par équipes** (nombre d'équipes et de joueurs par équipe au choix).
 - L'extrait démarre à un instant aléatoire (entre 0 et 30 s − temps de réponse) et se lance tout seul sur les téléphones, synchronisé. Une seule zone de saisie : tape le titre, l'artiste ou les deux ; une réponse peut contenir les deux. Les parenthèses, « feat. », « Remastered », accents, apostrophes, tirets, espaces, majuscules, ponctuation et petits mots oubliés (« the », « le », « de »…) sont ignorés. Les petites fautes de frappe sont acceptées et rapportent les points normalement (lettre manquante, en trop, fausse ou deux lettres inversées), selon la longueur de la réponse : 0 faute jusqu'à 4 lettres (« Hole » ≠ « Halo »), 1 faute de 5 à 9 lettres, 2 de 10 à 15, 3 au-delà. Un chiffre faux est refusé (« 21 Guns » ≠ « 22 Guns »). Une faute de plus que la tolérance donne « Presque ! » sans point, et on peut réessayer. Réglage : `typoTolerance` / `closeTolerance` dans `src/data/blindtest.js`.
@@ -251,7 +278,7 @@ Les anciens petits jeux 2D (tape au bon moment, réflexes…) ont été retirés
 ### Frise (frise musicale)
 Une équipe = une frise. À son tour, un joueur de l'équipe (ils tournent) écoute un extrait de 30 s dont il ne sait ni le titre ni l'année, et touche l'endroit de la frise où l'insérer (avant, entre ou après les cartes déjà posées, rangées de la plus ancienne à la plus récente).
 Puis l'année est révélée : bien placé (l'ordre des années reste croissant ; **même année = juste des deux côtés**), la carte rejoint la frise ; sinon elle est défaussée. Chaque équipe démarre avec 1 carte (année visible). La **première équipe qui atteint l'objectif gagne : 10, 15 ou 20 cartes, au choix du créateur**. Si la playlist est épuisée avant, la frise la plus longue gagne. Une frise seule (1 équipe, même 1 joueur) est possible pour s'entraîner.
-- **Source : ta playlist Spotify.** Dans le lobby, le créateur colle le lien de la playlist (même mécanisme que le blind test : lien lu dans l'appli Android, 100 premiers morceaux ; « + Ajouter une autre playlist » ou liste « Artiste - Titre » pour en avoir plus). Le **son** est l'extrait de 30 s du morceau retrouvé sur Deezer (Spotify ne donne plus d'extraits aux nouvelles applis), invisible pour les joueurs.
+- **Source : ta playlist Spotify.** Dans le lobby, le créateur colle le lien de la playlist (même mécanisme que le blind test : lien lu dans l'appli Android ou PC, 100 premiers morceaux ; « + Ajouter une autre playlist » ou liste « Artiste - Titre » pour en avoir plus). Le **son** est l'extrait de 30 s du morceau retrouvé sur Deezer (Spotify ne donne plus d'extraits aux nouvelles applis), invisible pour les joueurs.
 - **Années** (`src/data/musicbrainz.js`) : l'année de l'album Spotify/Deezer est fausse pour un remaster ou un best-of. L'appli cherche donc chaque morceau (titre nettoyé de « Remastered », « Live », « feat. »…) sur **MusicBrainz**, ne garde que les enregistrements qui correspondent au titre ET à l'artiste, et prend la **plus ancienne date de sortie**. Si MusicBrainz et Deezer ne sont pas d'accord de façon suspecte, ou si MusicBrainz ne connaît pas le morceau, la date est **incertaine** : le morceau est écarté (réglage « Morceaux dont l'année est incertaine » : écartés / acceptés ; la révélation signale alors « date à vérifier »).
   La préparation se fait pendant la partie, une carte d'avance (MusicBrainz impose 1 requête par seconde) : un écran « Préparation des cartes… » de quelques secondes au lancement.
 - Le créateur est l'arbitre : seul son téléphone connaît l'année avant la révélation (elle n'est jamais dans l'état diffusé aux autres).
@@ -339,7 +366,7 @@ League of Legends (un deck par **région** de Runeterra, comme les types Pokémo
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
 Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli
 et Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella), plus des cartes Neutres.
-2038 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
+2186 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
 
 **Les cartes de coût 7** (les plus puissantes, souvent légendaires) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
 (ex. Monkey D. Luffy en Gear Fourth et en Gear Fifth : une seule des deux par deck). Elles ont des pouvoirs à part, tirés de leur univers :
@@ -349,21 +376,33 @@ Barbe Noire et Sylas qui volent du Pouvoir, la rumeur d'Allison (« J'ai entendu
 Doctor Strange, Jérémie et Viktor qui ramènent un allié de la pile des morts, Captain America qui fait entrer un Avenger, Lex Luthor et Lotso
 qui font payer plus cher les personnages adverses, Scarlet Witch, Fred et Veigar qui gèlent une cible (elle ne se redresse pas au round suivant),
 Peter Hale qui revient en main après sa mort, Jet Black qui marque en défense… Sur la table, une carte gelée ou neutralisée porte une étiquette.
+Les plus connus ont deux versions à 7 aux pouvoirs différents : Pikachu (et Pikachu Gigamax), Dracaufeu (et Méga-Dracaufeu X), Mewtwo (et Méga-Mewtwo Y),
+Katniss (*Le Geai moqueur* / *La fille du feu*), Onze (*Pouvoirs déchaînés* / *Elle ferme le portail*), Woody, Buzz l'Éclair (et son mode espagnol),
+Wolverine (*Arme X* / *Old Man Logan*), Jean Grey (*Le Phénix* / *Le Phénix noir*), Batman, Superman, Scooby-Doo, Aelita…
+Marvel et DC suivent maintenant les comics : X-Men, Quatre Fantastiques, Fatalis, Galactus, Spider-verse et Défenseurs ; Corps des Green Lantern, Bat-famille,
+Teen Titans, Doomsday, Ra's al Ghul… (decks de départ : Les X-Men, Le Spider-verse, Les Quatre Fantastiques, Le Corps des Green Lantern, La Bat-famille).
+Code Lyoko gagne Odd, Yumi, William, Franz Hopper, Aelita et le Kolosse à 7, et Aelita a aussi deux versions moins chères
+(4 : *L'elfe de Lyoko*, qui redresse un allié de Lyoko ; 5 : *La Lyoko-guerrière*, qui agenouille un défenseur et reprend en main un personnage de la défausse) ; Scooby-Doo gagne Sammy « à 1 % de sa puissance », Véra, Daphné, Scrappy
+et l'École des Goules de Miss Grimwood (nouveau deck de départ).
 Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-la… » ; liste dans `cards/gender.js`).
 
 **Jouer** : dans le lobby, Jeu > **Trône des Mondes** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
 Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
 (Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés
 (Célèbre, Discret, Intimidation, Génie, Pillard, Duel, Embuscade, Fidèle, Limité…). Le bouton livre (en haut de la collection) explique les règles.
-Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
+Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
 
 **Collection** (bouton « Trône des Mondes » du menu, ou depuis le lobby) :
-- **Deck de départ** : choisi une seule fois parmi 100 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
+- **Deck de départ** : choisi une seule fois parmi 106 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, **une seule version par personnage** ; au plus 3 cartes de coût 7+, 6 de coût 6, 8 de coût 5 ;
   au moins 24 personnages ; au plus 18 objets + événements et 10 lieux ; jusqu'à 10 cartes d'UNE famille alliée (sauf les Fidèles).
+- **Album** (Collection > « Album : toutes les cartes ») : toutes les cartes qui existent, famille par famille avec le compte de chacune (ou toutes
+  familles mêlées par coût), filtres Obtenues / Manquantes / Brillantes. Celles qui manquent sont grisées mais s'ouvrent en grand (toujours grisées).
+  En grand, la carte s'incline un peu sous le doigt ou la souris, les brillantes ont leur reflet arc-en-ciel et un éclat de lumière qui les balaie,
+  et on feuillette l'album avec les flèches (← → au clavier).
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
   Environ 4 % des cartes sont **brillantes**, et 1 booster sur 200 est **doré** (que des rares ou mieux, toutes brillantes). Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
@@ -377,7 +416,10 @@ chaque fichier comme la carte : `Gryfenfer 7.jpg` (personnage : nom + coût), `G
 Le bouton **« Liste des cartes et noms de fichiers »** donne le nom exact de chaque carte (recherche, filtre par famille, « Sans illustration », copie d'un nom ou de toute la liste,
 tri par famille ou par coût toutes familles mêlées ; la collection a le même choix de tri) ;
 quand deux cartes auraient le même nom, la famille ou le sous-titre est ajouté entre parenthèses : `Mendoza 5 (Cités d'or).jpg`, `Noah 2 (Promo 2024).jpg`.
-Les images sont recadrées au format carte et gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
+Chaque image est recadrée **au format où la carte l'affiche** (pleine carte pour les légendaires, bandeau large pour les autres) : peu importe sa taille
+ou son format, l'appli cherche où est le sujet (contours et couleurs qui tranchent) et centre le cadre dessus. Avec « Choisir une image », on fait glisser l'image
+dans le cadre avant de valider. Après un import en lot, les cartes illustrées s'affichent en dessous : touche-en une puis **« Recadrer »** si le sujet est mal placé
+(sans rechoisir le fichier, tant que l'appli reste ouverte). Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
 ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
 
 **League of Legends** (`cards/lol.js`, 161 cartes) : un deck choisit une région, qui donne un bonus à la famille ; il joue les champions de cette région

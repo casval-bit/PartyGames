@@ -6,12 +6,14 @@ import "./tablet.css";
 import { installClickFx } from "./ui/clickfx.js";
 import { Icon } from "./ui/Icon.jsx";
 import { sfx } from "./lib/sfx.js";
+import { DESKTOP, desktopHint } from "./lib/device.js";
 
 installClickFx();
+if (DESKTOP) document.documentElement.classList.add("desktop"); // appli PC : voir lib/device.js
 // le son d'interface se débloque au premier geste (exigence des navigateurs)
 if (typeof window !== "undefined") window.addEventListener("pointerdown", () => sfx.unlock(), { once: true, capture: true });
 
-/** Coque de tablette (visible seulement sur grand écran ; sur téléphone ces boîtes n'existent pas pour la mise en page). */
+/** Coque de tablette (visible seulement sur grand écran, dans un navigateur ; sur téléphone ces boîtes n'existent pas pour la mise en page). */
 function Shell({ children }) {
   const [now, setNow] = useState(() => new Date());
   const [red, setRed] = useState(() => { try { return localStorage.getItem("ph-shell") === "red"; } catch { return false; } });
@@ -28,4 +30,6 @@ function Shell({ children }) {
   );
 }
 
-createRoot(document.getElementById("root")).render(<Shell><App /></Shell>);
+// Sur l'appli PC, l'écran de l'ordinateur est déjà l'écran du jeu : pas de fausse tablette, l'appli occupe toute la fenêtre.
+createRoot(document.getElementById("root")).render(DESKTOP ? <App /> : <Shell><App /></Shell>);
+desktopHint();

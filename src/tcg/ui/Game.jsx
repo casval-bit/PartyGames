@@ -9,7 +9,7 @@ import { Icon } from "../../ui/Icon.jsx";
 import QuitVote from "../../ui/QuitVote.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { vibrate } from "../../lib/util.js";
-import { lockLandscape, unlockOrientation, canFullscreen, toggleFullscreen } from "../../lib/orientation.js";
+import { lockLandscape, unlockOrientation, canFullscreen, toggleFullscreen, useFullscreen } from "../../lib/orientation.js";
 import { CardFace, CardBack, PlotFace, FamilyFace, Token, TYPE_ICON } from "./Card.jsx";
 import CardZoom from "./CardZoom.jsx";
 import Rules from "./Rules.jsx";
@@ -282,7 +282,7 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
   const [hideQ, setHideQ] = useState(false);
   const [toast, setToast] = useState("");
   const [pov, setPov] = useState(null); // joueur dont on regarde la table (null = la sienne)
-  const [fs, setFs] = useState(false);
+  const fs = useFullscreen();
   const q = priv && priv.prompt && ag && ag.prompt && priv.prompt.id === ag.prompt.id ? priv.prompt : null;
   const qid = q ? q.id : 0;
   useEffect(() => { setSel([]); setChType(null); setChDef(null); setHideQ(false); if (qid) { vibrate(15); sfx.select(); } }, [qid]);
@@ -518,7 +518,7 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
           <span className="tb-goal" title="Objectif de Pouvoir"><Icon name="crown" size={13} />{ag.goal}</span>
           <button className="iconbtn tb-ib" onClick={() => setSheet("rules")} aria-label="Règles"><Icon name="book" size={16} /></button>
           <button className="iconbtn tb-ib" onClick={() => setSheet("log")} aria-label="Journal de la partie"><Icon name="history" size={16} /></button>
-          {canFullscreen() && <button className="iconbtn tb-ib" onClick={async () => setFs(await toggleFullscreen())} aria-label={fs ? "Quitter le plein écran" : "Plein écran"}><Icon name={fs ? "minus" : "scan"} size={16} /></button>}
+          {canFullscreen() && <button className="iconbtn tb-ib" onClick={() => toggleFullscreen()} aria-label={fs ? "Quitter le plein écran" : "Plein écran"}><Icon name={fs ? "minus" : "scan"} size={16} /></button>}
         </div>
 
         <div className="agl-main">

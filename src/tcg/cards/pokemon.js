@@ -248,6 +248,10 @@ export const cards = [
   ev("Capture !", "Attrapé !", 3, "Ball", "evBounce:4", "R"),
   ev("Abri", "Protection", 2, "Attaque", "evCancel", "R"),
   ev("Échange", "Contre un autre", 1, "Dresseur", "evRecall:Pokémon", "U"),
+  // --- deuxièmes versions à 7 des plus célèbres
+  pk("Pikachu", "Pikachu Gigamax", 7, 6, "CRI", "Électrik", "celebre", "enterKneelAll:3@Gigamax Foudre ; winStand:combat@Vive-Attaque", "L", { key: "pokemon-pikachu" }),
+  pk("Dracaufeu", "Méga-Dracaufeu X", 7, 8, "C", "Feu|Dragon", "intimidation", "atkTerror:4@La flamme bleue ; winKill:combat,4@Boutefeu", "L"),
+  pk("Mewtwo", "Méga-Mewtwo Y", 7, 6, "RI", "Psy", "celebre", "actSilence:7@Psyko ; immune@Barrière", "L"),
 ];
 
 export const starters = [];

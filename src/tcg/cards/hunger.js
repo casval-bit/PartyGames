@@ -54,6 +54,7 @@ export const cards = [
   ev("Les trois doigts", "Le salut", 2, "Rébellion", "evStandAll:Rebelle", "R"),
   ev("Bain de sang", "À la Corne d'abondance", 3, "Arène", "evKillAll:1", "R"),
   ev("Baies sanguinaires", "Ensemble ou rien", 1, "Arène", "evMinus:3", "U"),
+  ch("Katniss Everdeen", "La fille du feu", 7, 6, "CR", "Tribut|District 12|Rebelle", "celebre", "atkKneel:5@La flèche dans le champ de force ; escape@Elle survit à l'arène", "L"),
 ];
 
 export const starters = [

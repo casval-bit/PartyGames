@@ -69,4 +69,9 @@ export const FEM = new Set([
   "Lacus Clyne", "Cagalli Yula Athha", "Murrue Ramius", "Sumeragi Lee Noriega", "Marina Ismail", "Feldt Grace", "Atra Mixta",
   "Kudelia Aina Bernstein", "Lafter Frankland", "Carta Issue", "Suletta Mercury", "Miorine Rembran", "Prospera", "Chuchu", "Norea Du Noc",
   "Sophie Pulone", "Nika Nanaura", "Ericht Samaya",
+  // Lot 4 : Marvel et DC (comics), Code Lyoko, Scooby-Doo
+  "Jean Grey", "Malicia", "Kitty Pryde", "Psylocke", "Emma Frost", "La Femme invisible", "Gwen Stacy", "She-Hulk",
+  "Jessica Cruz", "Talia al Ghul", "Power Girl", "Lois Lane", "Hawkgirl", "Black Canary", "Raven", "Starfire",
+  "Anthea Hopper", "Suzanne Hertz", "Rosa", "Miss Grimwood", "Sibella", "Elsa Frankenteen", "Winnie", "Phantasma", "Tanis",
+  "Jubilé", "Polaris", "Valeria Richards", "Alicia Masters", "Crystal", "Arisia",
 ]);

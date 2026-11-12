@@ -14,6 +14,8 @@ import PackOpen, { packColor, packIcon } from "./PackOpen.jsx";
 import Rules from "./Rules.jsx";
 import { useArtInfo, importFiles, syncRemote } from "./artStore.js";
 import ArtList, { loadTri, saveTri } from "./ArtList.jsx";
+import Album from "./Album.jsx";
+import { APPAREIL } from "../../lib/device.js";
 
 const EC = ({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
 const famStyle = (f, pt) => ({ "--fc": subOf(f.id, pt) ? subOf(f.id, pt).color : f.color });
@@ -149,6 +151,7 @@ function Collection({ t, own, setT, flash }) {
   const [rc, setRc] = useState(false);
   const [names, setNames] = useState(false);
   const [tri, setTri] = useState(loadTri);
+  const [album, setAlbum] = useState(false);
   const art = useArtInfo();
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -181,6 +184,11 @@ function Collection({ t, own, setT, flash }) {
         {rec.n > 0 && <small className="muted" style={{ fontSize: ".76rem" }}>Recycler transforme les exemplaires en trop ({rec.n} : au-delà de 2 normales et 1 brillante) en {rec.gained} Éclats.</small>}
         <span className="bar2 blue" style={{ display: "block" }}><i style={{ width: `${(100 * distinct) / ALL.length}%` }} /></span>
       </div>
+      <button className="hub-card alb-entry" onClick={() => { setAlbum(true); sfx.select(); }}>
+        <span className="alb-ico"><Icon name="library" size={22} /></span>
+        <span className="grow"><b>Album : toutes les cartes</b><small>Celles qui te manquent sont grisées ; touche une carte pour la voir en grand.</small></span>
+        <Icon name="next" />
+      </button>
       <input className="hub-search" placeholder="Chercher un nom, un trait…" value={q} onChange={(e) => { setQ(e.target.value); setLim(48); }} aria-label="Chercher une carte" />
       <div className="hub-filters">
         <button aria-pressed={mine} onClick={() => setMine(!mine)}>{mine ? "Mes cartes" : "Toutes"}</button>
@@ -205,16 +213,23 @@ function Collection({ t, own, setT, flash }) {
           <button className="btn ghost" onClick={() => setNames(true)}><Icon name="cliplist" size={18} />Liste des cartes et noms de fichiers</button>
           <label className="btn" style={{ cursor: "pointer" }}><Icon name="upload" size={18} />{imp && imp.busy ? `Import… ${imp.i}/${imp.n}` : "Importer des images"}<input type="file" accept="image/*" multiple hidden onChange={doImport} disabled={imp && imp.busy} /></label>
           {imp && !imp.busy && <div style={{ fontSize: ".82rem" }}><b>{imp.cards} carte{imp.cards > 1 ? "s" : ""} illustrée{imp.cards > 1 ? "s" : ""}</b> ({imp.ok} image{imp.ok > 1 ? "s" : ""}).{imp.bad.length > 0 && <div style={{ color: "#ffd3e1", marginTop: 4 }}>Non reconnues : {imp.bad.slice(0, 8).join(", ")}{imp.bad.length > 8 ? "…" : ""}</div>}</div>}
+          {imp && !imp.busy && imp.ids && imp.ids.length > 0 && (
+            <>
+              <small className="muted" style={{ fontSize: ".76rem" }}>Chaque image a été recadrée automatiquement au format de sa carte (pleine carte pour les légendaires). Vérifie : touche une carte, puis « Recadrer » si le sujet est mal placé.</small>
+              <div className="tz-att hub-strip">{imp.ids.slice(0, 120).map((id) => CARD[id] && <CardFace key={id} d={CARD[id]} w={84} onClick={() => setZoom(id)} />)}</div>
+            </>
+          )}
           <small className="muted" style={{ fontSize: ".76rem" }}>
             {art.remote.state === "ok" ? "Partage activé : les illustrations ajoutées par un joueur connecté à son compte apparaissent chez tous ses amis."
-              : art.remote.state === "missing" ? "Pour partager les illustrations avec tes amis : exécute une fois supabase/tcg_art.sql dans Supabase (voir README). En attendant, elles restent sur ce téléphone."
-              : art.remote.state === "off" ? "Mode local : les illustrations restent sur ce téléphone."
+              : art.remote.state === "missing" ? `Pour partager les illustrations avec tes amis : exécute une fois supabase/tcg_art.sql dans Supabase (voir README). En attendant, elles restent sur ${APPAREIL.ce}.`
+              : art.remote.state === "off" ? `Mode local : les illustrations restent sur ${APPAREIL.ce}.`
               : art.remote.state === "error" ? "Partage indisponible pour l'instant (connexion ?)." : "Synchronisation…"}
           </small>
           {(art.remote.state === "error" || art.remote.state === "ok") && <button className="btn small ghost" onClick={() => syncRemote(true)}><Icon name="reset" size={16} />Actualiser</button>}
         </div>
       </div>
       {names && <ArtList flash={flash} onZoom={setZoom} onClose={() => setNames(false)} />}
+      {album && <Album t={t} onClose={() => setAlbum(false)} />}
       {zoom && <CardZoom id={zoom} foil={(t.foil[zoom] || 0) > 0} owned={{ n: t.coll[zoom] || 0, f: t.foil[zoom] || 0 }} art onClose={() => setZoom(null)} />}
     </div>
   );

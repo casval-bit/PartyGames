@@ -53,6 +53,8 @@ export const cards = [
   ev("Le Grappin", "Ooooh !", 2, "Alien", "evBounce:3", "U"),
   ev("Évasion de la garderie", "Tous dehors", 2, "Évasion", "evStandAll:Jouet", "R"),
   ev("Mode jouet", "On ne bouge plus !", 1, "Secret", "evSave:Jouet", "U"),
+  ch("Woody", "Le shérif libre", 7, 6, "CRI", "Jouet|Cow-boy", "", "enterRevive:5@Personne n'est laissé derrière ; guard:Jouet@Il protège Fourchette", "L"),
+  ch("Buzz l'Éclair", "Le mode espagnol", 7, 6, "CR", "Jouet|Space Ranger", "", "winStand:*@Buzz Lightyear à la rescousse ! ; ifAtk:2@Le danseur de flamenco", "L"),
 ];
 
 export const starters = [

@@ -98,6 +98,10 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
 .tc.r-L .tc-text { flex: none; max-height: 47cqw; padding-bottom: 2cqw; text-shadow: 0 .3cqw .8cqw rgba(0,0,0,.9); }
 .tc.r-L .tc-foot { background: none; border-top-color: rgba(255,209,102,.25); }
 .tc.r-L .tc-name { color: #fff6d8; text-shadow: 0 0 2cqw rgba(255,190,90,.6), 0 .4cqw 1cqw #000; }
+/* l'illustration remplit la carte : icônes de défi et sous-types restent sous le bandeau du nom, comme sur les autres cartes
+   (sinon l'icône du haut passe sous la pastille de coût) */
+.tc.r-L .tc-icons { top: 17.7cqw; }
+.tc.r-L .tc-pts { top: 17.3cqw; }
 
 /* carte brillante (foil) : reflet holographique qui défile, et suit le doigt dans le zoom */
 .tc.foil::after { content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none; border-radius: inherit; mix-blend-mode: color-dodge; opacity: .45;
@@ -107,11 +111,17 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
   background: radial-gradient(circle at var(--sx, 30%) var(--sy, 20%), rgba(255,255,255,.9), transparent 34%),
     radial-gradient(circle, rgba(255,255,255,.85) 0 .35cqw, transparent .5cqw) 0 0 / 9cqw 11cqw, radial-gradient(circle, rgba(255,255,255,.6) 0 .25cqw, transparent .4cqw) 4cqw 5cqw / 13cqw 9cqw; }
 @keyframes holo { to { background-position: 300% 300%; } }
-.tc.tilt.foil::after { animation: none; }
 .tc-new { position: absolute; z-index: 8; right: -1cqw; top: 22cqw; padding: 1cqw 3cqw; border-radius: 2cqw 0 0 2cqw; font: 800 4.2cqw/1 var(--display); letter-spacing: .1em; color: #04261a; background: linear-gradient(180deg, #b6ffd3, #5dff9a); box-shadow: 0 .6cqw 1.6cqw rgba(0,0,0,.5); }
 .tc-own { position: absolute; z-index: 8; left: 50%; bottom: -.2cqw; transform: translateX(-50%); padding: .8cqw 3cqw; border-radius: 3cqw 3cqw 0 0; font: 800 4.6cqw/1 var(--display); color: #fff; background: rgba(5,9,20,.85); box-shadow: inset 0 0 0 .4cqw rgba(94,225,255,.45); }
-.tc.missing { filter: grayscale(1) brightness(.42) contrast(1.1); }
-.tc.missing .tc-art img { opacity: .4; }
+.tc.missing { filter: grayscale(1) brightness(.5) contrast(1.05); }
+.tc.missing .tc-art img { opacity: .5; }
+
+/* brillante : en plus du reflet arc-en-ciel, un éclat de lumière balaie la carte de temps en temps */
+.tc-shine { position: absolute; inset: 0; z-index: 7; pointer-events: none; border-radius: inherit; overflow: hidden; mix-blend-mode: screen; }
+.tc-shine::before { content: ""; position: absolute; top: -30%; bottom: -30%; left: 0; width: 45%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,.45) 45%, rgba(255,244,214,.7) 50%, rgba(255,255,255,.45) 55%, rgba(255,255,255,0) 78%, transparent 100%);
+  transform: translateX(-120%) skewX(-14deg); animation: tcShine 3.8s cubic-bezier(.45,.05,.3,1) infinite; }
+@keyframes tcShine { 0% { transform: translateX(-120%) skewX(-14deg); } 55%, 100% { transform: translateX(330%) skewX(-14deg); } }
 .tc.dim { filter: brightness(.5) saturate(.4); }
 
 /* dos de carte */
@@ -213,7 +223,29 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .tz-card { width: min(78vw, 330px, 46vh); perspective: 900px; animation: tzCard .38s cubic-bezier(.2,1.3,.4,1) both; flex: none; }
 .tz-card.land { width: min(92vw, 460px); }
 @keyframes tzCard { from { transform: translateY(30px) scale(.8); opacity: 0; } }
-.tz-card .tc, .tz-card .tp { transition: transform .12s ease-out; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+/* la carte s'incline un peu (doigt, souris) et oscille doucement toute seule quand on ne la touche pas */
+@property --irx { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --iry { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+.tz-card { touch-action: none; animation: tzCard .38s cubic-bezier(.2,1.3,.4,1) both, tzIdle 8s ease-in-out .5s infinite; }
+.tz-card.held { animation-play-state: running, paused; }
+@keyframes tzIdle { 0%, 100% { --irx: 0deg; --iry: 0deg; } 25% { --irx: 2deg; --iry: -5deg; } 50% { --irx: -1.5deg; --iry: 0deg; } 75% { --irx: 2deg; --iry: 5deg; } }
+.tz-card .tc, .tz-card .tp { transition: transform .45s cubic-bezier(.2,.8,.2,1); transform: rotateX(calc(var(--rx, 0deg) + var(--irx))) rotateY(calc(var(--ry, 0deg) + var(--iry))); }
+.tz-card.held .tc, .tz-card.held .tp { transition-duration: .12s; }
+.tz-card .tc.foil::after { opacity: .6; }
+.tz-card .tc.missing { filter: grayscale(1) brightness(.78); }
+.tz-card .tc.missing .tc-art img { opacity: .75; }
+.tz-stage { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.tz-nav { display: flex; align-items: center; gap: 14px; font: 600 .82rem var(--display); color: var(--txt-2); font-variant-numeric: tabular-nums; }
+.tz-nav .iconbtn:disabled { opacity: .3; }
+.pill.tz-foil { color: #2a1a00; border-color: transparent; background: linear-gradient(110deg, #ffd1f0, #fff3b0 32%, #b8fff0 64%, #c9d8ff); }
+/* grand écran (appli PC, tablette) : la carte en grand à gauche, sa fiche à droite */
+@media (min-width: 900px) and (min-height: 560px) {
+  .tz-wrap { flex-direction: row; align-items: flex-start; justify-content: center; gap: 28px; padding-top: calc(var(--safe-t) + 48px); }
+  .tz-stage { position: sticky; top: 0; }
+  .tz-card { width: min(400px, 62vh); }
+  .tz-card.land { width: min(560px, 46vw); }
+  .tz-info { flex: 0 1 460px; }
+}
 .tz-close { position: fixed; z-index: 81; top: calc(var(--safe-t) + 12px); right: max(14px, env(safe-area-inset-right, 0px)); }
 .tz-info { width: min(100%, 460px); display: flex; flex-direction: column; gap: 10px; }
 .tz-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -686,6 +718,11 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .agl-in { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 6px; overflow: clip;
   padding: max(6px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(4px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
 @media (orientation: portrait) { .agl-in { padding: 6px max(10px, env(safe-area-inset-bottom, 0px)) 4px max(10px, env(safe-area-inset-top, 0px)); } }
+/* Appli PC : une fenêtre plus haute que large ne fait pas pivoter la partie (on ne tourne pas un écran d'ordinateur). */
+@media (orientation: portrait) {
+  html.desktop .agl { width: 100vw; height: 100vh; height: 100dvh; left: 0; transform: none; }
+  html.desktop .agl-in { padding: 6px 10px 4px; }
+}
 
 .agl-hud { flex: none; height: 38px; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .agl-hud .quitbtn { position: static; flex: none; width: 30px; height: 30px; opacity: .85; }
@@ -798,3 +835,43 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .al-file span { min-width: 0; overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
 .al-file:active { background: rgba(94,225,255,.25); }
 .al-ok { flex: none; display: inline-flex; align-items: center; gap: 4px; font: 600 .74rem var(--display); color: var(--ok); }
+
+/* cadrage d'une illustration choisie (zoom de carte) */
+.tz-frame { width: 100%; margin: 2px auto 0; border-radius: 10px; background-color: #0b1426; background-size: cover; background-repeat: no-repeat;
+  box-shadow: 0 0 0 2px rgba(255,209,102,.75), 0 6px 16px rgba(0,0,0,.45); cursor: grab; touch-action: none; }
+.tz-frame:active { cursor: grabbing; }
+.hub-strip .tc { width: 84px; flex: 0 0 auto; }
+
+/* ------------------------------ album : toutes les cartes ------------------------------ */
+.alb-entry { flex-direction: row; align-items: center; gap: 12px; text-align: left; color: var(--txt); cursor: pointer; border-color: rgba(255,209,102,.45); }
+.alb-entry .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.alb-entry .grow b { font: 700 .95rem/1.2 var(--display); }
+.alb-entry .grow small { font-size: .78rem; color: var(--txt-2); }
+.alb-ico { flex: none; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: var(--gold); background: rgba(255,209,102,.12); box-shadow: inset 0 0 0 1px rgba(255,209,102,.35); }
+.alb { position: fixed; inset: 0; z-index: 72; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: calc(var(--safe-t) + 12px) max(14px, env(safe-area-inset-right, 0px)) 0 max(14px, env(safe-area-inset-left, 0px));
+  background: radial-gradient(120% 80% at 50% 0%, #0d1a35 0%, #070d1c 70%); color: var(--txt); animation: tzIn .2s ease-out both; }
+.alb > * { width: min(100%, 1400px); }
+.alb-top { display: flex; align-items: center; gap: 10px; flex: none; }
+.alb-title { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.alb-title h2 { font-size: 1.15rem; }
+.alb-title small { font-size: .8rem; color: var(--txt-2); }
+.alb-bar { display: block; flex: none; }
+.alb .hub-search, .alb .hub-filters { flex: none; }
+.alb-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: calc(var(--safe-b) + 18px); }
+.alb-sec { display: flex; flex-direction: column; gap: 10px; }
+.alb-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 9px 6px 8px; font-family: var(--display); color: #fff;
+  background: linear-gradient(180deg, #0c1934 80%, rgba(12,25,52,0)); }
+.alb-head > svg { color: var(--fc); filter: drop-shadow(0 0 6px var(--fc)); flex: none; }
+.alb-head b { font-size: .95rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alb-head small { margin-left: auto; font: 600 .78rem var(--display); color: var(--txt-2); font-variant-numeric: tabular-nums; flex: none; }
+.alb-mini { flex: none; width: 64px; height: 5px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.alb-mini i { display: block; height: 100%; border-radius: inherit; background: var(--fc); box-shadow: 0 0 6px var(--fc); }
+.alb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.alb-more { display: flex; justify-content: center; padding: 6px 0 10px; }
+@media (min-width: 700px) { .alb-grid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px; } }
+@media (min-width: 1200px) { .alb-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; } }
+@media (prefers-reduced-motion: reduce) {
+  .tz-card { animation: none; }
+  .tc-shine::before { animation: none; opacity: 0; }
+}

@@ -87,10 +87,25 @@ export const cards = [
   ev("Course-poursuite", "Sur un air de musique pop", 2, "Fuite", "evSave:Mystère et Cie", "U"),
   ev("Un Scooby Snack ?", "Il ferait n'importe quoi pour ça", 2, "Nourriture", "evBuffTrait:Chien,2", "U"),
   ev("Ces sales gosses !", "Le coupable enrage", 1, "Enquête", "evClaim:1", "R"),
+  // --- plus de 7 et l'École des Goules
+  ch("Scooby-Doo", "Scooby-Dooby-Doo !", 7, 6, "CRI", "Mystère et Cie|Chien|Famille Doo|Héros", "celebre", "enterPutPlay:Mystère et Cie,4@La bande arrive ; ifName:Sammy Rogers,2@Les inséparables", "L"),
+  ch("Sammy Rogers", "À 1 % de sa puissance", 7, 7, "CRI", "Mystère et Cie|Froussard|Coolsville", "", "atkTerror:5@Ultra Sammy ; selfGuard@Il n'a jamais dépassé 1 %", "L"),
+  ch("Véra Dinkley", "La plus grande détective", 7, 4, "RI", "Mystère et Cie", "genie", "actSilence:7@Je vous ai démasqué ! ; enterSearch:*@Un indice !", "L"),
+  ch("Daphné Blake", "Danger Daphné", 7, 5, "CRI", "Mystère et Cie|Blake|Héros", "", "enterKneelAll:2@Le karaté de Daphné ; escape@Toujours enlevée, jamais perdue", "L"),
+  ch("Scrappy-Doo", "Puppy Power !", 7, 5, "C", "Chien|Famille Doo|Héros", "", "atkKneel:5@Puppy Power ! ; ifAtk:2@Laissez-moi les attraper !", "L"),
+  ch("Miss Grimwood", "La directrice de l'École des Goules", 3, 2, "RI", "École des Goules|Magie", "", "aura:École des Goules,1@La directrice", "R"),
+  ch("Sibella", "La fille de Dracula", 2, 2, "RI", "École des Goules", "", "escape@Elle se change en chauve-souris", "U"),
+  ch("Elsa Frankenteen", "La fille de Frankenstein", 3, 4, "CI", "École des Goules", "", "ifDef:1@La force du monstre", "U"),
+  ch("Winnie", "La fille du loup-garou", 2, 3, "CI", "École des Goules", "", "ifAtk:1@La pleine lune", "U"),
+  ch("Phantasma", "La fille du fantôme", 2, 1, "R", "École des Goules", "discret", "escape@Elle traverse les murs", "U"),
+  ch("Tanis", "La fille de la momie", 2, 2, "C", "École des Goules", "", "ifWith:École des Goules,1@Les copines", "C"),
+  ch("Red Herring", "Ce n'est pas moi !", 2, 2, "C", "Coolsville", "", "loseDraw:1@Toujours accusé", "C"),
+  loc("L'École des Goules", "Le pensionnat de Miss Grimwood", 2, "École", "", "reserve:1 ; domi:1", "U"),
 ];
 
 export const starters = [
   { id: "sc-mystere", name: "Mystère et Cie", leader: "scooby-scooby-doo-7", maxChars: 30, like: ["Mystère et Cie", "Coolsville", "Héros"], avoid: ["Police", "Hex Girls"], excl: ["scooby-sammy-rogers-4"], desc: "Scooby, Sammy, Fred, Daphné et Véra au grand complet, avec une version de Sammy qu'on ne trouve que dans ce deck : on se sépare, on fouille, on démasque." },
   { id: "sc-doo", name: "La famille Doo", leader: "scooby-scrappy-doo-5", like: ["Chien", "Famille Doo", "Héros"], avoid: ["Hex Girls", "Treize fantômes"], desc: "Scrappy, Scooby-Dum, Yabba-Doo, Nova, Dynomutt et le Faucon bleu : tous les chiens de l'histoire, et quelques héros, pour une meute très attachante." },
+  { id: "sc-goules", name: "L'École des Goules", leader: "scooby-sammy-rogers-7", like: ["École des Goules", "Mystère et Cie", "Magie"], avoid: ["Police", "Famille Doo"], desc: "Sammy à 1 % de sa puissance, Scooby et les élèves de Miss Grimwood : Sibella, Elsa, Winnie, Phantasma et Tanis." },
   { id: "sc-cove", name: "Crystal Cove", leader: "scooby-bronson-stone-6", maxChars: 30, like: ["Crystal Cove", "Police", "Hex Girls", "Magie"], avoid: ["Famille Doo"], desc: "Le shérif Stone, Angel Dynamite, la maire Nettles, les Hex Girls et Vincent Van Ghoul : toute la ville la plus hantée du monde vient en aide à la bande." },
 ];

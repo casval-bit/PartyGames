@@ -79,6 +79,7 @@ export const cards = [
   ev("Le bal d'hiver", "Une soirée au collège", 2, "Fête", "evBuffTrait:Bande,1", "U"),
   ev("Les spores", "L'air du Monde à l'envers", 2, "Monde à l'envers", "evMinus:2", "U"),
   ev("Sauvé de justesse", "Retour du Monde à l'envers", 2, "Portail", "evSave:Bande", "R"),
+  ch("Onze", "Elle ferme le portail", 7, 6, "CRI", "Psychique|Bande|Hawkins", "", "enterKill:5@Le portail se referme ; loseStand@Les amis ne mentent pas", "L"),
 ];
 
 export const starters = [

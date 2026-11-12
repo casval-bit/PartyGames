@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "../ui/Avatar.jsx";
 import { isEmail } from "../lib/cloud.js";
 import { progressOf } from "../data/profile.js";
+import { APPAREIL } from "../lib/device.js";
 
 const RESEND_S = 30;
 
@@ -51,7 +52,7 @@ export default function Account({ acc, profile, onBack }) {
         {head}
         <div className="acard">
           <h3>Comptes indisponibles</h3>
-          <p>La connexion par e-mail a besoin du mode en ligne (Supabase). Tant qu'il n'est pas configuré, ton profil reste enregistré sur ce téléphone.</p>
+          <p>La connexion par e-mail a besoin du mode en ligne (Supabase). Tant qu'il n'est pas configuré, ton profil reste enregistré sur {APPAREIL.ce}.</p>
         </div>
       </div>
     );
@@ -74,14 +75,14 @@ export default function Account({ acc, profile, onBack }) {
         <div className={"astate " + st[0]} role="status" data-testid="acc-sync"><i />{st[1]}</div>
         {acc.sync === "error" && <button className="btn small" onClick={acc.retry}>Réessayer</button>}
         <p className="muted pnote" style={{ textAlign: "left" }}>
-          Ton niveau, tes statistiques, tes succès et ton avatar sont sauvegardés sur ton compte. Connecte-toi avec la même adresse sur un autre téléphone (ou après une réinstallation) pour les retrouver.
+          Ton niveau, tes statistiques, tes succès et ton avatar sont sauvegardés sur ton compte. Connecte-toi avec la même adresse sur {APPAREIL.autre} (ou après une réinstallation) pour les retrouver.
         </p>
         {err && <div className="toast" role="alert"><span>{err}</span></div>}
         {!confirmOut ? (
           <button className="btn ghost" onClick={() => { setErr(""); setConfirmOut(true); }}>Se déconnecter</button>
         ) : (
           <div className="acard">
-            <p>Ce téléphone repartira d'un profil vide. Ton compte, lui, garde tout.</p>
+            <p>{APPAREIL.Ce} repartira d'un profil vide. Ton compte, lui, garde tout.</p>
             <div className="row" style={{ gap: 10 }}>
               <button className="btn" style={{ flex: 1 }} onClick={() => setConfirmOut(false)} disabled={busy}>Annuler</button>
               <button className="btn primary" style={{ flex: 1 }} onClick={out} disabled={busy}>Se déconnecter</button>
@@ -97,8 +98,8 @@ export default function Account({ acc, profile, onBack }) {
       {head}
       <div className="acard">
         <h3>Garde ta progression</h3>
-        <p>Connecte-toi avec ton e-mail : ton niveau, tes avatars et tes statistiques sont sauvegardés sur ton compte, pas sur le téléphone. Pas de mot de passe : on t'envoie un code.</p>
-        {profile.stats.played > 0 && <p className="muted">Ta progression actuelle sur ce téléphone sera ajoutée à ton compte.</p>}
+        <p>Connecte-toi avec ton e-mail : ton niveau, tes avatars et tes statistiques sont sauvegardés sur ton compte, pas sur {APPAREIL.le}. Pas de mot de passe : on t'envoie un code.</p>
+        {profile.stats.played > 0 && <p className="muted">Ta progression actuelle sur {APPAREIL.ce} sera ajoutée à ton compte.</p>}
       </div>
 
       {step === "email" ? (

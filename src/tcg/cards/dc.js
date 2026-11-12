@@ -3,7 +3,7 @@ import { ch, loc, obj, ev } from "./build.js";
 export const meta = {
   id: "dc", name: "DC", short: "DC", color: "#4a8cff", color2: "#0d1d3d", icon: "star", motif: "skyline",
   desc: "La Ligue des Justiciers, la Bat-famille et les pires vilains de Gotham : les justiciers défendent mieux que personne.",
-  passive: "defAuraT:Justicier,1@Ligue des Justiciers",
+  passive: "defAuraT:Ligue,1@Ligue des Justiciers",
 };
 
 const J = "Justicier";
@@ -60,9 +60,61 @@ export const cards = [
   ev("Plan d'urgence", "Toujours prévoir", 2, "Bat-famille", "evCancel", "R"),
   ev("Rire du Joker", "Gaz hilarant", 2, "Chaos", "evKneel:4", "U"),
   ev("Justice !", "La Ligue intervient", 1, "Ligue", "evBuff:2", "C"),
+  // --- comics : le Corps des Green Lantern et le spectre émotionnel
+  ch("Green Lantern", "Le plus grand des Green Lantern", 7, 6, "CRI", `${J}|Ligue|Lantern`, "celebre", "aura:Lantern,1@Le serment ; actStandAll:Lantern,2@Dans le jour le plus clair", "L"),
+  ch("John Stewart", "Le Green Lantern architecte", 5, 5, "CRI", `${J}|Lantern|Ligue`, "", "ifWith:Lantern,1@Le Corps", "R"),
+  ch("Guy Gardner", "La grande gueule", 4, 5, "CI", `${J}|Lantern`, "", "ifAtk:1@Le poing vert", "U"),
+  ch("Kyle Rayner", "Le dernier Green Lantern", 4, 4, "RI", `${J}|Lantern`, "", "enterDraw:1@Les constructs de l'artiste", "U"),
+  ch("Jessica Cruz", "Celle qui a vaincu la peur", 4, 4, "CI", `${J}|Lantern`, "", "loseStand@La peur surmontée", "U"),
+  ch("Kilowog", "L'instructeur", 5, 6, "CI", `${J}|Lantern`, "", "atkBuff:Lantern,1@Au boulot, les bleus !", "R"),
+  ch("Sinestro", "Le Corps Sinestro", 6, 6, "CR", "Vilain|Lantern|Cosmique", "intimidation", "atkTerror:4@La peur jaune", "E"),
+  ch("Atrocitus", "Le Red Lantern", 5, 5, "C", "Vilain|Lantern|Cosmique", "", "winKill:combat,3@La rage", "R"),
+  ch("Larfleeze", "L'Orange Lantern", 3, 2, "R", "Vilain|Lantern|Cosmique", "", "winSteal:*,1@C'est à moi !", "U"),
+  // --- comics : la Bat-famille et Gotham
+  ch("Batman", "Le retour du Chevalier noir", 7, 7, "CR", `${J}|Bat-famille|Milliardaire`, "intimidation", "atkTerror:4@L'armure contre Superman ; winKneel:combat@Le vieux Batman", "L"),
+  ch("Red Hood", "Jason Todd", 4, 3, "C", `${J}|Bat-famille`, "", "dieReturn@Le puits de Lazare", "R"),
+  ch("Damian Wayne", "Le fils de Batman", 3, 2, "CR", `${J}|Bat-famille|Ado`, "", "ifName:Batman,1@Père et fils", "U"),
+  ch("Ra's al Ghul", "La Tête du Démon", 6, 5, "CRI", "Vilain|Ligue des Assassins", "", "dieReturn@Le puits de Lazare ; domi:2@La Ligue des Assassins", "E"),
+  ch("Talia al Ghul", "La fille du Démon", 4, 3, "RI", "Vilain|Ligue des Assassins", "", "winDiscard:ruse,1@La séductrice", "U"),
+  ch("Mr Freeze", "Victor Fries", 5, 5, "CR", "Vilain|Gotham", "", "enterFreeze:3@Le rayon glacial", "R"),
+  ch("Killer Croc", "Waylon Jones", 4, 6, "C", "Vilain|Gotham", "", "ifDef:1@Les égouts", "U"),
+  ch("L'Homme-Mystère", "Edward Nygma", 3, 2, "RI", "Vilain|Gotham", "genie", "winDiscard:ruse,1@Les énigmes", "U"),
+  ch("Hush", "Thomas Elliot", 4, 3, "RI", "Vilain|Gotham", "", "winSteal:ruse,1@Le chirurgien", "U"),
+  // --- comics : Superman, ses alliés et ses ennemis
+  ch("Superman", "Le dernier fils de Krypton", 7, 7, "CRI", `${J}|Ligue|Kryptonien`, "celebre", "enterKneelAll:3@Le souffle glacial ; selfGuard@L'homme d'acier", "L"),
+  ch("Doomsday", "Le monstre qui a tué Superman", 7, 8, "C", "Vilain|Kryptonien", "intimidation", "dieReturn@Il revient plus fort ; ifAtk:1@La rage de Doomsday", "L"),
+  ch("Black Adam", "Le champion de Kahndaq", 6, 6, "CRI", "Vilain|Magie", "", "winKill:combat,3@Shazam !", "E"),
+  ch("Brainiac", "Le collectionneur de mondes", 6, 4, "RI", "Vilain|Génie|Cosmique", "", "enterSearch:*@La collection de Brainiac ; actSilence:6@Il met une ville en bouteille", "E"),
+  ch("Bizarro", "Moi pas aimer toi", 5, 6, "C", "Vilain|Kryptonien", "", "ifAtk:1@Le monde de Bizarro", "U"),
+  ch("Général Zod", "Le tyran de Krypton", 6, 6, "C", "Vilain|Kryptonien", "", "winKill:combat,3@Agenouille-toi devant Zod !", "R"),
+  ch("Power Girl", "Kara de Terre-2", 5, 6, "C", `${J}|Kryptonien`, "", "ifAtk:1@La force de Terre-2", "U"),
+  ch("Lois Lane", "La reporter du Daily Planet", 2, 1, "RI", "Daily Planet", "", "enterDraw:1@Le scoop", "U"),
+  ch("Krypto", "Le super-chien", 2, 2, "C", `${J}|Kryptonien`, "", "ifName:Superman,1@Le chien de Superman", "C"),
+  // --- comics : la Ligue et les Teen Titans
+  ch("Hawkgirl", "Shayera Hol", 4, 4, "C", `${J}|Ligue`, "", "ifAtk:1@La masse de métal Nth", "U"),
+  ch("Black Canary", "Dinah Lance", 3, 3, "C", `${J}|Ligue`, "", "atkKneel:2@Le cri du canari", "U"),
+  ch("John Constantine", "Le magicien de la rue", 4, 3, "RI", "Magie", "", "winDiscard:ruse,1@Un sale tour", "R"),
+  ch("Swamp Thing", "Le gardien de la Sève", 5, 6, "C", `${J}|Magie`, "", "dieReturn@La Sève", "R"),
+  ch("Le Spectre", "La colère de Dieu", 6, 5, "RI", `${J}|Magie`, "", "enterKill:3@La vengeance divine", "E"),
+  ch("Raven", "La fille de Trigon", 4, 3, "RI", `${J}|Titans|Magie`, "", "actSilence:4@Azarath Metrion Zinthos", "R"),
+  ch("Starfire", "La princesse de Tamaran", 4, 4, "C", `${J}|Titans`, "", "ifAtk:1@Les éclairs d'étoile", "U"),
+  ch("Beast Boy", "Garfield Logan", 3, 3, "C", `${J}|Titans|Ado`, "", "escape@Il se change en n'importe quel animal", "U"),
+  ch("Paradémon", "L'armée d'Apokolips", 2, 2, "C", "Vilain|Apokolips", "", "ifWith:Apokolips,1@Les légions de Darkseid", "C", { uni: false }),
+  // --- comics : les recrues du Corps et les Gardiens d'Oa
+  ch("Ganthet", "Le Gardien de l'univers", 2, 1, "R", `${J}|Lantern|Oa`, "", "enterDraw:1@Les Gardiens d'Oa", "U"),
+  ch("Abin Sur", "Il transmet l'anneau", 3, 3, "CI", `${J}|Lantern`, "", "dieDraw:2@L'anneau choisit Hal", "U"),
+  ch("Tomar-Re", "Le vétéran du Corps", 3, 3, "CR", `${J}|Lantern`, "", "atkKneel:2@Le construct", "C"),
+  ch("Arisia", "La plus jeune Lantern", 2, 2, "C", `${J}|Lantern`, "", "ifWith:Lantern,1@Le Corps", "C"),
+  ch("Recrue du Corps", "Les Green Lantern d'Oa", 1, 1, "C", `${J}|Lantern`, "", "ifWith:Lantern,1@Le serment", "C", { uni: false }),
+  ch("Mogo", "La planète vivante", 6, 7, "CI", `${J}|Lantern`, "", "ifDef:2@Mogo ne socialise pas", "R"),
+  loc("Oa", "La planète des Gardiens", 2, "Lantern|Oa", "", "reserve:1@La batterie centrale", "U"),
+  obj("La Lanterne de pouvoir", "On recharge l'anneau", 1, "Lantern", "", "attStand", "U"),
+  ev("Le serment des Green Lantern", "Dans le jour le plus clair, dans la nuit la plus noire", 2, "Lantern", "evBuffTrait:Lantern,2", "U"),
 ];
 
 export const starters = [
-  { id: "dc-ligue", name: "La Ligue des Justiciers", leader: "dc-superman-7", like: ["Justicier", "Ligue", "Bat-famille"], avoid: ["Vilain"], desc: "Superman, Batman, Wonder Woman et la Ligue : imprenables en défense." },
-  { id: "dc-gotham", name: "Les vilains de Gotham", leader: "dc-darkseid-7", like: ["Vilain", "Gotham"], avoid: ["Justicier"], desc: "Darkseid, le Joker, Luthor et les fous d'Arkham : semer le chaos." },
+  { id: "dc-ligue", name: "La Ligue des Justiciers", leader: "dc-superman-7", like: ["Justicier", "Ligue", "Kryptonien"], avoid: ["Vilain", "Bat-famille", "Lantern"], desc: "Superman, Wonder Woman, Flash, Aquaman, Cyborg, Martian Manhunter, Hawkgirl et Black Canary : la Ligue défend plus fort." },
+  { id: "dc-gotham", name: "Les vilains de Gotham", leader: "dc-darkseid-7", like: ["Vilain", "Gotham"], avoid: ["Justicier", "Lantern"], desc: "Darkseid, le Joker, Luthor, Ra's al Ghul et les fous d'Arkham : semer le chaos." },
+  { id: "dc-lanterns", name: "Le Corps des Green Lantern", leader: "dc-green-lantern-7", like: ["Lantern", "Lantern", "Cosmique"], avoid: ["Gotham", "Bat-famille"], desc: "Hal Jordan, John Stewart, Guy Gardner, Kyle Rayner, Jessica Cruz et Kilowog, face à Sinestro, Atrocitus et Larfleeze : tout le spectre émotionnel." },
+  { id: "dc-bat", name: "La Bat-famille", leader: "dc-batman-7", like: ["Bat-famille", "Bat-famille", "Titans"], avoid: ["Vilain", "Kryptonien"], desc: "Batman, Robin, Nightwing, Batgirl, Red Hood, Damian Wayne, Alfred et les Teen Titans : la nuit de Gotham leur appartient." },
 ];
