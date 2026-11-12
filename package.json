@@ -10,6 +10,9 @@
     "check-cards": "node tools/check-cards.js",
     "android:sync": "vite build && cap sync android",
     "android:open": "cap open android",
+    "desktop:install": "npm --prefix desktop install",
+    "desktop": "npm --prefix desktop start",
+    "desktop:exe": "npm --prefix desktop run exe",
     "fetch-images": "node tools/fetch-images.js",
     "test-engine": "node tools/run-engine-tests.mjs",
     "test-all": "node tools/test-avatar3d.js && node tools/test-profile.js && node tools/test-account.js && node tools/test-dates.js && node tools/test-blindtest.js && node tools/test-playlist.js && node tools/test-spotify.js && node tools/test-secure.js && node tools/test-tcg.js --quiet && node tools/test-tcg-progress.js && npm run test-engine"

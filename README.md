@@ -330,15 +330,16 @@ stockage peut s'équiper d'éléments verrouillés chez lui, ce qui est sans con
 
 ## 11. Trône des Mondes (jeu de cartes à collectionner)
 
-Le jeu de cartes **Le Trône de Fer JCE 2e édition**, entièrement recodé, avec 23 familles (dont, clin d'œil, Westeros lui-même) :
+Le jeu de cartes **Le Trône de Fer JCE 2e édition**, entièrement recodé, avec 26 familles (dont, clin d'œil, Westeros lui-même) :
 Code Lyoko, Umbrella Academy, Toy Story, One Piece, Pokémon (un deck par **type**, chaque type donne un bonus à la famille ; avec leurs Dresseurs :
 Sacha, Ondine, Pierre, Régis, Jessie et James, Giovanni, N, Red, Silver, Tcheren, Aurore, Roseille, Lithia, et les Champions et Maîtres, réservés au deck de leur type :
 Cynthia, Goyah, Iris, Pieris, Inezia, Erika, Faïza, Donna), Star Academy, Les Mystérieuses Cités d'or,
 Les Légendaires, De cape et de crocs, Hunger Games, Cowboy Bebop, La Horde du Contrevent, Élite, Teen Wolf, Marvel, DC, Stranger Things, Scooby-Doo (que des gentils)
 League of Legends (un deck par **région** de Runeterra, comme les types Pokémon : voir plus bas), Harry Potter (un deck par **maison** de Poudlard),
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
-et Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), plus des cartes Neutres.
-1785 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 54 Scénarios (les « intrigues ») qui mélangent tous les univers.
+Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli
+et Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella), plus des cartes Neutres.
+2038 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
 
 **Les cartes de coût 7** (les plus puissantes, souvent légendaires) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
 (ex. Monkey D. Luffy en Gear Fourth et en Gear Fifth : une seule des deux par deck). Elles ont des pouvoirs à part, tirés de leur univers :
@@ -359,7 +360,7 @@ font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; penda
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
 
 **Collection** (bouton « Trône des Mondes » du menu, ou depuis le lobby) :
-- **Deck de départ** : choisi une seule fois parmi 87 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
+- **Deck de départ** : choisi une seule fois parmi 100 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, **une seule version par personnage** ; au plus 3 cartes de coût 7+, 6 de coût 6, 8 de coût 5 ;
   au moins 24 personnages ; au plus 18 objets + événements et 10 lieux ; jusqu'à 10 cartes d'UNE famille alliée (sauf les Fidèles).
@@ -452,11 +453,31 @@ et Sauron (*L'Œil sans paupière* / *Le Seigneur des Anneaux*) ont deux version
 | Mordor | les personnages du Mordor ont Intimidation | Sauron |
 | Isengard | +1 revenu, et les Uruk-hai ont Intimidation | Saroumane |
 
+**Le Monde de Narnia** (`cards/narnia.js`, 55 cartes) : passif « Aslan est en marche » (après un défi de Combat gagné, un participant se redresse) ;
+3 decks : les rois et reines de Narnia (Aslan), le Passeur d'Aurore (Caspian), la Sorcière Blanche (Jadis). Aslan a deux 7 (*Le Grand Lion* / *La Magie plus profonde*, qui revient de la Table de Pierre).
+
+**Studio Ghibli** (`cards/ghibli.js`, 69 cartes) : passif « Le vent se lève » (+1 force en défense, et un participant se redresse après une victoire) ;
+3 decks : les esprits de la forêt (Totoro, Mononoké, le Dieu-Cerf), les bains d'Aburaya (Chihiro, Haku, Yubaba, le Château ambulant), les aventuriers du ciel
+(Nausicaä, Laputa, Kiki, Porco Rosso). Totoro a deux 7 (*Le roi de la forêt* / *L'arrêt de bus sous la pluie*, qui fait arriver le Chatbus).
+
+**Gundam** (`cards/gundam.js`, 129 cartes) : les pilotes sont des personnages et les **Mobile Suits des objets** qu'on attache à un Pilote (RX-78-2, Zaku rouge, Wing Zero, Freedom, Exia,
+Barbatos, Aerial). Amuro, Char et Kira ont deux versions à 7.
+
+| Univers | Bonus | Deck de départ (héros) |
+|---|---|---|
+| Fédération | +1 force en défense | Amuro Ray |
+| Zeon | +1 revenu (les usines Zeonic) | Char Aznable |
+| After Colony | les pilotes ont Discret (opération Météore) | Heero Yuy |
+| Cosmic Era | après un défi gagné, un participant se redresse (l'éveil SEED) | Kira Yamato |
+| Anno Domini | un défi de Combat de plus (l'intervention armée) | Setsuna F. Seiei |
+| Post Disaster | +1 force en attaque (Tekkadan) | Mikazuki Augus |
+| Ad Stella | le premier défi de Combat gagné du round rapporte 1 Pouvoir (le duel) | Suletta Mercury |
+
 Code : `src/tcg/` — `rules.js` (règles, mots-clés), `abilities.js` (modèles d'effets : le texte d'une carte et son effet viennent du même modèle), `engine.js` (moteur),
 `bot.js` (adversaire), `cards/*.js` (une famille par fichier, une ligne par carte), `deck.js` (règles de deck, decks de départ), `progress.js` (collection, boosters, boutique, quêtes),
 `view.js` (ce qui part sur le réseau), `ui/` (cartes, partie, collection, boosters) ; côté créateur du lobby : `src/net/hostTrone.js`.
 Pour ajouter une carte : une ligne dans le fichier de sa famille (voir l'en-tête de `cards/build.js`). Une famille peut avoir des sous-groupes que chaque deck choisit
-(`types` et `sub` dans son fichier : les types Pokémon, les régions de League of Legends, les maisons de Poudlard, les camps de Star Wars, les factions de Westeros, les camps de la Terre du Milieu ; voir `subOf` et `subWords` dans `cards/index.js`). Tests : `node tools/test-tcg.js` (cartes, règles, parties entre bots ;
+(`types` et `sub` dans son fichier : les types Pokémon, les régions de League of Legends, les maisons de Poudlard, les camps de Star Wars, les factions de Westeros, les camps de la Terre du Milieu, les univers de Gundam ; voir `subOf` et `subWords` dans `cards/index.js`). Tests : `node tools/test-tcg.js` (cartes, règles, parties entre bots ;
 `--sim 400` pour l'équilibrage), `node tools/test-tcg-progress.js` (collection) et `node tools/test-tcg-host.js` (partie en réseau).
 
 ## 12. Loup-garou, version Stranger Things

@@ -1,0 +1,48 @@
+name: Appli PC (Windows)
+
+# Construit Party Hub pour Windows à chaque envoi sur main, comme l'APK : un installateur (Party-Hub-Setup-x.y.z.exe)
+# et une version portable sans installation (Party-Hub-x.y.z-portable.exe).
+# À récupérer dans Actions > « Appli PC (Windows) » > dernière exécution > Artifacts > party-hub-windows.
+# Mêmes secrets que l'APK pour le mode en ligne : VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci || npm install
+      - name: Build web
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      - uses: actions/upload-artifact@v4
+        with: { name: web-dist, path: dist, retention-days: 1 }
+
+  windows:
+    needs: web
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - uses: actions/download-artifact@v4
+        with: { name: web-dist, path: desktop/web }
+      - name: Build Windows app
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npm ci
+          npx electron-builder --win --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: party-hub-windows
+          path: desktop/release/*.exe
+          if-no-files-found: error

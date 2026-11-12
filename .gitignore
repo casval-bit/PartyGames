@@ -4,3 +4,6 @@ dist
 android/app/build
 android/.gradle
 android/build
+desktop/node_modules
+desktop/web
+desktop/release

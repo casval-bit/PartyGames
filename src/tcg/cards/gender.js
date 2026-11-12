@@ -59,4 +59,14 @@ export const FEM = new Set([
   "Elia Martell", "Ygritte", "Araignée de glace",
   // Le Seigneur des Anneaux
   "Galadriel", "Arwen", "Tauriel", "Éowyn", "Arachne", "Rosie Chaumine", "Lobelia Sacquet-de-Besace",
+  // Narnia
+  "Susan Pevensie", "Lucy Pevensie", "Jadis", "Mme Castor", "La Dame à la Robe Verte", "La Harpie",
+  // Studio Ghibli
+  "Satsuki Kusakabe", "Mei Kusakabe", "Noiraude", "Chihiro Ogino", "Yubaba", "Zeniba", "Lin", "San", "Dame Eboshi", "Moro", "Sophie Hatter",
+  "La Sorcière des Landes", "Nausicaä", "Kushana", "Sheeta", "Dola", "Kiki", "Gina", "Fio Piccolo", "Ponyo", "Arrietty",
+  // Gundam
+  "Sayla Mass", "Fraw Bow", "Lalah Sune", "Kycilia Zabi", "Haman Karn", "Relena Peacecraft", "Lady Une", "Lucrezia Noin", "Dorothy Catalonia",
+  "Lacus Clyne", "Cagalli Yula Athha", "Murrue Ramius", "Sumeragi Lee Noriega", "Marina Ismail", "Feldt Grace", "Atra Mixta",
+  "Kudelia Aina Bernstein", "Lafter Frankland", "Carta Issue", "Suletta Mercury", "Miorine Rembran", "Prospera", "Chuchu", "Norea Du Noc",
+  "Sophie Pulone", "Nika Nanaura", "Ericht Samaya",
 ]);

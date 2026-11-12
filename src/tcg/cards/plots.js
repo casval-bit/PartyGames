@@ -58,4 +58,10 @@ export const cards = [
   plot("Le jeu des trônes", "got", 5, 3, 1, 6, "Intrigue", "plDom:1"),
   plot("La Communauté de l'Anneau", "lotr", 5, 3, 1, 6, "Quête", "plStandOne"),
   plot("La bataille des champs du Pelennor", "lotr", 4, 6, 1, 5, "Guerre", "plExtra:combat"),
+  plot("L'éternel hiver", "narnia", 5, 4, 1, 6, "Hiver", "plKneel"),
+  plot("La bataille de Beruna", "narnia", 4, 5, 1, 6, "Guerre", "plExtra:combat"),
+  plot("La pluie à l'arrêt de bus", "ghibli", 5, 3, 1, 6, "Esprit", "plDraw:1"),
+  plot("Le grand festin", "ghibli", 6, 2, 1, 6, "Repas", "plEachDraw:1"),
+  plot("Une année de guerre", "gundam", 4, 5, 1, 6, "Guerre", "plExtra:combat"),
+  plot("L'opération Météore", "gundam", 5, 4, 1, 6, "Opération", "plKneel"),
 ];

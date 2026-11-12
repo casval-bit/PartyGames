@@ -705,6 +705,115 @@ const MOTIF = {
       for (let i = 0; i < 20; i++) glowDisk(g, r() * W, r() * H * 0.8, 2.5 * k, "#ffe9a8", 0.6);
     }
   },
+  // Narnia : le réverbère dans la forêt enneigée ; l'hiver de la Sorcière (trait Sorcière) ; la mer du Passeur d'Aurore
+  narnia(g, W, H, c, r) {
+    const k = W / 180, tr = c.tr || [];
+    const snow = (n, col = "#ffffff") => { for (let i = 0; i < n; i++) { g.fillStyle = rgba(col, 0.35 + r() * 0.6); g.beginPath(); g.arc(r() * W, r() * H, (0.6 + r() * 1.5) * k, 0, Math.PI * 2); g.fill(); } };
+    if (tr.includes("Sorcière")) { // l'éternel hiver et le château de glace
+      sky(g, W, H, "#0a1530", "#6f9cc8", 0.15);
+      const cx = W * (0.5 + (r() - 0.5) * 0.2), base = H * 0.86;
+      for (let i = -3; i <= 3; i++) { const h = H * (0.3 + (3 - Math.abs(i)) * 0.1 + r() * 0.06), w = 7 * k, x = cx + i * 12 * k;
+        g.fillStyle = rgba("#dff3ff", 0.85); g.beginPath(); g.moveTo(x - w, base); g.lineTo(x, base - h); g.lineTo(x + w, base); g.closePath(); g.fill(); }
+      glowDisk(g, cx, base - H * 0.3, 40 * k, "#bfe9ff", 0.35);
+      trees(g, W, H, base, "#173052", r, 12);
+      g.fillStyle = "#e9f5ff"; g.fillRect(0, base, W, H - base);
+      snow(60);
+    } else if (tr.includes("Passeur d'Aurore")) { // la mer de l'Est à l'aube et la proue en tête de dragon
+      sky(g, W, H, "#f7b46b", "#3b6fa8", 0);
+      glowDisk(g, W * 0.5, H * 0.56, H * 0.5, "#ffe6a8", 0.6);
+      for (let b = 0; b < 4; b++) { g.fillStyle = ["#2f6fa8", "#285f92", "#20507c", "#184266"][b]; g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, H * (0.6 + b * 0.1) + Math.sin(x * 0.05 + b * 2 + r()) * 3 * k); g.lineTo(W, H); g.closePath(); g.fill(); }
+      const sx = W * (0.3 + r() * 0.4), sy = H * 0.66;
+      g.fillStyle = "#3a2210"; g.beginPath(); g.moveTo(sx - 28 * k, sy); g.lineTo(sx + 24 * k, sy); g.lineTo(sx + 18 * k, sy + 7 * k); g.lineTo(sx - 22 * k, sy + 7 * k); g.closePath(); g.fill();
+      g.fillRect(sx - 1 * k, sy - 34 * k, 2 * k, 34 * k);
+      g.fillStyle = "#b03a2e"; g.fillRect(sx - 14 * k, sy - 30 * k, 26 * k, 20 * k);
+      g.fillStyle = "#d9a441"; g.beginPath(); g.arc(sx - 1 * k, sy - 20 * k, 5 * k, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#3a2210"; g.beginPath(); g.moveTo(sx + 24 * k, sy); g.quadraticCurveTo(sx + 34 * k, sy - 10 * k, sx + 28 * k, sy - 18 * k); g.lineTo(sx + 22 * k, sy - 12 * k); g.closePath(); g.fill();
+    } else { // le réverbère au milieu de la forêt enneigée
+      sky(g, W, H, "#1a2440", "#5d6f9a", 0.2);
+      trees(g, W, H, H * 0.86, "#0f1a2c", r, 14);
+      g.fillStyle = "#eef3fa"; g.fillRect(0, H * 0.86, W, H * 0.14);
+      const lx = W * (0.5 + (r() - 0.5) * 0.3), ly = H * 0.86;
+      g.fillStyle = "#1a1a1a"; g.fillRect(lx - 1.5 * k, ly - 52 * k, 3 * k, 52 * k);
+      g.fillRect(lx - 5 * k, ly - 62 * k, 10 * k, 10 * k);
+      glowDisk(g, lx, ly - 57 * k, 34 * k, "#ffd27a", 0.75);
+      g.fillStyle = "#fff1c4"; g.fillRect(lx - 3.5 * k, ly - 60.5 * k, 7 * k, 7 * k);
+      g.fillStyle = "rgba(255,214,140,.22)"; g.beginPath(); g.ellipse(lx, ly + 2 * k, 30 * k, 6 * k, 0, 0, Math.PI * 2); g.fill();
+      snow(50);
+    }
+  },
+  // Studio Ghibli : la forêt des esprits, les bains d'Aburaya la nuit, le ciel et ses grands nuages, la mer ; sinon les champs et le ciel d'été
+  ghibli(g, W, H, c, r) {
+    const k = W / 180, tr = c.tr || [];
+    const cloud = (x, y, s, col) => { g.fillStyle = col; for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(x + (i - 2) * 9 * s * k, y - Math.sin((i / 4) * Math.PI) * 9 * s * k, (9 + Math.sin((i / 4) * Math.PI) * 6) * s * k, 0, Math.PI * 2); g.fill(); } g.fillRect(x - 22 * s * k, y - 2 * s * k, 44 * s * k, 9 * s * k); };
+    if (tr.includes("Aburaya")) { // les bains la nuit, toits rouges et lanternes
+      sky(g, W, H, "#0b1030", "#2a2a5a", 0.2);
+      stars(g, W, H, r, 22, "#eef");
+      const bx = W * 0.5, base = H * 0.86;
+      for (let t = 0; t < 4; t++) { const w = (70 - t * 12) * k, y = base - t * 16 * k;
+        g.fillStyle = "#3a1414"; g.fillRect(bx - w / 2 + 4 * k, y - 14 * k, w - 8 * k, 14 * k);
+        for (let j = 0; j < 5; j++) { g.fillStyle = rgba("#ffcf6b", 0.75 + r() * 0.25); g.fillRect(bx - w / 2 + 8 * k + j * (w - 16 * k) / 5, y - 10 * k, 4 * k, 5 * k); }
+        g.fillStyle = "#a52a2a"; g.beginPath(); g.moveTo(bx - w / 2 - 4 * k, y - 14 * k); g.quadraticCurveTo(bx, y - 22 * k, bx + w / 2 + 4 * k, y - 14 * k); g.lineTo(bx + w / 2 - 2 * k, y - 16 * k); g.lineTo(bx - w / 2 + 2 * k, y - 16 * k); g.closePath(); g.fill(); }
+      for (let i = 0; i < 10; i++) { const x = r() * W, y = H * (0.3 + r() * 0.5); glowDisk(g, x, y, 6 * k, "#ff9b3d", 0.7); g.fillStyle = "#ff6a3d"; g.beginPath(); g.ellipse(x, y, 2 * k, 3 * k, 0, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = "#14204a"; g.fillRect(0, base, W, H - base);
+      for (let i = 0; i < 14; i++) { g.fillStyle = rgba("#ffcf6b", 0.2 + r() * 0.3); g.fillRect(r() * W, base + r() * (H - base), (6 + r() * 12) * k, 1.2 * k); }
+    } else if (tr.includes("Forêt") || tr.includes("Esprit")) { // la forêt des esprits et le grand arbre
+      sky(g, W, H, "#0d2a1a", "#3f7d4a", 0.3);
+      for (let i = 0; i < 6; i++) { const x = r() * W; const gr = g.createLinearGradient(x, 0, x + 30 * k, H); gr.addColorStop(0, "rgba(220,255,200,.25)"); gr.addColorStop(1, "rgba(220,255,200,0)"); g.fillStyle = gr; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 12 * k, 0); g.lineTo(x + 40 * k, H); g.lineTo(x + 20 * k, H); g.closePath(); g.fill(); }
+      const tx = W * (0.5 + (r() - 0.5) * 0.2);
+      g.fillStyle = "#2a1a0e"; g.beginPath(); g.moveTo(tx - 18 * k, H); g.quadraticCurveTo(tx - 8 * k, H * 0.6, tx - 10 * k, H * 0.3); g.lineTo(tx + 10 * k, H * 0.3); g.quadraticCurveTo(tx + 8 * k, H * 0.6, tx + 18 * k, H); g.closePath(); g.fill();
+      for (let i = 0; i < 9; i++) { g.fillStyle = ["#1f5a2e", "#2c7a3c", "#174a26"][i % 3]; g.beginPath(); g.arc(tx + (r() - 0.5) * 120 * k, H * (0.08 + r() * 0.25), (18 + r() * 14) * k, 0, Math.PI * 2); g.fill(); }
+      for (let i = 0; i < 24; i++) glowDisk(g, r() * W, H * (0.4 + r() * 0.55), (2 + r() * 3) * k, i % 3 ? "#eaffd8" : "#ffffff", 0.8);
+      g.fillStyle = "#123a1e"; g.fillRect(0, H * 0.92, W, H * 0.08);
+    } else if (tr.includes("Mer")) { // la mer et les vagues-poissons
+      sky(g, W, H, "#8fd3f2", "#e9f8ff", 0);
+      for (let b = 0; b < 4; b++) { g.fillStyle = ["#3fa4d8", "#2f8cc4", "#2476ad", "#1a6196"][b]; g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 6) g.lineTo(x, H * (0.5 + b * 0.12) + Math.sin(x * 0.06 + b * 1.7 + r()) * 5 * k); g.lineTo(W, H); g.closePath(); g.fill(); }
+      for (let i = 0; i < 18; i++) { g.fillStyle = "rgba(255,255,255,.7)"; g.beginPath(); g.ellipse(r() * W, H * (0.5 + r() * 0.45), 4 * k, 1.5 * k, 0, 0, Math.PI * 2); g.fill(); }
+    } else if (tr.includes("Ciel") || tr.includes("Pilote")) { // le grand ciel bleu et les nuages en tours
+      sky(g, W, H, "#2f86d6", "#bfe6ff", 0);
+      cloud(W * 0.3, H * 0.62, 1.6, "rgba(255,255,255,.95)"); cloud(W * 0.75, H * 0.4, 1.1, "rgba(255,255,255,.9)"); cloud(W * 0.15, H * 0.25, 0.8, "rgba(255,255,255,.85)");
+      g.fillStyle = "#2a3a4a"; const px = W * (0.55 + r() * 0.3), py = H * (0.2 + r() * 0.2); g.fillRect(px - 10 * k, py, 20 * k, 2 * k); g.fillRect(px - 2 * k, py - 3 * k, 6 * k, 6 * k);
+    } else { // les champs d'été et le ciel de cumulus
+      sky(g, W, H, "#4aa3e0", "#dff3ff", 0);
+      cloud(W * 0.35, H * 0.4, 1.3, "rgba(255,255,255,.95)"); cloud(W * 0.8, H * 0.28, 0.9, "rgba(255,255,255,.9)");
+      for (let b = 0; b < 3; b++) { g.fillStyle = ["#7fc25a", "#5fa844", "#4a9038"][b]; g.beginPath(); g.ellipse(W * (0.2 + b * 0.35), H * (0.86 + b * 0.04), W * 0.45, H * (0.24 - b * 0.04), 0, Math.PI, 0); g.fill(); }
+      g.fillStyle = "#4a9038"; g.fillRect(0, H * 0.9, W, H * 0.1);
+      for (let i = 0; i < 30; i++) { g.fillStyle = i % 2 ? "#ffe066" : "#ffffff"; g.beginPath(); g.arc(r() * W, H * (0.8 + r() * 0.2), 1.2 * k, 0, Math.PI * 2); g.fill(); }
+    }
+  },
+  // Gundam : l'espace et un décor par univers (c.sub)
+  gundam(g, W, H, c, r) {
+    const k = W / 180, s = c.sub;
+    const space = (a, b, n = 60) => { sky(g, W, H, a, b, 0.2); for (let i = 0; i < n; i++) { g.fillStyle = rgba("#ffffff", 0.2 + r() * 0.8); const z = (0.4 + r() * 1.2) * k; g.fillRect(r() * W, r() * H, z, z); } };
+    const beam = (col) => { const y0 = r() * H, y1 = r() * H; g.strokeStyle = rgba(col, 0.85); g.lineWidth = 2.2 * k; g.beginPath(); g.moveTo(-10, y0); g.lineTo(W + 10, y1); g.stroke(); glowDisk(g, W * 0.5, (y0 + y1) / 2, 18 * k, col, 0.35); };
+    const planet = (x, y, R, a, b) => { const gr = g.createRadialGradient(x - R * 0.4, y - R * 0.4, R * 0.1, x, y, R); gr.addColorStop(0, a); gr.addColorStop(1, b); g.fillStyle = gr; g.beginPath(); g.arc(x, y, R, 0, Math.PI * 2); g.fill(); };
+    if (s === "Fédération") { space("#020614", "#0c1e44"); planet(W * 0.2, H * 1.05, H * 0.55, "#6fb6ff", "#123a7a"); beam("#ff5aa0"); beam("#6fe3ff"); }
+    else if (s === "Zeon") {
+      space("#08030a", "#2a0c12"); planet(W * 0.85, H * 0.2, 18 * k, "#ffd27a", "#7a4a1a");
+      const cx = W * 0.45, cy = H * 0.55; g.save(); g.translate(cx, cy); g.rotate(-0.4); g.fillStyle = "#3a3f46"; g.fillRect(-55 * k, -9 * k, 110 * k, 18 * k);
+      for (let i = 0; i < 3; i++) { g.fillStyle = rgba("#ffd27a", 0.5); g.fillRect(-50 * k + i * 36 * k, -3 * k, 26 * k, 6 * k); } g.restore();
+      beam("#ff3b3b");
+    } else if (s === "After Colony") { // le ciel bleu traversé de météores
+      sky(g, W, H, "#0c2a5a", "#6fb6ff", 0.1);
+      for (let i = 0; i < 5; i++) { const x = r() * W, y = r() * H * 0.6; g.strokeStyle = "rgba(255,240,200,.8)"; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 30 * k, y - 18 * k); g.stroke(); glowDisk(g, x, y, 6 * k, "#fff2c4", 0.9); }
+      g.fillStyle = "#c9dcf0"; g.fillRect(0, H * 0.86, W, H * 0.14);
+    } else if (s === "Cosmic Era") { // les colonies-sabliers de PLANT
+      space("#020a10", "#0c3a34");
+      for (let i = 0; i < 3; i++) { const x = W * (0.2 + i * 0.3), y = H * (0.35 + r() * 0.3), h = (26 + r() * 10) * k; g.fillStyle = "rgba(160,230,210,.55)"; g.beginPath(); g.moveTo(x - 9 * k, y - h); g.lineTo(x + 9 * k, y - h); g.lineTo(x + 1.5 * k, y); g.lineTo(x + 9 * k, y + h); g.lineTo(x - 9 * k, y + h); g.lineTo(x - 1.5 * k, y); g.closePath(); g.fill(); }
+      beam("#5affc8");
+    } else if (s === "Anno Domini") { // les particules GN
+      space("#020812", "#0a2a3a", 30);
+      for (let i = 0; i < 60; i++) glowDisk(g, W * (0.5 + Math.sin(i * 0.4) * 0.35) + (r() - 0.5) * 20 * k, (i / 60) * H, (2 + r() * 3) * k, "#7dffb8", 0.7);
+      glowDisk(g, W * 0.5, H * 0.5, 40 * k, "#7dffb8", 0.25);
+    } else if (s === "Post Disaster") { // le désert rouge de Mars
+      sky(g, W, H, "#3a1208", "#c8642a", 0);
+      planet(W * 0.75, H * 0.22, 10 * k, "#fff0c4", "#d9a441");
+      for (let b = 0; b < 3; b++) { g.fillStyle = ["#a8441c", "#8a3414", "#6e2a10"][b]; g.beginPath(); g.ellipse(W * (b * 0.5), H * (0.86 + b * 0.04), W * 0.6, H * (0.2 - b * 0.03), 0, Math.PI, 0); g.fill(); g.fillRect(0, H * (0.86 + b * 0.04), W, H); }
+    } else if (s === "Ad Stella") { // l'école en orbite, blanche et rose
+      space("#0a0a1e", "#3a1a3a");
+      const cx = W * 0.5, cy = H * 0.55; g.strokeStyle = "rgba(255,200,230,.75)"; g.lineWidth = 4 * k; g.beginPath(); g.ellipse(cx, cy, 60 * k, 16 * k, 0, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = "#f2f2f8"; g.fillRect(cx - 8 * k, cy - 22 * k, 16 * k, 44 * k); glowDisk(g, cx, cy, 30 * k, "#ff9ad0", 0.3);
+    } else { space("#02040c", "#141a3a", 80); planet(W * 0.7, H * 0.7, 30 * k, "#8fd3ff", "#1a3a7a"); beam("#ffd27a"); }
+  },
   rings(g, W, H, c, r) {
     sky(g, W, H, "#0b1020", "#2a3346");
     for (let k = 0; k < 7; k++) { g.strokeStyle = rgba(k % 2 ? "#5ee1ff" : "#c084fc", 0.35 - k * 0.03); g.lineWidth = 2; g.beginPath(); g.ellipse(W / 2, H / 2, W * (0.08 + k * 0.07), H * (0.06 + k * 0.06), 0.3, 0, Math.PI * 2); g.stroke(); }
@@ -742,7 +851,7 @@ export function cardColors(d) {
   let c = f.color, c2 = f.color2;
   const tb = d.pt && d.pt.length ? subOf(d.fam, d.pt[0]) : null;
   if (tb) { c = tb.color; c2 = mix(c, "#0b1020", 0.72); }
-  return { c, c2, motif: f.motif || "rings", sub: tb ? tb.id : null };
+  return { c, c2, motif: f.motif || "rings", sub: tb ? tb.id : null, tr: d.traits || [] };
 }
 
 /**

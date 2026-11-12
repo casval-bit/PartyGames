@@ -39,7 +39,7 @@ export const GAMES = [
   { id: "petitbac", label: "Petit bac", note: "Une lettre, six catégories : sois le plus rapide et le plus original" },
   { id: "board", label: "Plateau", note: "Jeu de plateau : dé, cases, objets, gemmes… et un mini-jeu à chaque tour" },
   { id: "party", label: "Mini-jeux", note: "Mini-jeux sur chaque téléphone et tests d'amitié : le meilleur total gagne" },
-  { id: "trone", label: "Trône des Mondes", note: "Le jeu de cartes : 23 familles, défis, Domination… Le premier à atteindre l'objectif de Pouvoir gagne (2 à 4 joueurs)" },
+  { id: "trone", label: "Trône des Mondes", note: "Le jeu de cartes : 26 familles, défis, Domination… Le premier à atteindre l'objectif de Pouvoir gagne (2 à 4 joueurs)" },
   { id: "loupgarou", label: "Loup-garou", note: "Version Stranger Things : les créatures du Monde à l'envers contre les habitants de Hawkins. Rôles du jeu de base, des extensions et fanmade (4 à 18 joueurs)" },
 ];
 export const QE_ROUNDS_OPTIONS = [5, 8, 10, 15];

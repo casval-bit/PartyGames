@@ -1,0 +1,33 @@
+{
+  "name": "party-hub-desktop",
+  "productName": "Party Hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Party Hub sur ordinateur : la même appli que l'APK, dans une fenêtre.",
+  "author": "Brice",
+  "main": "main.cjs",
+  "scripts": {
+    "web": "npm --prefix .. run build && node copy-web.cjs",
+    "start": "npm run web && electron .",
+    "exe": "npm run web && electron-builder --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.9.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "fr.brice.timesup",
+    "productName": "Party Hub",
+    "copyright": "Brice",
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "preload.cjs", "icon.png", "web/**/*"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "icon": "icon.png"
+    },
+    "nsis": { "artifactName": "Party-Hub-Setup-${version}.${ext}", "shortcutName": "Party Hub" },
+    "portable": { "artifactName": "Party-Hub-${version}-portable.${ext}" },
+    "linux": { "target": ["AppImage"], "category": "Game", "icon": "icon.png" },
+    "mac": { "target": ["dmg"], "category": "public.app-category.games", "icon": "icon.png" }
+  }
+}
