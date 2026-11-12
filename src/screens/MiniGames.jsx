@@ -4,9 +4,9 @@ import { GAME_COMPONENTS, MG_BY, playSeconds } from "../minigames/index.js";
 import { MG_ASK_SECONDS } from "../config.js";
 import { MG_SIDES, modeLabel } from "../minigames/meta.js";
 import { beanColor, loadThree } from "../minigames/three/kit3d.jsx";
+import { Icon, Medal } from "../ui/Icon.jsx";
 
 const ord = (n) => (n === 1 ? "1er" : `${n}e`);
-const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const nameOf = (room, me, id) => (id === me.id ? "Toi" : (room.players.find((p) => p.id === id) || {}).name || "?");
 
 /** Les deux camps d'une manche en équipes (bleus / rouges), avec « ton équipe » mise en avant. */
@@ -19,9 +19,9 @@ function Sides({ room, me, mg, result }) {
         const mine = mg.teams && mg.teams[me.id] === sd.id;
         return (
           <div key={sd.id} className={"mgside" + (mine ? " mine" : "") + (res ? " " + res.result : "")} style={{ "--sc": sd.color, "--sink": sd.ink }}>
-            <b>{sd.emoji} {sd.name}{mine ? " · ton équipe" : ""}</b>
+            <b><i className="sidedot" style={{ background: sd.color }} />{sd.name}{mine ? " · ton équipe" : ""}</b>
             <div className="mem">{members.map((p) => <span key={p.id}><PlayerAvatar name={p.name} look={p.look} />{p.id === me.id ? "Toi" : p.name}</span>)}</div>
-            {res && <em>{res.result === "win" ? "🏆 " : res.result === "tie" ? "🤝 " : ""}moyenne {String(res.avg).replace(".", ",")}</em>}
+            {res && <em>{res.result === "win" ? <Icon name="trophy" size={14} /> : res.result === "tie" ? <Icon name="handheart" size={14} /> : null} moyenne {String(res.avg).replace(".", ",")}</em>}
           </div>
         );
       })}
@@ -41,7 +41,7 @@ function Standings({ room, me, gain }) {
           <span className="pos">{k + 1}</span>
           <span className="who"><PlayerAvatar name={p.name} look={p.look} />{p.id === me.id ? "Toi" : p.name}</span>
           {gain && gain[p.id] ? <b className="gain">+{gain[p.id]}</b> : <span />}
-          <small>{bd ? `${bd.gems[p.id] || 0} 💎 · ${val(p.id)} 🪙` : `${val(p.id)} pts`}</small>
+          <small>{bd ? <><Icon name="gem" size={13} /> {bd.gems[p.id] || 0} · <Icon name="coins" size={13} /> {val(p.id)}</> : `${val(p.id)} pts`}</small>
         </li>
       ))}
     </ol>
@@ -73,10 +73,10 @@ function Intro({ room, me }) {
   const cnt = left > 3000 ? "" : left > 0 ? String(Math.ceil(left / 1000)) : "GO";
   return (
     <div className="screen mgintro">
-      <div className="row spread"><span className="eyebrow">Manche {mg.round} sur {mg.total}</span><span className="tc-chip">{g.tag}</span></div>
+      <div className="row spread"><span className="eyebrow">Manche {mg.round} sur {mg.total}</span><span className="pill">{g.tag}</span></div>
       {mg.mode !== "ffa" && <div className="mgmode" data-testid="mg-mode">{modeLabel(mg.mode)}</div>}
       <div className="mghero">
-        <div className="mgemo" aria-hidden="true">{g.emoji}</div>
+        <div className="mgemo mgicon" aria-hidden="true"><Icon name={g.icon} size={54} stroke={1.3} /></div>
         <h2>{g.title}</h2>
         <p className="mgrule">{g.rule}</p>
       </div>
@@ -96,14 +96,14 @@ function Play({ room, me, api }) {
   return (
     <div className="screen mgplay">
       <div className="row spread">
-        <div className="mgtitle"><span aria-hidden="true">{g.emoji}</span> {g.title}</div>
-        {mg.mode !== "ffa" && mg.teams && mg.teams[me.id] != null ? <span className="mgteamchip" style={{ "--sc": MG_SIDES[mg.teams[me.id]].color, "--sink": MG_SIDES[mg.teams[me.id]].ink }} data-testid="mg-myteam">{MG_SIDES[mg.teams[me.id]].emoji} {modeLabel(mg.mode)}</span> : <span className="eyebrow">{mg.round}/{mg.total}</span>}
+        <div className="mgtitle"><Icon name={g.icon} size={20} /> {g.title}</div>
+        {mg.mode !== "ffa" && mg.teams && mg.teams[me.id] != null ? <span className="mgteamchip" style={{ "--sc": MG_SIDES[mg.teams[me.id]].color, "--sink": MG_SIDES[mg.teams[me.id]].ink }} data-testid="mg-myteam"><i className="sidedot" style={{ background: MG_SIDES[mg.teams[me.id]].color }} />{modeLabel(mg.mode)}</span> : <span className="eyebrow">{mg.round}/{mg.total}</span>}
       </div>
       {score == null ? (
         <div className="mgstage"><Game seed={mg.seed} seconds={playSeconds(g)} onFinish={finish} color={beanColor((room.players.find((p) => p.id === me.id) || {}).look)} look={(room.players.find((p) => p.id === me.id) || {}).look} /></div>
       ) : (
         <div className="mgdone" role="status" data-testid="mg-done">
-          <div className="mgemo" aria-hidden="true">✔️</div>
+          <div className="mgemo" aria-hidden="true"><Icon name="check" size={52} stroke={1.4} /></div>
           <h2>{g.fmt(score)}</h2>
           <p className="muted">Terminé ! On attend les autres ({done}/{total})</p>
           <div className="wait"><i /><i /><i /></div>
@@ -125,7 +125,7 @@ function Result({ room, me, api, isHost }) {
   return (
     <div className="screen mgresult">
       <div>
-        <div className="eyebrow">{g.emoji} {g.title} · manche {mg.round}/{mg.total}{team ? ` · ${modeLabel(L.mode)}` : ""}</div>
+        <div className="eyebrow">{g.title} · manche {mg.round}/{mg.total}{team ? ` · ${modeLabel(L.mode)}` : ""}</div>
         <h2 style={{ fontSize: "1.4rem" }} data-testid="mg-result-title">{title}</h2>
       </div>
       <div className="scroll">
@@ -136,9 +136,9 @@ function Result({ room, me, api, isHost }) {
             if (!p) return null;
             return (
               <li key={r.id} className={r.id === me.id ? "me" : ""} style={{ animationDelay: `${k * 70}ms` }}>
-                <span className="pos">{r.dnf ? "–" : team ? (r.rank === 1 ? "🏆" : "·") : MEDAL[r.rank] || ord(r.rank)}</span>
+                <span className="pos">{r.dnf ? "–" : team ? (r.rank === 1 ? <Icon name="trophy" size={18} /> : "·") : <Medal rank={r.rank} />}</span>
                 <span className="who"><PlayerAvatar name={p.name} look={p.look} />{r.id === me.id ? "Toi" : p.name}</span>
-                <b className="gain">{room.bd ? (r.coins ? `+${r.coins} 🪙` : "") : r.dnf || !r.pts ? "" : `+${r.pts}`}</b>
+                <b className="gain">{room.bd ? (r.coins ? <>+{r.coins} <Icon name="coins" size={14} /></> : "") : r.dnf || !r.pts ? "" : `+${r.pts}`}</b>
                 <small>{r.dnf ? "pas fini" : g.fmt(r.s)}</small>
               </li>
             );
@@ -234,7 +234,7 @@ function Final({ room, me, api, isHost, onLeave }) {
             <div key={r.id} className={"pod p" + Math.min(3, r.rank)} style={{ "--tc": playerColor(p.ci), "--tink": "#1d2457" }}>
               <PlayerAvatar name={p.name} look={p.look} showLv />
               <span className="who">{r.id === me.id ? "Toi" : p.name}</span>
-              <div className="blk"><b>{r.pts}</b><span>{MEDAL[r.rank] || ord(r.rank)}</span></div>
+              <div className="blk"><b>{r.pts}</b><span><Medal rank={r.rank} /></span></div>
             </div>
           );
         })}

@@ -4,6 +4,7 @@
 import { trackPoints, BD_N, extent } from "./layout.js";
 import { SPACE_INFO } from "../data/board.js";
 import { plastic } from "../minigames/three/kit3d.jsx";
+import { paintIcon } from "../ui/iconPaint.js";
 
 export const TYPE_COL = {
   start: [0xf5efdc, 0x9a927a], blue: [0x3aa4ff, 0x1b5fb0], red: [0xff5a70, 0xa82a3c], item: [0x86dc3a, 0x4a8a1a], event: [0xa06bff, 0x5a36a8],
@@ -13,27 +14,25 @@ const rng = (seed) => { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
-/** Pastille dessinée sur le dessus d'une case : « + » / « − » pour les cases de pièces, l'émoji de la case pour les autres. */
+/** Pastille dessinée sur le dessus d'une case : l'icône de la case en trait lumineux (« + » / « − » pour les cases de pièces). */
 function decalTexture(THREE, type) {
   const c = document.createElement("canvas"); c.width = c.height = 128;
   const g = c.getContext("2d");
-  g.textAlign = "center"; g.textBaseline = "middle";
-  if (type === "blue" || type === "red") {
-    g.font = "400 110px 'Luckiest Guy', Rubik, sans-serif"; g.lineWidth = 12; g.strokeStyle = "rgba(10,5,25,.85)"; g.fillStyle = "#fff";
-    const s = type === "blue" ? "+" : "−"; g.strokeText(s, 64, 70); g.fillText(s, 64, 70);
-  } else {
-    g.font = "84px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";
-    g.fillText(SPACE_INFO[type].emoji, 64, 70);
-  }
+  const icon = type === "blue" ? "plus" : type === "red" ? "minus" : SPACE_INFO[type].icon;
+  const big = type === "blue" || type === "red";
+  paintIcon(g, icon, 64, 64, big ? 104 : 86, { color: "rgba(6,10,24,.85)", stroke: big ? 4.6 : 3.6 });
+  paintIcon(g, icon, 64, 64, big ? 104 : 86, { color: "#ffffff", stroke: big ? 2.6 : 2, glow: 10 });
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   return t;
 }
-/** Cube flottant couvert d'un émoji (cadeau, point d'interrogation, machine à sous). */
-function emojiCube(THREE, emoji, bg) {
+/** Cube flottant (cadeau, surprise, chance) : panneau sombre à liseré, l'icône de la case en trait lumineux. */
+function iconCube(THREE, icon, bg) {
   const c = document.createElement("canvas"); c.width = c.height = 128;
   const g = c.getContext("2d");
-  g.fillStyle = bg; g.fillRect(0, 0, 128, 128); g.strokeStyle = "rgba(10,5,25,.9)"; g.lineWidth = 12; g.strokeRect(0, 0, 128, 128);
-  g.textAlign = "center"; g.textBaseline = "middle"; g.font = "74px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"; g.fillText(emoji, 64, 70);
+  const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, bg); gr.addColorStop(1, "#0b1426");
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  g.strokeStyle = "rgba(223,252,255,.9)"; g.lineWidth = 5; g.strokeRect(6, 6, 116, 116);
+  paintIcon(g, icon, 64, 64, 78, { color: "#ffffff", stroke: 2, glow: 8 });
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const m = new THREE.MeshBasicMaterial({ map: t });
   return new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.46, 0.46), m);
@@ -114,7 +113,7 @@ export function buildWorld(THREE, scene, spaces) {
     tiles.push({ x: T[k].x, z: T[k].z, y: 0.4, ang: T[k].ang, type, group: g, top: top2 });
     const o = outward(k);
     if (type === "item" || type === "event" || type === "chance") {
-      const cube = emojiCube(THREE, SPACE_INFO[type].emoji, type === "item" ? "#2d7a2a" : type === "event" ? "#5a36a8" : "#a01c64");
+      const cube = iconCube(THREE, SPACE_INFO[type].icon, type === "item" ? "#1f7a4a" : type === "event" ? "#5a36a8" : "#a01c64");
       cube.position.set(T[k].x, 1.35, T[k].z); root.add(cube); floaters.push({ m: cube, k, base: 1.35 });
     }
     if (type === "shop" || type === "shop2") {                  // petite échoppe sur le bord extérieur

@@ -1,6 +1,6 @@
 // Outils communs des mini-jeux en 3D : chargement de three.js à la demande, scène, haricots à la Fall Guys, commandes tactiles.
 import { useEffect, useRef, useState } from "react";
-import { CO_BY, cleanLook } from "../../data/profile.js";
+import { CO_BY, cleanLook, xOf } from "../../data/profile.js";
 import { loadKit } from "../../avatar3d/render.js";
 import { randomX, cleanX } from "../../avatar3d/schema.js";
 
@@ -73,7 +73,7 @@ export function Stage3D({ setup, label, onFail, onReady }) {
       const t0 = last;
       const loop = (now) => {
         raf = requestAnimationFrame(loop);
-        const dt = Math.min(0.05, (now - last) / 1000); last = now;
+        const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now;      // jamais négatif : le 1er horodatage d'image peut précéder l'instant de création
         ctl && ctl.update && ctl.update(dt, (now - t0) / 1000);
         renderer.render(scene, camera);
         if (!el.dataset.ready) { el.dataset.ready = "1"; readyRef.current && readyRef.current(); }
@@ -96,13 +96,58 @@ export function Stage3D({ setup, label, onFail, onReady }) {
 }
 
 /** Ciel, brouillard et lumières « bonbon ». */
-export function candyWorld(THREE, scene, { sky = 0x9fdcff, fog = [30, 90] } = {}) {
-  scene.background = new THREE.Color(sky);
-  if (fog) scene.fog = new THREE.Fog(sky, fog[0], fog[1]);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xa9b9e6, 2.6));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+/**
+ * Secteurs virtuels : chaque mini-jeu se joue dans un secteur (fond nuit, grille d'horizon, colonnes de lumière) à la couleur de sa zone.
+ * core = bleu-cyan, forest = vert forêt, desert = orange désert, ice = bleu-blanc glacé, mountain = gris-violet.
+ */
+export const SECTORS = {
+  core: { accent: 0x5ee1ff, glow: 0x2f8bff, bg: 0x060b18, ground: 0x0b1426 },
+  forest: { accent: 0x47e08f, glow: 0x1f9c5e, bg: 0x04110d, ground: 0x0a1c17 },
+  desert: { accent: 0xffae4a, glow: 0xe0782a, bg: 0x120a06, ground: 0x1f140c },
+  ice: { accent: 0xc9f3ff, glow: 0x6fc8ff, bg: 0x06101c, ground: 0x0d1b2c },
+  mountain: { accent: 0xb3a6e6, glow: 0x7266b8, bg: 0x0a0a17, ground: 0x15142a },
+};
+const texCache = new WeakMap();
+/** Texture de grille lumineuse (une case par répétition) : lignes fines, coins plus vifs. */
+export function gridTexture(THREE, { line = 2, glow = true } = {}) {
+  let m = texCache.get(THREE); if (!m) texCache.set(THREE, (m = new Map()));
+  const key = line + ":" + glow;
+  if (m.has(key)) return m.get(key);
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d");
+  g.clearRect(0, 0, 128, 128);
+  if (glow) { g.fillStyle = "rgba(255,255,255,.10)"; g.fillRect(0, 0, 128, 6); g.fillRect(0, 0, 6, 128); }
+  g.fillStyle = "rgba(255,255,255,.9)"; g.fillRect(0, 0, 128, line); g.fillRect(0, 0, line, 128);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, 10, line + 1); g.fillRect(0, 0, line + 1, 10);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+  m.set(key, t);
+  return t;
+}
+/** Le secteur : fond, brume, lumières (dont un contre-jour à la couleur de la zone), horizon quadrillé et colonnes de lumière au loin. */
+export function candyWorld(THREE, scene, { zone = "core", fog = [30, 90], horizon = -14 } = {}) {
+  const Z = SECTORS[zone] || SECTORS.core;
+  scene.userData.sector = Z;
+  scene.background = new THREE.Color(Z.bg);
+  if (fog) scene.fog = new THREE.Fog(Z.bg, fog[0], fog[1] * 1.15);
+  scene.add(new THREE.HemisphereLight(0xe4ecff, 0x1a2440, 2.1));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.3);
   sun.position.set(6, 12, 8);
   scene.add(sun);
+  const rim = new THREE.DirectionalLight(Z.accent, 1.1); rim.position.set(-7, 6, -10); scene.add(rim);
+  if (horizon != null) {
+    const tex = gridTexture(THREE).clone(); tex.needsUpdate = true; tex.repeat.set(70, 70);
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), new THREE.MeshBasicMaterial({ color: Z.accent, map: tex, transparent: true, opacity: 0.32, depthWrite: false }));
+    plane.rotation.x = -Math.PI / 2; plane.position.y = horizon; plane.renderOrder = -2; scene.add(plane);
+    const base = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), new THREE.MeshBasicMaterial({ color: Z.ground }));
+    base.rotation.x = -Math.PI / 2; base.position.y = horizon - 0.05; base.renderOrder = -3; scene.add(base);
+    // colonnes de lumière (tours lointaines du secteur)
+    const colMat = new THREE.MeshBasicMaterial({ color: Z.accent, transparent: true, opacity: 0.12, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    const colGeo = new THREE.CylinderGeometry(1.2, 1.2, 90, 12, 1, true);
+    for (let i = 0; i < 7; i++) {
+      const a = -0.6 + i * 1.05 + Math.sin(i * 12.9) * 0.3, r = 52 + (i % 3) * 14;
+      const col = new THREE.Mesh(colGeo, colMat); col.position.set(Math.sin(a) * r, horizon + 40, -Math.abs(Math.cos(a)) * r - 10); col.renderOrder = -1; scene.add(col);
+    }
+  }
   return sun;
 }
 const matCache = new WeakMap();
@@ -136,9 +181,14 @@ export function box(THREE, w, h, d, color, outline = true) {
  */
 export function makeBean(THREE, color = "#8b5cf6", look) {
   // avec une apparence : le vrai personnage du joueur (même corps et mêmes costumes que l'éditeur), même interface
-  const ax = look && (typeof look === "string" ? look : look.x);
+  // sans apparence enregistrée (ancien profil) : un personnage tiré de la couleur, jamais l'ancien haricot
+  const ax = look && typeof look === "string" ? look : xOf(look || { c: null });
   if (ax && avKit && avKit.THREE === THREE) {
-    try { const fig = avKit.makeFigure(avKit, cleanX(ax), { shadow: true }); fig.color = color; return fig; } catch (e) { console.error(e); }
+    try {
+      const fig = avKit.makeFigure(avKit, cleanX(ax), { shadow: true }); fig.color = color;
+      if (typeof window !== "undefined" && Array.isArray(window.__trackFigs)) window.__trackFigs.push(fig.group); // tests : sens de la course
+      return fig;
+    } catch (e) { console.error(e); }
   }
   const group = new THREE.Group();
   const body = new THREE.Group();
@@ -197,7 +247,7 @@ export function textSprite(THREE, text, { color = "#ffffff", size = 64, w = 256,
   const c = document.createElement("canvas");
   c.width = w; c.height = h;
   const g = c.getContext("2d");
-  g.font = `900 ${size}px Fredoka, "Arial Rounded MT Bold", sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+  g.font = `800 ${size}px Sora, "Segoe UI", sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
   g.lineWidth = size / 6; g.strokeStyle = "#1d2457"; g.strokeText(text, w / 2, h / 2);
   g.fillStyle = color; g.fillText(text, w / 2, h / 2);
   const tex = new THREE.CanvasTexture(c);

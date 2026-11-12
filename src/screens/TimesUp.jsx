@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { GameCard, Fuse, PlayerAvatar, teamStyle } from "../ui/parts.jsx";
 import { TEAMS, TU_READY_SECONDS, TU_ROUNDEND_SECONDS, TU_ROUND_RULES, TIME_BONUS_S, SCORE_BONUS_PTS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon } from "../ui/Icon.jsx";
 
 const plural = (n, a, b) => (n > 1 ? b : a);
 
@@ -215,7 +216,7 @@ function RoundEnd({ room, me, api }) {
       <div className="grow" />
       <Fuse deadline={room.deadline} total={TU_ROUNDEND_SECONDS} />
       {ready ? (
-        <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? " ✓" : ""}</span>)}</div>
+        <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? <Icon name="check" size={13} /> : null}</span>)}</div>
       ) : (
         <button className="btn good" onClick={() => api.ready(true)}>Prêt pour la suite</button>
       )}

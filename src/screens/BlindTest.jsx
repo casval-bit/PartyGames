@@ -4,6 +4,7 @@ import { TEAMS, BT_BREAK_SECONDS } from "../config.js";
 import { createPlayer } from "../lib/audio.js";
 import { vibrate } from "../lib/util.js";
 import { safeUrl } from "../lib/safeUrl.js";
+import { Icon } from "../ui/Icon.jsx";
 
 const plural = (n, a, b) => (n > 1 ? b : a);
 
@@ -35,9 +36,6 @@ const Flame = ({ n }) => (
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-10z" fill="currentColor" /></svg>{n}
   </span>
 );
-const Icon = ({ d }) => <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22"><path d={d} fill="currentColor" /></svg>;
-const SPEAKER = "M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.200v2.100a7 7 0 0 1 0 13.400v2.100a9 9 0 0 0 0-17.600z";
-const MUTED = "M3 9v6h4l5 4V5L7 9H3zm13.6 3l2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.400z";
 
 export default function BlindTest({ room, me, api, feedback, onLeave }) {
   const bt = room.bt;
@@ -142,7 +140,7 @@ function Play({ room, me, api, feedback, sound }) {
         </div>
         {sound.shouldPlay && (
           <button className="iconbtn" onClick={() => sound.setMuted(!sound.muted)} aria-label={sound.muted ? "Remettre le son" : "Couper le son"}>
-            <Icon d={sound.muted ? MUTED : SPEAKER} />
+            <Icon name={sound.muted ? "mute" : "sound"} size={22} />
           </button>
         )}
       </div>
@@ -157,8 +155,8 @@ function Play({ room, me, api, feedback, sound }) {
       )}
 
       <div className="btchips">
-        <span className={"btchip" + (mine.title ? " ok" : "")}>Titre {mine.title ? "✓" : "?"}</span>
-        <span className={"btchip" + (mine.artist ? " ok" : "")}>Artiste {mine.artist ? "✓" : "?"}</span>
+        <span className={"btchip" + (mine.title ? " ok" : "")}>Titre {mine.title ? <Icon name="check" size={13} /> : "?"}</span>
+        <span className={"btchip" + (mine.artist ? " ok" : "")}>Artiste {mine.artist ? <Icon name="check" size={13} /> : "?"}</span>
         {flash && <span key={flash.k} className={"btflash " + flash.kind}>{msg}</span>}
       </div>
 

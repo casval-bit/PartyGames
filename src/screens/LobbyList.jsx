@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { transport } from "../net/transport.js";
+import { Icon } from "../ui/Icon.jsx";
 
 export default function LobbyList({ busy, notice, clearNotice, onBack, onJoin }) {
   const [list, setList] = useState([]);
@@ -13,7 +14,7 @@ export default function LobbyList({ busy, notice, clearNotice, onBack, onJoin })
       </div>
       {notice && (
         <div className="toast" role="alert"><span>{notice}</span>
-          <button className="iconbtn" onClick={clearNotice} aria-label="Fermer">✕</button></div>
+          <button className="iconbtn" onClick={clearNotice} aria-label="Fermer"><Icon name="close" /></button></div>
       )}
       <div className="scroll">
         {list.length === 0 && (

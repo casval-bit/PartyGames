@@ -1,11 +1,15 @@
 // Mini-jeux 3D (1/2) : course d'obstacles, plancher qui s'effondre, arène de sumo, barre tournante, chasse aux pièces.
 import { useRef } from "react";
+import { Icon } from "../../ui/Icon.jsx";
 import {
   Stage3D, useReady, candyWorld, plastic, withOutline, box, makeBean, textSprite, bindKeys, bindStick, HoldBtn, beanColor, BOT_COLORS, botLook,
   clamp, lerp, wrapPi, rng, ri, useFinish, useScore, useClock, TimeBar, vib,
 } from "./kit3d.jsx";
 
-const COL = { pink: 0xff7eb6, yellow: 0xffd23f, cyan: 0x4cc9f0, purple: 0xb185ff, green: 0x6be28e, orange: 0xff9a3c, red: 0xff5d73, white: 0xffffff, navy: 0x1d2457 };
+import { COL, abyss } from "./party.jsx";
+import { gridTexture } from "./kit3d.jsx";
+/** Dalle sombre + quadrillage lumineux (sol des secteurs). */
+const gridTop = (THREE, w, d, color, repeat = 1) => { const t = gridTexture(THREE).clone(); t.needsUpdate = true; t.repeat.set(w * repeat, d * repeat); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color, map: t, transparent: true, opacity: 0.35, depthWrite: false })); m.rotation.x = -Math.PI / 2; return m; };
 const swipeDir = (el, on) => {
   let sx = 0, sy = 0, id = null;
   const d = (e) => { id = e.pointerId; sx = e.clientX; sy = e.clientY; };
@@ -28,15 +32,17 @@ export function FgRun({ seed, seconds, onFinish, color, look }) {
   const rd = useReady();
   const clock = useClock(seconds, () => finish(Math.round(S.dist)), rd.ready);
   const setup = ({ THREE, scene, camera, el }) => {
-    candyWorld(THREE, scene, { sky: 0x9fe3ff, fog: [28, 70] });
+    candyWorld(THREE, scene, { zone: "desert", fog: [28, 80] });
     const r = rng(seed), bean = makeBean(THREE, color || beanColor(), look);
     scene.add(bean.group);
     const road = new THREE.Group(); scene.add(road);
     const tiles = [];
     for (let i = 0; i < 18; i++) {
-      const t = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.5, 6), plastic(THREE, i % 2 ? 0xc9b6ff : 0xb095ff));
+      const t = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.5, 6), plastic(THREE, i % 2 ? 0x15284a : 0x1a3157));
+      for (const lx of [-1.1, 1.1]) { const ln = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 6), new THREE.MeshBasicMaterial({ color: 0xffae4a })); ln.position.set(lx, 0.26, 0); t.add(ln); }
+      const gt = gridTop(THREE, 7.6, 6, 0xffae4a, 0.6); gt.position.y = 0.255; t.add(gt);
       t.position.set(0, -0.25, i * 6 - 12); road.add(t); tiles.push(t);
-      for (const s of [-1, 1]) { const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 6, 10), plastic(THREE, i % 2 ? COL.red : COL.white)); rail.rotation.x = Math.PI / 2; rail.position.set(s * 4, 0.2, 0); withOutline(THREE, rail, 1.12); t.add(rail); }
+      for (const s of [-1, 1]) { const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 6, 10), plastic(THREE, i % 2 ? 0xffae4a : 0x2a3a5a, { emissive: i % 2 ? 0x5a2a00 : 0x000000 })); rail.rotation.x = Math.PI / 2; rail.position.set(s * 4, 0.2, 0); withOutline(THREE, rail, 1.12); t.add(rail); }
     }
     // obstacles : tirés avec la graine, donc identiques pour tous les joueurs
     const obs = [];
@@ -100,9 +106,9 @@ export function FgRun({ seed, seconds, onFinish, color, look }) {
       <div className="mgscore">{sc.val} m</div>
       <Stage3D onReady={rd.onReady} setup={setup} label="Course : glisse à gauche ou à droite, vers le haut pour sauter" onFail={() => finish(0)} />
       <div className="mgpads three">
-        <HoldBtn label="Gauche" testid="run-left" on={(v) => v && act.go("left")}>◀</HoldBtn>
+        <HoldBtn label="Gauche" testid="run-left" on={(v) => v && act.go("left")}><Icon name="back" size={26} /></HoldBtn>
         <HoldBtn label="Sauter" testid="run-jump" on={(v) => v && act.go("up")}>⤒</HoldBtn>
-        <HoldBtn label="Droite" testid="run-right" on={(v) => v && act.go("right")}>▶</HoldBtn>
+        <HoldBtn label="Droite" testid="run-right" on={(v) => v && act.go("right")}><Icon name="next" size={26} /></HoldBtn>
       </div>
     </div>
   );
@@ -115,13 +121,14 @@ export function HexFall({ seed, seconds, onFinish, color, look }) {
   const rd = useReady();
   const clock = useClock(seconds, () => finish(Math.round(S.t * 10) + (S.alive ? 40 : 0)), rd.ready);
   const setup = ({ THREE, scene, camera, el }) => {
-    candyWorld(THREE, scene, { sky: 0xffc8e8, fog: [26, 60] });
+    candyWorld(THREE, scene, { zone: "mountain", fog: [26, 70] });
     const r = rng(seed), N = 9, SZ = 2.2, half = (N * SZ) / 2 - SZ / 2;
     const pal = [COL.cyan, COL.pink, COL.yellow, COL.green, COL.purple];
     const tiles = [];
     for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(SZ - 0.18, 0.6, SZ - 0.18), plastic(THREE, pal[(i + j) % pal.length]));
-      withOutline(THREE, m, 1.03);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(SZ - 0.18, 0.6, SZ - 0.18), plastic(THREE, 0x172a4c));
+      const fr = new THREE.Mesh(new THREE.BoxGeometry(SZ - 0.26, 0.04, SZ - 0.26), new THREE.MeshBasicMaterial({ color: pal[(i + j) % pal.length], transparent: true, opacity: 0.85 })); fr.position.y = 0.31; m.add(fr);
+      const inner = new THREE.Mesh(new THREE.BoxGeometry(SZ - 0.5, 0.05, SZ - 0.5), plastic(THREE, 0x1b3156)); inner.position.y = 0.315; m.add(inner);
       m.position.set(i * SZ - half, -0.3, j * SZ - half); scene.add(m);
       tiles.push({ m, i, j, state: 0, timer: 0, vy: 0, base: m.position.clone() });
     }
@@ -196,13 +203,14 @@ export function Sumo({ seed, seconds, onFinish, color, look }) {
   const rd = useReady();
   const clock = useClock(seconds, () => finish(calc()), rd.ready);
   const setup = ({ THREE, scene, camera, el }) => {
-    candyWorld(THREE, scene, { sky: 0xa9e6ff, fog: [30, 70] });
+    candyWorld(THREE, scene, { zone: "ice", fog: [30, 80] });
     const r = rng(seed), R0 = 6.2, R1 = 3.7, ARENA = new THREE.Group();
     scene.add(ARENA);
-    const plat = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.7, 40), plastic(THREE, COL.pink)); plat.position.y = -0.35; withOutline(THREE, plat, 1.03);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 8, 48), plastic(THREE, COL.yellow)); ring.rotation.x = Math.PI / 2; ring.position.y = 0.01;
+    const plat = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.7, 48), plastic(THREE, 0x1b3156)); plat.position.y = -0.35;
+    { const gt = gridTexture(THREE).clone(); gt.needsUpdate = true; gt.repeat.set(6, 6); gt.center.set(0.5, 0.5); const top = new THREE.Mesh(new THREE.CircleGeometry(0.98, 48), new THREE.MeshBasicMaterial({ color: 0xc9f3ff, map: gt, transparent: true, opacity: 0.32, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = 0.356; plat.add(top); }
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.05, 8, 64), new THREE.MeshBasicMaterial({ color: 0xc9f3ff })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.01;
     ARENA.add(plat, ring);
-    const W = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ color: 0x5fb6ff })); W.rotation.x = -Math.PI / 2; W.position.y = -6; scene.add(W);
+    abyss(THREE, scene, null, -6);
     const mk = (c, x, z, bot, lk) => { const b = makeBean(THREE, c, lk); b.group.scale.setScalar(1.25); scene.add(b.group); return { b, x, z, vx: 0, vz: 0, y: 0, vy: 0, out: false, hidden: false, dash: 0, cd: 0, face: 0, bot, last: null, lastT: -9, think: 0, tx: 0, tz: 0 }; };
     const me = mk(color || beanColor(), 0, 3.2, false, look);
     const foes = [mk(BOT_COLORS[0], -3, -2.4, true, botLook(0)), mk(BOT_COLORS[1], 3, -2.4, true, botLook(1)), mk(BOT_COLORS[3], 0, -4.4, true, botLook(3))];
@@ -278,7 +286,7 @@ export function Sumo({ seed, seconds, onFinish, color, look }) {
       <div className="mgscore">{sc.val}</div>
       <Stage3D onReady={rd.onReady} setup={setup} label="Sumo : glisse pour bouger, bouton pour foncer" onFail={() => finish(0)} />
       <div className="mgpads">
-        <HoldBtn label="Foncer" testid="sumo-dash" className="wide" on={(v) => v && act.dash()}>💥 Foncer !</HoldBtn>
+        <HoldBtn label="Foncer" testid="sumo-dash" className="wide" on={(v) => v && act.dash()}><Icon name="bolt" /> Foncer !</HoldBtn>
       </div>
     </div>
   );
@@ -291,10 +299,11 @@ export function JumpClub({ seed, seconds, onFinish, color, look }) {
   const rd = useReady();
   const clock = useClock(seconds, () => finish(S.passes), rd.ready);
   const setup = ({ THREE, scene, camera, el }) => {
-    candyWorld(THREE, scene, { sky: 0xffe3a3, fog: [22, 55] });
+    candyWorld(THREE, scene, { zone: "forest", fog: [22, 65] });
     const r = rng(seed), RAD = 6;
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ color: 0x45c6ff })); water.rotation.x = -Math.PI / 2; water.position.y = -3; scene.add(water);
-    const plat = new THREE.Mesh(new THREE.CylinderGeometry(RAD, RAD, 0.8, 48), plastic(THREE, COL.cyan)); plat.position.y = -0.4; withOutline(THREE, plat, 1.015); scene.add(plat);
+    abyss(THREE, scene, null, -3);
+    const plat = new THREE.Mesh(new THREE.CylinderGeometry(RAD, RAD, 0.8, 48), plastic(THREE, 0x14323a)); plat.position.y = -0.4; scene.add(plat);
+    { const gt = gridTexture(THREE).clone(); gt.needsUpdate = true; gt.repeat.set(RAD * 1.2, RAD * 1.2); gt.center.set(0.5, 0.5); const top = new THREE.Mesh(new THREE.CircleGeometry(RAD - 0.05, 48), new THREE.MeshBasicMaterial({ color: 0x47e08f, map: gt, transparent: true, opacity: 0.3, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = 0.005; scene.add(top); }
     for (let i = 0; i < 6; i++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(1 + i * 0.95, 0.045, 6, 56), plastic(THREE, i % 2 ? COL.white : COL.yellow)); ring.rotation.x = Math.PI / 2; ring.position.y = 0.01; scene.add(ring); }
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.4, 14), plastic(THREE, COL.pink)); pole.position.y = 0.7; withOutline(THREE, pole, 1.08); scene.add(pole);
     const arm = new THREE.Group(); arm.position.y = 0.52; scene.add(arm);
@@ -363,9 +372,11 @@ export function CoinChase({ seed, seconds, onFinish, color, look }) {
   const rd = useReady();
   const clock = useClock(seconds, () => finish(S.coins * 10), rd.ready);
   const setup = ({ THREE, scene, camera, el }) => {
-    candyWorld(THREE, scene, { sky: 0xb7f0c8, fog: [30, 70] });
+    candyWorld(THREE, scene, { zone: "forest", fog: [30, 80] });
     const r = rng(seed), R = 6.2;
-    const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.6, R + 0.6, 0.6, 48), plastic(THREE, COL.green)); floor.position.y = -0.3; withOutline(THREE, floor, 1.02); scene.add(floor);
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.6, R + 0.6, 0.6, 48), plastic(THREE, 0x12392a)); floor.position.y = -0.3; scene.add(floor);
+    { const gt = gridTexture(THREE).clone(); gt.needsUpdate = true; gt.repeat.set(R * 1.3, R * 1.3); gt.center.set(0.5, 0.5); const top = new THREE.Mesh(new THREE.CircleGeometry(R + 0.55, 48), new THREE.MeshBasicMaterial({ color: 0x47e08f, map: gt, transparent: true, opacity: 0.3, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = 0.004; scene.add(top); }
+    abyss(THREE, scene, null, -5);
     for (let i = 0; i < 5; i++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2 + i * 1.2, 0.05, 6, 56), plastic(THREE, i % 2 ? 0x57d081 : 0x8ff0ad)); ring.rotation.x = Math.PI / 2; ring.position.y = 0.01; scene.add(ring); }
     const coinGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.12, 20);
     const gold = plastic(THREE, 0xffc928, { rough: 0.25, emissive: 0x6b4a00 }), silver = plastic(THREE, 0xffd76a, { rough: 0.3 });

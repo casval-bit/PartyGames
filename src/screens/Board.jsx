@@ -3,6 +3,7 @@ import { PlayerAvatar, Fuse, playerColor } from "../ui/parts.jsx";
 import { BD_SIZE, SPACE_INFO, ITEMS } from "../data/board.js";
 import { BD_PRE_SECONDS, BD_CHOICE_SECONDS, BD_GEM_COST, BD_MAX_ITEMS, BD_MINI_WIN, BD_DIE } from "../config.js";
 import { MG_SIDES } from "../minigames/meta.js";
+import { Icon, Medal } from "../ui/Icon.jsx";
 
 // Le plateau 3D est chargé à la demande (three.js pèse lourd) ; s'il ne peut pas s'afficher (pas de WebGL, chargement raté) : la grille 2D.
 const Board3D = lazy(() => import("../board3d/Board3D.jsx"));
@@ -15,7 +16,6 @@ class Catch3D extends Component {
   render() { return this.state.bad ? null : this.props.children; }
 }
 
-const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const ord = (n) => (n === 1 ? "1er" : `${n}e`);
 /** Position d'une case dans la grille 9×9 : le plateau fait le tour du bord, dans le sens des aiguilles d'une montre. */
 function cellXY(i) {
@@ -43,18 +43,18 @@ function Mid({ room, me, round = true }) {
   }
   return (
     <>
-      {round && <small>Tour {Math.min(bd.round, bd.total)}/{bd.total}{bd.sprint ? " · 🔥 sprint ×2" : ""}</small>}
+      {round && <small>Tour {Math.min(bd.round, bd.total)}/{bd.total}{bd.sprint ? <> · <Icon name="flame" size={13} /> sprint ×2</> : ""}</small>}
       {roll && bd.sub !== "pre" ? (
         <div className="bddice" key={roll.k} aria-label={`Dé : ${roll.steps}`}>
           {roll.dice.map((d, k) => <span key={k} className="die">{d}</span>)}
           {roll.dice.length > 1 ? <b>= {roll.steps}</b> : null}
-          {roll.back ? <em>↩️ recule</em> : null}
-          {!roll.dice.length && roll.item ? <em>{ITEMS[roll.item].emoji}</em> : null}
+          {roll.back ? <em><Icon name="undo" size={16} /> recule</em> : null}
+          {!roll.dice.length && roll.item ? <em><Icon name={ITEMS[roll.item].icon} size={22} /></em> : null}
         </div>
       ) : (
         <div className="bdwho">{bd.cur ? (bd.cur === me.id ? "À toi !" : `Tour de ${nameOf(room, me, bd.cur)}`) : ""}</div>
       )}
-      {bd.msg && <p className="bdmsg" key={bd.msg.k} role="status" data-testid="bd-msg">{bd.msg.text}</p>}
+      {bd.msg && <p className="bdmsg" key={bd.msg.k} role="status" data-testid="bd-msg">{bd.msg.icon ? <Icon name={bd.msg.icon} size={16} /> : null}{bd.msg.text}</p>}
     </>
   );
 }
@@ -70,7 +70,7 @@ function BoardGrid({ room, me }) {
         const [r, c] = cellXY(i), t = bd.spaces[i], ps = at[i] || [];
         return (
           <div key={i} className={"bdcell " + t + (bd.gemAt === i ? " gem" : "") + (cur && bd.pos[cur] === i ? " here" : "")} style={{ gridRow: r, gridColumn: c }} data-pos={i} data-type={t}>
-            <span className="ico" aria-hidden="true">{bd.gemAt === i ? "💎" : SPACE_INFO[t].emoji}</span>
+            <span className="ico" aria-hidden="true"><Icon name={bd.gemAt === i ? "gem" : SPACE_INFO[t].icon} size={18} /></span>
             <span className="toks">{ps.slice(0, 4).map((p) => <Token key={p.id} p={p} on={p.id === cur} />)}{ps.length > 4 && <b>+{ps.length - 4}</b>}</span>
           </div>
         );
@@ -89,9 +89,9 @@ function Strip({ room, me }) {
         if (!p) return null;
         return (
           <div key={id} className={"bdp" + (id === bd.cur ? " turn" : "") + (id === me.id ? " me" : "")} data-testid="bd-player">
-            <div className="top"><PlayerAvatar name={p.name} look={p.look} /><b>{id === me.id ? "Toi" : p.name}</b><i className="bdcol" style={{ background: MG_SIDES[bd.col[id] === 1 ? 1 : 0].color }} title={`Camp ${MG_SIDES[bd.col[id] === 1 ? 1 : 0].name.toLowerCase()} (décide du mini-jeu)`} data-testid="bd-col" />{bd.shield[id] && <span title="Bouclier">🛡️</span>}{bd.curse[id] && <span title="Maudit">{bd.curse[id] === "slow" ? "🍄" : "↩️"}</span>}</div>
-            <div className="num"><span data-testid="bd-coins">🪙 {bd.coins[id]}</span><span data-testid="bd-gems">💎 {bd.gems[id]}</span></div>
-            <div className="its">{bd.items[id].length ? bd.items[id].map((it, k) => <span key={k} title={ITEMS[it].name}>{ITEMS[it].emoji}</span>) : <span className="muted">—</span>}</div>
+            <div className="top"><PlayerAvatar name={p.name} look={p.look} /><b>{id === me.id ? "Toi" : p.name}</b><i className="bdcol" style={{ background: MG_SIDES[bd.col[id] === 1 ? 1 : 0].color }} title={`Camp ${MG_SIDES[bd.col[id] === 1 ? 1 : 0].name.toLowerCase()} (décide du mini-jeu)`} data-testid="bd-col" />{bd.shield[id] && <span className="bdst" title="Bouclier"><Icon name="shield" size={15} /></span>}{bd.curse[id] && <span className="bdst bad" title="Maudit"><Icon name={bd.curse[id] === "slow" ? "flask" : "undo"} size={15} /></span>}</div>
+            <div className="num"><span data-testid="bd-coins"><Icon name="coins" size={14} /> {bd.coins[id]}</span><span data-testid="bd-gems"><Icon name="gem" size={14} /> {bd.gems[id]}</span></div>
+            <div className="its">{bd.items[id].length ? bd.items[id].map((it, k) => <span key={k} title={ITEMS[it].name}><Icon name={ITEMS[it].icon} size={16} /></span>) : <span className="muted">—</span>}</div>
           </div>
         );
       })}
@@ -104,16 +104,16 @@ function Legend() {
     <div className="bdlegend">
       <h3>Comment ça marche</h3>
       <ul>
-        <li><span>🎲</span><span><b>Dé de 1 à {BD_DIE}.</b> Chacun joue son tour, du plus haut dé de départ au plus bas.</span></li>
-        <li><span>💎</span><span><b>Gemme : {BD_GEM_COST} pièces.</b> Arrête-toi ou passe dessus avec assez de pièces pour l'acheter. Elle change de case ensuite. Le plus de gemmes gagne, puis le plus de pièces, puis un dé.</span></li>
-        <li><span>🔵🔴</span><span><b>Après chaque tour de table, un mini-jeu.</b> La couleur de ta dernière case bleue ou rouge décide du camp : tous pareils = chacun pour soi, sinon 2 contre 2, 1 contre 3… Les gagnants empochent {BD_MINI_WIN} pièces.</span></li>
-        <li><span>🔥</span><span><b>Sprint final :</b> aux derniers tours, cases bleues et rouges ×2.</span></li>
-        <li><span>🏆</span><span><b>3 gemmes bonus à la fin :</b> mini-jeux (pièces gagnées), fortune (record de pièces), surprises (cases ?, chance, Gredin).</span></li>
+        <li><span><Icon name="dice" /></span><span><b>Dé de 1 à {BD_DIE}.</b> Chacun joue son tour, du plus haut dé de départ au plus bas.</span></li>
+        <li><span><Icon name="gem" /></span><span><b>Gemme : {BD_GEM_COST} pièces.</b> Arrête-toi ou passe dessus avec assez de pièces pour l'acheter. Elle change de case ensuite. Le plus de gemmes gagne, puis le plus de pièces, puis un dé.</span></li>
+        <li><span><Icon name="swords" /></span><span><b>Après chaque tour de table, un mini-jeu.</b> La couleur de ta dernière case bleue ou rouge décide du camp : tous pareils = chacun pour soi, sinon 2 contre 2, 1 contre 3… Les gagnants empochent {BD_MINI_WIN} pièces.</span></li>
+        <li><span><Icon name="flame" /></span><span><b>Sprint final :</b> aux derniers tours, cases bleues et rouges ×2.</span></li>
+        <li><span><Icon name="trophy" /></span><span><b>3 gemmes bonus à la fin :</b> mini-jeux (pièces gagnées), fortune (record de pièces), surprises (cases ?, chance, Gredin).</span></li>
       </ul>
       <h3>Les cases</h3>
-      <ul>{Object.entries(SPACE_INFO).map(([k, v]) => <li key={k}><span>{v.emoji}</span><span><b>{v.name}</b> {v.desc}</span></li>)}<li><span>💎</span><span><b>Gemme</b> la case où elle se trouve brille.</span></li></ul>
+      <ul>{Object.entries(SPACE_INFO).map(([k, v]) => <li key={k}><span style={{ color: v.tint }}><Icon name={v.icon} /></span><span><b>{v.name}</b> {v.desc}</span></li>)}<li><span><Icon name="gem" /></span><span><b>Gemme</b> la case où elle se trouve brille.</span></li></ul>
       <h3>Les objets ({BD_MAX_ITEMS} maximum)</h3>
-      <ul>{Object.values(ITEMS).map((v) => <li key={v.name}><span>{v.emoji}</span><span><b>{v.name}</b> {v.desc}{v.price ? ` (${v.price} 🪙)` : " (rare)"}</span></li>)}</ul>
+      <ul>{Object.values(ITEMS).map((v) => <li key={v.name}><span><Icon name={v.icon} /></span><span><b>{v.name}</b> {v.desc}{v.price ? ` (${v.price} pièces)` : " (rare)"}</span></li>)}</ul>
     </div>
   );
 }
@@ -137,7 +137,7 @@ function Actions({ room, me, api }) {
           <div className="bditems" aria-label="Tes objets">
             {inv.map((it, k) => (
               <button key={k} className={"bditem" + (sel === k ? " on" : "")} aria-pressed={sel === k} data-testid="bd-item" onClick={() => { setSel(sel === k ? -1 : k); setTarget(null); }}>
-                <span>{ITEMS[it].emoji}</span><b>{ITEMS[it].name}</b>
+                <span><Icon name={ITEMS[it].icon} size={22} /></span><b>{ITEMS[it].name}</b>
               </button>
             ))}
           </div>
@@ -149,7 +149,7 @@ function Actions({ room, me, api }) {
           </div>
         )}
         <button className="btn primary bdroll" data-testid="bd-roll" disabled={needTarget && !target} onClick={go}>
-          {item ? `${item.emoji} ${item.name} + lancer le dé 🎲` : "🎲 Lancer le dé"}
+          {item ? <><Icon name={item.icon} /> {item.name} + lancer le dé</> : <><Icon name="dice" /> Lancer le dé</>}
         </button>
       </div>
     );
@@ -158,7 +158,7 @@ function Actions({ room, me, api }) {
     if (!mine) return <div className="wait" role="status">{who} peut acheter une gemme<i /><i /><i /></div>;
     return (
       <div className="bdact">
-        <div className="bdoffer"><span aria-hidden="true">💎</span><div><b>Une gemme !</b><small>{BD_GEM_COST} pièces · tu en as {bd.coins[me.id]}</small></div></div>
+        <div className="bdoffer"><span aria-hidden="true"><Icon name="gem" size={30} /></span><div><b>Une gemme !</b><small>{BD_GEM_COST} pièces · tu en as {bd.coins[me.id]}</small></div></div>
         <div className="row" style={{ gap: 8 }}>
           <button className="btn primary" style={{ flex: 1 }} data-testid="bd-gem-yes" onClick={() => api.bdGem(true)}>Acheter</button>
           <button className="btn ghost" style={{ flex: 1 }} data-testid="bd-gem-no" onClick={() => api.bdGem(false)}>Non merci</button>
@@ -170,9 +170,9 @@ function Actions({ room, me, api }) {
     if (!mine) return <div className="wait" role="status">{who} est à la boutique<i /><i /><i /></div>;
     return (
       <div className="bdact">
-        <div className="bdoffer"><span aria-hidden="true">{bd.shopKind === "b" ? "🏴‍☠️" : "🛒"}</span><div><b>{bd.shopKind === "b" ? "Marché noir" : "Boutique"}</b><small>tu as {bd.coins[me.id]} 🪙 · {inv.length}/{BD_MAX_ITEMS} objets</small></div></div>
+        <div className="bdoffer"><span aria-hidden="true"><Icon name={bd.shopKind === "b" ? "skull" : "cart"} size={30} /></span><div><b>{bd.shopKind === "b" ? "Marché noir" : "Boutique"}</b><small>tu as {bd.coins[me.id]} pièces · {inv.length}/{BD_MAX_ITEMS} objets</small></div></div>
         <div className="bdshop">
-          {bd.shop.map((it, i) => <button key={i} className="bditem" data-testid="bd-shop" disabled={ITEMS[it].price > bd.coins[me.id] || inv.length >= BD_MAX_ITEMS} onClick={() => api.bdShop(i)}><span>{ITEMS[it].emoji}</span><b>{ITEMS[it].name}</b><small>{ITEMS[it].desc}</small><em>{ITEMS[it].price} 🪙</em></button>)}
+          {bd.shop.map((it, i) => <button key={i} className="bditem" data-testid="bd-shop" disabled={ITEMS[it].price > bd.coins[me.id] || inv.length >= BD_MAX_ITEMS} onClick={() => api.bdShop(i)}><span><Icon name={ITEMS[it].icon} size={22} /></span><b>{ITEMS[it].name}</b><small>{ITEMS[it].desc}</small><em><Icon name="coins" size={13} /> {ITEMS[it].price}</em></button>)}
         </div>
         <button className="btn small ghost" data-testid="bd-shop-skip" onClick={() => api.bdShop(-1)}>Passer</button>
       </div>
@@ -184,7 +184,7 @@ function Actions({ room, me, api }) {
 function Feed({ bd }) {
   const f = (bd.feed || []).slice(0, -1).reverse();
   if (!f.length) return null;
-  return <ul className="bdfeed" aria-label="Derniers événements">{f.map((m) => <li key={m.k}>{m.text}</li>)}</ul>;
+  return <ul className="bdfeed" aria-label="Derniers événements">{f.map((m) => <li key={m.k}>{m.icon ? <Icon name={m.icon} size={14} /> : null}{m.text}</li>)}</ul>;
 }
 
 /** Le plateau : en 3D par défaut, en 2D si l'appareil ne sait pas afficher la 3D (ou si le joueur l'a demandé : bouton « 2D » ou adresse ?bd2d). */
@@ -213,7 +213,7 @@ export default function Board({ room, me, api, onLeave }) {
         <div className="eyebrow">Plateau · tour {bd.round}/{bd.total}</div>
         <div className="row" style={{ gap: 6 }}>
           {flat && <button className="iconbtn" data-testid="bd-3d-on" onClick={() => { save2d(false); setFlat(false); }} aria-label="Afficher le plateau en 3D">3D</button>}
-          <button className="iconbtn" onClick={() => setHelp(!help)} aria-label="Règles" aria-pressed={help}>?</button>
+          <button className="iconbtn" onClick={() => setHelp(!help)} aria-label="Règles" aria-pressed={help}><Icon name={help ? "close" : "help"} /></button>
         </div>
       </div>
       <div className="scroll bdscroll">
@@ -252,7 +252,7 @@ function Final({ room, me, api, onLeave }) {
             <div key={r.id} className={"pod p" + Math.min(3, r.rank)} style={{ "--tc": playerColor(p.ci), "--tink": "#1d2457" }}>
               <PlayerAvatar name={p.name} look={p.look} showLv />
               <span className="who">{r.id === me.id ? "Toi" : p.name}</span>
-              <div className="blk"><b>{r.gems}💎</b><span>{MEDAL[r.rank] || ord(r.rank)}</span></div>
+              <div className="blk"><b>{r.gems}<Icon name="gem" size={15} /></b><span><Medal rank={r.rank} /></span></div>
             </div>
           );
         })}
@@ -263,9 +263,9 @@ function Final({ room, me, api, onLeave }) {
             <h3 className="mgh3">Gemmes bonus</h3>
             {bd.bonus.map((b) => (
               <div key={b.key} className={"bdbn" + (b.ids.length ? "" : " none")}>
-                <span aria-hidden="true">{b.emoji}</span>
+                <span aria-hidden="true"><Icon name={b.icon || "gem"} size={22} /></span>
                 <div><b>{b.name}</b><small>{b.ids.length ? `${b.ids.map((id) => nameOf(room, me, id)).join(" et ")} · ${b.desc} (${b.v})` : "personne"}</small></div>
-                {b.ids.length > 0 && <i>+1 💎</i>}
+                {b.ids.length > 0 && <i>+1 <Icon name="gem" size={13} /></i>}
               </div>
             ))}
           </div>
@@ -278,7 +278,7 @@ function Final({ room, me, api, onLeave }) {
               <li key={r.id} className={r.id === me.id ? "me" : ""} style={{ animationDelay: `${k * 60}ms` }}>
                 <span className="pos">{ord(r.rank)}</span>
                 <span className="who"><PlayerAvatar name={p.name} look={p.look} />{r.id === me.id ? "Toi" : p.name}</span>
-                <b className="gain">{r.gems} 💎</b><small>{r.coins} 🪙{r.tb ? ` · dé ${r.tb}` : ""}</small>
+                <b className="gain">{r.gems} <Icon name="gem" size={14} /></b><small>{r.coins} pièces{r.tb ? ` · dé ${r.tb}` : ""}</small>
               </li>
             );
           })}

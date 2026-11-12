@@ -1,13 +1,14 @@
 # Party Hub (nom de travail de la plateforme)
 
-Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Huit jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test**, **Frise** (frise musicale), **Célébrité** (photo pixellisée, façon golf), **Petit bac**, **Plateau** (façon Mario Party) et **Mini-jeux** (2D et 3D).
+Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Huit jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test**, **Frise** (frise musicale), **Célébrité** (photo pixellisée, façon golf), **Petit bac**, **Plateau** (façon Mario Party) et **Mini-jeux** (18 jeux 3D façon Pummel Party). Chaque joueur a son **Doudou**, une petite créature 3D à personnaliser.
 « Time's Up » est une marque déposée : le nom de la plateforme et des jeux est à changer avant le Play Store (`APP_NAME` dans `src/config.js`, `capacitor.config.json`, textes de `Splash.jsx` et `Menu.jsx`).
 
-## Look & feel (ambiance « soirée pièges » façon Pummel Party)
-Nuit violette avec un projecteur orange, panneaux sombres cernés d'un trait noir épais avec ombre dure, boutons orange épais, ruban de chantier jaune/noir en haut de l'écran. Polices embarquées (fonctionne hors-ligne) : **Luckiest Guy** (titres, boutons, chiffres, noms sur les cartes) et **Rubik** (texte).
-**Cartes** : contour noir, cadre crème, panneau saturé à rayons et trame de points (la teinte vient de l'identifiant de la carte, jamais de la catégorie), nom sur un cartouche crème qui penche un peu avec deux rivets jaunes, ruban de chantier en bas. Dos violet nuit avec anneau jaune et sablier. Cartes spéciales : même habillage en cyan (+10 s) ou magenta (× 3) avec foil. La taille du nom est calculée pour qu'aucun mot ne soit coupé (`GameCard` dans `src/ui/parts.jsx`). `/?gallery=names3` affiche des noms difficiles pour juger le rendu (`/?gallery`, `=big`, `=bonus` aussi).
-**Animations de clic** (`src/ui/clickfx.js`, installé une fois dans `main.jsx`) : tout bouton s'écrase puis rebondit « façon gélatine » et des étoiles giclent du point touché. Rien à ajouter sur les écrans ; `data-nofx` sur un élément le met à l'écart ; coupé automatiquement si le téléphone demande moins d'animations.
-Tout se règle dans `src/theme.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
+## Look & feel (« Tablette de virtualisation »)
+Tablette high-tech nuit bleue : fond marine très sombre avec deux halos (bleu, cyan) et une grille cyan très fine, panneaux arrondis en dégradé marine, pastilles, barres de progression arrondies (vertes, orange quand il reste peu), contours lumineux cyan pour la sélection. Polices embarquées : **Sora** (titres, cartes, chiffres) et **Noto Sans KR** (texte). **Aucune émoji** : toutes les icônes sont des traits fins Lucide (`src/ui/Icon.jsx`, `<Icon name="trophy" />` ; `src/ui/iconPaint.js` les dessine aussi sur les textures 3D).
+Sur une grande tablette (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone, plein écran. Variante de coque rouge et blanche dans les réglages du profil.
+**Matérialisation** (`src/ui/Materialize.jsx`) : à chaque changement d'écran, un damier de blocs s'allume du centre vers les bords, flashe et disparaît de bas en haut. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
+**Cartes** : cartes holographiques (grille, coins lumineux, nom en Sora) ; boosters en « cartouche de données ». Les mini-jeux se jouent dans des **secteurs virtuels** (sol sombre quadrillé, horizon en grille, colonnes de lumière) à la couleur de leur zone : forêt (vert), désert (orange), banquise (bleu-blanc), montagne (gris-violet), noyau (cyan) — `candyWorld(THREE, scene, { zone })` dans `src/minigames/three/kit3d.jsx`.
+Tout le thème est dans `src/tablet.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
 
 ## 1. Lancer en local (sans serveur)
 
@@ -166,7 +167,7 @@ Polices : Fraunces (noms des cartes), Bungee (titres), Figtree (texte).
 
 ## 7. Plateforme : sept jeux
 
-Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Célébrité**, **Petit bac**, **Plateau** ou **Mini-jeux**). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
+Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Célébrité**, **Petit bac**, **Plateau**, **Mini-jeux**, **Trône des Mondes**, le jeu de cartes décrit au point 11, ou **Loup-garou** version Stranger Things, au point 12). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
 À la fin d'une partie, le créateur appuie sur « Retour au lobby » : tout le monde revient au lobby avec ses équipes.
 
 **Qui est-ce ?** : pas de vote. Trois modes d'image dans le lobby : **Mixte** (une catégorie au hasard, puis une carte de cette catégorie : équilibré), **Tout au hasard** (une carte parmi toutes celles qui existent) et **Choisi par un adversaire** (avant chaque image, un joueur choisit la catégorie de l'image d'un autre ; à 2 équipes chacun choisit pour l'autre, à 3 ou 4 le cycle est retiré au hasard à chaque manche ; sans choix à temps, catégorie au hasard). **Chaque équipe a sa propre image** (et pas forcément le même thème que les autres équipes) ; les coéquipiers voient la même. La catégorie n'est révélée qu'avec la réponse. Nombre d'images au choix : 5, 8, 10, 15.
@@ -182,7 +183,7 @@ Choisis « Blind test » dans le lobby, puis importe une playlist :
 - **Liste texte** : une ligne `Artiste - Titre` par morceau (600 max d'un coup ; si Deezer demande de ralentir, l'appli patiente et réessaie) ; chaque morceau est retrouvé sur Deezer. C'est aussi la solution pour **Spotify** (export en texte, par ex. avec Exportify) ou pour transférer ta playlist Spotify vers Deezer (Soundiiz, TuneMyMusic).
 - **Lien Spotify** : fonctionne seulement dans l'**appli Android** (le lien est lu via la page publique « embed », 100 morceaux max : limite de Spotify, puis chaque morceau est retrouvé sur Deezer). Spotify ne fournit plus d'extraits audio aux nouvelles applications, donc l'audio vient toujours de Deezer. Fonction expérimentale, non testée en réel.
 - **Liens de morceaux Spotify (sans limite de 100)** : sur ordinateur, ouvre la playlist dans Spotify, **Ctrl+A puis Ctrl+C**, colle dans la zone d'import. Chaque lien `open.spotify.com/track/…` est lu (page publique du morceau : titre + artiste, appli Android uniquement) puis retrouvé sur Deezer pour l'extrait audio.
-- **Connexion Spotify (facultative)** : bouton « Mes playlists Spotify » dans le lobby, visible tant qu'un Client ID est renseigné (par défaut celui de l'appli Spotify « Party Hub », dans `src/config.js` ; surchargeable avec `VITE_SPOTIFY_CLIENT_ID`). Flux PKCE sans secret : la page `public/spotify.html` (sur GitHub Pages) affiche un code que le joueur colle dans l'appli ; le jeton est gardé sur le téléphone. Importe une playlist entière (pages de 50), mais Spotify (mode développement) ne laisse lire que les playlists dont on est propriétaire ou collaborateur, limite l'appli à 5 utilisateurs et exige un compte Premium pour le propriétaire de l'appli.
+- **Connexion Spotify (facultative)** : bouton « Mes playlists Spotify » dans le lobby, visible tant qu'un Client ID est renseigné (par défaut celui de l'appli Spotify « Party Hub », dans `src/config.js` ; surchargeable avec `VITE_SPOTIFY_CLIENT_ID`). Flux PKCE sans secret : la page `public/spotify.html` (sur GitHub Pages) affiche un code que le joueur colle dans l'appli ; le jeton est gardé sur le téléphone. Importe une playlist entière (pages de 50), mais Spotify (mode développement) ne laisse lire que les playlists dont on est propriétaire ou collaborateur, limite l'appli à 5 utilisateurs et exige un compte Premium pour le propriétaire de l'appli. Une grande playlist (ex. 1950 morceaux = 39 pages) est lue avec une pause de 0,25 s entre deux pages ; les pannes passagères de Spotify (erreurs 429 et 500 à 504, ex. « 503 service indisponible ») sont réessayées automatiquement (6 fois : 0,7 s, 1,8 s, 4 s, 8 s, 15 s, 25 s, ou le délai demandé par Spotify ; l'écran dit « Spotify est lent, nouvel essai dans X s ») avant d'afficher « Spotify est momentanément indisponible ». Si Spotify lâche quand même, la lecture **reprend à la page où elle s'est arrêtée** : retouche la playlist (le bouton affiche « reprendre (600 lus) »). Les erreurs d'accès (401, 403) ne sont jamais réessayées. La lecture directe de Spotify accepte jusqu'à 3 000 morceaux (le texte collé reste limité à 1 500 lignes).
 - **Plusieurs playlists** : une fois une playlist chargée, « + Ajouter une autre playlist » en fusionne une autre (doublons ignorés, 3 000 morceaux au plus). Pratique pour dépasser les 100 morceaux d'un lien Spotify : ajoute-en plusieurs, colle une liste texte (1 500 lignes) ou un export CSV d'exportify.net, ou transfère la playlist sur Deezer (tunemymusic.com, gratuit) et colle le lien Deezer (jusqu'à 2 000 morceaux). Le nombre de morceaux joués par partie va de 5 à 100.
 - **Playlist de démo** : 12 morceaux avec une mélodie synthétique, pour tester sans réseau.
 Dans l'appli Android, `CapacitorHttp` est activé (`capacitor.config.json`) : les requêtes passent par le réseau natif, sans blocage CORS. Sur le web, Deezer est interrogé en JSONP.
@@ -230,21 +231,22 @@ Chacun pour soi (1 à 16 joueurs), plateau en boucle de **32 cases** (`src/data/
   Code : `src/board3d/` (`layout.js` : tracé de la boucle, calcul pur et testé ; `world.js` : décor ; `Board3D.jsx` : pions, caméra, bulles), `src/screens/Board.jsx` (choix 3D / 2D). Salle d'essai : `?bd3dlab` (partie fictive à 4 joueurs costumés avec des boutons pour faire avancer un pion, gagner des pièces, lancer un grand saut, voir le sprint ; réglable : `&n=3&cur=1&pos=0,5,5,12&sub=order&sprint=1&gem=9`). Tests : `tools/test-board3d.js` (17 vérifications du tracé : cases à égale distance, ordre, chemins) et le test de bout en bout `e2e_board3d` (un téléphone en 3D, un en 2D : les pions sont sur la même case).
 - **Pas encore codé** : cases Duel / Banque / Combat de Mario Party, objet « gant de duel », plusieurs plateaux, chemins qui se séparent.
 
-### Mini-jeux (façon Wii Party / Mario Party)
-Pas de lobby en équipes : chacun pour soi à l'écran des réglages (1 à 16 joueurs, un joueur seul peut s'entraîner). Le créateur choisit **5, 8, 10 ou 15 manches**. Une manche est :
-- un **mini-jeu** : présentation + décompte, puis **tout le monde joue la même partie en même temps sur son téléphone** (même graine aléatoire, donc même difficulté pour tous). Chaque mini-jeu donne un score (plus haut = mieux) ; classement de la manche : **10 points au premier**, puis décroissant (`rankPoints` dans `src/minigames/meta.js`), égalité = mêmes points, pas fini = 0 ;
-- un **test d'amitié** (une manche sur trois, dès 2 joueurs) : 3 questions « Plutôt… ? » (`src/data/friendQs.js`), chacune sur un joueur tiré au sort. Il répond pour lui, les autres devinent en même temps ; **3 points par bonne devinette**, et le joueur visé gagne 1 point par personne qui l'a bien deviné (5 max). La réponse reste secrète tant que tout le monde n'a pas répondu.
-- **Modes d'équipe** (à partir de 3 joueurs, tirés au sort à chaque mini-jeu, annoncés à l'écran de présentation) : **2 contre 2**, **1 contre 3**, **1 contre 2** (et 2 contre 3 à 5 joueurs…). Le score d'une équipe est **la moyenne** des scores de ses membres (pas de jeu coopératif en direct : chacun joue sur son téléphone). L'équipe gagnante : 10 points chacun, égalité 5, défaite 0. Un camp vidé par des départs bascule en chacun pour soi (`MG_SIDES`, `randomTeams`, `teamAvg` dans `src/minigames/meta.js`).
-Le meilleur total gagne (podium à la fin). Chaque mini-jeu n'apparaît qu'une fois avant que tous soient passés.
-**31 mini-jeux** dont **9 en 3D**, où **tu joues avec ton vrai personnage** (même corps et mêmes costumes que dans l'éditeur ; les robots adverses portent eux aussi des costumes) : 
-- **2D (22)** : Tape-tape, Réflexe, Taupes, Simon, Pile au centre, Compte-les !, Calcul mental, Couleur ou mot ?, Paires, Rattrape-les, Esquive, Chrono à l'aveugle, L'intrus, Dans l'ordre, Cibles, Envol, Saute-obstacles, Mémo-grille, Le plus grand, Flèches, Pierre-feuille-ciseaux, Rythme.
-- **3D (9)** : Course de haricots (couloir à obstacles), Plancher fragile (dalles qui s'effondrent), Sumo bonbon (arène qui rétrécit, on pousse les autres), Barre tournante (saut de corde géant), Chasse aux pièces (boulets rouges à éviter), Tunnel champêtre (on tourne autour d'un tube), Cueillette de champis (type « mousse pousse » : on cueille quand ça brille), Safari photo (type « safari » : on photographie le bon animal), Bowling bonbon.
-  Les noms et règles des jeux inspirés de Mario Party sont des **créations originales** (pas de copie).
-- **Technique 3D** : `three` (v0.169) chargé à la demande (la bibliothèque n'est téléchargée qu'au premier mini-jeu 3D) ; `src/minigames/three/kit3d.jsx` (scène bonbon, haricot animé, joystick, boutons) et `gamesA.jsx` / `gamesB.jsx`. Si l'appareil ne sait pas faire de 3D (WebGL), le jeu affiche un message et compte 0.
-- **Ajouter un mini-jeu** : (1) une ligne dans `MINIGAMES` (`src/minigames/meta.js` : identifiant, titre, règle, durée, score maximum, affichage du score), (2) un composant `({ seed, seconds, onFinish, color })` dans `src/minigames/games*.jsx` ou `three/games*.jsx` qui appelle `onFinish(score)` (entier ≥ 0, plus haut = mieux) et utilise `rng(seed)` pour tout ce qui est aléatoire, (3) une ligne dans `src/minigames/index.js`. Pour la 3D, partir de `Stage3D` + `makeBean` de `kit3d.jsx`.
-- **Salle d'essai** : ouvre l'appli avec `?minilab` à la fin de l'adresse (ex. `.../PartyGames/?minilab`) pour jouer seul à chaque mini-jeu, sans lobby.
-- **Honnêteté** : le score est calculé sur le téléphone du joueur ; le créateur le limite au maximum possible de chaque jeu, mais un joueur modifié pourrait tricher à l'intérieur de cette limite. Entre amis, ça suffit. Les jeux 3D n'ont pas encore été essayés sur un vrai téléphone (fluidité, difficulté à régler).
-- Réglages dans `src/config.js` (`MG_*`). Code : `src/net/hostEngine.js` (section « Mini-jeux »), `src/screens/MiniGames.jsx`. Tests : `node tools/run-engine-tests.mjs` (`tools/test-party.js`).
+### Mini-jeux (façon Mario Party / Pummel Party)
+Pas de lobby en équipes : chacun pour soi à l'écran des réglages (1 à 16 joueurs, un joueur seul peut s'entraîner). Le créateur choisit **5, 8, 10 ou 15 manches** et peut **choisir les mini-jeux joués** (bouton « Choisir » du lobby, au moins 3 ; par défaut tous). Une manche est :
+- un **mini-jeu** : présentation + décompte, puis **tout le monde joue la même partie en même temps sur son téléphone** (même graine, donc même difficulté pour tous, contre les mêmes bots). Chaque mini-jeu donne un score (plus haut = mieux) ; classement de la manche : **10 points au premier**, puis décroissant (`rankPoints` dans `src/minigames/meta.js`), égalité = mêmes points, pas fini = 0 ;
+- un **test d'amitié** (une manche sur trois, dès 2 joueurs) : 3 questions « Plutôt… ? » (`src/data/friendQs.js`) sur un joueur tiré au sort ; 3 points par bonne devinette, 1 point au joueur visé par personne qui l'a deviné.
+- **Modes d'équipe** (dès 3 joueurs, tirés au sort, annoncés à la présentation) : 2 contre 2, 1 contre 3, 1 contre 2… Score d'équipe = moyenne de ses membres ; gagnants 10 points, égalité 5.
+Tirage (`makeDraw`) : tous les jeux à égalité, un jeu sorti ne revient pas avant 6 autres tirages.
+**18 mini-jeux 3D** avec ton **Doudou** (voir section 10) et trois bots (noms, règles et décors : **créations originales** inspirées du genre, pas des copies) :
+- **Arène** : Patate explosive (bombe qui passe de main en main), Poseur de bombes (grille, caisses, bonus), Chars d'assaut (obus qui rebondissent), Roi de la colline (zone qui change de place), Boules de neige géantes, Sumo de l'arène (arène qui rétrécit), **Guerre de peinture** (nouveau : repeins le sol à ta couleur, rouleau = peinture XXL, le plus de dalles gagne).
+- **Survie** : Canons en cercle, Plancher fragile, Barre tournante, **Plateformes musicales** (nouveau : les chaises musicales — au « STOP ! » il manque toujours une plateforme, petite musique synthétisée), **Traînées de lumière** (nouveau : ta planche laisse un mur de lumière, virages à angle droit, Turbo ; fais s'écraser les autres).
+- **Course** : Grand Prix de karts, Pilotes de l'extrême, Course d'obstacles. **Collecte** : Labyrinthe des gloutons, Chasse aux pièces. **Adresse** : Palets glacés.
+Les anciens petits jeux 2D (tape au bon moment, réflexes…) ont été retirés.
+- **Salle d'arcade** (menu > « Salle d'arcade », ou `?minilab` à la fin de l'adresse) : jouer seul contre les bots à n'importe quel mini-jeu, filtres par genre. `&g=kart&secs=60` lance directement un jeu avec une durée.
+- **Technique** : chaque jeu récent a une **simulation pure** (`src/minigames/sim/*.js`, sans three ni React, graine commune, bots) et un **décor 3D** qui la lit (`src/minigames/three/games*.jsx`, outils communs dans `party.jsx` et `kit3d.jsx`). Règles **testées sans navigateur** : `tools/test-arena.js` (fin de partie, scores entiers dans [0, max], pas de NaN, règles de chaque jeu). `three` (v0.169) est chargé à la demande ; sans WebGL, le jeu affiche un message et compte 0.
+- **Ajouter un mini-jeu** : (1) une ligne dans `MINIGAMES` (`src/minigames/meta.js` : id, titre, icône, genre, règle, durée, score max, affichage), (2) une simulation dans `src/minigames/sim/` + un composant `({ seed, seconds, onFinish, color, look })` dans `three/games*.jsx` qui appelle `onFinish(score)`, (3) une ligne dans `src/minigames/index.js`.
+- **Honnêteté** : le score est calculé sur le téléphone du joueur ; le créateur le limite au maximum possible de chaque jeu.
+- Réglages dans `src/config.js` (`MG_*`). Code : `src/net/hostEngine.js` (section « Mini-jeux »), `src/screens/MiniGames.jsx`, `src/screens/MiniLab.jsx`. Tests : `node tools/run-engine-tests.mjs`.
 
 ### Frise (frise musicale)
 Une équipe = une frise. À son tour, un joueur de l'équipe (ils tournent) écoute un extrait de 30 s dont il ne sait ni le titre ni l'année, et touche l'endroit de la frise où l'insérer (avant, entre ou après les cartes déjà posées, rangées de la plus ancienne à la plus récente).
@@ -307,8 +309,10 @@ Sans compte, il y reste (il disparaît si on efface les données de l'appli) ; *
 
 - **Apparence** : ton **personnage 3D** (voir ci-dessous), 10 bordures (certaines animées) et 16 couleurs de fond. Les autres joueurs voient ton apparence et ton niveau dans le lobby et pendant les parties.
   Tu peux la changer dans le lobby : tout le monde voit le changement tout de suite.
-- **Personnage 3D** (`src/avatar3d/`) : **un seul corps pour tout le monde**, un long haricot façon Fall Guys (jambes qui finissent à plat, mains plates à 3 doigts et un pouce, visage peint). Taille et proportions ne changent **jamais**, avec ou sans costume. L'éditeur (onglets Peau, Costume, Visage, Tête, Tenue, Extras, Fond) ne change que l'apparence : couleurs, motifs, **24 costumes** par-dessus le corps (11 classiques + 13 animaux/objets : dino, pingouin, poussin, grenouille, ours, robot, fantôme, requin, alien, cactus, champignon, bonhomme de neige, citrouille), coiffures, chapeaux, lunettes, accessoires. Les costumes ont de vraies **couches d'épaisseur** (ventre en relief, plastron, côtes, drap, bottes, manches…) posées sur le corps sans le modifier (`layers.js`, `suits3d.js`, `animals3d.js`). Le personnage est stocké dans le profil sous forme d'une chaîne de 40 caractères (un caractère par réglage ; `build` et `size` sont gardés, inertes, pour que les anciennes chaînes restent lisibles).
-  Outils : `?avlab&lineup=1` (tous les costumes alignés + vérification qu'ils partagent le même squelette), `?avlab&sheet=suit` ; test : `node tools/test-avatar3d.js`.
+- **Personnage 3D = un « Doudou »** (`src/avatar3d/`) : une petite créature ronde et douce (grands yeux brillants, joues roses, petite bouche, oreilles, petits bras et pieds), entièrement fabriquée en code (aucun modèle à télécharger). **16 espèces** (chat, lapin, ourson, renard, chiot, souris, grenouille, pingouin, poussin, hibou, axolotl, fantôme, dragon, slime, extraterrestre, robot), 24 couleurs, 14 motifs, 11 yeux, 10 bouches, joues et détails (taches de rousseur, moustaches, pansement…), et une **garde-robe** : 24 couvre-chefs, 9 lunettes, 9 accessoires de cou, 10 objets de dos (sac, cape, ailes…), 20 tenues (une couche de tissu qui épouse le corps : sweat, salopette, robe de mage, combinaison numérique, armure…) et 7 chaussures. Beaucoup de pièces se débloquent par niveau ou par succès.
+  Le visage est **peint** sur une pièce qui épouse le corps, avec des **expressions** (cligne des yeux, joie, tristesse, colère, surprise, étourdi, amoureux) ; l'animation se fait par écrasement / étirement (course qui sautille, saut, chute, étourdi, victoire, assis, sur une planche) et **12 émotes**.
+  **Personnalisation** (bouton « Personnaliser » du profil, ou l'avatar du menu) : le Doudou en grand sur sa plateforme de scan ; on touche une zone (**Tête, Visage, Corps, Dos, Pieds**), la caméra s'approche, une fenêtre montre les apparences (vignettes 3D de TON Doudou avec la pièce), on essaie, on applique, il se re-matérialise. Bouton **Émotes** (roue d'émotes) aussi dans le **lobby** : la bulle s'affiche à côté de ton nom chez tout le monde.
+  Stockage : une chaîne « C » + 22 caractères (un par réglage, `src/avatar3d/schema.js`) ; un ancien personnage (humain ou haricot) devient automatiquement un Doudou, toujours le même. Code : `doudou-data.js` (catalogue), `doudou.js` (corps, visage, oreilles, animation), `doudou-paint.js` (textures : pelage, visage, tissus), `doudou-gear.js` (garde-robe). Outils : `?avlab&slot=espece` (une pièce par vignette, `slot=hat`, `slot=outfit`…), `?avlab&n=12` (au hasard), `&view=face|bust|full|back|feet`, `&pose=run|cheer|stun…`, `&emote=wave&et=1` ; test : `node tools/test-avatar3d.js`.
 - **Niveaux** : de l'XP à chaque partie terminée (20 de base, +30 victoire, +10 égalité, + un bonus selon les cartes/images/morceaux trouvés). Niveau max : 50.
 - **Déblocages** : par niveau (ex. Flamme niv. 2, Couronne niv. 20) ou par **succès** (18 succès : séries de victoires, 20 morceaux trouvés, être le premier 10 fois, etc.).
   Toucher un cadenas indique comment le débloquer.
@@ -319,7 +323,183 @@ Sans compte, il y reste (il disparaît si on efface les données de l'appli) ; *
 Comment ça marche : le créateur du lobby mesure les statistiques détaillées pendant la partie (`pstats` dans l'état, `gameNo` = numéro de partie) ;
 à l'écran de fin, chaque téléphone calcule son propre résultat (`summarize`) et l'ajoute à son profil (`recordGame`), une seule fois par partie.
 Code : `src/data/profile.js` (catalogues, niveaux, succès, règles), `src/lib/useProfile.js`, `src/screens/Profile.jsx`, `src/ui/Avatar.jsx`.
-Pour ajouter une bordure / une couleur / un succès : une ligne dans `profile.js` (+ le style CSS `.pav.b-<id>` pour une bordure). Pour ajouter un costume : une entrée dans `src/avatar3d/animals.js` (couleurs, peinture, visage) et ses couches dans `animals3d.js`. `node tools/test-profile.js` vérifie la logique.
+Pour ajouter une bordure / une couleur / un succès : une ligne dans `profile.js` (+ le style CSS `.pav.b-<id>` pour une bordure). Pour ajouter une pièce de Doudou : une option à la FIN de sa liste dans `doudou-data.js` (+ son dessin dans `doudou-gear.js` ou `doudou-paint.js`). `node tools/test-profile.js` et `node tools/test-avatar3d.js` vérifient la logique.
 
 **Sécurité** : l'apparence reçue du réseau est filtrée (seuls des identifiants du catalogue passent). Le statut « débloqué » est local : quelqu'un qui bidouille son
 stockage peut s'équiper d'éléments verrouillés chez lui, ce qui est sans conséquence (purement cosmétique).
+
+## 11. Trône des Mondes (jeu de cartes à collectionner)
+
+Le jeu de cartes **Le Trône de Fer JCE 2e édition**, entièrement recodé, avec 23 familles (dont, clin d'œil, Westeros lui-même) :
+Code Lyoko, Umbrella Academy, Toy Story, One Piece, Pokémon (un deck par **type**, chaque type donne un bonus à la famille ; avec leurs Dresseurs :
+Sacha, Ondine, Pierre, Régis, Jessie et James, Giovanni, N, Red, Silver, Tcheren, Aurore, Roseille, Lithia, et les Champions et Maîtres, réservés au deck de leur type :
+Cynthia, Goyah, Iris, Pieris, Inezia, Erika, Faïza, Donna), Star Academy, Les Mystérieuses Cités d'or,
+Les Légendaires, De cape et de crocs, Hunger Games, Cowboy Bebop, La Horde du Contrevent, Élite, Teen Wolf, Marvel, DC, Stranger Things, Scooby-Doo (que des gentils)
+League of Legends (un deck par **région** de Runeterra, comme les types Pokémon : voir plus bas), Harry Potter (un deck par **maison** de Poudlard),
+Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
+et Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), plus des cartes Neutres.
+1785 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 54 Scénarios (les « intrigues ») qui mélangent tous les univers.
+
+**Les cartes de coût 7** (les plus puissantes, souvent légendaires) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
+(ex. Monkey D. Luffy en Gear Fourth et en Gear Fifth : une seule des deux par deck). Elles ont des pouvoirs à part, tirés de leur univers :
+le Haki des rois (Luffy, Gear Fourth : les petits personnages n'osent pas défendre), le festin de Sanji (il redresse tout l'équipage),
+le séisme de Barbe Blanche (il agenouille tous les petits adversaires en arrivant), Kaido impossible à tuer (il s'agenouille pour survivre),
+Barbe Noire et Sylas qui volent du Pouvoir, la rumeur d'Allison (« J'ai entendu une rumeur… » : un adversaire ne peut ni attaquer ni défendre),
+Doctor Strange, Jérémie et Viktor qui ramènent un allié de la pile des morts, Captain America qui fait entrer un Avenger, Lex Luthor et Lotso
+qui font payer plus cher les personnages adverses, Scarlet Witch, Fred et Veigar qui gèlent une cible (elle ne se redresse pas au round suivant),
+Peter Hale qui revient en main après sa mort, Jet Black qui marque en défense… Sur la table, une carte gelée ou neutralisée porte une étiquette.
+Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-la… » ; liste dans `cards/gender.js`).
+
+**Jouer** : dans le lobby, Jeu > **Trône des Mondes** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
+Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
+(Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés
+(Célèbre, Discret, Intimidation, Génie, Pillard, Duel, Embuscade, Fidèle, Limité…). Le bouton livre (en haut de la collection) explique les règles.
+Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
+font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
+On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
+
+**Collection** (bouton « Trône des Mondes » du menu, ou depuis le lobby) :
+- **Deck de départ** : choisi une seule fois parmi 87 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
+- **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
+  Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, **une seule version par personnage** ; au plus 3 cartes de coût 7+, 6 de coût 6, 8 de coût 5 ;
+  au moins 24 personnages ; au plus 18 objets + événements et 10 lieux ; jusqu'à 10 cartes d'UNE famille alliée (sauf les Fidèles).
+- **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
+  Environ 4 % des cartes sont **brillantes**, et 1 booster sur 200 est **doré** (que des rares ou mieux, toutes brillantes). Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
+- **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
+  (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; ×3 si brillante).
+- **Niveaux** : un booster à chaque niveau (un Prestige tous les 5). **3 quêtes par jour** (une peut être changée) et 13 succès.
+- Tout est enregistré dans le profil (`profile.tcg`), donc sauvegardé sur le compte quand on est connecté.
+
+**Illustrations** : chaque carte a une illustration originale générée par l'appli (décor de sa famille, plus riche selon la rareté : les légendaires sont en pleine carte).
+Tu peux la remplacer par tes propres images : touche une carte > « Choisir une image », ou Collection > Illustrations > « Importer des images » (plusieurs d'un coup) en nommant
+chaque fichier comme la carte : `Gryfenfer 7.jpg` (personnage : nom + coût), `Gryfenfer.jpg` (toutes ses versions), le nom seul pour un lieu, un objet ou un événement.
+Le bouton **« Liste des cartes et noms de fichiers »** donne le nom exact de chaque carte (recherche, filtre par famille, « Sans illustration », copie d'un nom ou de toute la liste,
+tri par famille ou par coût toutes familles mêlées ; la collection a le même choix de tri) ;
+quand deux cartes auraient le même nom, la famille ou le sous-titre est ajouté entre parenthèses : `Mendoza 5 (Cités d'or).jpg`, `Noah 2 (Promo 2024).jpg`.
+Les images sont recadrées au format carte et gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
+ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
+
+**League of Legends** (`cards/lol.js`, 161 cartes) : un deck choisit une région, qui donne un bonus à la famille ; il joue les champions de cette région
+(un champion de deux régions compte pour les deux : Mel est de Noxus et de Piltover, les yordles Poppy, Gnar, Kennen, Heimerdinger, Ziggs et Kled sont aussi de Bandle City),
+plus ce qui va partout : Bard et ses meeps, les sbires, le Héraut, le Baron Nashor, les objets (Ange gardien, Lame d'infini…) et les sorts d'invocateur (Saut éclair, Embrasement…).
+
+| Région | Bonus | Deck de départ (héros) |
+|---|---|---|
+| Ionia | une fois par round, un champion d'Ionia qui devrait mourir retourne en main | Shen |
+| Freljord | un défi de Combat gagné agenouille un adversaire | Sejuani |
+| Piltover et Zaun | +1 revenu | Caitlyn |
+| Noxus | +1 force en attaque | Rell |
+| Demacia | +1 force en défense | Poppy |
+| Ixtal | après un défi de Combat gagné, un participant se redresse | Zyra |
+| Bandle City | l'arrivée d'un yordle rapporte 1 or (une fois par round) | Méga Gnar |
+
+Les pouvoirs viennent de l'histoire des champions : Shen protège un allié qui allait mourir (Unis dans l'adversité), Kennen attaque sans s'agenouiller (Ruée de foudre),
+Rakan et Xayah gagnent +2 quand l'autre est en jeu, Varus enchaîne un défenseur (Chaîne de corruption), Sejuani mène la charge de la Griffe d'hiver,
+Lissandra gèle en arrivant et survit en reprenant sa place (Mille ans de mensonges), Gnar devient Méga Gnar, Caitlyn abat une cible en arrivant (As dans la manche),
+Vi interpelle un défenseur, Renata rachète un allié (Renflouement) et prend l'or des perdants, Janna protège (Œil du cyclone), Rell attire les défenseurs (Tempête magnétique),
+Mel est immunisée aux événements (Réfutation), Poppy est plus forte quand on est mené (« Pas une héroïne »), Zyra fait pousser ses plantes, Nidalee se change en couguar,
+Milio redresse un allié en arrivant (Souffle de vie), Bard fige un adversaire (Destin altéré) et grandit avec ses meeps.
+
+**Harry Potter** (`cards/hp.js`, 135 cartes) : un deck choisit une maison de Poudlard ; chaque maison a son fondateur en carte 7, son fantôme, sa salle commune
+et son objet (l'épée de Gryffondor, le médaillon, le diadème, la coupe). Les créatures (Dobby, Fumseck, Buck, le Magyar à pointes…), les Aurors, le Ministère,
+les sortilèges (Expelliarmus, Stupéfix, Spero Patronum…) et les Reliques de la Mort vont dans toutes les maisons. Harry, Dumbledore et Voldemort ont chacun deux versions à 7.
+
+| Maison | Bonus | Deck de départ (héros) |
+|---|---|---|
+| Gryffondor | +2 force en attaque | Harry Potter (Le Survivant) |
+| Serpentard | un défi de Ruse gagné fait défausser une carte au perdant | Lord Voldemort |
+| Serdaigle | après un défi de Ruse gagné, un participant se redresse | Luna Lovegood |
+| Poufsouffle | une fois par round, un Poufsouffle qui devrait mourir retourne en main | Norbert Dragonneau |
+
+**Star Wars** (`cards/sw.js`, 118 cartes) : un deck choisit un camp (Dark Vador est Sith et impérial, Han Solo rebelle et contrebandier…).
+Luke, Dark Vador et Palpatine ont deux versions à 7 (le Chevalier Jedi et le dernier Jedi ; le Seigneur Sith et l'Élu déchu ; l'Empereur et Dark Sidious, qui revient toujours).
+
+| Camp | Bonus | Deck de départ (héros) |
+|---|---|---|
+| Jedi | les Jedi ont Discret (les tours de l'esprit Jedi) | Yoda |
+| Sith | les Sith ont Intimidation (la peur) | Dark Vador |
+| Rébellion | le premier défi gagné du round rapporte 1 Pouvoir (l'espoir) | Luke Skywalker |
+| Empire | +1 revenu | Palpatine |
+| Pègre | +1 or quand on devient premier joueur (« il a tiré le premier ») | Din Djarin |
+
+**Game of Thrones** (`cards/got.js`, 189 cartes) : un deck choisit une faction (Jon Snow est Stark et frère juré, Theon Greyjoy a grandi à Winterfell…) ;
+Varys, Littlefinger, Jaqen H'ghar, le Grand Moineau et Syrio Forel vont partout. Jon Snow (*Le Roi du Nord* / *Le Lord Commandant*), Arya (*Personne* / *La tueuse du Roi de la Nuit*),
+Tyrion (*La Main du Roi* / *La Main de la Reine*), Daenerys (*La Mère des Dragons* / *Briseuse de chaînes*) et le Roi de la Nuit ont deux versions à 7.
+
+| Faction | Bonus | Deck de départ (héros) |
+|---|---|---|
+| Stark | après un défi de Combat gagné, un participant se redresse | Jon Snow (Le Roi du Nord) |
+| Lannister | le premier défi gagné du round rapporte 1 or | Tyrion Lannister |
+| Targaryen | les Targaryen ont Intimidation (Feu et Sang) | Daenerys Targaryen |
+| Baratheon | le premier défi de Combat gagné du round rapporte 1 Pouvoir | Stannis Baratheon |
+| Greyjoy | un défi de Combat de plus, et les Fer-nés ont Discret | Euron Greyjoy |
+| Tyrell | la Domination gagnée fait piocher une carte | Olenna Tyrell |
+| Martell | un défi de Ruse gagné agenouille un personnage du perdant | Oberyn Martell |
+| Garde de Nuit | +1 force en défense, et un participant se redresse après une victoire | Jon Snow (Le Lord Commandant) |
+| Marcheurs blancs | un défi de Combat gagné agenouille un personnage du perdant | Le Roi de la Nuit |
+
+**Le Seigneur des Anneaux** (`cards/lotr.js`, 130 cartes) : un deck choisit un camp ; Gandalf, Radagast, les Aigles et Beorn vont dans tous les camps des Peuples libres,
+les Ents chez les Hobbits, les Elfes et le Rohan, Azog et les gobelins chez le Mordor et l'Isengard. Gandalf (*le Gris* / *le Blanc*), Aragorn (*Grand-Pas* / *Le Roi Elessar*)
+et Sauron (*L'Œil sans paupière* / *Le Seigneur des Anneaux*) ont deux versions à 7.
+
+| Camp | Bonus | Deck de départ (héros) |
+|---|---|---|
+| Hobbits | les Hobbits ont Discret (personne ne les remarque) | Frodon Sacquet |
+| Elfes | +1 force en défense, et un participant se redresse après une victoire | Galadriel |
+| Nains | +1 revenu | Thorin Écu-de-Chêne |
+| Gondor | +1 force en défense | Aragorn (Le Roi Elessar) |
+| Rohan | un défi de Combat de plus (la charge des Rohirrim) | Théoden |
+| Mordor | les personnages du Mordor ont Intimidation | Sauron |
+| Isengard | +1 revenu, et les Uruk-hai ont Intimidation | Saroumane |
+
+Code : `src/tcg/` — `rules.js` (règles, mots-clés), `abilities.js` (modèles d'effets : le texte d'une carte et son effet viennent du même modèle), `engine.js` (moteur),
+`bot.js` (adversaire), `cards/*.js` (une famille par fichier, une ligne par carte), `deck.js` (règles de deck, decks de départ), `progress.js` (collection, boosters, boutique, quêtes),
+`view.js` (ce qui part sur le réseau), `ui/` (cartes, partie, collection, boosters) ; côté créateur du lobby : `src/net/hostTrone.js`.
+Pour ajouter une carte : une ligne dans le fichier de sa famille (voir l'en-tête de `cards/build.js`). Une famille peut avoir des sous-groupes que chaque deck choisit
+(`types` et `sub` dans son fichier : les types Pokémon, les régions de League of Legends, les maisons de Poudlard, les camps de Star Wars, les factions de Westeros, les camps de la Terre du Milieu ; voir `subOf` et `subWords` dans `cards/index.js`). Tests : `node tools/test-tcg.js` (cartes, règles, parties entre bots ;
+`--sim 400` pour l'équilibrage), `node tools/test-tcg-progress.js` (collection) et `node tools/test-tcg-host.js` (partie en réseau).
+
+## 12. Loup-garou, version Stranger Things
+
+Les règles des **Loups-Garous de Thiercelieux** (jeu de base, Nouvelle Lune, Personnages, le Corbeau du Village) et des rôles fanmade
+très joués en ligne (Wolfy, Loups-Garous en ligne). Seuls les noms et l'ambiance changent : les loups-garous sont les créatures du
+**Monde à l'envers**, les villageois les **habitants de Hawkins**. L'appli fait le meneur : chacun joue sur son téléphone.
+
+**Jouer** : lobby > Jeu > **Loup-garou** ; de 4 à 18 joueurs (bots possibles pour tester, ils jouent au hasard).
+Réglages : composition automatique (on coche les boîtes de rôles et le nombre de créatures) ou choisie rôle par rôle, durée de chaque
+étape de la nuit, du débat et du vote, capitaine, composition visible ou secrète.
+- **La nuit** : tout le monde a quelque chose à toucher (ceux qui n'ont pas de pouvoir désignent la personne qui leur paraît louche,
+  pour que personne ne devine qui agit). La meute vote en direct et discute dans son canal secret ; la nuit continue dès qu'elle est d'accord.
+- **Le jour** : annonce des morts (rôle révélé, jamais la cause), élection du capitaine le premier jour (voix double, départage),
+  débat (à voix haute ou dans la discussion ; on passe au vote quand plus de la moitié est prête), puis vote en direct (on peut changer d'avis).
+- **Discussions** : village (le jour), meute, amoureux, sœurs, frères et morts (Mama, la Chaman, les entend la nuit). Erica (Petite Fille) voit la meute sans savoir qui écrit.
+
+| Personnage | Rôle | | Personnage | Rôle |
+|---|---|---|---|---|
+| Onze | Voyante | | Démochien | Loup-garou |
+| Dr Sam Owens | Sorcière (potion de vie, potion de mort) | | Le Démogorgon | Grand méchant loup |
+| Jim Hopper | Chasseur | | Le Flagelleur mental | Infect père des loups |
+| Murray Bauman | Cupidon | | Billy Hargrove | Loup bavard (fanmade) |
+| Erica Sinclair | Petite Fille | | Vecna | Loup-garou blanc (solitaire) |
+| Suzie | Voleur (elle pirate le système) | | Papa (Dr Brenner) | Joueur de flûte (solitaire) |
+| Steve Harrington | Salvateur | | Barb | Ange (solitaire) |
+| Max Mayfield | Ancien (Running Up That Hill) | | Jason Carver | Abominable sectaire (Tigers / Hellfire) |
+| Argyle | Idiot du village | | Grigori, l'agent russe | Mercenaire (fanmade) |
+| Eddie Munson | Bouc émissaire | | Dart | Chien-loup |
+| M. Clarke | Juge bègue | | Will Byers | Enfant sauvage |
+| Lucas Sinclair | Chevalier à l'épée rouillée | | Mike Wheeler | Comédien |
+| Joyce Byers | Montreur d'ours (ses guirlandes clignotent) | | Jonathan Byers | Servante dévouée |
+| Dustin Henderson | Renard | | Nancy Wheeler | Corbeau (la journaliste) |
+| Karen et Claudia | Deux Sœurs | | Powell, Callahan et Flo | Trois Frères |
+| Ted Wheeler | Villageois-villageois | | Habitants (Benny, Keith, Chrissy…) | Simples villageois |
+| Robin Buckley | Mentaliste (fanmade) | | Bob Newby | Fossoyeur (fanmade) |
+| Larry Kline | Dictateur (fanmade) | | Mama (Terry Ives) | Chaman (fanmade) |
+| Kali | Noctambule (fanmade) | | Holly Wheeler | Chaperon rouge (fanmade) |
+
+Les cartes de rôle sont carrées ; leurs illustrations sont celles des cartes Stranger Things du Trône des Mondes (une image importée pour « Onze 7 » apparaît aussi sur la Voyante).
+
+Code : `src/lg/` — `roles.js` (rôles, compositions), `engine.js` (moteur : nuit, jour, morts en chaîne, victoires), `view.js` (ce qui part
+sur le réseau), `ui/` (écran de partie, réglages du lobby) ; côté créateur du lobby : `src/net/hostLg.js` (minuteurs, bots).
+Tests : `node tools/test-lg.js` via `npm run test-engine` (compositions, 420 parties entre bots, partie en réseau, départ d'un joueur).
+Limite connue : comme pour les autres jeux, les messages privés passent par le salon et sont filtrés par chaque téléphone ; un joueur qui
+bidouille la version web avec les outils de développement pourrait lire des rôles. Entre amis sur l'APK, ce n'est pas un problème.

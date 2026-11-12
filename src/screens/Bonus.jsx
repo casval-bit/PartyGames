@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Fuse, GameCard, BonusBadge } from "../ui/parts.jsx";
 import { BONUS_SECONDS, BONUS_SLOTS, TIME_BONUS_S, SCORE_BONUS_PTS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon } from "../ui/Icon.jsx";
 
 const DEMO = { id: "demo", name: "Carte", cat: "x", tier: "F" };
 const KINDS = [
@@ -83,7 +84,7 @@ export default function Bonus({ room, me, cards, api }) {
 
       {ready ? (
         <>
-          <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? " ✓" : ""}</span>)}</div>
+          <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? <Icon name="check" size={13} /> : null}</span>)}</div>
           <button className="btn" onClick={() => push(picks, false)}>Modifier mes bonus</button>
         </>
       ) : (

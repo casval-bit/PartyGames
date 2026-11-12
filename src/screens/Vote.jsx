@@ -3,6 +3,7 @@ import { CatBattery, Fuse, playerColor, teamStyle } from "../ui/parts.jsx";
 import { BY_ID, CATEGORIES, SPECIALS, rulesFor } from "../data/categories.js";
 import { MAX_CELLS, VOTE_SECONDS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon } from "../ui/Icon.jsx";
 
 export default function Vote({ room, me, api }) {
   const R = rulesFor(room.settings);
@@ -34,7 +35,7 @@ export default function Vote({ room, me, api }) {
   const tile = (c, wide) => {
     const { cells, total } = cellsFor(c.id);
     return (
-      <button key={c.id} className={"cat" + (wide ? " wide" : "")} style={{ background: c.color }} onClick={() => choose(c.id)} aria-label={`Voter ${c.label}`}>
+      <button key={c.id} className={"cat" + (wide ? " wide" : "") + (c.special ? " sp-" + c.id : "")} style={{ "--cc": c.special ? (c.id === "random" ? "#5ee1ff" : "#b48cff") : c.color }} onClick={() => choose(c.id)} aria-label={`Voter ${c.label}`}>
         {total > 0 && <span className="n" key={total}>{total}</span>}
         <span className="lbl">{c.label}</span>
         <CatBattery cells={cells} total={total} />
@@ -55,7 +56,7 @@ export default function Vote({ room, me, api }) {
           <div className="myvotes">
             {slots.map((_, i) => (
               <button key={i} className={"mv" + (slots[i] ? " on" : "")} onClick={() => clear(i)} disabled={ready || !slots[i]} aria-label={slots[i] ? `Retirer ${BY_ID[slots[i]].label}` : `Vote ${i + 1} vide`}>
-                {slots[i] ? <>{BY_ID[slots[i]].label}<b>✕</b></> : <>vote {i + 1}</>}
+                {slots[i] ? <>{BY_ID[slots[i]].label}<b><Icon name="close" size={13} /></b></> : <>vote {i + 1}</>}
               </button>
             ))}
           </div>
@@ -64,7 +65,7 @@ export default function Vote({ room, me, api }) {
           {room.players.map((p) => (
             <span key={p.id} className="lg" style={{ "--pc": playerColor(p.ci) }}>
               <i />{p.id === me.id ? "Toi" : p.name}
-              <small>{p.ready ? "✓" : `${room.votesCast[p.id] || 0}/${VOTES_PER_PLAYER}`}</small>
+              <small>{p.ready ? <Icon name="check" size={13} /> : `${room.votesCast[p.id] || 0}/${VOTES_PER_PLAYER}`}</small>
             </span>
           ))}
         </div>
@@ -79,7 +80,7 @@ export default function Vote({ room, me, api }) {
       </div>
 
       {ready ? (
-        <button className="btn" onClick={() => api.ready(false)}>Prêt ✓ · modifier</button>
+        <button className="btn" onClick={() => api.ready(false)}><Icon name="check" /> Prêt · modifier</button>
       ) : (
         <button className="btn good" disabled={!full} onClick={() => api.ready(true)}>{full ? "Prêt !" : `Choisis ${VOTES_PER_PLAYER} packs`}</button>
       )}

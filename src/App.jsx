@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRoom } from "./net/useRoom.js";
 import { useProfile, useGameRecorder } from "./lib/useProfile.js";
 import Profile from "./screens/Profile.jsx";
+import Studio from "./screens/Studio.jsx";
 import Account from "./screens/Account.jsx";
 import { useAccount } from "./lib/useAccount.js";
 import GainToast from "./ui/GainToast.jsx";
@@ -30,6 +31,11 @@ import AvatarLab from "./screens/AvatarLab.jsx";
 import Board3DLab from "./board3d/Board3DLab.jsx";
 import Gallery from "./screens/Gallery.jsx";
 import QuitVote from "./ui/QuitVote.jsx";
+import Materialize from "./ui/Materialize.jsx";
+import TroneGame from "./tcg/ui/Game.jsx";
+import LoupGame from "./lg/ui/Loup.jsx";
+import Hub from "./tcg/ui/Hub.jsx";
+import { recordTcgGame, summaryFromView } from "./tcg/progress.js";
 
 export default function App() {
   if (typeof location !== "undefined" && location.search.includes("gallery")) return <Gallery />;
@@ -49,6 +55,9 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [labOpen, setLabOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(null); // Trône des Mondes : onglet de la collection ouvert (ou null)
+  const [tcgGain, setTcgGain] = useState(null);
   // Profil (avatar, niveau, stats) : enregistré sur le téléphone, chaque partie terminée y est comptée une fois.
   const prof = useProfile();
   // Compte (connexion par e-mail) : le profil et le pseudo suivent le joueur d'un téléphone à l'autre.
@@ -57,6 +66,17 @@ export default function App() {
   const net = useRoom(me);
   const { room } = net;
   useGameRecorder(room, id, prof.record);
+  // Trône des Mondes : XP, Éclats et quêtes de la partie (comptée une seule fois)
+  const agKey = room && room.phase === "ag_end" && room.ag && room.ag.over ? `${room.id}:${room.gameNo || 0}` : null;
+  useEffect(() => {
+    if (!agKey) return;
+    const sum = summaryFromView(room.ag, id);
+    if (!sum) return;
+    let gain = null;
+    prof.setTcg((t) => { const r = recordTcgGame(t, sum, agKey); gain = r.gain; return r.gain ? r.t : null; });
+    if (gain) setTcgGain(gain);
+  }, [agKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (room && room.phase === "ag_play") setTcgGain(null); }, [room && room.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Connexion à un compte pendant que l'on est dans un lobby : les autres voient tout de suite l'apparence récupérée.
   const shown = room && room.phase === "lobby" ? room.players.find((p) => p.id === id) : null;
@@ -74,17 +94,21 @@ export default function App() {
   const leave = () => { net.leave(); setScreen("menu"); };
 
   let body;
-  const overlay = profileOpen || accountOpen || labOpen;
-  if (labOpen) {
+  const overlay = profileOpen || accountOpen || labOpen || studioOpen || Boolean(hubOpen);
+  if (hubOpen) {
+    body = <Hub key={hubOpen} tcg={prof.profile.tcg} setTcg={prof.setTcg} initialTab={hubOpen} onClose={() => setHubOpen(null)} />;
+  } else if (studioOpen) {
+    body = <Studio profile={prof.profile} equip={equip} onClose={() => setStudioOpen(false)} />;
+  } else if (labOpen) {
     body = <MiniLab onBack={() => setLabOpen(false)} />;
   } else if (accountOpen) {
     body = <Account acc={acc} profile={prof.profile} onBack={() => setAccountOpen(false)} />;
   } else if (profileOpen) {
-    body = <Profile name={name} profile={prof.profile} equip={equip} acc={acc} onAccount={() => setAccountOpen(true)} onBack={() => setProfileOpen(false)} />;
+    body = <Profile name={name} profile={prof.profile} equip={equip} acc={acc} onAccount={() => setAccountOpen(true)} onStudio={() => setStudioOpen(true)} onBack={() => setProfileOpen(false)} />;
   } else if (room) {
     const common = { room, me };
     switch (room.phase) {
-      case "lobby": body = <Lobby {...common} isHost={net.isHost} api={net} onLeave={leave} onProfile={() => setProfileOpen(true)} />; break;
+      case "lobby": body = <Lobby {...common} isHost={net.isHost} api={net} onLeave={leave} onProfile={() => setProfileOpen(true)} tcg={prof.profile.tcg} setTcg={prof.setTcg} onTrone={(tab) => setHubOpen(tab || "decks")} />; break;
       case "voting": body = <Vote key="vote" {...common} api={net} />; break;
       case "reveal": body = <Reveal {...common} />; break;
       case "booster": body = <Booster {...common} packs={net.packs} api={net} />; break;
@@ -104,6 +128,10 @@ export default function App() {
         body = <PetitBac {...common} api={net} onLeave={leave} />; break;
       case "bd_turn": case "bd_final":
         body = <Board {...common} api={net} onLeave={leave} />; break;
+      case "lg_play": case "lg_end":
+        body = <LoupGame {...common} api={net} priv={net.lgPriv} isHost={net.isHost} />; break;
+      case "ag_play": case "ag_end":
+        body = <TroneGame {...common} api={net} priv={net.agPriv} onLeave={leave} gain={tcgGain} isHost={net.isHost} onHub={(tab) => setHubOpen(tab || "decks")} />; break;
       case "mg_intro": case "mg_play": case "mg_result": case "mg_ask": case "mg_qreveal": case "mg_final":
         body = <MiniGames {...common} api={net} onLeave={leave} />; break;
       default: body = <TimesUp {...common} api={net} queue={net.queue} onLeave={leave} />;
@@ -115,14 +143,17 @@ export default function App() {
   } else {
     body = (
       <Menu name={name} setName={setName} notice={net.notice} clearNotice={net.clearNotice} busy={net.busy}
-        onCreate={net.create} onJoinList={() => { net.clearNotice(); setScreen("list"); }} look={me.look} level={prof.level} onProfile={() => setProfileOpen(true)} acc={acc} onAccount={() => setAccountOpen(true)} onLab={() => setLabOpen(true)} />
+        onCreate={net.create} onJoinList={() => { net.clearNotice(); setScreen("list"); }} look={me.look} level={prof.level} xp={prof.profile.xp} onProfile={() => setProfileOpen(true)} onStudio={() => setStudioOpen(true)} acc={acc} onAccount={() => setAccountOpen(true)} onLab={() => setLabOpen(true)} onTrone={() => setHubOpen("decks")} />
     );
   }
 
+  // effet de matérialisation à chaque grand changement d'écran (pas à chaque manche d'un même jeu)
+  const matKey = hubOpen ? "hub" : studioOpen ? "studio" : labOpen ? "lab" : accountOpen ? "account" : profileOpen ? "profile" : room ? "room:" + String(room.phase).split("_")[0] : screen;
   return (
     <div className={"app" + (room && room.phase !== "lobby" && !overlay && room.players.some((p) => p.id === id && !p.bot) ? " ingame" : "")}>
       {body}
-      {room && room.phase !== "lobby" && !overlay && room.players.some((p) => p.id === id && !p.bot) && <QuitVote room={room} me={me} api={net} />}
+      <Materialize k={matKey} />
+      {room && room.phase !== "lobby" && room.phase !== "ag_play" && !overlay && room.players.some((p) => p.id === id && !p.bot) && <QuitVote room={room} me={me} api={net} />}
       {prof.gain && !overlay && <GainToast gain={prof.gain} onClose={prof.clearGain} onOpen={() => { prof.clearGain(); setProfileOpen(true); }} />}
     </div>
   );

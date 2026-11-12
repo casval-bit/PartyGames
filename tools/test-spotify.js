@@ -52,6 +52,40 @@ eq("53 pages lues sur 2 appels, locaux et épisodes ignorés, premier artiste", 
 try { await playlistLines("p2", o); bad++; console.log("ECHEC lecture seule"); } catch (e) { eq("playlist non lisible", /seules les tiennes/.test(e.message), true); }
 try { await playlistLines("p9", o); bad++; console.log("ECHEC 403"); } catch (e) { eq("403 expliqué", /refuse/.test(e.message), true); }
 
+// pannes passagères de Spotify : réessais automatiques, puis message clair
+{
+  const waits = [];
+  const mk = (statuses, headers) => { let i = 0, n = 0; return { n: () => n, fetchFn: async (u, init) => { if (u.endsWith("/api/token")) return server(u, init); n++; const code = statuses[Math.min(i++, statuses.length - 1)]; return code === 200 ? server(u, init) : { ok: false, status: code, headers: { get: (h) => (headers && headers[h]) || null }, json: async () => ({}) }; } }; };
+  const sleep = async (ms) => { waits.push(ms); };
+  let m = mk([503, 503, 200]);
+  eq("503 deux fois puis OK : la liste arrive quand même", (await myPlaylists({ ...o, fetchFn: m.fetchFn, sleep })).length, 2);
+  eq("deux pauses croissantes, 5 appels (me ×3 + 2 pages de playlists)", [waits.slice(), m.n()], [[700, 1800], 5]);
+  waits.length = 0; m = mk([502]);
+  try { await myPlaylists({ ...o, fetchFn: m.fetchFn, sleep }); bad++; console.log("ECHEC 5xx permanent"); } catch (e) { eq("5xx permanent : message clair, 6 réessais de plus en plus longs", [/momentanément indisponible \(erreur 502\)/.test(e.message), e.status, waits.slice(), m.n()], [true, 502, [700, 1800, 4000, 8000, 15000, 25000], 7]); }
+  waits.length = 0; m = mk([429, 200], { "Retry-After": "2" });
+  await myPlaylists({ ...o, fetchFn: m.fetchFn, sleep });
+  eq("429 : on attend le Retry-After de Spotify", waits[0], 2000);
+  // lecture d'une grande playlist : si Spotify lâche à la page 2, on reprend à la page 2 (sans relire la page 1, sans doublons)
+  {
+    const resume = {}; let page1 = 0, healthy = false;
+    const flaky = async (u, init) => {
+      if (u.endsWith("/api/token")) return server(u, init);
+      if (u.includes("/playlists/p1/items") && !u.includes("offset=50")) page1++;
+      if (!healthy && u.includes("/playlists/p1/items") && u.includes("offset=50")) return { ok: false, status: 503, headers: { get: () => null }, json: async () => ({}) };
+      return server(u, init);
+    };
+    waits.length = 0;
+    try { await playlistLines("p1", { ...o, fetchFn: flaky, sleep }, () => {}, resume); bad++; console.log("ECHEC coupure"); }
+    catch (e) { eq("coupure à la page 2 : 50 morceaux déjà lus, total connu", [e.partial, e.total, resume.lines.length], [50, 53, 50]); }
+    healthy = true; waits.length = 0;
+    const all = await playlistLines("p1", { ...o, fetchFn: flaky, sleep }, () => {}, resume);
+    eq("reprise : 51 morceaux, page 1 lue une seule fois, pas de doublon", [all.length, page1, new Set(all.map((l) => l.title)).size], [51, 1, 51]);
+    eq("playlist déjà lue en entier : rien à relire", (await playlistLines("p1", { ...o, fetchFn: flaky, sleep }, () => {}, resume)).length, 51);
+  }
+  waits.length = 0; m = mk([403]);
+  try { await myPlaylists({ ...o, fetchFn: m.fetchFn, sleep }); bad++; } catch (e) { eq("403 : jamais de réessai", [waits.length, m.n()], [0, 1]); }
+}
+
 // jeton expiré -> renouvelé tout seul ; refresh invalide -> déconnexion propre
 const s = JSON.parse(st.getItem("ph_spotify")); s.exp = 0; st.setItem("ph_spotify", JSON.stringify(s));
 tokens = 0; await myPlaylists(o);

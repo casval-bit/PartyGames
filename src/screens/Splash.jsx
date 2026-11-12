@@ -1,62 +1,56 @@
 import { useEffect, useState } from "react";
+import { Icon } from "../ui/Icon.jsx";
 
+/** Écran d'accueil : emblème holographique (anneau de scan, icônes des jeux en orbite) et logo ; on touche pour lancer la virtualisation. */
 export default function Splash({ onTap }) {
   const [ready, setReady] = useState(false);
   const [boom, setBoom] = useState(false);
+  const [want, setWant] = useState(false); // touché avant la fin du chargement : on lance dès que c'est prêt
 
   useEffect(() => {
-    // "chargement" : polices + cartes prêtes, au moins 1,3 s pour laisser jouer l'animation
+    // « chargement » : polices prêtes, au moins 1,3 s pour laisser jouer l'animation
     const min = new Promise((r) => setTimeout(r, 1300));
     const fonts = (document.fonts && document.fonts.ready) || Promise.resolve();
     Promise.all([min, fonts.catch(() => {})]).then(() => setReady(true));
   }, []);
 
-  const tap = () => {
-    if (!ready || boom) return;
+  useEffect(() => {
+    if (!ready || !want) return undefined;
     setBoom(true);
-    setTimeout(onTap, 420);
-  };
-
+    const t = setTimeout(onTap, 380);
+    return () => clearTimeout(t);
+  }, [ready, want]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tap = () => setWant(true);
+  const orbit = ["hourglass", "help", "music", "gamepad", "dice", "image"];
   return (
     <div className="splash" onClick={tap} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && tap()} aria-label="Toucher l'écran pour commencer">
-      <div className="bomb">
-        <svg viewBox="0 0 200 200" aria-hidden="true">
+      <div className="emblem" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
           <defs>
-            <radialGradient id="bg" cx="38%" cy="32%" r="75%"><stop offset="0" stopColor="#6a49b8" /><stop offset="1" stopColor="#241a3c" /></radialGradient>
-            <linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff4c4" /><stop offset=".5" stopColor="#e0b552" /><stop offset="1" stopColor="#a8751f" /></linearGradient>
+            <radialGradient id="emg" cx="50%" cy="45%" r="60%"><stop offset="0" stopColor="#1d4f9e" /><stop offset="1" stopColor="#070d1c" /></radialGradient>
+            <linearGradient id="ems" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5ee1ff" stopOpacity="0" /><stop offset="1" stopColor="#5ee1ff" stopOpacity=".7" /></linearGradient>
           </defs>
-          <circle cx="100" cy="100" r="92" fill="url(#bg)" stroke="#fff2dc" strokeWidth="8" />
-          <circle cx="100" cy="100" r="96.5" fill="none" stroke="#07040e" strokeWidth="3" />
-          <circle cx="100" cy="100" r="78" fill="none" stroke="#ffc928" strokeWidth="3.5" strokeDasharray="1 9" strokeLinecap="round" />
-          <g className="orbit">
-            {/* sablier : Time's Up */}
-            <g transform="translate(100 34)"><circle r="22" fill="#ff9d00" stroke="#07040e" strokeWidth="5" />
-              <path d="M-8 -11h16c0 7-6 8-6 11s6 4 6 11h-16c0-7 6-8 6-11s-6-4-6-11z" fill="#fff" /></g>
-            {/* cadre + ? : Qui est-ce ? */}
-            <g transform="translate(157 133)"><circle r="22" fill="#2f8bff" stroke="#07040e" strokeWidth="5" />
-              <rect x="-11" y="-11" width="22" height="22" rx="4" fill="none" stroke="#fff" strokeWidth="2.5" />
-              <text y="7" textAnchor="middle" fontSize="19" fontWeight="900" fill="#fff" fontFamily="Fredoka, sans-serif">?</text></g>
-            {/* note : Blind test */}
-            <g transform="translate(43 133)"><circle r="22" fill="#ff3b6b" stroke="#07040e" strokeWidth="5" />
-              <path d="M-3 -11v14a5 5 0 1 0 3 4.500V-5h8v-6z" fill="#fff" /></g>
-          </g>
-          <g className="hubstar">
-            <path d="M100 62l9 22 23 9-23 9-9 23-9-23-23-9 23-9z" fill="#ffd400" stroke="#07040e" strokeWidth="4" strokeLinejoin="round" />
-            <circle cx="100" cy="95" r="4" fill="#fff" />
-          </g>
+          <circle cx="100" cy="100" r="88" fill="url(#emg)" stroke="#1f3a66" strokeWidth="1.5" />
+          <circle cx="100" cy="100" r="76" fill="none" stroke="#5ee1ff" strokeOpacity=".45" strokeWidth="1" strokeDasharray="2 6" />
+          <circle cx="100" cy="100" r="58" fill="none" stroke="#2f8bff" strokeOpacity=".5" strokeWidth="1" />
+          <g className="em-grid" stroke="#5ee1ff" strokeOpacity=".1">{[60, 80, 100, 120, 140].map((v) => <g key={v}><line x1={v} y1="30" x2={v} y2="170" /><line x1="30" y1={v} x2="170" y2={v} /></g>)}</g>
+          <rect className="em-scan" x="24" y="0" width="152" height="26" fill="url(#ems)" />
+          <path d="M100 66l7 20 20 7-20 7-7 20-7-20-20-7 20-7z" fill="#dffcff" stroke="#5ee1ff" strokeWidth="1.5" strokeLinejoin="round" />
         </svg>
+        <div className="em-orbit">{orbit.map((n, i) => <span key={n} style={{ "--i": i }}><Icon name={n} size={18} stroke={1.6} /></span>)}</div>
       </div>
 
       <h1 className="logo" aria-label="Party Hub">
         {["PARTY", "HUB"].map((w, wi) => (
           <b key={w} className="word" aria-hidden="true">
-            {[...w].map((ch, i) => <span key={i} className={"lt c" + ((i + wi * 5) % 4)} style={{ animationDelay: `${0.45 + (i + wi * 5) * 0.07}s` }}>{ch}</span>)}
+            {[...w].map((ch, i) => <span key={i} className={"lt c" + ((i + wi * 5) % 4)} style={{ animationDelay: `${0.35 + (i + wi * 5) * 0.06}s` }}>{ch}</span>)}
           </b>
         ))}
       </h1>
+      <div className="eyebrow">Terminal de virtualisation</div>
 
-      {ready ? <div className="tap">TOUCHEZ L'ÉCRAN</div> : <div className="loadbar" aria-label="Chargement"><i /></div>}
-      <p className="muted" style={{ fontSize: ".78rem", fontWeight: 700, opacity: ready ? 1 : 0 }}>Time's Up · Qui est-ce ? · Blind test</p>
+      {ready ? <div className="tap"><Icon name="scan" size={16} /> Touche pour lancer le transfert</div> : <div className="loadbar" aria-label="Chargement"><i /></div>}
+      <p className="muted" style={{ fontSize: ".78rem", opacity: ready ? 1 : 0 }}>Time's Up · Qui est-ce ? · Blind test · Frise · Mini-jeux · Plateau</p>
       {boom && <i className="boom" />}
     </div>
   );

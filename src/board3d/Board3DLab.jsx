@@ -59,9 +59,9 @@ export default function Board3DLab() {
         {B("Avancer 5", () => walk(5), "lab-walk5")}
         {B("Avancer 9", () => walk(9), "lab-walk9")}
         {B("Suivant", next, "lab-next")}
-        {B("+3 🪙", () => upd((bd) => { bd.coins[bd.cur] += 3; }), "lab-coin")}
-        {B("−3 🪙", () => upd((bd) => { bd.coins[bd.cur] -= 3; }), "lab-coinm")}
-        {B("+1 💎", () => upd((bd) => { bd.gems[bd.cur] += 1; bd.gemAt = (bd.gemAt + 11) % 32 || 1; }), "lab-gem")}
+        {B("+3 pièces", () => upd((bd) => { bd.coins[bd.cur] += 3; }), "lab-coin")}
+        {B("−3 pièces", () => upd((bd) => { bd.coins[bd.cur] -= 3; }), "lab-coinm")}
+        {B("+1 gemme", () => upd((bd) => { bd.gems[bd.cur] += 1; bd.gemAt = (bd.gemAt + 11) % 32 || 1; }), "lab-gem")}
         {B("Génie (téléport)", () => upd((bd) => { bd.pos[bd.cur] = bd.gemAt; }), "lab-warp")}
         {B("Sprint", () => upd((bd) => { bd.sprint = !bd.sprint; }), "lab-sprint")}
         {B("Ordre", () => upd((bd) => { bd.sub = bd.sub === "order" ? "pre" : "order"; }), "lab-order")}

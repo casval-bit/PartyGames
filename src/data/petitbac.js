@@ -5,22 +5,22 @@ export const PB_LETTERS = "ABCDEFGHIJLMNOPRSTV".split("");
 
 /** Toutes les catégories possibles. Les six premières forment la partie « Classique ». */
 export const PB_CATS = [
-  { id: "prenom", name: "Prénom", emoji: "🧑" },
-  { id: "animal", name: "Animal", emoji: "🐾" },
-  { id: "pays", name: "Pays", emoji: "🌍" },
-  { id: "metier", name: "Métier", emoji: "🧑‍🔧" },
-  { id: "fruitleg", name: "Fruit ou légume", emoji: "🍎" },
-  { id: "objet", name: "Objet", emoji: "🧸" },
-  { id: "ville", name: "Ville", emoji: "🏙️" },
-  { id: "marque", name: "Marque", emoji: "🏷️" },
-  { id: "film", name: "Film ou série", emoji: "🎬" },
-  { id: "sport", name: "Sport", emoji: "⚽" },
-  { id: "vetement", name: "Vêtement", emoji: "👕" },
-  { id: "plat", name: "Plat ou boisson", emoji: "🍝" },
-  { id: "corps", name: "Partie du corps", emoji: "🦵" },
-  { id: "chanteur", name: "Chanteur ou groupe", emoji: "🎤" },
-  { id: "celebre", name: "Personnage célèbre", emoji: "⭐" },
-  { id: "nature", name: "Dans la nature", emoji: "🌳" },
+  { id: "prenom", name: "Prénom", icon: "user" },
+  { id: "animal", name: "Animal", icon: "paw" },
+  { id: "pays", name: "Pays", icon: "globe" },
+  { id: "metier", name: "Métier", icon: "briefcase" },
+  { id: "fruitleg", name: "Fruit ou légume", icon: "apple" },
+  { id: "objet", name: "Objet", icon: "box" },
+  { id: "ville", name: "Ville", icon: "building" },
+  { id: "marque", name: "Marque", icon: "tag" },
+  { id: "film", name: "Film ou série", icon: "film" },
+  { id: "sport", name: "Sport", icon: "ball" },
+  { id: "vetement", name: "Vêtement", icon: "shirt" },
+  { id: "plat", name: "Plat ou boisson", icon: "food" },
+  { id: "corps", name: "Partie du corps", icon: "hand" },
+  { id: "chanteur", name: "Chanteur ou groupe", icon: "mic" },
+  { id: "celebre", name: "Personnage célèbre", icon: "star" },
+  { id: "nature", name: "Dans la nature", icon: "trees" },
 ];
 export const PB_CLASSIC = PB_CATS.slice(0, 6).map((c) => c.id);
 export const PB_CAT_BY = Object.fromEntries(PB_CATS.map((c) => [c.id, c]));

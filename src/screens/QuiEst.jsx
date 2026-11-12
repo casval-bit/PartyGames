@@ -4,6 +4,7 @@ import { PlayerAvatar, Fuse, teamStyle, useNow } from "../ui/parts.jsx";
 import { QE_COUNT_MS, QE_HOLD_MS, QE_PICK_SECONDS, QE_PLAY_SECONDS, QE_RESULT_MS, QE_TAP_SECONDS, TEAMS } from "../config.js";
 import { vibrate } from "../lib/util.js";
 import { safeUrl } from "../lib/safeUrl.js";
+import { Icon } from "../ui/Icon.jsx";
 
 const ord = (n) => (n === 1 ? "1er" : `${n}e`);
 const GOOFY = [
@@ -64,10 +65,10 @@ function Pick({ room, me, api }) {
         </>
       ) : (
         <div className="qe-mid" style={{ flex: 1 }}>
-          {mine && sent ? <div className="tapdone">Choix envoyé ✓</div>
+          {mine && sent ? <div className="tapdone">Choix envoyé <Icon name="check" size={16} /></div>
             : aboutMe ? <h2 className="taptxt">{who(aboutMe.picker)} choisit la catégorie de ton image…</h2>
             : <h2 className="taptxt">Les catégories se choisissent…</h2>}
-          <div className="waitlist">{pk.pairs.map((x) => <span key={x.picker} className={pk.done.includes(x.picker) ? "ok" : ""}>{who(x.picker)} → {names(room, x.team)}{pk.done.includes(x.picker) ? " ✓" : ""}</span>)}</div>
+          <div className="waitlist">{pk.pairs.map((x) => <span key={x.picker} className={pk.done.includes(x.picker) ? "ok" : ""}>{who(x.picker)} → {names(room, x.team)}{pk.done.includes(x.picker) ? <Icon name="check" size={13} /> : null}</span>)}</div>
           <div className="wait" role="status">En attente<i /><i /><i /></div>
         </div>
       )}
@@ -89,8 +90,8 @@ function Tap({ room, me, api }) {
       <div className="qe-mid">
         {ready ? (
           <>
-            <div className="tapdone">Prêt ✓</div>
-            <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? " ✓" : ""}</span>)}</div>
+            <div className="tapdone">Prêt <Icon name="check" size={16} /></div>
+            <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? <Icon name="check" size={13} /> : null}</span>)}</div>
             <div className="wait" role="status">On attend les autres<i /><i /><i /></div>
           </>
         ) : (
@@ -161,7 +162,7 @@ function Play({ room, me, api }) {
         <div className="foundbadge">{ord(rank)}</div>
         <h2>Trouvé !</h2>
         <p style={{ fontWeight: 800 }}>Les autres cherchent encore… ({qe.order.length}/{room.players.length})</p>
-        <div className="waitlist">{room.players.map((p) => <span key={p.id} className={qe.order.includes(p.id) ? "ok" : ""}>{p.name}{qe.order.includes(p.id) ? " ✓" : ""}</span>)}</div>
+        <div className="waitlist">{room.players.map((p) => <span key={p.id} className={qe.order.includes(p.id) ? "ok" : ""}>{p.name}{qe.order.includes(p.id) ? <Icon name="check" size={13} /> : null}</span>)}</div>
       </div>
     );
   }

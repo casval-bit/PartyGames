@@ -3,8 +3,8 @@ import { PlayerAvatar, Fuse, playerColor } from "../ui/parts.jsx";
 import { CELEB_LEVELS, CELEB_PENALTY, golfName } from "../data/celeb.js";
 import { CC_RESULT_SECONDS, CC_PLAY_SECONDS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon, Medal } from "../ui/Icon.jsx";
 
-const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const ord = (n) => (n === 1 ? "1er" : `${n}e`);
 const strokeClass = (n) => (n == null ? "" : n >= CELEB_PENALTY ? "out" : n <= 2 ? "great" : n <= 4 ? "ok" : "meh");
 
@@ -67,7 +67,7 @@ function Load({ cc }) {
   return (
     <div className="screen center" role="status">
       <div className="eyebrow">Célébrité · {cc.round}/{cc.total}</div>
-      <div className="ccspin" aria-hidden="true">🔍</div>
+      <div className="ccspin" aria-hidden="true"><Icon name="search" size={40} stroke={1.4} /></div>
       <h2 style={{ fontSize: "1.4rem" }}>Qui sera la prochaine célébrité ?</h2>
       <div className="wait">Recherche d'une photo<i /><i /><i /></div>
     </div>
@@ -114,7 +114,7 @@ function Play({ room, me, api }) {
             return (
               <span key={p.id} className={"pbp" + (q.got != null ? " done" : "")} title={p.name} style={{ "--tc": playerColor(p.ci) }}>
                 <PlayerAvatar name={p.name} look={p.look} />
-                <i>{q.got != null ? (q.got >= CELEB_PENALTY ? "✗" : "✓") : q.tries || 0}</i>
+                <i>{q.got != null ? <Icon name={q.got >= CELEB_PENALTY ? "close" : "check"} size={12} stroke={2.4} /> : q.tries || 0}</i>
               </span>
             );
           })}
@@ -128,7 +128,7 @@ function Play({ room, me, api }) {
       </div>
       {log.length > 0 && (
         <ul className="ccguesses" data-testid="cc-log">
-          {log.map((g, i) => <li key={i} className={g.res || ""}>{g.res === "close" ? "≈" : "✗"} {g.text}{g.res === "close" ? " · presque !" : ""}</li>)}
+          {log.map((g, i) => <li key={i} className={g.res || ""}>{g.res === "close" ? "≈" : <Icon name="close" size={13} />} {g.text}{g.res === "close" ? " · presque !" : ""}</li>)}
         </ul>
       )}
       {done ? (
@@ -212,7 +212,7 @@ function Final({ room, me, api, isHost, onLeave }) {
               <div key={r.id} className={"pod p" + Math.min(3, r.rank)} style={{ "--tc": playerColor(p.ci), "--tink": "#1d2457" }}>
                 <PlayerAvatar name={p.name} look={p.look} showLv />
                 <span className="who">{r.id === me.id ? "Toi" : p.name}</span>
-                <div className="blk"><b>{r.total}</b><span>{MEDAL[r.rank] || ord(r.rank)}</span></div>
+                <div className="blk"><b>{r.total}</b><span><Medal rank={r.rank} /></span></div>
               </div>
             );
           })}
@@ -229,7 +229,7 @@ function Final({ room, me, api, isHost, onLeave }) {
                 <span className="who"><PlayerAvatar name={p.name} look={p.look} />{r.id === me.id ? "Toi" : p.name}</span>
                 <b className="gain">{r.total}</b><small>coups</small>
                 <div className="cccard" aria-label="Coups par célébrité">
-                  {(cc.hist[r.id] || []).map((n, i) => <i key={i} className={strokeClass(n)} title={cc.past[i] ? cc.past[i].name : ""}>{n >= CELEB_PENALTY ? "✗" : n}</i>)}
+                  {(cc.hist[r.id] || []).map((n, i) => <i key={i} className={strokeClass(n)} title={cc.past[i] ? cc.past[i].name : ""}>{n >= CELEB_PENALTY ? <Icon name="close" size={11} stroke={2.4} /> : n}</i>)}
                 </div>
               </li>
             );

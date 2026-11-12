@@ -1,0 +1,233 @@
+import { ch, loc, obj, ev } from "./build.js";
+
+// League of Legends : un deck choisit UNE région de Runeterra (comme un type Pokémon). Il joue les champions de cette
+// région (un champion de deux régions compte pour les deux), plus ceux qui vont partout : Bard et ses meeps, les sbires,
+// les monstres, les objets et les sorts de la Faille. La région choisie donne un bonus permanent (voir `types`).
+// Les pouvoirs s'inspirent de l'histoire de chaque champion ; les noms d'effets reprennent ses techniques.
+export const meta = {
+  id: "lol", name: "League of Legends", short: "LoL", color: "#c8aa6e", color2: "#0a1428", icon: "hexagon", motif: "runeterra",
+  desc: "Les champions de Runeterra. Choisis une région : chacune a son bonus et ses champions. Bard, ses meeps, les sbires, les monstres et les objets de la Faille vont dans tous les decks.",
+  passive: "",
+  sub: { one: "région", One: "Région", fem: true, ask: "Quelle région de Runeterra ?", help: "Un deck League of Legends ne prend que les champions de cette région (et ceux qui vont partout : Bard, les sbires, les objets…) ; chaque région donne un bonus à la famille.",
+    pick: "Choisis une région de Runeterra pour ce deck.", not: "n'est pas de la région", starter: "lol" },
+};
+
+const IO = "Ionia", FR = "Freljord", PZ = "Piltover et Zaun", NX = "Noxus", DE = "Demacia", IX = "Ixtal", BA = "Bandle";
+
+export const types = [
+  { id: IO, name: "Ionia", color: "#e2679f", bonus: "famEscape:Ionia@Harmonie spirituelle", desc: "La terre de l'équilibre : une fois par round, un champion d'Ionia qui devrait mourir retourne dans votre main." },
+  { id: FR, name: "Freljord", color: "#7cc5ea", bonus: "fWinKneel:combat@Morsure du givre", desc: "Le grand froid : un défi de Combat gagné agenouille un personnage adverse." },
+  { id: PZ, name: "Piltover et Zaun", short: "Piltover-Zaun", color: "#e3a73c", bonus: "income:1@La cité du progrès", desc: "La ville la plus riche de Runeterra (et sa ville basse) : +1 revenu à chaque round." },
+  { id: NX, name: "Noxus", color: "#d0352f", bonus: "atkAura:Noxus,1@La force avant tout", desc: "L'empire conquérant : vos champions de Noxus frappent plus fort en attaque." },
+  { id: DE, name: "Demacia", color: "#6c9be0", bonus: "defAuraT:Demacia,1@Les remparts de pétricite", desc: "Le royaume de la justice : vos champions de Demacia tiennent mieux en défense." },
+  { id: IX, name: "Ixtal", color: "#2db488", bonus: "fWinStand:combat@L'axiomata", desc: "La jungle cachée des élémentalistes : chaque round, après un défi de Combat gagné, un de vos participants se redresse." },
+  { id: BA, name: "Bandle City", color: "#f0983a", bonus: "fEnterGold:Yordle@Les portails yordles", desc: "La cité des yordles : chaque round, l'arrivée d'un yordle rapporte 1 or." },
+];
+
+/** Un champion : sa ou ses régions (vide = va dans tous les decks), puis ses traits. */
+const c = (name, title, cost, str, icons, pt, traits, kw, ab, r, o = {}) => ch(name, title, cost, str, icons, traits, kw, ab, r, { pt, ...o });
+const IOBA = `${IO}|${BA}`, FRBA = `${FR}|${BA}`, PZBA = `${PZ}|${BA}`, NXBA = `${NX}|${BA}`, DEBA = `${DE}|${BA}`, NXPZ = `${NX}|${PZ}`;
+
+export const cards = [
+  // --- Ionia : le Kinkou, les vastayas de Lhotlan, la résistance contre Noxus
+  c("Shen", "L'Œil du Crépuscule", 6, 6, "CI", IO, "Kinkou|Ninja", "", "guard:*@Unis dans l'adversité ; defStand@Refuge spirituel", "E"),
+  c("Shen", "L'héritier de Kusho", 3, 3, "C", IO, "Kinkou|Ninja", "", "ifWith:Kinkou,1@L'équilibre", "U"),
+  c("Kennen", "Le Cœur de la Tempête", 5, 4, "CR", IOBA, "Yordle|Kinkou|Ninja", "", "noKneel:combat@Ruée de foudre ; atkKneel:3@Marque de la tempête", "E"),
+  c("Kennen", "Le messager de la foudre", 2, 2, "C", IOBA, "Yordle|Kinkou|Ninja", "", "ifWith:Kinkou,1@Les trois piliers", "C"),
+  c("Rakan", "Le Charmeur", 4, 3, "RI", IO, "Vastaya|Lhotlan", "", "ifName:Xayah,2@Âmes sœurs ; enterKneel:3@Grande entrée", "R"),
+  c("Xayah", "La Rebelle", 5, 5, "CR", IO, "Vastaya|Lhotlan", "", "ifName:Rakan,2@Âmes sœurs ; winKill:combat,2@Appel des lames", "E"),
+  c("Varus", "La Flèche du châtiment", 6, 5, "CR", IO, "Darkin", "", "atkKneel:4@Chaîne de corruption ; winDiscard:combat,1@Carquois corrompu", "E"),
+  c("Irelia", "La Danseuse des lames", 5, 5, "CI", IO, "Navori", "", "winStand:combat@Assaut tranchant ; ifAtk:1@Danse des lames", "R"),
+  c("Ahri", "La Renarde à neuf queues", 4, 3, "RI", IO, "Vastaya", "discret", "winKneel:ruse@Charme", "R"),
+  c("Karma", "L'Éclairée", 4, 3, "RI", IO, "Mage", "", "enterDraw:1@Mantra ; domi:1@Mille vies", "R"),
+  c("Yasuo", "Le Disgracié", 5, 5, "C", IO, "Épéiste", "", "immune@Mur de vent ; ifAlone:1@Le vagabond", "R"),
+  c("Master Yi", "Le Fine Lame Wuju", 4, 3, "C", IO, "Wuju", "", "winStand:combat@Frappe alpha", "U"),
+  c("Lee Sin", "Le Moine aveugle", 4, 4, "CR", IO, "Moine", "", "winKneel:combat@Rage du dragon", "R"),
+  c("Akali", "L'Assassin rebelle", 3, 3, "CR", IO, "Ninja", "discret", "ifWith:Kinkou,1@L'ancienne élève de Shen", "U"),
+  c("Zed", "Le Maître des ombres", 6, 5, "CR", IO, "Ninja|Ordre de l'ombre", "discret", "winKill:combat,3@Marque de la mort", "R"),
+  c("Lillia", "La Fleur timide", 2, 1, "I", IO, "Esprit", "", "enterKneel:2@Berceuse", "U"),
+  c("Sett", "Le Patron", 4, 4, "C", IO, "Vastaya", "", "ifAtk:1@Le patron des fosses", "U"),
+  c("Moine du Kinkou", "Gardien de l'équilibre", 2, 2, "C", IO, "Kinkou", "", "ifWith:Kinkou,1@Les trois piliers", "C", { uni: false }),
+  c("Esprit sylvestre", "Un habitant du monde spirituel", 1, 1, "R", IO, "Esprit", "", "", "C", { uni: false }),
+
+  // --- Freljord : la Griffe d'hiver, l'Avarosa, la Garde de givre et les demi-dieux
+  c("Sejuani", "La Fureur de l'hiver", 6, 6, "CI", FR, "Griffe d'hiver", "", "atkBuff:Freljord,1@Assaut arctique ; winKneel:combat@Prison glaciaire", "E"),
+  c("Bristle", "Le sanglier de Sejuani", 2, 2, "C", FR, "Griffe d'hiver|Bête", "", "ifName:Sejuani,1@Fidèle monture", "U"),
+  c("Lissandra", "La Sorcière de glace", 7, 6, "RI", FR, "Givre-né|Garde de givre|Mage", "", "enterKneel:5@Tombeau de glace ; escape@Mille ans de mensonges", "L"),
+  c("Lissandra", "La prêtresse de la Garde de givre", 4, 3, "RI", FR, "Givre-né|Garde de givre|Mage", "", "enterKneel:2@Anneau de givre", "R"),
+  c("Gnar", "Le Chaînon manquant", 2, 2, "C", FRBA, "Yordle", "", "loseStand@Ça l'énerve ; actPay:1@Rage montante", "R"),
+  c("Gnar", "Méga Gnar", 6, 7, "C", FRBA, "Yordle|Bête", "", "enterKneel:4@GNAR !", "E"),
+  c("Ashe", "L'Archère de givre", 5, 5, "CI", FR, "Avarosan|Givre-né", "", "atkKneel:3@Flèche de cristal enchantée ; aura:Avarosan,1@Unir le Freljord", "E"),
+  c("Tryndamere", "Le Roi barbare", 5, 5, "C", FR, "Avarosan", "", "selfSave:1@Rage immortelle", "R"),
+  c("Braum", "Le Cœur du Freljord", 4, 4, "CI", FR, "Avarosan", "", "guard:*@Inébranlable", "R"),
+  c("Anivia", "La Cryophénix", 6, 5, "RI", FR, "Demi-dieu|Givre-né", "", "escape@Renaissance ; enterKneel:3@Pointe de glace", "R"),
+  c("Volibear", "Le Tonnerre implacable", 7, 7, "CI", FR, "Demi-dieu|Ursin", "intimidation", "atkKneel:4@Frappe orageuse", "L"),
+  c("Ornn", "Le Feu sous la montagne", 5, 5, "CI", FR, "Demi-dieu|Forgeron", "", "enterSearch:Équipement@La forge du Freljord", "U"),
+  c("Olaf", "Le Berserker", 4, 4, "C", FR, "Lokfar", "", "dieKill:3@Une mort glorieuse", "R"),
+  c("Trundle", "Le Roi des trolls", 5, 5, "C", FR, "Troll|Garde de givre", "", "winSteal:combat,1@Subjugation", "U"),
+  c("Udyr", "Le Marcheur spirituel", 3, 3, "C", FR, "Chaman", "", "ifAtk:1@Posture du tigre", "C"),
+  c("Nunu et Willump", "Le garçon et son yéti", 3, 3, "CR", FR, "Yéti", "", "enterKneel:2@Boule de neige géante", "U"),
+  c("Gragas", "L'Agitateur", 3, 3, "C", FR, "Brasseur", "", "enterGold:2@Tournée générale", "U"),
+  c("Poro", "La petite boule de poils", 1, 1, "I", FR, "Poro|Bête", "", "", "C", { uni: false }),
+  c("Guerrière de la Griffe d'hiver", "Pillarde du Nord", 2, 2, "C", FR, "Griffe d'hiver", "", "ifAtk:1@Raid", "C", { uni: false }),
+
+  // --- Piltover et Zaun : la cité du progrès et sa ville basse
+  c("Caitlyn", "La Shérif de Piltover", 6, 5, "CI", PZ, "Piltover|Police|Kiramman", "", "enterKill:3@As dans la manche ; ifName:Vi,1@Partenaires", "E"),
+  c("Caitlyn", "L'enquêtrice", 3, 2, "RI", PZ, "Piltover|Police|Kiramman", "", "winDraw:ruse,1@La piste ; ifName:Vi,1@Partenaires", "R"),
+  c("Vi", "La Gardienne de Piltover", 5, 5, "C", PZ, "Piltover|Police|Hextech", "", "atkKneel:3@Interpellation ; ifName:Caitlyn,1@Partenaires", "E"),
+  c("Vi", "La gamine des bas-fonds", 2, 2, "C", PZ, "Zaun", "", "ifAtk:1@Poings nus", "U"),
+  c("Renata Glasc", "La Chimio-baronne", 5, 4, "RI", PZ, "Zaun|Chimie|Baron", "", "winSteal:influence,2@Effet de levier ; guard:*@Renflouement", "E"),
+  c("Janna", "La Furie des tempêtes", 4, 3, "RI", PZ, "Zaun|Esprit", "", "actBuff:*,2@Œil du cyclone ; defStand@Mousson", "R"),
+  c("Jinx", "La Gâchette folle", 5, 4, "CR", PZ, "Zaun|Hors-la-loi", "pillard", "winKill:combat,2@Super méga roquette de la mort !", "E"),
+  c("Powder", "La petite sœur de Vi", 1, 1, "R", PZ, "Zaun", "", "dieDraw:1@Porte-poisse", "U", { key: "lol-jinx" }),
+  c("Ekko", "Le Garçon qui a brisé le temps", 4, 3, "CR", PZ, "Zaun|Lucioles", "", "escape@Chronofracture", "R"),
+  c("Jayce", "Le Défenseur de demain", 5, 4, "CI", PZ, "Piltover|Hextech", "", "ifAtk:1@Marteau de mercure ; ifDef:1@Canon de mercure", "R"),
+  c("Viktor", "Le Héraut des machines", 5, 4, "RI", PZ, "Zaun|Hextech", "genie", "atkKneel:3@Champ de gravité", "R"),
+  c("Heimerdinger", "Le Génie révéré", 4, 3, "RI", PZBA, "Yordle|Piltover|Hextech", "genie", "enterDraw:1@Eurêka !", "R"),
+  c("Camille", "L'Ombre d'acier", 5, 5, "CR", PZ, "Piltover|Hextech", "duel", "ifAlone:2@Ultimatum hextech", "R"),
+  c("Ezreal", "L'Explorateur prodigue", 3, 3, "R", PZ, "Piltover|Explorateur", "", "escape@Transfert arcanique", "U"),
+  c("Singed", "Le Chimiste fou", 4, 3, "CR", PZ, "Zaun|Chimie", "", "winDiscard:combat,1@Traînée toxique", "U"),
+  c("Warwick", "La Colère déchaînée de Zaun", 6, 6, "C", PZ, "Zaun|Chimie", "intimidation", "atkKneel:3@Contrainte infinie", "R"),
+  c("Seraphine", "La Chanteuse étoilée", 3, 2, "I", PZ, "Piltover|Zaun|Musicienne", "", "domi:2@Une voix pour deux cités", "U"),
+  c("Blitzcrank", "Le Golem à vapeur", 4, 4, "C", PZ, "Zaun|Machine", "", "atkKneel:2@Grappin propulsé", "U"),
+  c("Silco", "Le baron de la ville basse", 4, 3, "RI", PZ, "Zaun|Chimie|Baron", "", "enterGold:2@Le Shimmer", "R"),
+  c("Garde de Piltover", "Les forces de l'ordre", 2, 2, "C", PZ, "Piltover|Police", "", "ifWith:Police,1@En patrouille", "C", { uni: false }),
+  c("Chimio-punk", "Voyou de la ville basse", 1, 1, "C", PZ, "Zaun|Chimie", "", "", "C", { uni: false }),
+
+  // --- Noxus : l'empire, le Trifarix, la Rose noire et les Du Couteau
+  c("Rell", "La Vierge de fer", 5, 4, "CI", NX, "Ferromancienne", "", "atkKneel:3@Tempête magnétique ; ifDef:1@Armure de fer", "E"),
+  c("Rell", "L'élève de la Rose noire", 2, 2, "C", NX, "Ferromancienne", "", "ifDef:1@Armure de fer", "U"),
+  c("Mel", "Le Reflet de l'âme", 6, 4, "RI", NXPZ, "Medarda|Mage", "", "immune@Réfutation ; winKill:ruse,3@Éclipse dorée", "E"),
+  c("Mel", "La Conseillère de Piltover", 3, 2, "I", NXPZ, "Medarda|Conseil", "", "enterGold:2@La fortune des Medarda ; domi:1@Diplomatie", "R"),
+  c("Darius", "La Main de Noxus", 7, 7, "CI", NX, "Trifarix", "intimidation", "winKill:combat,3@Guillotine noxienne", "L"),
+  c("Draven", "Le Glorieux Exécuteur", 5, 4, "C", NX, "Exécuteur", "celebre", "winGold:combat,1@Adoration", "R"),
+  c("Swain", "Le Grand Général de Noxus", 6, 4, "RI", NX, "Trifarix|Mage", "genie", "enterKneel:3@Ascension démoniaque", "E"),
+  c("Katarina", "La Lame sinistre", 4, 3, "CR", NX, "Du Couteau", "discret", "winStand:combat@Shunpo", "R"),
+  c("LeBlanc", "La Trompeuse", 5, 3, "RI", NX, "Rose noire|Mage", "", "escape@Reflet ; winKneel:ruse@Chaînes éthérées", "E"),
+  c("Sion", "Le Colosse mort-vivant", 6, 6, "C", NX, "Mort-vivant", "", "dieKill:4@Gloire dans la mort", "R"),
+  c("Talon", "La Lame de l'ombre", 3, 3, "C", NX, "Du Couteau", "discret", "", "U"),
+  c("Samira", "La Rose du désert", 4, 3, "C", NX, "Hors-la-loi", "celebre", "", "R"),
+  c("Kled", "Le Cavalier acariâtre", 3, 3, "C", NXBA, "Yordle", "", "ifAtk:1@Chaaaaaarge !", "U"),
+  c("Cassiopeia", "L'Étreinte du serpent", 5, 4, "RI", NX, "Du Couteau|Mage", "", "enterKneel:4@Regard pétrifiant", "R"),
+  c("Ambessa", "La Matriarche de guerre", 6, 5, "CI", NX, "Medarda", "intimidation", "ifName:Mel,1@Sang Medarda", "R"),
+  c("Briar", "La Faim incarnée", 4, 3, "C", NX, "Rose noire", "", "ifAtk:1@Frénésie", "U"),
+  c("Riven", "L'Exilée", 4, 4, "C", NX, "Exilée", "", "winStand:combat@Lame brisée", "U"),
+  c("Légionnaire noxien", "Soldat de l'empire", 2, 2, "C", NX, "Légion", "", "", "C", { uni: false }),
+  c("Corbeau de Swain", "Les yeux de l'empire", 1, 1, "R", NX, "Corbeau", "", "", "C", { uni: false }),
+
+  // --- Demacia : la couronne, l'Avant-garde intrépide et ses mages cachés
+  c("Poppy", "La Gardienne du marteau", 5, 4, "CI", DEBA, "Yordle", "", "atkKneel:3@Charge héroïque ; ifBehind:2@Pas une héroïne", "E"),
+  c("Poppy", "L'Ambassadrice de fer", 2, 2, "C", DEBA, "Yordle", "", "ifDef:1@Bouclier de fer", "U"),
+  c("Garen", "La Force de Demacia", 6, 6, "CI", DE, "Avant-garde|Crownguard", "", "ifDef:1@Courage ; winKill:combat,3@Justice de Demacia", "E"),
+  c("Lux", "La Dame de lumière", 5, 4, "RI", DE, "Crownguard|Mage", "discret", "enterKneel:4@Lien de lumière", "E"),
+  c("Jarvan IV", "Le Modèle de Demacia", 6, 5, "CI", DE, "Lightshield", "", "aura:Demacia,1@Étendard de Demacia", "E"),
+  c("Galio", "Le Colosse", 7, 7, "CI", DE, "Pétricite|Gardien", "", "guard:Demacia@Entrée héroïque ; immune@Statue de pétricite", "L"),
+  c("Fiora", "La Grande Duelliste", 5, 5, "C", DE, "Laurent", "duel", "ifAlone:2@Grand défi", "R"),
+  c("Quinn", "Les Ailes de Demacia", 3, 2, "CR", DE, "Avant-garde|Éclaireuse", "", "winDraw:ruse,1@Valor en éclaireur", "R"),
+  c("Valor", "L'aigle de Quinn", 1, 1, "R", DE, "Aigle|Bête", "", "ifName:Quinn,1@Les ailes de Demacia", "C"),
+  c("Shyvana", "La Demi-dragonne", 6, 6, "C", DE, "Dragon", "intimidation", "ifAtk:1@Forme draconique", "R"),
+  c("Xin Zhao", "Le Sénéchal de Demacia", 4, 4, "C", DE, "Lightshield", "", "ifName:Jarvan IV,1@Le serment du sénéchal", "U"),
+  c("Vayne", "La Chasseuse de nuit", 4, 3, "CR", DE, "Chasseuse", "", "winKneel:ruse@Condamnation", "R"),
+  c("Sona", "La Virtuose de la harpe", 3, 1, "I", DE, "Musicienne", "", "domi:2@Crescendo", "U"),
+  c("Lucian", "Le Purificateur", 4, 4, "CR", DE, "Sentinelle de lumière", "", "winStand:combat@Implacable", "U"),
+  c("Sylas", "Le Révolutionnaire", 5, 4, "CI", DE, "Mage|Rebelle", "", "winDiscard:ruse,1@Détournement", "R"),
+  c("Morgana", "La Déchue", 5, 4, "RI", DE, "Mage|Ascendante", "", "atkKneel:4@Lien ténébreux ; immune@Bouclier noir", "E"),
+  c("Kayle", "La Juste", 6, 5, "CI", DE, "Ascendante", "", "guard:*@Intervention divine", "R"),
+  c("Soldat de l'Avant-garde", "L'Avant-garde intrépide", 2, 2, "C", DE, "Avant-garde", "", "ifDef:1@Formation", "C", { uni: false }),
+  c("Chasseur de mages", "L'ordre de la pétricite", 2, 2, "C", DE, "Chasseur de mages", "", "immune@Pétricite", "C", { uni: false }),
+
+  // --- Ixtal : la jungle cachée, ses élémentalistes et ses créatures
+  c("Zyra", "L'Ascension des ronces", 6, 5, "RI", IX, "Plante|Mage", "", "aura:Plante,1@Croissance débridée ; atkKneel:3@Racines agrippantes", "E"),
+  c("Zyra", "La Graine d'épines", 3, 2, "R", IX, "Plante|Mage", "", "enterSearch:Plante@Jardin d'épines", "R"),
+  c("Nidalee", "La Chasseresse bestiale", 4, 3, "CR", IX, "Métamorphe|Chasseuse", "", "ifAtk:2@Forme de couguar ; winDraw:ruse,1@Lancer de javelot", "E"),
+  c("Nidalee", "L'enfant des couguars", 2, 1, "R", IX, "Métamorphe", "", "ifWith:Bête,1@Élevée par les couguars", "U"),
+  c("Milio", "La Flamme douce", 3, 2, "RI", IX, "Élémentaliste", "", "enterStand:*@Souffle de vie ; actBuff:*,1@Câlins chaleureux", "E"),
+  c("Fuemigo", "L'esprit de feu de Milio", 1, 1, "R", IX, "Esprit|Élémentaire", "", "ifName:Milio,1@Feu de camp douillet", "C"),
+  c("Neeko", "La Caméléon curieuse", 4, 3, "RI", IX, "Vastaya", "discret", "winKneel:ruse@Éclosion", "R"),
+  c("Qiyana", "L'Impératrice des éléments", 5, 4, "CI", IX, "Élémentaliste|Yun Tal", "", "atkKneel:3@Puissance suprême", "E"),
+  c("Malphite", "L'Éclat du Monolithe", 7, 6, "C", IX, "Élémentaire|Roche", "intimidation", "enterKneel:4@Force imparable", "L"),
+  c("Rengar", "Le Traqueur fier", 5, 4, "C", IX, "Vastaya|Chasseur", "embuscade:4", "", "R"),
+  c("Skarner", "Le Souverain primordial", 6, 5, "CI", IX, "Brackern", "", "ifDef:1@Carapace de cristal ; enterKneel:3@Empalement", "R"),
+  c("Ronce cracheuse", "Une graine de Zyra", 1, 1, "C", IX, "Plante", "", "", "C", { uni: false }),
+  c("Plante étrangleuse", "Elle pousse en un instant", 2, 2, "C", IX, "Plante", "", "ifWith:Plante,1@Lianes", "C", { uni: false }),
+  c("Couguar de Kumungu", "La famille de Nidalee", 2, 2, "C", IX, "Bête", "", "ifName:Nidalee,1@La meute", "C", { uni: false }),
+  c("Élémentaliste d'Ixtal", "Maître de l'axiomata", 2, 1, "RI", IX, "Élémentaliste", "", "enterDraw:1@Axiomata", "U", { uni: false }),
+  c("Brackern", "Le peuple de cristal", 3, 3, "C", IX, "Brackern|Bête", "", "", "C", { uni: false }),
+
+  // --- Bandle City : les yordles (Poppy, Gnar, Kennen, Heimerdinger, Ziggs et Kled en font aussi partie)
+  c("Teemo", "Le Scout rapide", 3, 3, "R", BA, "Yordle|Éclaireur", "discret", "winDiscard:ruse,1@Piège toxique", "R"),
+  c("Tristana", "La Canonnière yordle", 4, 4, "C", BA, "Yordle|Artilleuse", "", "winStand:combat@Saut-roquette", "R"),
+  c("Lulu", "La Sorcière féerique", 3, 2, "RI", BA, "Yordle|Fée|Mage", "", "actBuff:*,2@Croissance démesurée", "R"),
+  c("Pix", "Le compagnon de Lulu", 1, 1, "R", BA, "Fée", "", "ifName:Lulu,1@Pix !", "C"),
+  c("Veigar", "Le Petit Maître du mal", 5, 4, "RI", BA, "Yordle|Mage", "genie", "enterKill:3@Explosion primordiale", "E"),
+  c("Corki", "Le Bombardier audacieux", 4, 3, "C", BA, "Yordle|Pilote", "", "ifAtk:1@Le Paquet", "U"),
+  c("Rumble", "La Menace mécanisée", 4, 4, "C", BA, "Yordle|Machine", "", "winDiscard:combat,1@L'Égaliseur", "U"),
+  c("Yuumi", "La Chatte magique", 2, 1, "I", BA, "Chat|Fée", "", "actBuff:*,1@Toi et moi !", "U"),
+  c("Ziggs", "L'Expert en hexplosifs", 3, 3, "R", PZBA, "Yordle|Hextech", "", "enterKneel:2@Charge de démolition", "U"),
+  c("Vex", "La Morose", 3, 3, "RI", BA, "Yordle|Ombre", "", "winKneel:ruse@Le désespoir", "U"),
+  c("Tourelle de Heimerdinger", "H-28G Évolution", 1, 1, "C", PZBA, "Machine|Hextech", "", "ifName:Heimerdinger,1@Tourelle améliorée", "C", { uni: false }),
+
+  // --- partout : le gardien errant, la Faille de l'invocateur
+  c("Bard", "Le Gardien errant", 6, 5, "RI", "", "Céleste", "", "enterKneel:4@Destin altéré ; pack:Meep,1@L'appel du voyageur", "E"),
+  c("Bard", "Le Voyageur des étoiles", 3, 2, "RI", "", "Céleste", "", "enterSearch:Meep@Les meeps le suivent", "U"),
+  c("Meep", "Esprit des carillons", 1, 1, "R", "", "Meep|Esprit", "", "ifName:Bard,1@Meep !", "C", { uni: false }),
+  c("Sbire", "La vague de la Faille", 1, 1, "C", "", "Sbire", "", "ifWith:Sbire,1@En vague", "C", { uni: false }),
+  c("Sbire canonnier", "La vague de la Faille", 2, 2, "C", "", "Sbire", "", "ifWith:Sbire,1@En vague", "C", { uni: false }),
+  c("Super-sbire", "Les inhibiteurs sont tombés", 4, 4, "C", "", "Sbire", "", "aura:Sbire,1@Vague de super-sbires", "U", { uni: false }),
+  c("Héraut de la Faille", "Le monstre du Néant", 5, 5, "C", "", "Monstre|Néant", "", "claim:1@Charge du Héraut", "R"),
+  c("Baron Nashor", "La terreur de la Faille", 7, 6, "CI", "", "Monstre|Néant", "", "aura:*,1@Main du Baron", "L"),
+
+  // --- les champions au sommet de leur puissance (coût 7)
+  c("Varus", "Le Darkin éveillé", 7, 7, "CR", IO, "Darkin", "intimidation", "atkTerror:4@La terreur du Darkin ; winDiscard:combat,1@Fléau", "L"),
+  c("Viktor", "La Glorieuse Évolution", 7, 6, "RI", PZ, "Zaun|Hextech", "genie", "enterRevive:5@La Glorieuse Évolution ; immune@L'Arcane", "L"),
+  c("Janna", "La Déesse du vent", 7, 5, "RI", PZ, "Zaun|Esprit", "", "immuneAura:*@Le zéphyr protecteur ; enterKneelAll:2@Mousson", "L"),
+  c("Swain", "Le Démon de Noxus", 7, 6, "RI", NX, "Trifarix|Mage", "genie", "domSteal:1@L'Empire voit tout ; atkTerror:3@Les corbeaux de Raum", "L"),
+  c("Sylas", "Le Briseur de chaînes", 7, 6, "CI", DE, "Mage|Rebelle", "", "winPowerSteal:*,1@Détournement ; ifBehind:2@La révolution des mages", "L"),
+  c("Zyra", "La Reine des ronces", 7, 6, "RI", IX, "Plante|Mage", "", "enterKneelAll:2@Ronces étrangleuses ; aura:Plante,1@Croissance débridée", "L"),
+  c("Veigar", "Le Maître du mal ultime", 7, 5, "RI", BA, "Yordle|Mage", "genie", "enterFreeze:5@Horizon des événements ; ifPower:8,3@Puissance phénoménale", "L"),
+
+  // --- lieux
+  loc("La Faille de l'invocateur", "Bienvenue, invocateur", 1, "Faille", "limite", "income:1", "C"),
+  loc("Le Mont Targon", "Là où veillent les Célestes", 2, "Montagne", "", "reserve:1 ; domi:1", "U"),
+  loc("Le Placidium de Navori", "Le cœur spirituel d'Ionia", 2, "Temple", "", "reserve:1 ; domi:1", "U", { pt: IO }),
+  loc("Rakelstake", "La forteresse de l'Avarosa", 2, "Forteresse", "", "income:1", "U", { pt: FR }),
+  loc("Le Pont du Progrès", "Entre la ville haute et la ville basse", 3, "Cité", "", "reduce:*,1@Le progrès ; reserve:1", "R", { pt: PZ }),
+  loc("Le Bastion immortel", "Le siège de l'empire", 2, "Forteresse", "", "domi:2", "U", { pt: NX }),
+  loc("La Grande Cité de Demacia", "Des remparts de pétricite", 2, "Cité", "", "income:1", "U", { pt: DE }),
+  loc("Ixaocan", "La cité cachée", 2, "Cité", "", "actStand:Ixtal@Les sentiers de la jungle", "U", { pt: IX }),
+  loc("La Cité de Bandle", "Le foyer des yordles", 2, "Cité", "", "income:1", "U", { pt: BA }),
+
+  // --- objets de la Faille (et de quelques champions)
+  obj("Ange gardien", "Une seconde vie", 2, "Équipement", "", "attSave", "R"),
+  obj("Lame d'infini", "Coups critiques", 2, "Équipement|Arme", "", "attStr:2", "U"),
+  obj("Bottes de mobilité", "Toujours là où il faut", 1, "Équipement", "", "attStand", "C"),
+  obj("Coiffe de Rabadon", "La puissance magique", 2, "Équipement", "", "attIcon:ruse ; attStr:1", "U"),
+  obj("Balise de contrôle", "La vision, c'est la victoire", 1, "Équipement", "", "attWinDraw:1", "C"),
+  obj("Gants Atlas", "Les poings hextech de Vi", 2, "Hextech|Arme", "", "attKw:intimidation ; attStr:1", "R", { pt: PZ }),
+  obj("Le marteau d'Orlon", "Il attend son héros", 2, "Équipement|Arme", "", "attStr:1 ; attKw:celebre", "R", { pt: DEBA }),
+  obj("Champignon de Teemo", "Un piège bien caché", 1, "Piège", "", "attNeg:2", "U", { pt: BA }),
+
+  // --- événements : sorts d'invocateur, exploits, et un par région
+  ev("Saut éclair", "Sort d'invocateur", 2, "Sort d'invocateur", "evSave:*", "R"),
+  ev("Embrasement", "Sort d'invocateur", 2, "Sort d'invocateur", "evKill:3", "R"),
+  ev("Téléportation", "Sort d'invocateur", 1, "Sort d'invocateur", "evPutPlay:*,4", "R"),
+  ev("Barrière", "Sort d'invocateur", 1, "Sort d'invocateur", "evBuff:3", "U"),
+  ev("Pentakill", "Cinq d'un coup", 2, "Exploit", "evWinKill:combat,3", "R"),
+  ev("Harmonie", "L'équilibre retrouvé", 2, "Esprit", "evStandAll:Ionia", "R", { pt: IO }),
+  ev("Glace pure", "Le don des Givre-nés", 1, "Glace", "evKneel:3", "U", { pt: FR }),
+  ev("OPA hostile", "Une offre de Renata Glasc", 1, "Affaires", "evSteal:2", "U", { pt: PZ }),
+  ev("Invasion noxienne", "L'empire avance", 1, "Guerre", "evClaim:1", "U", { pt: NX }),
+  ev("Pour Demacia !", "Le cri de ralliement", 2, "Ralliement", "evBuffTrait:Demacia,2", "U", { pt: DE }),
+  ev("Le voile d'Ixtal", "La barrière élémentaire", 1, "Magie", "evCancel", "R", { pt: IX }),
+  ev("Les chemins de Bandle", "Un portail yordle", 1, "Portail", "evPutPlay:Yordle,4", "R", { pt: BA }),
+];
+
+export const starters = [
+  { id: "lol-ionia", name: "Ionia", pt: IO, leader: "lol-shen-6", excl: ["lol-bard-6"], like: [IO, IO, "Kinkou", "Vastaya"], avoid: [], desc: "Shen et le Kinkou veillent sur l'équilibre, avec Kennen, Rakan et Xayah, Varus, Ahri, Yasuo… Une fois par round, un champion d'Ionia qui devrait mourir retourne en main." },
+  { id: "lol-freljord", name: "Le Freljord", pt: FR, leader: "lol-sejuani-6", excl: ["lol-lissandra-7"], like: [FR, FR, "Griffe d'hiver", "Avarosan"], avoid: [], desc: "Sejuani et la Griffe d'hiver, Lissandra la Sorcière de glace, Gnar, Ashe, Braum, Volibear… Chaque défi de Combat gagné gèle un adversaire." },
+  { id: "lol-pz", name: "Piltover et Zaun", pt: PZ, leader: "lol-caitlyn-6", like: [PZ, PZ, "Hextech", "Police"], avoid: [], desc: "Caitlyn et Vi face à Jinx, avec Renata Glasc, Janna, Ekko, Jayce, Viktor et Mel… La cité du progrès rapporte +1 or à chaque round." },
+  { id: "lol-noxus", name: "Noxus", pt: NX, leader: "lol-rell-5", excl: ["lol-mel-6"], like: [NX, NX, "Medarda", "Trifarix"], avoid: [], desc: "Rell la Vierge de fer, Mel et Ambessa Medarda, Darius, Swain, LeBlanc, Draven… Les champions de Noxus frappent plus fort en attaque." },
+  { id: "lol-demacia", name: "Demacia", pt: DE, leader: "lol-poppy-5", like: [DE, DE, "Avant-garde", "Yordle"], avoid: [], desc: "Poppy la gardienne du marteau, Garen, Lux, Jarvan IV, Galio, Fiora… Les champions de Demacia tiennent les remparts en défense." },
+  { id: "lol-ixtal", name: "Ixtal", pt: IX, leader: "lol-zyra-6", excl: ["lol-bard-6"], like: [IX, IX, "Plante", "Élémentaliste"], avoid: [], desc: "Zyra et ses ronces, Nidalee la chasseresse, Milio la flamme douce, Qiyana, Malphite, Skarner… Après un défi de Combat gagné, un participant se redresse." },
+  { id: "lol-bandle", name: "Les yordles", pt: BA, leader: "lol-gnar-6", like: [BA, BA, "Yordle"], avoid: [], desc: "Méga Gnar, Poppy, Kennen, Teemo, Tristana, Lulu, Veigar, Heimerdinger… Chaque round, un yordle qui arrive rapporte de l'or." },
+];

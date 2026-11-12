@@ -1,6 +1,7 @@
 // Mini-jeux (« Party »), côté moteur (sans réseau) : manches, classement, points, tests d'amitié, triche.
 import { HostEngine } from "../src/net/hostEngine.js";
-import { MINIGAMES, MG_BY, rankPoints, randomTeams, modeOf, modeLabel, teamAvg } from "../src/minigames/meta.js";
+import { MINIGAMES, MG_BY, rankPoints, randomTeams, modeOf, modeLabel, teamAvg, makeDraw, gameWeight, pickList } from "../src/minigames/meta.js";
+import { GAME_COMPONENTS } from "../src/minigames/index.js";
 import { FRIEND_QS } from "../src/data/friendQs.js";
 let bad = 0;
 const eq = (n, g, w) => { if (JSON.stringify(g) !== JSON.stringify(w)) { bad++; console.log("ECHEC", n, JSON.stringify(g), "attendu", JSON.stringify(w)); } else console.log("ok   :", n); };
@@ -18,9 +19,24 @@ const mk = (rounds = 5, bots = 0) => {
 const toPlay = async (e) => { e.mgPlay(); await wait(); };
 
 // ---------- données
-eq("22 mini-jeux, identifiants uniques", [MINIGAMES.length >= 20, new Set(MINIGAMES.map((g) => g.id)).size === MINIGAMES.length], [true, true]);
+eq("15 mini-jeux et plus, identifiants uniques", [MINIGAMES.length >= 15, new Set(MINIGAMES.map((g) => g.id)).size === MINIGAMES.length], [true, true]);
+eq("chaque mini-jeu a son jeu, une icône et un genre", MINIGAMES.every((g) => GAME_COMPONENTS[g.id] && g.icon && g.tag), true);
 eq("chaque mini-jeu a une règle, une durée et un score max", MINIGAMES.every((g) => g.rule && g.seconds > 0 && g.max > 0 && typeof g.fmt(5) === "string"), true);
 eq("questions d'amitié : 2 à 4 choix, pas de doublons", FRIEND_QS.every(([t, o]) => t && o.length >= 2 && o.length <= 4 && new Set(o).size === o.length), true);
+// ---------- tirage des mini-jeux : tous à égalité, jamais de répétition proche, tous restent possibles ; le créateur peut choisir la liste
+{
+  const draw = makeDraw(), seq = Array.from({ length: 4000 }, () => draw());
+  const counts = MINIGAMES.map((g) => seq.filter((id) => id === g.id).length), avg = seq.length / MINIGAMES.length;
+  eq("tirage : chaque jeu sort à peu près autant (±35 %)", counts.every((n) => n > avg * 0.65 && n < avg * 1.35), true);
+  eq("tirage : jamais deux fois le même jeu à moins de 6 tirages d'écart", seq.every((id, i) => !seq.slice(Math.max(0, i - 6), i).includes(id)), true);
+  eq("tirage : tous les jeux sont possibles", new Set(seq).size, MINIGAMES.length);
+  eq("tirage : poids égaux", MINIGAMES.every((g) => gameWeight(g) === 1), true);
+  const three = ["kart", "sumo", "bomber"], d3 = makeDraw(Math.random, 6, pickList(three)), s3 = Array.from({ length: 60 }, () => d3());
+  eq("liste choisie (3 jeux) : seuls ces jeux sortent, sans répétition immédiate", [s3.every((id) => three.includes(id)), s3.every((id, i) => !i || id !== s3[i - 1])], [true, true]);
+  eq("liste trop courte ou inconnue : tout le catalogue", [pickList(["kart", "sumo"]).length, pickList(["zzz", "kart", "sumo"]).length, pickList(undefined).length], [MINIGAMES.length, MINIGAMES.length, MINIGAMES.length]);
+  let k = 0; const fixed = makeDraw(() => (k++ % 10) / 10);
+  eq("tirage : générateur injectable (résultat reproductible)", [fixed(), fixed(), fixed()].join(), (() => { let j = 0; const d = makeDraw(() => (j++ % 10) / 10); return [d(), d(), d()].join(); })());
+}
 eq("points selon le rang (4 joueurs)", [1, 2, 3, 4].map((r) => rankPoints(r, 4)), [10, 8, 5, 3]);
 eq("solo : 10 points", rankPoints(1, 1), 10);
 
@@ -164,6 +180,17 @@ e.destroy();
   const st = e.S.mg.step;
   e.mgSubmit("h", st, 5); e.mgSubmit("a", st, 9);
   eq("les deux joueurs restants sont du même camp : chacun pour soi", [e.S.mg.last.mode, e.S.mg.last.rows.map((r) => r.id)], ["ffa", ["a", "h"]]);
+}
+{ // émotes : relayées à tous, filtrées (id inconnu ignoré), une toutes les 1,2 s au plus
+  const e = mk(5, 0), a = e.S.players.find((p) => p.id === "a");
+  e.handle({ t: "emote", id: "wave", from: "a" });
+  eq("émote : enregistrée sur le joueur", [a.emote, a.emoteK], ["wave", 1]);
+  e.handle({ t: "emote", id: "dance", from: "a" });
+  eq("émote : anti-rafale (1,2 s)", [a.emote, a.emoteK], ["wave", 1]);
+  a.emoteAt -= 2000; e.handle({ t: "emote", id: "nimporte", from: "a" });
+  eq("émote inconnue : ignorée", [a.emote, a.emoteK], ["wave", 1]);
+  e.handle({ t: "emote", id: "heart", from: "a" });
+  eq("émote suivante après le délai", [a.emote, a.emoteK], ["heart", 2]);
 }
 console.log(bad ? `\n${bad} ÉCHEC(S)` : "\nTOUT BON");
 process.exit(bad ? 1 : 0);

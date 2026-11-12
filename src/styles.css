@@ -1,16 +1,3 @@
-@import "@fontsource/fredoka/latin-500.css";
-@import "@fontsource/fredoka/latin-600.css";
-@import "@fontsource/fredoka/latin-700.css";
-@import "@fontsource/fredoka/latin-ext-600.css";
-@import "@fontsource/nunito/latin-700.css";
-@import "@fontsource/nunito/latin-800.css";
-@import "@fontsource/nunito/latin-900.css";
-@import "@fontsource/fraunces/latin-700.css";
-@import "@fontsource/fraunces/latin-900.css";
-@import "@fontsource/cinzel-decorative/latin-700.css";
-@import "@fontsource/cinzel-decorative/latin-900.css";
-@import "@fontsource/cinzel-decorative/latin-ext-900.css";
-
 /* Direction : soirée jeux de société sur console (Mario Party, Wii Party, Smash). Ciel bleu vif, confettis, rayons, panneaux blancs cernés d'un
    gros trait bleu nuit, boutons bombés brillants, couleurs des 4 joueurs (rouge, bleu, jaune, vert). Les noms (--ink, --cream…) gardent leur rôle. */
 :root {
@@ -31,9 +18,9 @@
   --spark: #a96a00;      /* jaune lisible sur blanc (texte) */
   --danger: #e0203a;
   --ok: #138a3a;
-  --display: "Fredoka", "Nunito", system-ui, sans-serif;
-  --serif: "Fraunces", "Georgia", "Times New Roman", serif;
-  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Sora", system-ui, sans-serif;
+  --serif: "Sora", system-ui, sans-serif;
+  --body: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
   /* confettis (étoiles, ronds, triangles) posés sur le ciel */
@@ -380,7 +367,7 @@ button.slot:active { background: rgba(255,255,255,.08); }
   background: linear-gradient(180deg, rgba(10,4,20,.62), rgba(10,4,20,.5));
   box-shadow: 0 0 0 .5cqw rgba(240,207,122,.9), 0 0 0 1.5cqw rgba(10,4,20,.5), 0 0 0 1.9cqw rgba(240,207,122,.5), 0 3cqw 7cqw rgba(0,0,0,.5); }
 .fc .swash { width: 62%; height: auto; flex: none; filter: drop-shadow(0 .4cqw 0 rgba(0,0,0,.4)); }
-.fc .nm { width: 100%; display: grid; place-items: center; text-align: center; font-family: "Cinzel Decorative", var(--serif); font-weight: 900; line-height: 1.12; letter-spacing: .01em; overflow-wrap: anywhere; hyphens: auto; text-wrap: balance;
+.fc .nm { width: 100%; display: grid; place-items: center; text-align: center; font-family: var(--display); font-weight: 900; line-height: 1.12; letter-spacing: .01em; overflow-wrap: anywhere; hyphens: auto; text-wrap: balance;
   filter: drop-shadow(0 .7cqw 0 rgba(0,0,0,.55)); }
 .fc .nm span { display: inline; -webkit-box-decoration-break: clone; box-decoration-break: clone; background: linear-gradient(180deg, #fffbe6 8%, #ffe08a 42%, #d9a233 74%, #fff0b0); -webkit-background-clip: text; background-clip: text; color: transparent; padding: .4cqw 0; }
 .fc .nm.s1 { font-size: 14cqw; } .fc .nm.s2 { font-size: 10.6cqw; } .fc .nm.s3 { font-size: 8.4cqw; } .fc .nm.s4 { font-size: 7cqw; }
@@ -619,7 +606,7 @@ button.slot:active { background: rgba(255,255,255,.08); }
 
 /* pastille */
 .bdg { position: absolute; z-index: 7; top: 9.4%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 1.6cqw; padding: 1.2cqw 3.6cqw 1.2cqw 2.2cqw; border-radius: 99px; white-space: nowrap;
-  font-family: "Cinzel Decorative", var(--serif); font-weight: 900; font-size: 6.6cqw; line-height: 1; color: #07202b;
+  font-family: var(--display); font-weight: 900; font-size: 6.6cqw; line-height: 1; color: #07202b;
   background: linear-gradient(180deg, #fff, var(--orn) 55%, var(--glow)); box-shadow: 0 .6cqw 0 rgba(0,0,0,.45), 0 0 3.4cqw var(--glow); animation: bdgIn .55s .2s cubic-bezier(.2,1.7,.4,1) backwards; }
 .fc.bonus.score .bdg { color: #3a0720; }
 .bdg svg { width: 7.4cqw; height: 7.4cqw; flex: none; }
@@ -1380,3 +1367,19 @@ button:not(:disabled):active, .bigbtn:active, .profbtn:active { scale: .94; }
 .ccgal li { display: grid; gap: 3px; text-align: center; font-weight: 800; font-size: .72rem; }
 .ccgal img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 3px solid var(--outline); background: var(--ink-3); }
 .ccspin { font-size: 4rem; animation: ccPulse 1s ease-in-out infinite; }
+
+/* Salle d'essai : la page ne défile jamais (seule la liste des jeux défile), ni en jeu ni sur le résultat */
+.labwrap { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.labwrap > .screen, .app > .screen { min-height: 0; }
+.mgplay { overflow: hidden; overscroll-behavior: none; touch-action: none; }
+.mgplay .mgstage { overflow: hidden; }
+.mgplay .mgdone { overflow: hidden; }
+[data-testid="lab-list"] .scroll { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+/* Mini-jeux d'arène : pastilles des joueurs (une seule ligne, hauteur fixe : la scène 3D ne saute jamais) */
+.mgchips { display: flex; gap: 4px; flex: none; flex-wrap: nowrap; height: 28px; }
+.mgchip { display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex: 1 1 0; min-width: 0; padding: 2px 4px; border: 3px solid var(--outline); border-radius: 999px; background: var(--ink-2); font: 800 .7rem var(--display); color: var(--cream); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mgchip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c, #fff); border: 2px solid var(--outline); flex: none; }
+.mgchip.me { box-shadow: 0 0 0 2px var(--c, #fff); }
+.mgchip.on { background: #ff5d73; color: #fff; }
+.mgchip.dead { opacity: .4; text-decoration: line-through; }

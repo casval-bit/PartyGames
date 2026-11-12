@@ -1,6 +1,7 @@
 // Plateau en 3D : une île de nuit, une boucle de 32 cases, et les avatars costumés des joueurs qui sautent de case en case.
 // Ce composant ne PREND aucune décision : il lit l'état du jeu (`room.bd`, exactement comme la grille 2D) et l'anime. Le moteur n'a pas changé.
 import { useRef, useState } from "react";
+import { Icon } from "../ui/Icon.jsx";
 import { Stage3D, makeBean, beanColor, textSprite, clamp, wrapPi } from "../minigames/three/kit3d.jsx";
 import { cleanX } from "../avatar3d/schema.js";
 import { BD_STEP_MS } from "../config.js";
@@ -191,9 +192,9 @@ export default function Board3D({ room, center, onFail, onFlat }) {
     <div className="bdboard b3d" data-testid="bd-3d" data-ready={ready ? "1" : "0"} data-spaces={bd.spaces.join(",")} data-gem={bd.gemAt} data-cur={bd.cur || ""}>
       <Stage3D setup={setup} label="Plateau de jeu en 3D" onFail={onFail} onReady={() => setReady(true)} />
       <div className="b3top">
-        <span className="b3pill" data-testid="bd-round">Tour {Math.min(bd.round, bd.total)}/{bd.total}{bd.sprint ? <b className="b3hot" title="Sprint final : pièces ×2">🔥 ×2</b> : null}</span>
+        <span className="b3pill" data-testid="bd-round">Tour {Math.min(bd.round, bd.total)}/{bd.total}{bd.sprint ? <b className="b3hot" title="Sprint final : pièces ×2"><Icon name="flame" size={13} /> ×2</b> : null}</span>
         <span className="b3btns">
-          <button className="b3btn" data-testid="bd-cam" aria-pressed={ov} aria-label={ov ? "Suivre le joueur" : "Voir tout le plateau"} title={ov ? "Suivre le joueur" : "Voir tout le plateau"} onClick={() => setOv(!ov)}>{ov ? "🎯" : "🗺️"}</button>
+          <button className="b3btn" data-testid="bd-cam" aria-pressed={ov} aria-label={ov ? "Suivre le joueur" : "Voir tout le plateau"} title={ov ? "Suivre le joueur" : "Voir tout le plateau"} onClick={() => setOv(!ov)}><Icon name={ov ? "locate" : "map"} size={18} /></button>
           <button className="b3btn" data-testid="bd-2d" onClick={onFlat} aria-label="Afficher le plateau en 2D">2D</button>
         </span>
       </div>

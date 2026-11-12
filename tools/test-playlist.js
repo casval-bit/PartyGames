@@ -1,5 +1,5 @@
 // node tools/test-playlist.js : import de playlist avec un faux Deezer (aucun réseau)
-import { MAX_TEXT_LINES, parseCsvTracks, spotifyTrackIds, parseSpotifyTrackPage, fetchSpotifyTracks, resolveLines, parseInput, fetchDeezerPlaylist, importPlaylist, parseSpotifyEmbed, fetchSpotifyPlaylist, freshTrack } from "../src/data/playlist.js";
+import { MAX_TEXT_LINES, MAX_TOTAL, parseCsvTracks, spotifyTrackIds, parseSpotifyTrackPage, fetchSpotifyTracks, resolveLines, parseInput, fetchDeezerPlaylist, importPlaylist, parseSpotifyEmbed, fetchSpotifyPlaylist, freshTrack } from "../src/data/playlist.js";
 let bad = 0;
 const eq = (n, g, w) => { if (JSON.stringify(g) !== JSON.stringify(w)) { bad++; console.log("ECHEC", n, JSON.stringify(g), "attendu", JSON.stringify(w)); } };
 
@@ -50,6 +50,16 @@ let calls = 0;
 const searchOk = async (path) => (path.startsWith("/search") ? (calls++, { data: [tr(1000 + calls, "T" + calls, "A")] }) : {});
 const big = await resolveLines(parseInput(many.split("\n").slice(0, 300).join("\n")).lines, searchOk, () => {}, 0);
 eq("300 lignes résolues", big.tracks.length, 300);
+// grande playlist Spotify (lecture directe) : 1950 morceaux ne sont pas coupés à 1500
+{
+  let prog = [];
+  const lines1950 = Array.from({ length: 1950 }, (_, i) => ({ artist: "A" + i, title: "T" + i }));
+  let c2 = 0; const ok2 = async (path) => (path.startsWith("/search") ? (c2++, { data: [tr(90000 + c2, "T" + c2, "A")] }) : {});
+  const r2 = await resolveLines(lines1950, ok2, (a, b) => prog.push([a, b]), 0, MAX_TOTAL);
+  eq("1950 morceaux Spotify : tous résolus, progression sur 1950", [r2.tracks.length, prog[prog.length - 1]], [1950, [1950, 1950]]);
+  const r3 = await resolveLines(lines1950.slice(0, 1600), ok2, () => {}, 0);
+  eq("texte collé : toujours limité à 1500 lignes", r3.tracks.length, MAX_TEXT_LINES);
+}
 // Deezer répond « quota » (code 4) quelques fois : on réessaie au lieu de perdre le morceau
 let q = 0;
 const quota = async (path) => (path.startsWith("/search") ? (++q <= 2 ? { error: { code: 4, message: "Quota limit exceeded" } } : { data: [tr(5000, "Z", "Y")] }) : {});

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Fuse, GameCard } from "../ui/parts.jsx";
 import { DISCARD_SECONDS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon } from "../ui/Icon.jsx";
 
 export default function Discard({ room, me, cards: dealt, api }) {
   const cards = dealt || [];
@@ -36,7 +37,7 @@ export default function Discard({ room, me, cards: dealt, api }) {
           })}
         </div>
         {ready && (
-          <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? " ✓" : ""}</span>)}</div>
+          <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? <Icon name="check" size={13} /> : null}</span>)}</div>
         )}
       </div>
       {ready ? (

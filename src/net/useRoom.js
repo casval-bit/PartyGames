@@ -15,6 +15,8 @@ export function useRoom(me) {
   const [queue, setQueue] = useState(null);
   const [discarded, setDiscarded] = useState(null);
   const [feedback, setFeedback] = useState(null); // blind test : réponse à ma dernière proposition
+  const [agPriv, setAgPriv] = useState(null);     // Trône des Mondes : ma main, mes scénarios, ma question
+  const [lgPriv, setLgPriv] = useState(null);     // Loup-garou : mon rôle, ce que je sais, ma question
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const R = useRef({ engine: null, conn: null, ad: null, isHost: false, lastSeen: 0, joined: false, watch: null });
@@ -50,7 +52,7 @@ export function useRoom(me) {
     if (r.conn) { const c = r.conn, flush = ID.current.out; Promise.race([flush, new Promise((res) => setTimeout(res, 800))]).finally(() => c.close()); } // laisse partir le dernier message signé (ex. « closed »)
     R.current = { engine: null, conn: null, ad: null, isHost: false, lastSeen: 0, joined: false, watch: null, hostPk: null, hostN: 0 };
     ID.current.out = Promise.resolve(); ID.current.inn = Promise.resolve();
-    setRoom(null); setPacks(null); setDealt(null); setDiscarded(null); setQueue(null); setFeedback(null);
+    setRoom(null); setPacks(null); setDealt(null); setDiscarded(null); setQueue(null); setFeedback(null); setAgPriv(null); setLgPriv(null);
   }, []);
 
   const apply = useCallback((msg) => {
@@ -64,7 +66,7 @@ export function useRoom(me) {
         if (r.joined && !inRoom) { setNotice("Vous n'êtes plus dans ce lobby."); return reset(); }
         if (inRoom) r.joined = true;
         setRoom({ ...s, deadline: s.endsIn != null ? Date.now() + s.endsIn : null });
-        if (s.phase === "lobby") { setPacks(null); setDealt(null); setDiscarded(null); setQueue(null); }
+        if (s.phase === "lobby") { setPacks(null); setDealt(null); setDiscarded(null); setQueue(null); setAgPriv(null); setLgPriv(null); }
         break;
       }
       case "hand": setPacks(msg.packs); break;
@@ -72,6 +74,8 @@ export function useRoom(me) {
       case "queue": setQueue({ cards: msg.cards, seq: msg.seq || 0, turn: msg.turn }); break;
       case "deck": setDiscarded(msg.discarded); break;
       case "fb": setFeedback({ ...msg, k: Date.now() + Math.random() }); break;
+      case "agp": setAgPriv(msg.v); break;
+      case "lgp": setLgPriv(msg.v); break;
       case "kicked": setNotice("Le créateur vous a exclu du lobby."); reset(); break;
       case "denied": setNotice(msg.reason || "Impossible de rejoindre."); reset(); break;
       case "closed": if (!r.isHost) { setNotice("Le créateur a fermé le lobby."); reset(); } break;
@@ -183,6 +187,7 @@ export function useRoom(me) {
   const host = (fn) => (...a) => { const e = R.current.engine; if (e) fn(e, ...a); };
   const actions = {
     setTeam: (team) => act({ t: "setTeam", team }),
+    emote: (id) => act({ t: "emote", id }),
     setLook: (look) => act({ t: "look", look }),
     vote: (slots) => act({ t: "vote", slots }),
     ready: (v) => act({ t: "ready", v }),
@@ -206,6 +211,10 @@ export function useRoom(me) {
     ccGuess: (text) => act({ t: "ccguess", text }),
     ccNext: () => act({ t: "ccnext" }),
     quitVote: (v) => act({ t: "quit", v }),
+    agDeck: (deck) => act({ t: "agdeck", deck }),
+    agAnswer: (id, a) => act({ t: "agans", id, a }),
+    lgAnswer: (id, a) => act({ t: "lgans", id, a }),
+    lgChat: (ch, text) => act({ t: "lgchat", ch, text }),
     setPlaylist: host((e, pl, add) => e.setPlaylist(me.id, pl, add === true)),
     found: () => act({ t: "found" }),
     qePick: (cat) => act({ t: "qepick", cat }),
@@ -220,7 +229,7 @@ export function useRoom(me) {
   };
 
   return {
-    room, packs, dealt, queue, discarded, feedback, notice, busy,
+    room, packs, dealt, queue, discarded, feedback, agPriv, lgPriv, notice, busy,
     isHost: Boolean(room && room.hostId === me.id),
     clearNotice: () => setNotice(""),
     create, join, leave, ...actions,

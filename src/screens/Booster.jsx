@@ -3,6 +3,7 @@ import { BY_ID } from "../data/categories.js";
 import { Fuse, GameCard, HourglassMark } from "../ui/parts.jsx";
 import { BOOSTER_SECONDS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon } from "../ui/Icon.jsx";
 
 const packColor = (cat) => (cat.color.startsWith("hsl") ? cat.color : cat.id === "random" ? "#9b7bff" : "#d8c48f");
 
@@ -176,7 +177,7 @@ export default function Booster({ room, me, packs, api }) {
         {top}
         <div className="stage">
           <strong>Cartes prêtes</strong>
-          <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? " ✓" : ""}</span>)}</div>
+          <div className="waitlist">{room.players.map((p) => <span key={p.id} className={p.ready ? "ok" : ""}>{p.name}{p.ready ? <Icon name="check" size={13} /> : null}</span>)}</div>
           <div className="wait" role="status">En attente des autres<i /><i /><i /></div>
         </div>
       </div>

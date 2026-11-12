@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT } from "../config.js";
 import { startAuth, finishAuth, isConnected, disconnect, myPlaylists, playlistLines } from "../data/spotifyApi.js";
-import { resolveLines } from "../data/playlist.js";
+import { resolveLines, MAX_TOTAL } from "../data/playlist.js";
 
 /** Blind test / Frise : le créateur se connecte à Spotify (une seule fois) et importe une de ses playlists en entier. */
 export default function SpotifyPicker({ onImported, disabled }) {
@@ -12,7 +12,8 @@ export default function SpotifyPicker({ onImported, disabled }) {
   const [lists, setLists] = useState(null);
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
-  const opts = { clientId: SPOTIFY_CLIENT_ID };
+  const resumes = useRef({});                                 // avancement de lecture par playlist : on peut reprendre après une coupure de Spotify
+  const opts = { clientId: SPOTIFY_CLIENT_ID, onWait: (status, ms) => setBusy(`Spotify est lent (erreur ${status}), nouvel essai dans ${Math.max(1, Math.round(ms / 1000))} s…`) };
 
   const fail = (e) => { setErr(e.message || String(e)); if (e.code === "auth") { setConnected(false); setLists(null); } setBusy(""); };
   const connect = async () => {
@@ -32,13 +33,18 @@ export default function SpotifyPicker({ onImported, disabled }) {
   }, [open, connected]); // eslint-disable-line
   const pick = async (p) => {
     setErr(""); setBusy("Lecture de la playlist…");
+    const rs = (resumes.current[p.id] ||= {});
     try {
-      const lines = await playlistLines(p.id, opts, (a, b) => setBusy(`Lecture ${a}/${b}`));
-      const { tracks, missing } = await resolveLines(lines, undefined, (a, b) => setBusy(`Extraits audio ${a}/${b}`));
+      const lines = await playlistLines(p.id, opts, (a, b) => setBusy(`Lecture ${a}/${b}`), rs);
+      const { tracks, missing } = await resolveLines(lines, undefined, (a, b) => setBusy(`Extraits audio ${a}/${b}`), undefined, MAX_TOTAL);
       if (!tracks.length) throw new Error("Aucun morceau jouable trouvé.");
       onImported({ name: p.name, cover: p.cover, source: "Spotify", total: lines.length, tracks, missing: missing.length });
+      delete resumes.current[p.id];
       setOpen(false); setBusy("");
-    } catch (e) { fail(e); }
+    } catch (e) {
+      fail(e);
+      if (e.partial > 0) setErr(`${e.message} Lu : ${e.partial}${e.total ? "/" + e.total : ""} morceaux. Touche à nouveau la playlist pour reprendre là où ça s'est arrêté.`);
+    }
   };
 
   if (!SPOTIFY_CLIENT_ID) return null;
@@ -62,11 +68,11 @@ export default function SpotifyPicker({ onImported, disabled }) {
           {lists && !lists.length && <p className="muted gnote">Aucune playlist à toi trouvée (seules tes playlists et celles en collaboration sont lisibles).</p>}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
             {(lists || []).map((p) => (
-              <button key={p.id} className="btn small ghost" disabled={Boolean(busy)} onClick={() => pick(p)} style={{ textAlign: "left" }}>{p.name}{p.total ? ` · ${p.total}` : ""}</button>
+              <button key={p.id} className="btn small ghost" disabled={Boolean(busy)} onClick={() => pick(p)} style={{ textAlign: "left" }}>{p.name}{p.total ? ` · ${p.total}` : ""}{resumes.current[p.id] && resumes.current[p.id].lines && resumes.current[p.id].lines.length ? ` · reprendre (${resumes.current[p.id].lines.length} lus)` : ""}</button>
             ))}
           </div>
           {busy && <p className="muted gnote" role="status">{busy}</p>}
-          <button className="btn small ghost" style={{ marginTop: 6 }} disabled={Boolean(busy)} onClick={() => { disconnect(); setConnected(false); setLists(null); }}>Se déconnecter de Spotify</button>
+          <button className="btn small ghost" style={{ marginTop: 6 }} disabled={Boolean(busy)} onClick={() => { disconnect(); resumes.current = {}; setConnected(false); setLists(null); }}>Se déconnecter de Spotify</button>
         </>
       )}
       {err && <p className="plerr" role="alert">{err}</p>}

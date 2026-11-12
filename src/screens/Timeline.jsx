@@ -4,10 +4,8 @@ import { TEAMS, TL_PLACE_SECONDS, TL_REVEAL_SECONDS, TL_PREVIEW_S } from "../con
 import { createPlayer } from "../lib/audio.js";
 import { vibrate } from "../lib/util.js";
 import { safeUrl } from "../lib/safeUrl.js";
+import { Icon } from "../ui/Icon.jsx";
 
-const SPEAKER = "M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.200v2.100a7 7 0 0 1 0 13.400v2.100a9 9 0 0 0 0-17.600z";
-const MUTED = "M3 9v6h4l5 4V5L7 9H3zm13.600 3l2.700-2.700-1.400-1.400-2.700 2.700-2.700-2.700-1.400 1.400 2.700 2.700-2.700 2.700 1.400 1.400 2.700-2.700 2.700 2.700 1.400-1.400z";
-const Icon = ({ d }) => <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22"><path d={d} fill="currentColor" /></svg>;
 
 /** Une carte de la frise : l'année en grand, puis titre et artiste. */
 function Card({ c, hot, ghost }) {
@@ -23,7 +21,7 @@ function Card({ c, hot, ghost }) {
 function Line({ cards, slots, pick, onPick, ghost, hotIdx }) {
   const Slot = ({ i }) => (
     <button className={"tls" + (pick === i ? " on" : "")} onClick={() => { vibrate(15); onPick(i); }} aria-label={`Placer ici (position ${i + 1})`} aria-pressed={pick === i}>
-      {pick === i ? <span className="mystery"><i>♪</i>Ta carte mystère</span> : <span className="plus">+ ici</span>}
+      {pick === i ? <span className="mystery"><i><Icon name="music" size={16} /></i>Ta carte mystère</span> : <span className="plus">+ ici</span>}
     </button>
   );
   return (
@@ -117,7 +115,7 @@ function Play({ room, me, api, sound }) {
         {sound.shouldPlay && (
           <div className="row" style={{ gap: 8 }}>
             <button className="iconbtn" onClick={sound.replay} aria-label="Réécouter l'extrait">↻</button>
-            <button className="iconbtn" onClick={() => sound.setMuted(!sound.muted)} aria-label={sound.muted ? "Remettre le son" : "Couper le son"}><Icon d={sound.muted ? MUTED : SPEAKER} /></button>
+            <button className="iconbtn" onClick={() => sound.setMuted(!sound.muted)} aria-label={sound.muted ? "Remettre le son" : "Couper le son"}><Icon name={sound.muted ? "mute" : "sound"} size={22} /></button>
           </div>
         )}
       </div>

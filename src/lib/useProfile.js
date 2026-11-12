@@ -34,8 +34,15 @@ export function useProfile() {
     commit(n);
   }, [commit]);
 
+  /** Trône des Mondes : met à jour la collection (fonction tcg => nouveau tcg, ou objet). */
+  const setTcg = useCallback((next) => {
+    const cur = ref.current;
+    const tcg = typeof next === "function" ? next(cur.tcg) : next;
+    if (!tcg) return;
+    commit({ ...cur, tcg });
+  }, [commit]);
   const clearGain = useCallback(() => setGain(null), []);
-  return { profile, gain, clearGain, equip, record, replace, level: levelOf(profile.xp) };
+  return { profile, gain, clearGain, equip, record, replace, setTcg, level: levelOf(profile.xp) };
 }
 
 /** À appeler avec la room courante : enregistre la partie dès qu'elle se termine. */

@@ -13,13 +13,16 @@ export const loadKit = () => (kitP ||= Promise.all([
 
 /** Lumières communes : ciel doux + soleil + contre-jour, et un petit décor de studio pour les reflets du plastique (calculé une seule fois par rendu). */
 const envs = new WeakMap();
-export function lightRig(THREE, scene, renderer, M) {
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b4d8, 1.05));
-  const sun = new THREE.DirectionalLight(0xfff6ea, 2.1);
-  sun.position.set(2.5, 4.5, 5);
+export function lightRig(THREE, scene, renderer, M, o = {}) {
+  scene.add(new THREE.HemisphereLight(0xf2f4ff, 0x3a4660, 0.72));
+  const sun = new THREE.DirectionalLight(0xfff3e6, 1.45);
+  sun.position.set(2.2, 4.2, 5);
   scene.add(sun);
-  const rim = new THREE.DirectionalLight(0xc9d6ff, 1.1);
-  rim.position.set(-4, 2.5, -3);
+  const fill = new THREE.DirectionalLight(0xbfd8ff, 0.3);
+  fill.position.set(-3.5, 1.5, 3);
+  scene.add(fill);
+  const rim = new THREE.DirectionalLight(o.rim ?? 0x8fdcff, o.rimK ?? 1.2);
+  rim.position.set(-2.5, 3, -4);
   scene.add(rim);
   if (renderer && M && M.RoomEnvironment) {
     let tex = envs.get(renderer);
@@ -30,27 +33,30 @@ export function lightRig(THREE, scene, renderer, M) {
       envs.set(renderer, tex);
     }
     scene.environment = tex;
+    scene.environmentIntensity = o.env ?? 0.4;     // reflets d'ambiance discrets : les couleurs restent franches
   }
 }
 
-/** Cadrage : où regarder et à quelle distance, d'après les dimensions réelles du personnage (chapeaux, ailes… compris). */
+/** Cadrage : où regarder et à quelle distance. view : "full" (en pied), "bust" (portrait), "head", "face", "torso", "legs", "feet", "back" (de dos). */
 export function frameOf(fig, view) {
   const { THREE } = fig.ctx.K;
-  fig.group.updateMatrixWorld(true);
-  const hc = fig.ctx.headCY * fig.scale, hr = fig.ctx.hr * fig.scale, fov = view === "full" || view === "feet" ? 28 : 26;
-  let top, bottom, w;
-  if (view === "feet") {
-    const b = new THREE.Box3().setFromObject(fig.group);
-    top = b.min.y + (b.max.y - b.min.y) * 0.45; bottom = Math.min(0, b.min.y); w = (b.max.x - b.min.x) * 0.9;
-  } else if (view === "full") {
-    const b = new THREE.Box3().setFromObject(fig.group);
-    top = b.max.y; bottom = Math.min(0, b.min.y); w = b.max.x - b.min.x;
-  } else {
-    const b = new THREE.Box3().setFromObject(fig.ctx.G.head);
-    top = Math.max(b.max.y, hc + hr); bottom = hc - hr * (view === "head" ? 1.3 : 1.55); w = Math.max(2 * hr, b.max.x - b.min.x);
+  const fov = 26, dist = (span) => (span / 2) / Math.tan((fov * Math.PI) / 360);
+  const D = fig.dims || { H: 1.2, Rx: 0.6, top: 1.5, faceY: 0.85 };
+  const at = (y, span) => ({ y, d: dist(span), fov });
+  switch (view) {
+    case "head": return at((D.faceY + D.top) / 2 - 0.03, Math.max(0.3, D.top - D.faceY) * 1.9 + D.Rx * 0.55);
+    case "face": return at(D.faceY - D.Rx * 0.1, D.Rx * 2.05);
+    case "bust": return at(D.top * 0.53, Math.max(D.top, D.Rx * 2.1) * 1.08);
+    case "torso": return at(D.H * 0.42, D.H * 1.12);
+    case "legs": case "feet": return at(0.13, D.Rx * 1.8);
+    default: {
+      fig.group.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(fig.core || fig.group);
+      const top = Math.max(b.max.y, D.top), bottom = Math.min(0, b.min.y), w = b.max.x - b.min.x;
+      const span = Math.max(top - bottom, w) * 1.08;
+      return { y: (top + bottom) / 2, d: dist(span), fov };
+    }
   }
-  const span = Math.max(top - bottom, w) * 1.1, y = (top + bottom) / 2;
-  return { y, d: span / 2 / Math.tan((fov * Math.PI) / 360), fov };
 }
 
 let R = null, failed = false;
@@ -86,12 +92,12 @@ export function avatarImage(x, view = "bust", size = 192, yaw = 0) {
       const { THREE, renderer, scene, camera } = S;
       const fig = S.M.makeFigure(S.M, cx, { shadow: false });
       fig.anim({ t: 0.4 });
-      fig.group.rotation.y = yaw;
+      fig.group.rotation.y = yaw + (view === "back" ? Math.PI * 0.82 : 0);
       scene.add(fig.group);
       const f = frameOf(fig, view);
       renderer.setSize(size, size, false);
       camera.fov = f.fov; camera.aspect = 1; camera.near = 0.1; camera.far = 50; camera.updateProjectionMatrix();
-      camera.position.set(f.d * 0.13, f.y + f.d * 0.05, f.d);
+      camera.position.set(f.d * 0.1, f.y + f.d * 0.03, f.d);
       camera.lookAt(0, f.y, 0);
       renderer.render(scene, camera);
       const url = S.canvas.toDataURL("image/png");

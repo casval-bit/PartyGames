@@ -154,7 +154,7 @@ export const ACH_BY = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
 const zero = () => ({ p: 0, w: 0, l: 0, d: 0, pts: 0, best: 0 });
 export const emptyStats = () => ({
   played: 0, wins: 0, losses: 0, draws: 0, winStreak: 0, bestWinStreak: 0,
-  byGame: { timesup: zero(), quiest: zero(), blindtest: zero(), timeline: zero(), party: zero(), board: zero(), petitbac: zero(), celeb: zero() },
+  byGame: { timesup: zero(), quiest: zero(), blindtest: zero(), timeline: zero(), party: zero(), board: zero(), petitbac: zero(), celeb: zero(), trone: zero(), loupgarou: zero() },
   tu: { cards: 0, passes: 0, turns: 0, bonusGames: 0 },
   qe: { rounds: 0, found: 0, firsts: 0, msSum: 0, msN: 0, fastest: null },
   bt: { songs: 0, full: 0, half: 0, msSum: 0, msN: 0, fastest: null, bestStreak: 0, perfect: 0 },
@@ -163,7 +163,7 @@ export const emptyStats = () => ({
   pb: { rounds: 0, valid: 0, unique: 0 },
   cc: { rounds: 0, found: 0, strokes: 0, aces: 0 },
 });
-export const emptyProfile = () => ({ v: 1, look: { ...DEFAULT_LOOK }, xp: 0, stats: emptyStats(), ach: {}, history: [], seen: [] });
+export const emptyProfile = () => ({ v: 1, look: { ...DEFAULT_LOOK }, xp: 0, stats: emptyStats(), ach: {}, history: [], seen: [], tcg: null });
 
 /** Remet un profil lu du stockage dans une forme valide (champs manquants, valeurs étranges). */
 export function normalizeProfile(raw) {
@@ -180,6 +180,7 @@ export function normalizeProfile(raw) {
   base.ach = raw.ach && typeof raw.ach === "object" ? Object.fromEntries(Object.entries(raw.ach).filter(([k]) => ACH_BY[k])) : {};
   base.history = Array.isArray(raw.history) ? raw.history.slice(0, 30) : [];
   base.seen = Array.isArray(raw.seen) ? raw.seen.filter((x) => typeof x === "string").slice(0, 40) : [];
+  base.tcg = raw.tcg && typeof raw.tcg === "object" && !Array.isArray(raw.tcg) ? raw.tcg : null; // Trône des Mondes : vérifié par src/tcg/progress.js
   return base;
 }
 
@@ -275,6 +276,18 @@ export function summarize(room, meId) {
     const r = rankOf(room.cc.final.map((x) => ({ key: x.id, pts: worst - x.total })), meId);
     return { key, game: "celeb", ...r, cc: { rounds: ps.ccRounds || 0, found: ps.ccFound || 0, strokes: ps.ccStrokes || 0, aces: ps.ccAces || 0 } };
   }
+  if (room.phase === "ag_end" && room.ag && room.ag.over) {
+    const ag = room.ag, order = ag.rank || ag.players.map((p) => p.id);
+    const r = rankOf(order.map((id, i) => ({ key: id, pts: order.length - i })), meId);
+    const mine = ag.players.find((p) => p.id === meId);
+    return r && { key, game: "trone", ...r, pts: mine ? mine.power : 0 };
+  }
+  if (room.phase === "lg_end" && room.lg && room.lg.over) {
+    const mine = room.lg.players.find((p) => p.id === meId);
+    if (!mine) return null;
+    const winners = room.lg.players.filter((p) => p.win).length;
+    return { key, game: "loupgarou", rank: mine.win ? 1 : 2, of: room.lg.players.length, result: !winners ? "draw" : mine.win ? "win" : "loss", pts: mine.alive ? 1 : 0 };
+  }
   if (room.phase === "bd_final" && room.bd && room.bd.final) {
     const F = room.bd.final, gems = Object.fromEntries(F.map((x) => [x.id, x.gems]));
     const r = rankOf(F.map((x) => ({ key: x.id, pts: x.gems * 1000 + x.coins })), meId);
@@ -295,6 +308,8 @@ export function xpFor(s) {
   if (s.game === "petitbac" && s.pb) xp += Math.min(30, s.pb.unique + Math.floor(s.pb.valid / 2));
   if (s.game === "celeb" && s.cc) xp += Math.min(30, s.cc.found * 3 + s.cc.aces * 5);
   if (s.game === "board" && s.bd) xp += Math.min(30, s.bd.gems * 6 + s.mg.wins * 3);
+  if (s.game === "trone") xp += Math.min(30, (s.pts || 0) * 2);
+  if (s.game === "loupgarou") xp += s.pts ? 10 : 0; // survivre jusqu'au bout
   return xp;
 }
 

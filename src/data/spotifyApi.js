@@ -59,16 +59,29 @@ async function accessToken({ clientId, storage, fetchFn }) {
   catch { disconnect(storage); throw Object.assign(new Error("Session Spotify expirée : reconnecte-toi."), { code: "auth" }); }
 }
 
+const RETRY_MS = [700, 1800, 4000, 8000, 15000, 25000]; // pannes passagères de Spotify (429, 500 à 504) : on réessaie tout seul (≈ 55 s en tout) avant d'afficher une erreur
 async function api(path, ctx) {
-  const tok = await accessToken(ctx);
-  const r = await ctx.fetchFn(path.startsWith("http") ? path : API + path, { headers: { Authorization: "Bearer " + tok } });
-  if (r.status === 401) { disconnect(ctx.storage); throw Object.assign(new Error("Session Spotify expirée : reconnecte-toi."), { code: "auth" }); }
-  if (r.status === 403) throw new Error("Spotify refuse l'accès (compte non autorisé pour cette appli, ou playlist qui n'est pas la tienne).");
-  if (r.status === 429) throw new Error("Spotify demande de patienter : réessaie dans une minute.");
-  if (!r.ok) throw new Error("Spotify : erreur " + r.status);
-  return r.json();
+  for (let attempt = 0; ; attempt++) {
+    const tok = await accessToken(ctx);
+    const r = await ctx.fetchFn(path.startsWith("http") ? path : API + path, { headers: { Authorization: "Bearer " + tok } });
+    if (r.status === 401) { disconnect(ctx.storage); throw Object.assign(new Error("Session Spotify expirée : reconnecte-toi."), { code: "auth" }); }
+    if (r.status === 403) throw new Error("Spotify refuse l'accès (compte non autorisé pour cette appli, ou playlist qui n'est pas la tienne).");
+    const transient = r.status === 429 || (r.status >= 500 && r.status <= 504);
+    if (transient && attempt < RETRY_MS.length) {
+      const ra = Number(r.headers && r.headers.get && r.headers.get("Retry-After"));
+      const ms = r.status === 429 && ra > 0 ? Math.min(ra, 20) * 1000 : RETRY_MS[attempt];
+      ctx.pace = Math.max(ctx.pace, 1200);                    // Spotify souffle : on espace ensuite les pages
+      ctx.onWait(r.status, ms, attempt + 1);
+      await ctx.sleep(ms);
+      continue;
+    }
+    if (r.status === 429) throw new Error("Spotify demande de patienter : réessaie dans une minute.");
+    if (r.status >= 500) throw Object.assign(new Error(`Spotify est momentanément indisponible (erreur ${r.status}). Ça vient de leurs serveurs : réessaie dans quelques minutes.`), { status: r.status });
+    if (!r.ok) throw new Error("Spotify : erreur " + r.status);
+    return r.json();
+  }
 }
-const ctxOf = (o = {}) => ({ clientId: o.clientId, storage: o.storage || localStorage, fetchFn: o.fetchFn || ((...a) => fetch(...a)) });
+const ctxOf = (o = {}) => ({ clientId: o.clientId, storage: o.storage || localStorage, fetchFn: o.fetchFn || ((...a) => fetch(...a)), sleep: o.sleep || ((ms) => new Promise((res) => setTimeout(res, ms))), onWait: o.onWait || (() => {}), pace: o.pace ?? 250 });
 
 /** Mes playlists lisibles (les miennes ou en collaboration). */
 export async function myPlaylists(o) {
@@ -88,23 +101,31 @@ export async function myPlaylists(o) {
   return out;
 }
 
-/** Tous les morceaux d'une playlist (pages de 50) -> [{ artist, title }]. */
-export async function playlistLines(id, o, onProgress = () => {}) {
+/**
+ * Tous les morceaux d'une playlist (pages de 50, une petite pause entre deux pages pour ne pas se faire limiter) -> [{ artist, title }].
+ * `resume` ({}) garde l'avancement : si Spotify coupe en route (panne, limite), on rappelle avec le MÊME objet et la lecture reprend à la page
+ * où elle s'est arrêtée, sans tout relire. Les morceaux déjà lus sont dans `resume.lines` (l'erreur levée porte aussi `partial` / `total`).
+ */
+export async function playlistLines(id, o, onProgress = () => {}, resume = {}) {
   const ctx = ctxOf(o);
-  const lines = [];
-  let url = `/playlists/${encodeURIComponent(id)}/items?limit=50&additional_types=track`, total = 0;
-  for (let guard = 0; url && guard < 200; guard++) {
-    const page = await api(url, ctx);
-    if (page.items === undefined) throw new Error("Spotify ne donne pas le contenu de cette playlist (seules les tiennes sont lisibles).");
-    total = page.total || total;
-    for (const it of page.items) {
-      const t = it && (it.item || it.track);
-      if (!t || t.is_local || (t.type && t.type !== "track") || !t.name) continue;
-      const artist = t.artists && t.artists[0] && t.artists[0].name;
-      if (artist) lines.push({ title: t.name, artist });
+  const lines = resume.lines || (resume.lines = []);
+  let url = resume.url === undefined ? `/playlists/${encodeURIComponent(id)}/items?limit=50&additional_types=track` : resume.url, total = resume.total || 0;
+  resume.url = url;
+  try {
+    for (let guard = 0; url && guard < 200; guard++) {
+      if (guard > 0) await ctx.sleep(ctx.pace);
+      const page = await api(url, ctx);
+      if (page.items === undefined) throw new Error("Spotify ne donne pas le contenu de cette playlist (seules les tiennes sont lisibles).");
+      total = page.total || total;
+      for (const it of page.items) {
+        const t = it && (it.item || it.track);
+        if (!t || t.is_local || (t.type && t.type !== "track") || !t.name) continue;
+        const artist = t.artists && t.artists[0] && t.artists[0].name;
+        if (artist) lines.push({ title: t.name, artist });
+      }
+      url = page.next || ""; resume.url = url; resume.total = total;   // page validée : on ne la relira pas
+      onProgress(lines.length, total || lines.length);
     }
-    onProgress(lines.length, total || lines.length);
-    url = page.next || "";
-  }
+  } catch (e) { e.partial = lines.length; e.total = total; throw e; }
   return lines;
 }

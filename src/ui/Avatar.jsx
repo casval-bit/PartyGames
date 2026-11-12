@@ -9,7 +9,7 @@ export function Avatar({ look, size, className = "", title, showLv, view }) {
   const L = cleanLook(look);
   const av = AV_BY[L.a], co = CO_BY[L.c];
   const big = (size || 0) >= 64;
-  const img = useAvatarImg(xOf(L), view || (big ? "bust" : "head"), big ? 256 : 128);
+  const img = useAvatarImg(xOf(L), view || "bust", big ? 256 : 128);   // un Doudou est rond : on le montre en entier
   return (
     <span className={`pav b-${L.b} ${img ? "has3d" : ""} ${className}`} style={{ "--pbg": co.bg, "--pink": co.ink, ...(size ? { "--s": size + "px" } : null) }} title={title} aria-hidden="true">
       {img ? <span className="pavin"><img src={img} alt="" draggable={false} /></span> : <svg viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd"><path d={av.d} /></svg>}

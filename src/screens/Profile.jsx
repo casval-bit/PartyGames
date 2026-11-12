@@ -1,150 +1,61 @@
-import { lazy, Suspense, useState } from "react";
+// Profil : carte d'identité recto/verso (fiche personnage / arbre des succès zoomable), puis les statistiques jeu par jeu.
+import { useMemo, useState } from "react";
+import { Avatar3DImg } from "../avatar3d/Avatar3D.jsx";
 import { Avatar } from "../ui/Avatar.jsx";
-import { AvatarLive } from "../avatar3d/Avatar3D.jsx";
-import { SLOTS } from "../avatar3d/schema.js";
-const AvatarEditor = lazy(() => import("../avatar3d/AvatarEditor.jsx"));
-import {
-  ACHIEVEMENTS, BORDERS, COLORS, isUnlocked, ruleText, rewardsOf, progressOf, pct, secs, xOf,
-} from "../data/profile.js";
+import { Icon } from "../ui/Icon.jsx";
+import AchTree from "../ui/AchTree.jsx";
+import { ACHIEVEMENTS, BORDERS, COLORS, isUnlocked, ruleText, progressOf, pct, secs, xOf } from "../data/profile.js";
+import { sfx } from "../lib/sfx.js";
 
-const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité" };
+const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité", trone: "Trône des Mondes", loupgarou: "Loup-garou" };
+const GICON = { timesup: "hourglass", quiest: "eye", blindtest: "music", timeline: "history", party: "gamepad", board: "dice", petitbac: "edit", celeb: "image", trone: "crown", loupgarou: "moon" };
 const RESULT = { win: "Victoire", loss: "Défaite", draw: "Égalité", solo: "Solo" };
-const KIND = { avatar: "Avatar", border: "Bordure", color: "Couleur", part: "Pièce" };
-
-const Lock = () => (
-  <svg className="lock" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z" /></svg>
-);
-
-const Tile = ({ label, value, hot }) => (
-  <div className={"ptile" + (hot ? " hot" : "")}><b>{value}</b><span>{label}</span></div>
-);
-const Rows = ({ rows }) => (
-  <dl className="prows">{rows.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}</dl>
-);
 const avg = (sum, n) => (n > 0 ? sum / n : null);
+const idOf = (s) => { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16).toUpperCase().padStart(8, "0").slice(0, 6); };
+
+/** Bloc de statistiques d'un jeu : bilan en pastilles, chiffres clés, barres. */
+function GameCard({ id, g, rows, bars = [] }) {
+  const rated = g.w + g.l + g.d;
+  return (
+    <section className="gcard" data-game={id}>
+      <header>
+        <span className="gico" aria-hidden="true"><Icon name={GICON[id]} size={20} /></span>
+        <div><b>{GAMES[id]}</b><small>{g.p} partie{g.p > 1 ? "s" : ""}</small></div>
+        <div className="gpills"><span className="pill ok">{g.w} V</span><span className="pill dim">{g.d} N</span><span className="pill pink">{g.l} D</span></div>
+      </header>
+      {rated > 0 && <span className={"bar2" + (pct(g.w, rated) < 34 ? " low" : "")} title="Taux de victoire"><i style={{ width: `${pct(g.w, rated)}%` }} /></span>}
+      <dl className="gnums">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      {bars.map(([k, a, b]) => (
+        <div className="gbar" key={k}><span>{k}</span><span className={"bar2" + (pct(a, b) != null && pct(a, b) < 34 ? " low" : "")}><i style={{ width: `${pct(a, b) || 0}%` }} /></span><em>{pct(a, b) == null ? "—" : pct(a, b) + " %"}</em></div>
+      ))}
+    </section>
+  );
+}
 
 function Stats({ s, history }) {
-  const rated = s.wins + s.losses + s.draws;
-  const T = s.byGame.timesup, Q = s.byGame.quiest, B = s.byGame.blindtest, F = s.byGame.timeline, M = s.byGame.party, Pl = s.byGame.board, PB = s.byGame.petitbac, CE = s.byGame.celeb;
-  const rec = (g) => `${g.w} V · ${g.d} N · ${g.l} D`; // victoires · nuls · défaites
+  const B = s.byGame;
   return (
     <>
-      <div className="ptiles">
-        <Tile label="Parties" value={s.played} />
-        <Tile label="Victoires" value={s.wins} />
-        <Tile label="Défaites" value={s.losses} />
-        <Tile label="Égalités" value={s.draws} />
-        <Tile label="% de victoires" value={pct(s.wins, rated) == null ? "—" : pct(s.wins, rated) + " %"} />
-        <Tile label="Série en cours" value={s.winStreak} hot={s.winStreak >= 3} />
-        <Tile label="Meilleure série" value={s.bestWinStreak} />
-      </div>
-
-      <section className="pgame">
-        <h3>Time's Up</h3>
-        <Rows rows={[
-          ["Parties jouées", T.p],
-          ["Bilan (victoires · nuls · défaites)", rec(T)],
-          ["Meilleur score d'équipe", T.best],
-          ["Cartes trouvées", s.tu.cards],
-          ["Cartes passées", s.tu.passes],
-          ["Précision", pct(s.tu.cards, s.tu.cards + s.tu.passes) == null ? "—" : pct(s.tu.cards, s.tu.cards + s.tu.passes) + " %"],
-          ["Tours joués", s.tu.turns],
-          ["Parties en mode Bonus", s.tu.bonusGames],
-        ]} />
-      </section>
-      <section className="pgame">
-        <h3>Qui est-ce ?</h3>
-        <Rows rows={[
-          ["Parties jouées", Q.p],
-          ["Bilan (victoires · nuls · défaites)", rec(Q)],
-          ["Manches jouées", s.qe.rounds],
-          ["Images trouvées", `${s.qe.found}${pct(s.qe.found, s.qe.rounds) == null ? "" : ` (${pct(s.qe.found, s.qe.rounds)} %)`}`],
-          ["Premier à trouver", `${s.qe.firsts} fois`],
-          ["Temps moyen", secs(avg(s.qe.msSum, s.qe.msN))],
-          ["Record", secs(s.qe.fastest)],
-        ]} />
-      </section>
-      <section className="pgame">
-        <h3>Blind test</h3>
-        <Rows rows={[
-          ["Parties jouées", B.p],
-          ["Bilan (victoires · nuls · défaites)", rec(B)],
-          ["Meilleur score", B.best],
-          ["Morceaux entendus", s.bt.songs],
-          ["Trouvés en entier", `${s.bt.full}${pct(s.bt.full, s.bt.songs) == null ? "" : ` (${pct(s.bt.full, s.bt.songs)} %)`}`],
-          ["Titre ou artiste seulement", s.bt.half],
-          ["Temps de réponse moyen", secs(avg(s.bt.msSum, s.bt.msN))],
-          ["Réponse la plus rapide", secs(s.bt.fastest)],
-          ["Meilleure série dans une partie", s.bt.bestStreak],
-          ["Parties sans faute", s.bt.perfect],
-        ]} />
-      </section>
-
-      <section className="pgame">
-        <h3>Frise</h3>
-        <Rows rows={[
-          ["Parties jouées", F.p],
-          ["Bilan (victoires · nuls · défaites)", rec(F)],
-          ["Plus longue frise", F.best],
-          ["Tours joués", s.tl.turns],
-          ["Cartes bien placées", `${s.tl.hits}${pct(s.tl.hits, s.tl.turns) == null ? "" : ` (${pct(s.tl.hits, s.tl.turns)} %)`}`],
-        ]} />
-      </section>
-
-      <section className="pgame">
-        <h3>Mini-jeux</h3>
-        <Rows rows={[
-          ["Parties jouées", M.p],
-          ["Bilan (victoires · nuls · défaites)", rec(M)],
-          ["Meilleur total", M.best],
-          ["Manches de mini-jeux jouées", s.mg.rounds],
-          ["Manches gagnées", s.mg.wins],
-          ["Amis bien devinés", `${s.mg.fqRight}${pct(s.mg.fqRight, s.mg.fqTotal) == null ? "" : ` (${pct(s.mg.fqRight, s.mg.fqTotal)} %)`}`],
-        ]} />
-      </section>
-
-      <section className="pgame">
-        <h3>Petit bac</h3>
-        <Rows rows={[
-          ["Parties jouées", PB.p],
-          ["Bilan (victoires · nuls · défaites)", rec(PB)],
-          ["Meilleur score", PB.best],
-          ["Manches jouées", s.pb.rounds],
-          ["Réponses valides", s.pb.valid],
-          ["Réponses uniques (10 pts)", `${s.pb.unique}${pct(s.pb.unique, s.pb.valid) == null ? "" : ` (${pct(s.pb.unique, s.pb.valid)} %)`}`],
-        ]} />
-      </section>
-
-      <section className="pgame">
-        <h3>Célébrité</h3>
-        <Rows rows={[
-          ["Parties jouées", CE.p],
-          ["Bilan (victoires · nuls · défaites)", rec(CE)],
-          ["Célébrités trouvées", `${s.cc.found}${pct(s.cc.found, s.cc.rounds) == null ? "" : ` (${pct(s.cc.found, s.cc.rounds)} %)`}`],
-          ["Moyenne de coups (quand trouvée)", s.cc.found ? (s.cc.strokes / s.cc.found).toFixed(1) : "—"],
-          ["Trouvées au 1er coup", s.cc.aces],
-        ]} />
-      </section>
-
-      <section className="pgame">
-        <h3>Plateau</h3>
-        <Rows rows={[
-          ["Parties jouées", Pl.p],
-          ["Bilan (victoires · nuls · défaites)", rec(Pl)],
-          ["Plus de gemmes dans une partie", Pl.best],
-        ]} />
-      </section>
-
-      <section className="pgame">
-        <h3>Dernières parties</h3>
-        {history.length === 0 && <p className="muted pnote">Aucune partie terminée pour l'instant. Tes stats se remplissent à la fin de chaque partie.</p>}
+      <GameCard id="timesup" g={B.timesup} rows={[["Meilleur score d'équipe", B.timesup.best], ["Cartes trouvées", s.tu.cards], ["Tours joués", s.tu.turns], ["Parties Bonus", s.tu.bonusGames]]} bars={[["Précision", s.tu.cards, s.tu.cards + s.tu.passes]]} />
+      <GameCard id="quiest" g={B.quiest} rows={[["Images trouvées", s.qe.found], ["Premier à trouver", s.qe.firsts], ["Temps moyen", secs(avg(s.qe.msSum, s.qe.msN))], ["Record", secs(s.qe.fastest)]]} bars={[["Réussite", s.qe.found, s.qe.rounds]]} />
+      <GameCard id="blindtest" g={B.blindtest} rows={[["Meilleur score", B.blindtest.best], ["Morceaux entendus", s.bt.songs], ["Réponse moyenne", secs(avg(s.bt.msSum, s.bt.msN))], ["Plus rapide", secs(s.bt.fastest)], ["Meilleure série", s.bt.bestStreak], ["Sans faute", s.bt.perfect]]} bars={[["Trouvés en entier", s.bt.full, s.bt.songs]]} />
+      <GameCard id="timeline" g={B.timeline} rows={[["Plus longue frise", B.timeline.best], ["Tours joués", s.tl.turns]]} bars={[["Bien placées", s.tl.hits, s.tl.turns]]} />
+      <GameCard id="party" g={B.party} rows={[["Meilleur total", B.party.best], ["Manches jouées", s.mg.rounds], ["Manches gagnées", s.mg.wins]]} bars={[["Amis bien devinés", s.mg.fqRight, s.mg.fqTotal], ["Manches gagnées", s.mg.wins, s.mg.rounds]]} />
+      <GameCard id="board" g={B.board} rows={[["Record de gemmes", B.board.best]]} />
+      <GameCard id="petitbac" g={B.petitbac} rows={[["Meilleur score", B.petitbac.best], ["Manches", s.pb.rounds], ["Réponses valides", s.pb.valid]]} bars={[["Réponses uniques", s.pb.unique, s.pb.valid]]} />
+      <GameCard id="celeb" g={B.celeb} rows={[["Trouvées", s.cc.found], ["Coups en moyenne", s.cc.found ? (s.cc.strokes / s.cc.found).toFixed(1).replace(".", ",") : "—"], ["Du premier coup", s.cc.aces]]} bars={[["Réussite", s.cc.found, s.cc.rounds]]} />
+      <GameCard id="trone" g={B.trone} rows={[["Record de Pouvoir", B.trone.best]]} />
+      <GameCard id="loupgarou" g={B.loupgarou} rows={[["Survies jusqu'à la fin", B.loupgarou.pts]]} />
+      <section className="gcard">
+        <header><span className="gico" aria-hidden="true"><Icon name="history" size={20} /></span><div><b>Dernières parties</b><small>{history.length ? `${Math.min(10, history.length)} plus récentes` : "aucune pour l'instant"}</small></div></header>
+        {history.length === 0 && <p className="muted pnote">Tes stats se remplissent à la fin de chaque partie.</p>}
         <ul className="phist">
           {history.slice(0, 10).map((h, i) => (
             <li key={h.t + ":" + i} className={h.result}>
-              <b>{RESULT[h.result] || "—"}</b>
-              <span>{GAMES[h.game] || h.game}{h.of > 1 ? ` · ${h.rank}/${h.of}` : ""}</span>
+              <span className="phico" aria-hidden="true"><Icon name={GICON[h.game] || "gamepad"} size={16} /></span>
+              <span><b>{GAMES[h.game] || h.game}</b><small>{new Date(h.t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}{h.of > 1 ? ` · ${h.rank}/${h.of}` : ""}</small></span>
               <em>{h.pts} pts</em>
-              <small>{new Date(h.t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</small>
+              <span className={"pill " + (h.result === "win" ? "ok" : h.result === "loss" ? "pink" : "dim")}>{RESULT[h.result] || "—"}</span>
             </li>
           ))}
         </ul>
@@ -153,105 +64,120 @@ function Stats({ s, history }) {
   );
 }
 
-function Looks({ profile, equip, onEdit, editing }) {
+/** Pastille (fond + bordure) visible dans les lobbys et classements. */
+function Badge({ profile, equip }) {
   const [hint, setHint] = useState("");
   const cur = profile.look;
-  const parts = SLOTS.filter((s) => !s.color), total = parts.reduce((n, s) => n + s.opts.length, 0), owned = parts.reduce((n, s) => n + s.opts.filter((o) => isUnlocked(profile, o.rule)).length, 0);
-  const grid = (title, list, key, kind) => (
-    <section className="pgame">
-      <h3>{title}<small>{list.filter((x) => isUnlocked(profile, x.rule)).length}/{list.length}</small></h3>
-      <div className={"pitems k" + kind}>
+  const grid = (title, list, key) => (
+    <div className="bgrid">
+      <h4>{title}<small>{list.filter((x) => isUnlocked(profile, x.rule)).length}/{list.length}</small></h4>
+      <div className="pitems">
         {list.map((it) => {
           const open = isUnlocked(profile, it.rule), on = cur[key] === it.id;
           return (
             <button key={it.id} className={"itm" + (on ? " on" : "") + (open ? "" : " locked")} aria-pressed={on} aria-label={`${it.name}${open ? "" : " (verrouillé)"}`}
-              onClick={() => { if (open) { equip({ [key]: it.id }); setHint(`${it.name} équipé.`); } else setHint(`${it.name} : ${ruleText(it.rule)}`); }}>
-              <Avatar look={{ ...cur, [key]: it.id }} size={46} />
-              {!open && <Lock />}
+              onClick={() => { if (open) { equip({ [key]: it.id }); setHint(`${it.name} équipé.`); sfx.select(); } else setHint(`${it.name} : ${ruleText(it.rule)}`); }}>
+              <Avatar look={{ ...cur, [key]: it.id }} size={44} />
+              {!open && <Icon name="lock" size={12} className="lk" />}
               <span>{it.name}</span>
             </button>
           );
         })}
       </div>
+    </div>
+  );
+  return (
+    <section className="gcard">
+      <header><span className="gico" aria-hidden="true"><Icon name="badge" size={20} /></span><div><b>Pastille</b><small>Ta vignette dans les lobbys et les classements</small></div></header>
+      <p className="phint" role="status">{hint}</p>
+      {grid("Bordures", BORDERS, "b")}
+      {grid("Couleurs de fond", COLORS, "c")}
     </section>
   );
-  return (
-    <>
-      <section className="pgame lookcard">
-        <div className="lookstage">{!editing && <AvatarLive x={xOf(cur)} focus="body" turn />}</div>
-        <button className="btn primary" onClick={onEdit} data-testid="prof-customize">Personnaliser mon personnage</button>
-        <p className="muted pnote">{owned}/{total} pièces débloquées · de nouvelles pièces arrivent avec les niveaux et les succès.</p>
-      </section>
-      <p className="phint" role="status">{hint || "Choisis la couleur et la bordure de ta pastille (visible dans le lobby et les classements)."}</p>
-      {grid("Bordures", BORDERS, "b", "bd")}
-      {grid("Couleurs de fond", COLORS, "c", "co")}
-    </>
-  );
 }
 
-function Achievements({ profile }) {
-  return (
-    <ul className="pach">
-      {ACHIEVEMENTS.map((a) => {
-        const done = Boolean(profile.ach[a.id]);
-        const [cur, target] = a.prog(profile.stats);
-        const rewards = rewardsOf(a.id);
-        return (
-          <li key={a.id} className={done ? "done" : ""}>
-            <div className="top"><b>{a.name}</b><em>{done ? "✓" : `${Math.min(cur, target)}/${target}`}</em></div>
-            <p>{a.desc}</p>
-            <div className="bar"><i style={{ width: `${done ? 100 : Math.round(100 * Math.min(1, cur / target))}%` }} /></div>
-            <div className="rw"><span>+{a.xp} XP</span>{rewards.map((r) => <span key={r.kind + r.id} className={"r " + r.kind}>{KIND[r.kind]} · {r.name}</span>)}</div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-export default function Profile({ name, profile, equip, onBack, acc, onAccount }) {
-  const [tab, setTab] = useState("stats"), [editing, setEditing] = useState(false);
+export default function Profile({ name, profile, equip, onBack, acc, onAccount, onStudio }) {
+  const [flip, setFlip] = useState(false);
   const pr = progressOf(profile.xp);
+  const s = profile.stats, rated = s.wins + s.losses + s.draws;
+  const x = useMemo(() => xOf(profile.look), [profile.look]);
+  const toggle = () => { setFlip((f) => !f); sfx.flip(); };
   return (
     <div className="screen prof">
-      {editing && <Suspense fallback={null}><AvatarEditor profile={profile} equip={equip} onClose={() => setEditing(false)} /></Suspense>}
       <div className="row" style={{ gap: 10 }}>
-        <button className="iconbtn" onClick={onBack} aria-label="Retour">←</button>
-        <div><div className="eyebrow">Profil</div><h2 style={{ fontSize: "1.25rem" }}>{name || "Joueur"}</h2></div>
-      </div>
-
-      <div className="phero">
-        <Avatar look={profile.look} size={92} />
-        <div className="info">
-          <div className="lvl"><b>Niveau {pr.lv}</b><small>{pr.max ? "niveau maximum" : `${pr.into}/${pr.need} XP`}</small></div>
-          <div className="xpbar" role="progressbar" aria-valuemin={0} aria-valuemax={pr.need} aria-valuenow={pr.into}><i style={{ width: `${Math.round(100 * pr.into / pr.need)}%` }} /></div>
-          <small className="muted">{profile.stats.played} partie{profile.stats.played > 1 ? "s" : ""} · {Object.keys(profile.ach).length}/{ACHIEVEMENTS.length} succès</small>
-        </div>
-      </div>
-
-      <div className="seg ptabs" role="tablist">
-        {[["stats", "Stats"], ["look", "Apparence"], ["ach", "Succès"]].map(([id, label]) => (
-          <button key={id} role="tab" aria-pressed={tab === id} aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
-        ))}
+        <button className="iconbtn" onClick={onBack} aria-label="Retour"><Icon name="back" /></button>
+        <div style={{ flex: 1 }}><div className="eyebrow">Profil</div><h2 style={{ fontSize: "1.25rem" }}>{name || "Joueur"}</h2></div>
+        <Settings />
       </div>
 
       <div className="scroll">
-        {tab === "stats" && <Stats s={profile.stats} history={profile.history} />}
-        {tab === "look" && <Looks profile={profile} equip={equip} onEdit={() => setEditing(true)} editing={editing} />}
-        {tab === "ach" && <Achievements profile={profile} />}
+        {/* carte d'identité recto / verso */}
+        <div className={"idcard" + (flip ? " flipped" : "")}>
+          <div className="idc-in">
+            <div className="idc-face front">
+              <div className="idc-head"><span className="eyebrow">Carte d'identité virtuelle</span><span className="idc-num">ID {idOf(name || "Joueur")}</span></div>
+              <div className="idc-body">
+                <button className="idc-portrait scanv" onClick={onStudio} aria-label="Personnaliser mon personnage" data-testid="prof-customize">
+                  <Avatar3DImg x={x} view="bust" size={300} fallback={<span className="stph" />} />
+                </button>
+                <div className="idc-info">
+                  <b className="idc-name">{name || "Joueur"}</b>
+                  <div className="idc-lv"><span className="pill">Niveau {pr.lv}</span><small>{pr.max ? "niveau maximum" : `${pr.into}/${pr.need} XP`}</small></div>
+                  <span className="bar2 blue" role="progressbar" aria-valuemin={0} aria-valuemax={pr.need} aria-valuenow={pr.into}><i style={{ width: `${Math.round((100 * pr.into) / pr.need)}%` }} /></span>
+                  <dl className="idc-stats">
+                    <div><dt>Parties</dt><dd>{s.played}</dd></div>
+                    <div><dt>Victoires</dt><dd>{s.wins}</dd></div>
+                    <div><dt>Réussite</dt><dd>{pct(s.wins, rated) == null ? "—" : pct(s.wins, rated) + "%"}</dd></div>
+                    <div><dt>Série</dt><dd className={s.winStreak >= 3 ? "hot" : ""}>{s.winStreak}</dd></div>
+                  </dl>
+                </div>
+              </div>
+              <div className="idc-foot">
+                <button className="btn small primary" onClick={onStudio}><Icon name="palette" size={18} /> Personnaliser</button>
+                <button className="btn small" onClick={toggle} data-testid="id-flip"><Icon name="flow" size={18} /> Succès ({Object.keys(profile.ach).length}/{ACHIEVEMENTS.length})</button>
+              </div>
+            </div>
+            <div className="idc-face back">
+              <div className="idc-head"><span className="eyebrow">Arbre des succès</span><button className="iconbtn small" onClick={toggle} aria-label="Retourner la carte"><Icon name="idcard" size={18} /></button></div>
+              {flip && <AchTree profile={profile} />}
+            </div>
+          </div>
+        </div>
+
+        <Stats s={s} history={profile.history} />
+        <Badge profile={profile} equip={equip} />
+
         {acc && acc.enabled ? (
           <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="prof-account">
-            <span className="accdot" aria-hidden="true">{acc.user ? "✓" : "@"}</span>
-            <span>
-              <strong>{acc.user ? "Sauvegardé sur ton compte" : "Profil enregistré sur ce téléphone"}</strong>
-              <small>{acc.user ? acc.user.email : "Connecte-toi par e-mail pour ne pas le perdre"}</small>
-            </span>
-            <i aria-hidden="true">›</i>
+            <span className="accdot" aria-hidden="true"><Icon name={acc.user ? "check" : "mail"} size={18} /></span>
+            <span><strong>{acc.user ? "Sauvegardé sur ton compte" : "Profil enregistré sur ce téléphone"}</strong><small>{acc.user ? acc.user.email : "Connecte-toi par e-mail pour ne pas le perdre"}</small></span>
+            <Icon name="next" />
           </button>
         ) : (
           <p className="muted pnote">Ton profil est enregistré sur ce téléphone uniquement. Il ne suit pas d'un appareil à l'autre.</p>
         )}
       </div>
     </div>
+  );
+}
+
+/** Réglages rapides : sons d'interface, couleur de la coque (grand écran). */
+function Settings() {
+  const [open, setOpen] = useState(false), [on, setOn] = useState(sfx.on);
+  const [red, setRed] = useState(() => { try { return localStorage.getItem("ph-shell") === "red"; } catch { return false; } });
+  const shell = (v) => { setRed(v); try { localStorage.setItem("ph-shell", v ? "red" : "dark"); } catch { /* rien */ } window.dispatchEvent(new Event("ph-shell")); };
+  return (
+    <>
+      <button className="iconbtn" onClick={() => { setOpen(true); sfx.open(); }} aria-label="Réglages"><Icon name="settings" /></button>
+      {open && (
+        <div className="modalwrap" onClick={() => setOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Réglages">
+            <div className="row spread"><h3>Réglages</h3><button className="iconbtn" onClick={() => setOpen(false)} aria-label="Fermer"><Icon name="close" /></button></div>
+            <div className="setrow"><span><Icon name={on ? "sound" : "mute"} /> Sons d'interface</span><div className="seg"><button aria-pressed={on} onClick={() => { sfx.set(true); setOn(true); sfx.select(); }}>Oui</button><button aria-pressed={!on} onClick={() => { sfx.set(false); setOn(false); }}>Non</button></div></div>
+            <div className="setrow"><span><Icon name="tablet" /> Coque (grand écran)</span><div className="seg"><button aria-pressed={!red} onClick={() => shell(false)}>Noire</button><button aria-pressed={red} onClick={() => shell(true)}>Rouge et blanche</button></div></div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

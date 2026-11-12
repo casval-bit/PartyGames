@@ -1,9 +1,120 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlayerAvatar, teamStyle } from "../ui/parts.jsx";
 import { GAMES, TU_VARIANTS, PER_TEAM_OPTIONS, QE_ROUNDS_OPTIONS, QE_MODES, ROUND_SECONDS_OPTIONS, SHOW_BOT_BUTTON, TEAMS, BT_SONGS_OPTIONS, BT_GUESS_OPTIONS, BT_MAX_SOLO, TL_GOAL_OPTIONS, MG_ROUNDS_OPTIONS, BD_ROUNDS_OPTIONS, PB_ROUNDS_OPTIONS, PB_SECONDS_OPTIONS, CC_ROUNDS_OPTIONS } from "../config.js";
 import SpotifyPicker from "./SpotifyPicker.jsx";
 import { importPlaylist, demoPlaylist, MAX_TRACKS, MAX_TEXT_LINES } from "../data/playlist.js";
 import { safeUrl } from "../lib/safeUrl.js";
+import { Icon } from "../ui/Icon.jsx";
+import { MINIGAMES, MG_BY } from "../minigames/meta.js";
+import { sfx } from "../lib/sfx.js";
+import EmoteWheel, { EMOTE_ICON } from "../ui/EmoteWheel.jsx";
+import { EMOTE_BY } from "../avatar3d/emotes.js";
+import { FAMILY, TYPE_BONUS } from "../tcg/cards/index.js";
+import { validateDeck } from "../tcg/deck.js";
+import { normalizeTcg, owned as ownedOf, selectDeck } from "../tcg/progress.js";
+import { AG_GOALS, AG_TIMERS, AG_MAX } from "../net/hostTrone.js";
+import { LG_MAX } from "../net/hostLg.js";
+import LoupSettings, { lgCanStart, lgStartHint } from "../lg/ui/LoupLobby.jsx";
+
+/** Bulle d'émote à côté du nom : apparaît quand le joueur en envoie une (compteur emoteK), disparaît après 2,8 s. */
+function EmoteBubble({ p }) {
+  const k = p.emoteK || 0, first = useRef(k), [show, setShow] = useState(null);
+  useEffect(() => {
+    if (!k || k === first.current || !EMOTE_BY[p.emote]) return undefined;
+    setShow({ id: p.emote, k }); sfx.emote();
+    const t = setTimeout(() => setShow(null), 2800);
+    return () => clearTimeout(t);
+  }, [k]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!show) return null;
+  return <span className="ebub" key={show.k} data-testid="emote-bubble"><Icon name={EMOTE_ICON[show.id]} size={15} />{EMOTE_BY[show.id].name}</span>;
+}
+
+const GICON = { timesup: "hourglass", quiest: "eye", blindtest: "music", timeline: "history", party: "gamepad", board: "dice", petitbac: "edit", celeb: "image", trone: "crown", loupgarou: "moon" };
+
+/** Trône des Mondes : le deck que je joue (envoyé au créateur dès qu'il change) et accès à ma collection. */
+function TronePanel({ room, me, api, tcg, setTcg, onTrone }) {
+  const t = normalizeTcg(tcg);
+  const own = ownedOf(t);
+  const valid = t.decks.filter((d) => validateDeck(d, own).ok);
+  const deck = valid.find((d) => d.id === t.sel) || valid[0] || null;
+  const mine = room.players.find((p) => p.id === me.id);
+  const sentKey = useRef("");
+  const key = deck ? JSON.stringify([deck.name, deck.fam, deck.pt, deck.cards, deck.plots]) : "";
+  useEffect(() => {
+    if (!deck || (sentKey.current === key && mine && mine.agDeck)) return;
+    sentKey.current = key;
+    api.agDeck({ name: deck.name, fam: deck.fam, pt: deck.pt, cards: deck.cards, plots: deck.plots });
+  }, [key, Boolean(mine && mine.agDeck)]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!t.starter) {
+    return (
+      <div className="gamepick">
+        <div className="eyebrow" style={{ marginBottom: 6 }}>Ton deck</div>
+        <p className="muted gnote" style={{ marginTop: 0 }}>Tu n'as pas encore de cartes : choisis d'abord ton deck de départ (il débloque 50 cartes).</p>
+        <button className="btn primary small" onClick={() => onTrone("decks")} data-testid="trone-starter"><Icon name="crown" size={18} />Choisir mon deck de départ</button>
+      </div>
+    );
+  }
+  return (
+    <div className="gamepick">
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Ton deck</div>
+      {valid.length ? (
+        <div className="seg games">
+          {valid.map((d) => {
+            const f = FAMILY[d.fam];
+            return <button key={d.id} aria-pressed={deck && deck.id === d.id} onClick={() => { if (setTcg) { setTcg(selectDeck(t, d.id)); sfx.select(); } }}><Icon name={f.icon} size={16} />{d.name}{d.pt && TYPE_BONUS[d.pt] ? ` (${TYPE_BONUS[d.pt].name})` : ""}</button>;
+          })}
+        </div>
+      ) : <p className="plerr" role="alert">Aucun deck valide : complète un deck dans ta collection.</p>}
+      <div className="row" style={{ gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        <button className="btn small ghost" onClick={() => onTrone("decks")}><Icon name="layers" size={16} />Mes decks</button>
+        <button className="btn small ghost" onClick={() => onTrone("packs")}><Icon name="gift" size={16} />Boosters</button>
+        {mine && !mine.agDeck && deck && <span className="pill warn">Envoi du deck…</span>}
+      </div>
+    </div>
+  );
+}
+
+/** Mini-jeux joués (mode Mini-jeux et Plateau) : tous, ou une sélection du créateur (au moins 3). */
+function MiniPick({ settings, isHost, api }) {
+  const [open, setOpen] = useState(false);
+  const cur = Array.isArray(settings.mgPick) && settings.mgPick.length >= 3 ? settings.mgPick : [];
+  const [sel, setSel] = useState(cur);
+  const toggle = (id) => { sfx.select(); setSel((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id])); };
+  return (
+    <div className="mgpick">
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Mini-jeux joués</div>
+      <div className="mgpick-row">
+        <span className="pill">{cur.length ? `Sélection : ${cur.length} jeux` : `Tous les jeux (${MINIGAMES.length})`}</span>
+        {isHost && <button className="btn small" onClick={() => { setSel(cur.length ? cur : MINIGAMES.map((g) => g.id)); setOpen(true); sfx.open(); }} data-testid="mg-pick"><Icon name="list" size={18} /> Choisir</button>}
+      </div>
+      {cur.length > 0 && <div className="mgpick-tags">{cur.map((id) => <span key={id} className="mgtag"><Icon name={MG_BY[id].icon} size={14} />{MG_BY[id].title}</span>)}</div>}
+      {open && (
+        <div className="modalwrap" onClick={() => setOpen(false)}>
+          <div className="modal mgpick-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Choisir les mini-jeux">
+            <div className="row spread"><h3>Choisir les mini-jeux</h3><button className="iconbtn" onClick={() => setOpen(false)} aria-label="Fermer"><Icon name="close" /></button></div>
+            <p className="muted" style={{ fontSize: ".82rem" }}>Coche au moins 3 jeux. Les manches tirent au hasard parmi eux, sans répétition rapprochée.</p>
+            <div className="row" style={{ gap: 8 }}><button className="btn small ghost" onClick={() => setSel(MINIGAMES.map((g) => g.id))}>Tout cocher</button><button className="btn small ghost" onClick={() => setSel([])}>Tout décocher</button></div>
+            <div className="mgpick-grid">
+              {MINIGAMES.map((g) => {
+                const on = sel.includes(g.id);
+                return (
+                  <button key={g.id} className={"mgpcard" + (on ? " on" : "")} aria-pressed={on} onClick={() => toggle(g.id)} data-testid={"mgp-" + g.id}>
+                    <span className="mgpico"><Icon name={g.icon} size={22} /></span>
+                    <b>{g.title}</b><small>{g.tag} · {g.seconds} s</small>
+                    <i className="mgpchk" aria-hidden="true">{on && <Icon name="check" size={14} />}</i>
+                  </button>
+                );
+              })}
+            </div>
+            <button className="btn primary" disabled={sel.length > 0 && sel.length < 3} onClick={() => { api.setSettings({ mgPick: sel.length === MINIGAMES.length ? [] : sel }); setOpen(false); sfx.apply(); }} data-testid="mg-pick-ok">
+              {sel.length > 0 && sel.length < 3 ? "Choisis au moins 3 jeux" : sel.length === 0 || sel.length === MINIGAMES.length ? "Jouer avec tous les jeux" : `Valider (${sel.length} jeux)`}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Blind test : le créateur importe une playlist (Deezer, liste texte, Spotify depuis l'APK) ou prend la démo. */
 const MAX_TOTAL_LABEL = "3 000";
@@ -61,7 +172,7 @@ const Seg = ({ value, options, onPick, disabled }) => (
 );
 const Field = ({ label, children }) => (<div><div className="eyebrow" style={{ marginBottom: 6 }}>{label}</div>{children}</div>);
 
-export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
+export default function Lobby({ room, me, isHost, api, onLeave, onProfile, tcg, setTcg, onTrone }) {
   const { settings, players } = room;
   const myTeam = players.find((p) => p.id === me.id)?.team;
   const teamsUsed = new Set(players.map((p) => p.team)).size;
@@ -70,25 +181,29 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
   const board = settings.game === "board";
   const pbac = settings.game === "petitbac";
   const celeb = settings.game === "celeb";
-  const party = settings.game === "party" || board || pbac || celeb; // jeux sans équipes
+  const trone = settings.game === "trone";
+  const loup = settings.game === "loupgarou";
+  const party = settings.game === "party" || board || pbac || celeb || trone || loup; // jeux sans équipes
   const soloBt = (bt && !settings.btTeams) || party; // pas d'équipes : liste de joueurs seule
-  const canStart = pbac ? players.length >= 2 : party ? players.length >= 1 : bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : tl ? Boolean(room.playlist) && players.length >= 1 : players.length >= 2 && teamsUsed >= 2;
-  const cap = soloBt ? BT_MAX_SOLO : settings.teamCount * settings.perTeam;
+  const canStart = loup ? lgCanStart(settings, players.length) : trone ? players.length >= 2 && players.length <= AG_MAX && players.every((p) => p.bot || p.agDeck) : pbac ? players.length >= 2 : party ? players.length >= 1 : bt ? Boolean(room.playlist) && players.length >= 1 && (soloBt || teamsUsed >= 2) : tl ? Boolean(room.playlist) && players.length >= 1 : players.length >= 2 && teamsUsed >= 2;
+  const cap = loup ? LG_MAX : trone ? AG_MAX : soloBt ? BT_MAX_SOLO : settings.teamCount * settings.perTeam;
   const full = players.length >= cap;
+  const [wheel, setWheel] = useState(false);
   const biggest = Math.max(...Array.from({ length: settings.teamCount }, (_, t) => players.filter((p) => p.team === t).length));
 
   return (
     <div className="screen">
       <div className="row spread">
         <div className="row" style={{ minWidth: 0 }}>
-          <button className="iconbtn" onClick={onLeave} aria-label="Quitter le lobby">←</button>
+          <button className="iconbtn" onClick={onLeave} aria-label="Quitter le lobby"><Icon name="back" /></button>
           <div style={{ minWidth: 0 }}>
             <div className="eyebrow">Lobby</div>
             <h2 style={{ fontSize: "1.25rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</h2>
           </div>
         </div>
         <div className="row" style={{ gap: 8 }}>
-          {onProfile && <button className="iconbtn" onClick={onProfile} aria-label="Mon profil" title="Mon profil">☺</button>}
+          <button className="iconbtn" onClick={() => setWheel(true)} aria-label="Émotes" title="Émotes" data-testid="lobby-emotes"><Icon name="smile" /></button>
+          {onProfile && <button className="iconbtn" onClick={onProfile} aria-label="Mon profil" title="Mon profil"><Icon name="user" /></button>}
           <span className="chip"><i />{players.length}/{cap}</span>
         </div>
       </div>
@@ -98,7 +213,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
           <div className="eyebrow" style={{ marginBottom: 6 }}>Jeu</div>
           <div className="seg games">
             {GAMES.map((g) => (
-              <button key={g.id} aria-pressed={settings.game === g.id} disabled={!isHost} onClick={() => api.setSettings({ game: g.id })}>{g.label}</button>
+              <button key={g.id} aria-pressed={settings.game === g.id} disabled={!isHost} onClick={() => api.setSettings({ game: g.id })}><Icon name={GICON[g.id] || "gamepad"} size={18} />{g.label}</button>
             ))}
           </div>
           <p className="muted gnote">{GAMES.find((g) => g.id === settings.game).note}</p>
@@ -115,14 +230,16 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
           )}
         </div>
         {(bt || tl) && <PlaylistPanel room={room} isHost={isHost} api={api} spotify={tl} />}
+        {trone && onTrone && <TronePanel room={room} me={me} api={api} tcg={tcg} setTcg={setTcg} onTrone={onTrone} />}
         {soloBt && (
           <section className="team solo" style={{ "--tc": "var(--blue)", "--tink": "#fff" }} aria-label="Joueurs">
             <header>Joueurs<small>{players.length}/{cap}</small></header>
             {players.map((p) => (
               <div className={"pl" + (p.id === me.id ? " me" : "")} key={p.id}>
-                <PlayerAvatar name={p.name} look={p.look} showLv /><span className="nm">{p.name}</span>{p.bot && <span className="tag">BOT</span>}
+                <PlayerAvatar name={p.name} look={p.look} showLv /><span className="nm">{p.name}</span><EmoteBubble p={p} />{p.bot && <span className="tag">BOT</span>}
+                {trone && !p.bot && (p.agDeck ? <span className="tag" title={p.agDeck.name}><Icon name={(FAMILY[p.agDeck.fam] || FAMILY.neutre).icon} size={12} /> {(FAMILY[p.agDeck.fam] || {}).short || ""}</span> : <span className="tag" style={{ color: "#ffd3e1" }}>sans deck</span>)}
                 {p.id === room.hostId && <span className="crown">HÔTE</span>}
-                {isHost && p.id !== me.id && <button className="x" onClick={() => api.kick(p.id)} aria-label={`Exclure ${p.name}`}>✕</button>}
+                {isHost && p.id !== me.id && <button className="x" onClick={() => api.kick(p.id)} aria-label={`Exclure ${p.name}`}><Icon name="close" size={14} /></button>}
               </div>
             ))}
           </section>
@@ -137,10 +254,10 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
                 {members.map((p) => (
                   <div className={"pl" + (p.id === me.id ? " me" : "")} key={p.id}>
                     <PlayerAvatar name={p.name} look={p.look} showLv />
-                    <span className="nm">{p.name}</span>{p.bot && <span className="tag">BOT</span>}
+                    <span className="nm">{p.name}</span><EmoteBubble p={p} />{p.bot && <span className="tag">BOT</span>}
                     {p.id === room.hostId && <span className="crown">HÔTE</span>}
                     {isHost && p.id !== me.id && (
-                      <button className="x" onClick={() => api.kick(p.id)} aria-label={`Exclure ${p.name}`}>✕</button>
+                      <button className="x" onClick={() => api.kick(p.id)} aria-label={`Exclure ${p.name}`}><Icon name="close" size={14} /></button>
                     )}
                   </div>
                 ))}
@@ -159,6 +276,15 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
         <div className="settings">
           {settings.game === "party" && (
             <Field label="Nombre de manches"><Seg value={settings.mgRounds} options={MG_ROUNDS_OPTIONS.map((n) => [n, n])} disabled={!isHost} onPick={(v) => api.setSettings({ mgRounds: v })} /></Field>
+          )}
+          {(settings.game === "party" || board) && <MiniPick settings={settings} isHost={isHost} api={api} />}
+          {loup && <LoupSettings settings={settings} isHost={isHost} api={api} n={players.length} Field={Field} Seg={Seg} />}
+          {trone && (
+            <>
+              <Field label="Objectif de Pouvoir"><Seg value={settings.agGoal} options={AG_GOALS.map((n) => [n, n === 10 ? "10 (partie rapide)" : `${n} (classique)`])} disabled={!isHost} onPick={(v) => api.setSettings({ agGoal: v })} /></Field>
+              <Field label="Temps pour chaque décision"><Seg value={settings.agTimer} options={AG_TIMERS} disabled={!isHost} onPick={(v) => api.setSettings({ agTimer: v })} /></Field>
+              <p className="muted" style={{ fontSize: ".85rem", margin: 0 }}>De 2 à 4 joueurs, chacun avec son deck. Trop long à décider : l'ordinateur joue le coup à ta place. Les bots prennent un deck de départ au hasard.</p>
+            </>
           )}
           {celeb && (
             <>
@@ -241,19 +367,20 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile }) {
             </div>
           </div></>}
           {isHost && SHOW_BOT_BUTTON && (
-            <button className="btn small ghost" disabled={full} onClick={api.addBot}>+ Ajouter un bot (test)</button>
+            <button className="btn small ghost" disabled={full} onClick={api.addBot} data-testid="add-bot"><Icon name="bot" size={16} /> Ajouter un bot (test)</button>
           )}
         </div>
       </div>
 
       {isHost ? (
         <>
-          {!canStart && <p className="muted" style={{ textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{pbac ? "Il faut au moins 2 joueurs (ajoute un bot pour tester seul)." : bt || tl ? (!room.playlist ? "Importe d'abord une playlist." : "Il faut au moins 2 équipes occupées.") : "Il faut au moins 2 joueurs, dans 2 équipes différentes."}</p>}
+          {!canStart && <p className="muted" style={{ textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{loup ? lgStartHint(settings, players.length) : trone ? (players.length < 2 ? "Il faut au moins 2 joueurs (ajoute un bot pour tester seul)." : players.length > AG_MAX ? `${AG_MAX} joueurs au maximum.` : "Chaque joueur doit avoir choisi un deck valide.") : pbac ? "Il faut au moins 2 joueurs (ajoute un bot pour tester seul)." : bt || tl ? (!room.playlist ? "Importe d'abord une playlist." : "Il faut au moins 2 équipes occupées.") : "Il faut au moins 2 joueurs, dans 2 équipes différentes."}</p>}
           <button className="btn primary" disabled={!canStart} onClick={api.start}>Lancer la partie</button>
         </>
       ) : (
         <div className="wait" role="status">En attente du créateur<i /><i /><i /></div>
       )}
+      {wheel && <EmoteWheel onPick={(id) => { api.emote(id); setWheel(false); }} onClose={() => setWheel(false)} />}
     </div>
   );
 }

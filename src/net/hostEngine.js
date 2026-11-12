@@ -10,6 +10,9 @@ import { shuffle, pick, uid } from "../lib/util.js";
 import { safeUrl } from "../lib/safeUrl.js";
 import { verifyMsg, validPk } from "./secure.js";
 import { cleanLook, randomFreeLook } from "../data/profile.js";
+import { EMOTE_BY } from "../avatar3d/emotes.js";
+import { troneMethods, AG_DEFAULTS, AG_MAX, AG_GOALS, AG_TIMERS, cleanDeck, cleanAnswer as cleanAgAnswer } from "./hostTrone.js";
+import { loupMethods, LG_DEFAULTS, LG_MAX, cleanLgSettings, cleanLgAnswer } from "./hostLg.js";
 import {
   DEFAULT_PER_TEAM, VOTE_SECONDS, DISCARD_SECONDS, BOOSTER_SECONDS, REVEAL_MS, SHUFFLE_MS, COUNTDOWN_MS, HAND_SIZE,
   TU_ROUNDS, TU_READY_SECONDS, TU_TURNEND_MS, TU_ROUNDEND_SECONDS, TU_MIN_CARRY_MS, TU_ROUND_RULES, FAST,
@@ -23,7 +26,7 @@ import {
 } from "../config.js";
 import { isCeleb, celebCheck, celebHint, rankStrokes, CELEB_MAX_TRIES, CELEB_PENALTY } from "../data/celeb.js";
 import { PB_LETTERS, PB_CATS, PB_CLASSIC, PB_CAT_COUNT, PB_UNIQUE, PB_SHARED, cleanAnswer, answerKey, startsWith, filled } from "../data/petitbac.js";
-import { MINIGAMES, MG_BY, playSeconds, rankPoints, MG_GRACE_S, randomTeams, modeOf, teamAvg } from "../minigames/meta.js";
+import { MINIGAMES, MG_BY, makeDraw, pickList, playSeconds, rankPoints, MG_GRACE_S, randomTeams, modeOf, teamAvg } from "../minigames/meta.js";
 import { FRIEND_QS } from "../data/friendQs.js";
 import { BD_SIZE, BD_LAYOUT, ITEMS, SPACE_INFO, HAPPENING, SHOP_POOL, randomItem } from "../data/board.js";
 
@@ -64,7 +67,7 @@ export class HostEngine {
       id: roomId,
       name,
       hostId: host.id,
-      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...QE_DEFAULTS, ...BT_DEFAULTS, ...TL_DEFAULTS, ...MG_DEFAULTS, ...BD_DEFAULTS, ...PB_DEFAULTS, ...CC_DEFAULTS },
+      settings: { game: "timesup", variant: "classic", roundSeconds: 45, teamCount: 2, perTeam: DEFAULT_PER_TEAM, rounds: QE_DEFAULT_ROUNDS, ...QE_DEFAULTS, ...BT_DEFAULTS, ...TL_DEFAULTS, ...MG_DEFAULTS, ...BD_DEFAULTS, ...PB_DEFAULTS, ...CC_DEFAULTS, ...AG_DEFAULTS, ...LG_DEFAULTS },
       players: [],
       phase: "lobby",
       votesCast: {},
@@ -81,6 +84,7 @@ export class HostEngine {
       bd: null,     // plateau : voir « Plateau » plus bas
       pb: null,     // petit bac : voir « Petit bac » plus bas
       cc: null,     // célébrité (golf) : voir « Célébrité » plus bas
+      ag: null,     // Trône des Mondes : état public de la partie de cartes (src/tcg/view.js)
       quit: null,   // vote « retour au lobby » en cours : { by, yes: [ids], no: [ids], until, closed? }
       pstats: {},   // statistiques détaillées de la partie en cours, par joueur (pour les profils)
       gameNo: 0,    // numéro de la partie dans ce lobby (sert à ne compter chaque partie qu'une fois)
@@ -94,8 +98,8 @@ export class HostEngine {
   get S() { return this.state; }
   get rules() { return rulesFor(this.S.settings); }
   get variant() { return this.S.settings.game === "timesup" && this.S.settings.variant === "bonus" ? "bonus" : "classic"; }
-  get capacity() { const s = this.S.settings; return (s.game === "blindtest" && !s.btTeams) || s.game === "party" || s.game === "board" || s.game === "petitbac" || s.game === "celeb" ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
-  get minPlayers() { const g = this.S.settings.game; return g === "blindtest" || g === "timeline" || g === "party" || g === "board" || g === "celeb" ? 1 : 2; }
+  get capacity() { const s = this.S.settings; if (s.game === "trone") return AG_MAX; if (s.game === "loupgarou") return LG_MAX; return (s.game === "blindtest" && !s.btTeams) || s.game === "party" || s.game === "board" || s.game === "petitbac" || s.game === "celeb" ? BT_MAX_SOLO : s.teamCount * s.perTeam; }
+  get minPlayers() { const g = this.S.settings.game; return g === "trone" || g === "loupgarou" || g === "blindtest" || g === "timeline" || g === "party" || g === "board" || g === "celeb" ? 1 : 2; }
   after(ms, fn) {
     const t = setTimeout(() => { this.timers.delete(t); fn(); }, ms);
     this.timers.add(t);
@@ -164,6 +168,8 @@ export class HostEngine {
     if (this.S.phase === "cc_play" && this.S.cc) { delete this.S.cc.prog[id]; this.broadcast(); return this.ccCheckDone(); }
     if (this.S.phase === "pb_vote" && this.S.pb) { this.pbPurge(id); return this.pbCheckVote(); }
     if (this.S.phase === "mg_play") return this.mgCheckPlay();
+    if (this.S.phase === "ag_play") return this.agTick(); // l'ordinateur joue à la place de celui qui est parti
+    if (this.S.phase === "lg_play") return this.lgTick();
     if (this.S.phase === "mg_ask" && this.S.mg && this.S.mg.q) return this.S.mg.q.subject === id ? this.mgAskEnd() : this.mgCheckAsk();
     if (["tu_ready", "tu_play"].includes(this.S.phase) && this.S.tu && this.S.tu.playerId === id) return this.endTurn("left");
     this.checkAdvance();
@@ -172,6 +178,13 @@ export class HostEngine {
     if (by !== this.S.hostId || id === this.S.hostId) return;
     this.emit({ t: "kicked", to: id });
     this.leave(id);
+  }
+  /** Émote d'un joueur (roue d'émotes) : visible par tous quelques secondes. Une toutes les 1,2 s au plus. */
+  emote(id, e) {
+    const p = this.player(id), now = Date.now();
+    if (!p || !EMOTE_BY[e] || (p.emoteAt && now - p.emoteAt < 1200)) return;
+    p.emote = e; p.emoteAt = now; p.emoteK = (p.emoteK || 0) + 1;
+    this.broadcast();
   }
   setLook(id, look) {
     const p = this.player(id);
@@ -192,7 +205,11 @@ export class HostEngine {
     const s = this.S.settings;
     if (GAMES.some((g) => g.id === patch.game)) s.game = patch.game;
     if (MG_ROUNDS_OPTIONS.includes(patch.mgRounds)) s.mgRounds = patch.mgRounds;
+    if (Array.isArray(patch.mgPick)) s.mgPick = [...new Set(patch.mgPick.filter((id) => typeof id === "string" && MG_BY[id]))].slice(0, 64);
     if (CC_ROUNDS_OPTIONS.includes(patch.ccRounds)) s.ccRounds = patch.ccRounds;
+    if (AG_GOALS.includes(patch.agGoal)) s.agGoal = patch.agGoal;
+    if (AG_TIMERS.some(([v]) => v === patch.agTimer)) s.agTimer = patch.agTimer;
+    cleanLgSettings(patch, s);
     if (typeof patch.ccHint === "boolean") s.ccHint = patch.ccHint;
     if (PB_ROUNDS_OPTIONS.includes(patch.pbRounds)) s.pbRounds = patch.pbRounds;
     if (PB_SECONDS_OPTIONS.includes(patch.pbSeconds)) s.pbSeconds = patch.pbSeconds;
@@ -264,6 +281,16 @@ export class HostEngine {
       this.newGame();
       return this.startParty();
     }
+    if (st.game === "trone") {
+      if (!this.agReady()) return;
+      this.newGame();
+      return this.startTrone();
+    }
+    if (st.game === "loupgarou") {
+      if (!this.lgReady()) return;
+      this.newGame();
+      return this.startLoup();
+    }
     if (this.S.players.length < 2 || teamsUsed < 2) return;
     this.newGame();
     if (this.S.settings.game === "quiest") return this.startQuiEst(); // Qui est-ce ? : pas de vote, tout est aléatoire
@@ -276,12 +303,12 @@ export class HostEngine {
     this.emit({ t: "aborted", reason });
     this.S.phase = "lobby";
     this.deadline = null;
-    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.S.mg = null; this.S.bd = null; this.S.pb = null; this.S.cc = null; this.ccReset(); this.pbAns = {}; this.pbRej = {}; this.bdTraps = {}; this.mgSub = {}; this.mgAns = {}; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
+    this.S.votesCast = {}; this.S.reveal = null; this.S.qe = null; this.S.tu = null; this.S.bonus = null; this.S.bt = null; this.S.tl = null; this.S.mg = null; this.S.bd = null; this.S.pb = null; this.S.cc = null; this.agClear(); this.lgClear(); this.ccReset(); this.pbAns = {}; this.pbRej = {}; this.bdTraps = {}; this.mgSub = {}; this.mgAns = {}; this.tlCard = null; this.tlStamp = (this.tlStamp || 0) + 1; this.S.quit = null; clearTimeout(this.quitTimer); this.quitTimer = null; this.bonusMap = {}; this.bonusPicks = {}; this.resetReady();
     this.broadcast();
   }
   // Fin de partie (Time's Up, Qui est-ce ? ou Blind test) : le créateur ramène tout le monde au lobby, équipes conservées.
   backToLobby(by) {
-    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final", "mg_final", "bd_final", "pb_final", "cc_final"].includes(this.S.phase))) return;
+    if (by !== this.S.hostId || !(["done", "qe_final", "bt_final", "tl_final", "mg_final", "bd_final", "pb_final", "cc_final", "ag_end", "lg_end"].includes(this.S.phase))) return;
     this.forceLobby();
   }
   // Retour immédiat au lobby, quelle que soit la phase (fin de partie ou vote des joueurs).
@@ -294,6 +321,8 @@ export class HostEngine {
     this.hands = {}; this.dealt = {}; this.discards = {}; this.gameDeck = []; this.votes = {};
     Object.assign(this.S, { votesCast: {}, tally: {}, reveal: null, tu: null, deckSize: 0, qe: null, bonus: null, bt: null, tl: null, mg: null, bd: null, pb: null, cc: null, quit: null, pstats: {} });
     this.ccReset();
+    this.agClear();
+    this.lgClear();
     this.pbAns = {}; this.pbRej = {};
     this.bdTraps = {};
     this.mgSub = {}; this.mgAns = {};
@@ -1371,8 +1400,7 @@ export class HostEngine {
   startParty() {
     this.clearTimers();
     const total = this.S.settings.mgRounds;
-    let bag = [];
-    const draw = () => { if (!bag.length) bag = shuffle(MINIGAMES.map((g) => g.id)); return bag.pop(); };
+    const draw = makeDraw(Math.random, 6, pickList(this.S.settings.mgPick)); // tirage sans répétition proche, parmi les jeux choisis
     this.mgPlan = Array.from({ length: total }, (_, r) => (this.S.players.length >= 2 && total >= MG_FRIEND_EVERY && r % MG_FRIEND_EVERY === MG_FRIEND_EVERY - 1 ? { kind: "friend" } : { kind: "mini", game: draw() }));
     this.mgSpare = draw;
     this.mgSub = {}; this.mgAns = {};
@@ -1564,8 +1592,7 @@ export class HostEngine {
   startBoard() {
     this.clearTimers();
     const total = this.S.settings.bdRounds, ids = this.S.players.map((p) => p.id);
-    let bag = [];
-    this.mgSpare = () => { if (!bag.length) bag = shuffle(MINIGAMES.map((g) => g.id)); return bag.pop(); };
+    this.mgSpare = makeDraw(Math.random, 6, pickList(this.S.settings.mgPick));
     this.mgSub = {}; this.mgAns = {}; this.bdTraps = {}; this.bdK = 0; this.bdRemain = 0; this.bdDir = 1; this.bdSuit = false;
     this.S.mg = { round: 0, total, step: 0, kind: null, game: null, seed: 0, mode: "ffa", teams: null, done: [], scores: Object.fromEntries(ids.map((id) => [id, 0])), wins: {}, last: null, q: null, fq: null, final: null };
     // ordre de jeu : chacun lance le dé, le plus haut joue en premier
@@ -1588,10 +1615,11 @@ export class HostEngine {
     for (let i = 1; i < BD_SIZE; i++) if (i !== bd.gemAt && Math.min((i - bd.gemAt + BD_SIZE) % BD_SIZE, (bd.gemAt - i + BD_SIZE) % BD_SIZE) >= 8) far.push(i);
     bd.gemAt = pick(far);
   }
-  bdSay(text) {
+  /** Message du plateau (bandeau + fil des derniers événements). `icon` : nom d'icône affichée devant (jamais d'emoji). */
+  bdSay(text, icon = null) {
     const bd = this.S.bd, k = (this.bdK = (this.bdK || 0) + 1);
-    bd.msg = { text, k };
-    bd.feed = [...(bd.feed || []), { text, k }].slice(-4);
+    bd.msg = { text, k, icon };
+    bd.feed = [...(bd.feed || []), { text, k, icon }].slice(-4);
   }
   bdName(id) { const p = this.player(id); return p ? p.name : "?"; }
   /** Met à jour le record de pièces possédées (gemme bonus « pièces »). */
@@ -1606,7 +1634,7 @@ export class HostEngine {
     bd.round += 1;
     if (bd.round > bd.total) return this.bdFinish();
     const sprint = bd.forceSprint || bd.round > bd.total - bdSprintTurns(bd.total);
-    if (sprint && !bd.sprint) this.bdSay("🔥 Sprint final ! Les cases bleues et rouges comptent double.");
+    if (sprint && !bd.sprint) this.bdSay("Sprint final ! Les cases bleues et rouges comptent double.", "flame");
     bd.sprint = sprint;
     bd.idx = -1;
     this.bdNextTurn();
@@ -1650,7 +1678,7 @@ export class HostEngine {
     const bd = this.S.bd;
     if (!bd.shield[id]) return false;
     delete bd.shield[id];
-    this.bdSay(`🛡️ Le bouclier de ${this.bdName(id)} bloque : ${why}`);
+    this.bdSay(`Le bouclier de ${this.bdName(id)} bloque : ${why}`, "shield");
     return true;
   }
   bdGive(id, forced) {
@@ -1677,33 +1705,33 @@ export class HostEngine {
         if (id === "double") count = 2;
         else if (id === "triple") count = 3;
         else if (id === "speed") { lo = 8; hi = 10; }
-        else if (id === "shield") { bd.shield[by] = true; this.bdSay(`${me} lève son bouclier 🛡️`); }
-        else if (id === "trap") { this.bdTraps[bd.pos[by]] = by; this.bdSay(`${me} pose un piège 🪤`); }
+        else if (id === "shield") { bd.shield[by] = true; this.bdSay(`${me} lève son bouclier`, "shield"); }
+        else if (id === "trap") { this.bdTraps[bd.pos[by]] = by; this.bdSay(`${me} pose un piège`, "alert"); }
         else if (id === "warp") {
           const o = this.bdOthers(by);
-          if (o.length) { const t = pick(o).id; [bd.pos[by], bd.pos[t]] = [bd.pos[t], bd.pos[by]]; this.bdSay(`🌀 ${me} se téléporte à la place de ${this.bdName(t)}`); }
+          if (o.length) { const t = pick(o).id; [bd.pos[by], bd.pos[t]] = [bd.pos[t], bd.pos[by]]; this.bdSay(`${me} se téléporte à la place de ${this.bdName(t)}`, "orbit"); }
         }
-        else if (id === "swap") { [bd.pos[by], bd.pos[target]] = [bd.pos[target], bd.pos[by]]; this.bdSay(`🔄 ${me} échange sa place avec ${who}`); }
-        else if (id === "lamp") { bd.pos[by] = bd.gemAt; lamp = true; this.bdSay(`🪔 Le génie emmène ${me} jusqu'à la gemme !`); }
-        else if (id === "magnet") { bd.gemAt = (bd.pos[by] + D(3, 10)) % BD_SIZE || 1; this.bdSay(`🧲 ${me} attire la gemme vers lui`); }
-        else if (id === "bag") { let n = 0; while (bd.items[by].length < BD_MAX_ITEMS && n < 3) { bd.items[by].push(randomItem()); n++; } this.bdSay(`🎒 ${me} fouille son sac : ${n} objet${n > 1 ? "s" : ""}`); }
+        else if (id === "swap") { [bd.pos[by], bd.pos[target]] = [bd.pos[target], bd.pos[by]]; this.bdSay(`${me} échange sa place avec ${who}`, "swap"); }
+        else if (id === "lamp") { bd.pos[by] = bd.gemAt; lamp = true; this.bdSay(`Le génie emmène ${me} jusqu'à la gemme !`, "wand"); }
+        else if (id === "magnet") { bd.gemAt = (bd.pos[by] + D(3, 10)) % BD_SIZE || 1; this.bdSay(`${me} attire la gemme vers lui`, "magnet"); }
+        else if (id === "bag") { let n = 0; while (bd.items[by].length < BD_MAX_ITEMS && n < 3) { bd.items[by].push(randomItem()); n++; } this.bdSay(`${me} fouille son sac : ${n} objet${n > 1 ? "s" : ""}`, "backpack"); }
         else if (id === "poison" || id === "reverse") {
-          if (!this.bdBlocked(target, "malédiction évitée")) { bd.curse[target] = id === "poison" ? "slow" : "reverse"; this.bdSay(`${ITEMS[id].emoji} ${me} jette un sort à ${who}`); }
+          if (!this.bdBlocked(target, "malédiction évitée")) { bd.curse[target] = id === "poison" ? "slow" : "reverse"; this.bdSay(`${me} jette un sort à ${who}`, ITEMS[id].icon); }
         }
-        else if (id === "thief") { const got = this.bdLose(target, 5, "vol raté"); if (got) { bd.coins[by] += got; this.bdSay(`🦹 ${me} vole ${got} pièce${got > 1 ? "s" : ""} à ${who}`); } }
+        else if (id === "thief") { const got = this.bdLose(target, 5, "vol raté"); if (got) { bd.coins[by] += got; this.bdSay(`${me} vole ${got} pièce${got > 1 ? "s" : ""} à ${who}`, "handcoins"); } }
         else if (id === "plunder") {
           const loot = bd.items[target];
-          if (loot.length && !this.bdBlocked(target, "pillage évité")) { const k = D(0, loot.length - 1), [it] = loot.splice(k, 1); bd.items[by].push(it); this.bdSay(`🧰 ${me} pille ${ITEMS[it].emoji} ${ITEMS[it].name} chez ${who}`); }
-          else if (!loot.length) this.bdSay(`🧰 ${who} n'a rien à piller`);
+          if (loot.length && !this.bdBlocked(target, "pillage évité")) { const k = D(0, loot.length - 1), [it] = loot.splice(k, 1); bd.items[by].push(it); this.bdSay(`${me} pille ${ITEMS[it].name} chez ${who}`, "package"); }
+          else if (!loot.length) this.bdSay(`${who} n'a rien à piller`, "package");
         }
         else if (id === "ghost") {
-          if (bd.gems[target] > 0 && !this.bdBlocked(target, "fantôme repoussé")) { bd.gems[target] -= 1; bd.gems[by] += 1; this.bdSay(`👻 ${me} vole une gemme à ${who} !`); }
-          else if (bd.gems[target] <= 0) this.bdSay(`👻 ${who} n'a aucune gemme`);
+          if (bd.gems[target] > 0 && !this.bdBlocked(target, "fantôme repoussé")) { bd.gems[target] -= 1; bd.gems[by] += 1; this.bdSay(`${me} vole une gemme à ${who} !`, "ghost"); }
+          else if (bd.gems[target] <= 0) this.bdSay(`${who} n'a aucune gemme`, "ghost");
         }
-        else if (id === "phone") { this.bdSay(`📞 ${me} appelle le Gredin chez ${who}…`); this.bdBossEffect(target); }
-        else if (id === "suit") { this.bdSuit = true; this.bdSay(`🦖 ${me} enfile le costume de monstre`); }
-        else if (id === "watch") { bd.forceSprint = true; bd.sprint = true; this.bdSay("⌛ Le sablier se retourne : sprint final ! Pièces ×2"); }
-        else if (id === "barter") { [bd.items[by], bd.items[target]] = [bd.items[target], bd.items[by]]; this.bdSay(`🔁 ${me} troque ses objets avec ${who}`); }
+        else if (id === "phone") { this.bdSay(`${me} appelle le Gredin chez ${who}…`, "phone"); this.bdBossEffect(target); }
+        else if (id === "suit") { this.bdSuit = true; this.bdSay(`${me} enfile le costume de monstre`, "paw"); }
+        else if (id === "watch") { bd.forceSprint = true; bd.sprint = true; this.bdSay("Le sablier se retourne : sprint final ! Pièces ×2", "hourglass"); }
+        else if (id === "barter") { [bd.items[by], bd.items[target]] = [bd.items[target], bd.items[by]]; this.bdSay(`${me} troque ses objets avec ${who}`, "handshake"); }
       }
     }
     if (curse === "slow") { lo = 1; hi = 3; }
@@ -1712,7 +1740,7 @@ export class HostEngine {
     this.bdDir = curse === "reverse" && !lamp ? -1 : 1;
     bd.roll = { dice, steps, bonus: 0, item: used, back: this.bdDir < 0, curse: curse || null, k: bd.n };
     bd.sub = "moving";
-    if (curse) this.bdSay(curse === "slow" ? `🍄 ${me} est affaibli : dé de 1 à 3` : `↩️ ${me} doit reculer !`);
+    if (curse) this.bdSay(curse === "slow" ? `${me} est affaibli : dé de 1 à 3` : `${me} doit reculer !`, curse === "slow" ? "flask" : "undo");
     this.setPhase("bd_turn", null);
     this.broadcast();
     this.bdRemain = steps;
@@ -1730,7 +1758,7 @@ export class HostEngine {
     if (this.bdSuit) {
       for (const p of this.bdOthers(id)) if (bd.pos[p.id] === bd.pos[id]) {
         const got = this.bdLose(p.id, 3, "costume repoussé");
-        if (got) { bd.coins[id] += got; this.bdSay(`🦖 ${this.bdName(id)} croque ${got} pièce${got > 1 ? "s" : ""} à ${p.name}`); }
+        if (got) { bd.coins[id] += got; this.bdSay(`${this.bdName(id)} croque ${got} pièce${got > 1 ? "s" : ""} à ${p.name}`, "paw"); }
       }
     }
     if (bd.pos[id] === bd.gemAt && bd.coins[id] >= BD_GEM_COST) return this.bdOfferGem();
@@ -1751,7 +1779,7 @@ export class HostEngine {
     this.clearTimers();
     if (v === true && bd.coins[by] >= BD_GEM_COST) {
       bd.coins[by] -= BD_GEM_COST; bd.gems[by] += 1;
-      this.bdSay(`💎 ${this.bdName(by)} achète une gemme !`);
+      this.bdSay(`${this.bdName(by)} achète une gemme !`, "gem");
       this.bdMoveGem();
     }
     bd.sub = "moving";
@@ -1765,22 +1793,22 @@ export class HostEngine {
     if (this.bdTraps[pos] && this.bdTraps[pos] !== id) {
       const owner = this.bdTraps[pos]; delete this.bdTraps[pos];
       const lost = this.bdLose(id, 6, "piège évité");
-      if (lost) this.bdSay(`🪤 ${name} tombe dans le piège de ${this.bdName(owner)} : −${lost}`);
+      if (lost) this.bdSay(`${name} tombe dans le piège de ${this.bdName(owner)} : −${lost}`, "alert");
       return this.bdEnd();
     }
     if (HAPPENING.has(type)) {
       bd.stat.hap[id] = (bd.stat.hap[id] || 0) + 1;
       if (type === "event") bd.col[id] = Math.random() < 0.5 ? 0 : 1; // comme dans Mario Party : une case « ? » compte au hasard bleue ou rouge
     }
-    if (type === "blue") { bd.col[id] = 0; bd.coins[id] += c3; this.bdSay(`🔵 ${name} gagne ${c3} pièces`); }
-    else if (type === "red") { bd.col[id] = 1; const l = this.bdLose(id, c3, "case rouge évitée"); if (l) this.bdSay(`🔴 ${name} perd ${l} pièce${l > 1 ? "s" : ""}`); }
-    else if (type === "item") { const it = this.bdGive(id); this.bdSay(it ? `🎁 ${name} trouve : ${ITEMS[it].emoji} ${ITEMS[it].name}` : `🎁 Poches pleines : ${name} reçoit 2 pièces`); }
+    if (type === "blue") { bd.col[id] = 0; bd.coins[id] += c3; this.bdSay(`${name} gagne ${c3} pièces`, "plus"); }
+    else if (type === "red") { bd.col[id] = 1; const l = this.bdLose(id, c3, "case rouge évitée"); if (l) this.bdSay(`${name} perd ${l} pièce${l > 1 ? "s" : ""}`, "minus"); }
+    else if (type === "item") { const it = this.bdGive(id); this.bdSay(it ? `${name} trouve : ${ITEMS[it].name}` : `Poches pleines : ${name} reçoit 2 pièces`, "gift"); }
     else if (type === "event") return this.bdEvent();
     else if (type === "chance") this.bdChance();
-    else if (type === "boss") { this.bdSay(`👹 Le Gredin surgit devant ${name} !`); this.bdBossEffect(id); }
+    else if (type === "boss") { this.bdSay(`Le Gredin surgit devant ${name} !`, "mask"); this.bdBossEffect(id); }
     else if (type === "shop" || type === "shop2") {
       const kind = type === "shop" ? "a" : "b", offer = shuffle(SHOP_POOL[kind]).slice(0, 4), cheapest = Math.min(...offer.map((x) => ITEMS[x].price));
-      if (bd.coins[id] < cheapest || bd.items[id].length >= BD_MAX_ITEMS) { this.bdSay(`${SPACE_INFO[type].emoji} ${name} passe devant le magasin (${bd.items[id].length >= BD_MAX_ITEMS ? "poches pleines" : "pas assez de pièces"})`); return this.bdEnd(); }
+      if (bd.coins[id] < cheapest || bd.items[id].length >= BD_MAX_ITEMS) { this.bdSay(`${name} passe devant le magasin (${bd.items[id].length >= BD_MAX_ITEMS ? "poches pleines" : "pas assez de pièces"})`, SPACE_INFO[type].icon); return this.bdEnd(); }
       bd.shop = offer; bd.shopKind = kind; bd.sub = "shop";
       this.setPhase("bd_turn", BD_CHOICE_SECONDS * 1000);
       this.broadcast();
@@ -1797,7 +1825,7 @@ export class HostEngine {
     const it = Number.isInteger(i) && i >= 0 && i < bd.shop.length ? bd.shop[i] : null;
     if (it && bd.coins[by] >= ITEMS[it].price && bd.items[by].length < BD_MAX_ITEMS) {
       bd.coins[by] -= ITEMS[it].price; bd.items[by].push(it);
-      this.bdSay(`🛒 ${this.bdName(by)} achète ${ITEMS[it].emoji} ${ITEMS[it].name}`);
+      this.bdSay(`${this.bdName(by)} achète ${ITEMS[it].name}`, "cart");
     }
     bd.shop = null; bd.shopKind = null;
     this.bdEnd();
@@ -1806,38 +1834,38 @@ export class HostEngine {
   bdChance() {
     const bd = this.S.bd, id = bd.cur, name = this.bdName(id), others = this.bdOthers(id);
     const k = Math.floor(Math.random() * 5);
-    if (!others.length && k < 2) { bd.coins[id] += 12; return this.bdSay(`🎰 ${name} gagne le jackpot : +12 pièces`); }
-    if (k === 0) { const o = pick(others); if (!this.bdBlocked(o.id, "échange refusé")) { [bd.coins[id], bd.coins[o.id]] = [bd.coins[o.id], bd.coins[id]]; this.bdSay(`🎰 ${name} échange toutes ses pièces avec ${o.name} !`); } }
-    else if (k === 1) { const rich = others.reduce((a, b) => (bd.coins[b.id] > bd.coins[a.id] ? b : a)); const got = this.bdLose(rich.id, 8, "vol évité"); if (got) { bd.coins[id] += got; this.bdSay(`🎰 ${name} reçoit ${got} pièces de ${rich.name}, le plus riche`); } }
-    else if (k === 2) { bd.coins[id] += 12; this.bdSay(`🎰 Jackpot : ${name} gagne 12 pièces !`); }
-    else if (k === 3) { const poor = others.length ? others.reduce((a, b) => (bd.coins[b.id] < bd.coins[a.id] ? b : a)) : null; const given = Math.min(5, bd.coins[id]); if (poor && given) { bd.coins[id] -= given; bd.coins[poor.id] += given; this.bdSay(`🎰 ${name} offre ${given} pièces à ${poor.name}, le plus pauvre`); } else this.bdSay("🎰 Rien de spécial…"); }
-    else { const it = this.bdGive(id); this.bdSay(it ? `🎰 Un objet pour ${name} : ${ITEMS[it].emoji} ${ITEMS[it].name}` : `🎰 Poches pleines : ${name} reçoit 2 pièces`); }
+    if (!others.length && k < 2) { bd.coins[id] += 12; return this.bdSay(`${name} gagne le jackpot : +12 pièces`, "sparkles"); }
+    if (k === 0) { const o = pick(others); if (!this.bdBlocked(o.id, "échange refusé")) { [bd.coins[id], bd.coins[o.id]] = [bd.coins[o.id], bd.coins[id]]; this.bdSay(`${name} échange toutes ses pièces avec ${o.name} !`, "sparkles"); } }
+    else if (k === 1) { const rich = others.reduce((a, b) => (bd.coins[b.id] > bd.coins[a.id] ? b : a)); const got = this.bdLose(rich.id, 8, "vol évité"); if (got) { bd.coins[id] += got; this.bdSay(`${name} reçoit ${got} pièces de ${rich.name}, le plus riche`, "sparkles"); } }
+    else if (k === 2) { bd.coins[id] += 12; this.bdSay(`Jackpot : ${name} gagne 12 pièces !`, "sparkles"); }
+    else if (k === 3) { const poor = others.length ? others.reduce((a, b) => (bd.coins[b.id] < bd.coins[a.id] ? b : a)) : null; const given = Math.min(5, bd.coins[id]); if (poor && given) { bd.coins[id] -= given; bd.coins[poor.id] += given; this.bdSay(`${name} offre ${given} pièces à ${poor.name}, le plus pauvre`, "sparkles"); } else this.bdSay("Rien de spécial…", "sparkles"); }
+    else { const it = this.bdGive(id); this.bdSay(it ? `Un objet pour ${name} : ${ITEMS[it].name}` : `Poches pleines : ${name} reçoit 2 pièces`, "sparkles"); }
   }
   /** Événement du Gredin (case ou téléphone) sur le joueur `id`. */
   bdBossEffect(id) {
     const bd = this.S.bd, name = this.bdName(id), r = Math.random();
-    if (r < 0.4) { const l = this.bdLose(id, 10, "le Gredin repart bredouille"); if (l) this.bdSay(`👹 Le Gredin vole ${l} pièces à ${name} !`); }
+    if (r < 0.4) { const l = this.bdLose(id, 10, "le Gredin repart bredouille"); if (l) this.bdSay(`Le Gredin vole ${l} pièces à ${name} !`, "mask"); }
     else if (r < 0.6) {
       const all = this.S.players.map((p) => p.id), tot = all.reduce((a, x) => a + bd.coins[x], 0), each = Math.floor(tot / all.length);
       for (const x of all) bd.coins[x] = each;
-      this.bdSay(`👹 Le Gredin redistribue tout : ${each} pièces pour chacun !`);
+      this.bdSay(`Le Gredin redistribue tout : ${each} pièces pour chacun !`, "mask");
     }
-    else if (r < 0.8) { bd.coins[id] += 6; this.bdSay(`👹 Le Gredin est de bonne humeur : +6 pièces pour ${name}`); }
-    else if (bd.items[id].length) { if (!this.bdBlocked(id, "confiscation évitée")) { const n = bd.items[id].length; bd.items[id] = []; this.bdSay(`👹 Le Gredin confisque ${n} objet${n > 1 ? "s" : ""} à ${name} !`); } }
-    else { bd.coins[id] += 4; this.bdSay(`👹 Le Gredin n'a rien à confisquer à ${name} et lui laisse 4 pièces`); }
+    else if (r < 0.8) { bd.coins[id] += 6; this.bdSay(`Le Gredin est de bonne humeur : +6 pièces pour ${name}`, "mask"); }
+    else if (bd.items[id].length) { if (!this.bdBlocked(id, "confiscation évitée")) { const n = bd.items[id].length; bd.items[id] = []; this.bdSay(`Le Gredin confisque ${n} objet${n > 1 ? "s" : ""} à ${name} !`, "mask"); } }
+    else { bd.coins[id] += 4; this.bdSay(`Le Gredin n'a rien à confisquer à ${name} et lui laisse 4 pièces`, "mask"); }
   }
   bdEvent() {
     const bd = this.S.bd, id = bd.cur, name = this.bdName(id), all = this.S.players.map((p) => p.id);
     const k = Math.floor(Math.random() * 7);
-    if (k === 0) { bd.coins[id] += 8; this.bdSay(`❓ ${name} trouve un trésor : +8 pièces`); }
-    else if (k === 1) { const l = this.bdLose(id, 5, "mauvaise surprise évitée"); if (l) this.bdSay(`❓ ${name} se fait dévaliser : −${l} pièces`); }
-    else if (k === 2) { for (const x of all) bd.coins[x] += 3; this.bdSay("❓ Pluie de pièces : tout le monde gagne 3 pièces !"); }
-    else if (k === 3) { const it = this.bdGive(id); this.bdSay(it ? `❓ Un objet tombe du ciel : ${ITEMS[it].emoji} ${ITEMS[it].name}` : "❓ Poches pleines : +2 pièces"); }
-    else if (k === 4) { bd.pos[id] = (bd.pos[id] + 3) % BD_SIZE; this.bdSay(`❓ Un coup de vent pousse ${name} de 3 cases !`); }
-    else if (k === 5) { bd.pos[id] = (bd.pos[id] + BD_SIZE - 2) % BD_SIZE; this.bdSay(`❓ ${name} trébuche : recule de 2 cases`); }
+    if (k === 0) { bd.coins[id] += 8; this.bdSay(`${name} trouve un trésor : +8 pièces`, "help"); }
+    else if (k === 1) { const l = this.bdLose(id, 5, "mauvaise surprise évitée"); if (l) this.bdSay(`${name} se fait dévaliser : −${l} pièces`, "help"); }
+    else if (k === 2) { for (const x of all) bd.coins[x] += 3; this.bdSay("Pluie de pièces : tout le monde gagne 3 pièces !", "help"); }
+    else if (k === 3) { const it = this.bdGive(id); this.bdSay(it ? `Un objet tombe du ciel : ${ITEMS[it].name}` : "Poches pleines : +2 pièces", "help"); }
+    else if (k === 4) { bd.pos[id] = (bd.pos[id] + 3) % BD_SIZE; this.bdSay(`Un coup de vent pousse ${name} de 3 cases !`, "help"); }
+    else if (k === 5) { bd.pos[id] = (bd.pos[id] + BD_SIZE - 2) % BD_SIZE; this.bdSay(`${name} trébuche : recule de 2 cases`, "help"); }
     else {
       const last = all.reduce((a, b) => (bd.coins[b] < bd.coins[a] ? b : a), all[0]);
-      bd.coins[last] += 8; this.bdSay(`❓ Coup de pouce : ${this.bdName(last)} (dernier) gagne 8 pièces`);
+      bd.coins[last] += 8; this.bdSay(`Coup de pouce : ${this.bdName(last)} (dernier) gagne 8 pièces`, "help");
     }
     this.bdEnd();
   }
@@ -1864,9 +1892,9 @@ export class HostEngine {
     // gemmes bonus (comme les étoiles bonus) : celui qui a le plus de… en reçoit une (égalité : chacun la sienne ; rien si personne n'a rien fait)
     const best = (map) => { const v = Math.max(0, ...ids.map((id) => map[id] || 0)); return v > 0 ? { v, ids: ids.filter((id) => (map[id] || 0) === v) } : { v: 0, ids: [] }; };
     const bonus = ids.length < 2 ? [] : [
-      { key: "mini", emoji: "🎮", name: "Gemme des mini-jeux", desc: "le plus de pièces gagnées en mini-jeux", ...best(bd.stat.mini) },
-      { key: "coins", emoji: "🪙", name: "Gemme de la fortune", desc: "le plus de pièces possédées à un moment", ...best(bd.stat.peak) },
-      { key: "hap", emoji: "❓", name: "Gemme des surprises", desc: "le plus de cases « ? », chance et Gredin", ...best(bd.stat.hap) },
+      { key: "mini", icon: "gamepad", name: "Gemme des mini-jeux", desc: "le plus de pièces gagnées en mini-jeux", ...best(bd.stat.mini) },
+      { key: "coins", icon: "coins", name: "Gemme de la fortune", desc: "le plus de pièces possédées à un moment", ...best(bd.stat.peak) },
+      { key: "hap", icon: "help", name: "Gemme des surprises", desc: "le plus de cases « ? », chance et Gredin", ...best(bd.stat.hap) },
     ];
     for (const b of bonus) for (const id of b.ids) bd.gems[id] += 1;
     bd.bonus = bonus;
@@ -2181,6 +2209,11 @@ export class HostEngine {
       case "imgfail": return this.imageFailed(from);
       case "quit": return this.quitVote(from, msg.v);
       case "who": return this.broadcast();
+      case "emote": return this.emote(from, msg.id);
+      case "agdeck": return this.agSetDeck(from, msg.deck);
+      case "agans": return this.agAnswer(from, msg.id, msg.a);
+      case "lgans": return this.lgAnswer(from, msg.id, msg.a);
+      case "lgchat": return this.lgChat(from, msg.ch, msg.text);
       default:
     }
   }
@@ -2196,6 +2229,11 @@ function sanitize(m) {
     case "look": return { t: "look", look: cleanLook(m.look) };
     case "leave": case "btnext": case "tlnext": case "mgnext": case "pbstop": case "ccnext": case "pbok": case "pbnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
     case "setTeam": return Number.isInteger(m.team) && m.team >= 0 && m.team < 8 ? { t: "setTeam", team: m.team } : null;
+    case "emote": return typeof m.id === "string" && EMOTE_BY[m.id] ? { t: "emote", id: m.id } : null;
+    case "agdeck": { const deck = cleanDeck(m.deck); return deck ? { t: "agdeck", deck } : null; }
+    case "agans": { const a = cleanAgAnswer(m.a); return Number.isInteger(m.id) && m.id > 0 && a ? { t: "agans", id: m.id, a } : null; }
+    case "lgans": { const a = cleanLgAnswer(m.a); return Number.isInteger(m.id) && m.id > 0 && a ? { t: "lgans", id: m.id, a } : null; }
+    case "lgchat": return str(m.ch, 12) && typeof m.text === "string" ? { t: "lgchat", ch: m.ch, text: m.text.slice(0, 200) } : null;
     case "vote": { const slots = Array.isArray(m.slots) && m.slots.length <= 5 ? m.slots.map((x) => str(x, 20)) : null; return slots ? { t: "vote", slots } : null; }
     case "place": return Number.isInteger(m.slot) && m.slot >= 0 && m.slot <= 60 ? { t: "place", slot: m.slot } : null;
     case "mgscore": return Number.isInteger(m.step) && m.step >= 0 && m.step < 1e6 && Number.isFinite(m.s) ? { t: "mgscore", step: m.step, s: Math.max(0, Math.min(1e6, Math.round(m.s))) } : null;
@@ -2223,3 +2261,5 @@ function sanitize(m) {
 }
 
 export { BY_ID };
+
+Object.assign(HostEngine.prototype, troneMethods, loupMethods);

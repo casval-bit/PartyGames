@@ -4,39 +4,43 @@ import { FAST } from "../config.js";
 
 const pts = (s) => `${s} pt${s > 1 ? "s" : ""}`;
 export const MINIGAMES = [
-  { id: "tap", title: "Tape-tape", emoji: "👆", tag: "Rapidité", rule: "Tape le plus de fois possible sur le bouton.", seconds: 8, max: 160, fmt: (s) => `${s} taps` },
-  { id: "reflex", title: "Réflexe", emoji: "⚡", tag: "Rapidité", rule: "Quand l'écran devient vert, touche-le tout de suite. 3 essais. Trop tôt = raté.", seconds: 24, max: 3000, fmt: (s) => `${Math.round((3000 - s) / 3)} ms en moyenne` },
-  { id: "moles", title: "Taupes", emoji: "🐹", tag: "Rapidité", rule: "Tape les taupes. Pas les bombes !", seconds: 15, max: 40, fmt: pts },
-  { id: "simon", title: "Simon", emoji: "🎵", tag: "Mémoire", rule: "Regarde la suite de couleurs puis refais-la. Elle s'allonge à chaque fois.", seconds: 45, max: 30, fmt: (s) => `${s} niveau${s > 1 ? "x" : ""}` },
-  { id: "stopbar", title: "Pile au centre", emoji: "🎯", tag: "Précision", rule: "Arrête le curseur au milieu. 3 essais, de plus en plus vite.", seconds: 22, max: 300, fmt: pts },
-  { id: "count", title: "Compte-les !", emoji: "🔢", tag: "Coup d'œil", rule: "Des images clignotent : combien en as-tu vu ? 6 questions.", seconds: 45, max: 900, fmt: pts },
-  { id: "maths", title: "Calcul mental", emoji: "➕", tag: "Réflexion", rule: "Choisis le bon résultat. Une erreur te fait perdre des points.", seconds: 25, max: 600, fmt: pts },
-  { id: "stroop", title: "Couleur ou mot ?", emoji: "🌈", tag: "Réflexion", rule: "Touche la COULEUR de l'encre, pas le mot écrit !", seconds: 20, max: 80, fmt: pts },
-  { id: "pairs", title: "Paires", emoji: "🃏", tag: "Mémoire", rule: "Retrouve les 8 paires le plus vite possible.", seconds: 60, max: 3000, fmt: pts },
-  { id: "catch", title: "Rattrape-les", emoji: "🧺", tag: "Arcade", rule: "Glisse le panier pour attraper les fruits. Évite les bombes !", seconds: 20, max: 60, fmt: pts },
-  { id: "dodge", title: "Esquive", emoji: "🚧", tag: "Arcade", rule: "Touche la gauche ou la droite de l'écran pour changer de voie. Tiens le plus longtemps.", seconds: 30, max: 320, fmt: (s) => `${(s / 10).toFixed(1).replace(".", ",")} s` },
-  { id: "holdtime", title: "Chrono à l'aveugle", emoji: "⏱️", tag: "Précision", rule: "Le chrono disparaît : touche quand tu penses être à 5,00 s. 3 essais.", seconds: 34, max: 3000, fmt: pts },
-  { id: "odd", title: "L'intrus", emoji: "🔍", tag: "Coup d'œil", rule: "Trouve l'image différente. La grille grandit !", seconds: 25, max: 60, fmt: pts },
-  { id: "order", title: "Dans l'ordre", emoji: "🔟", tag: "Rapidité", rule: "Touche les nombres de 1 à 16, dans l'ordre, le plus vite possible.", seconds: 40, max: 3000, fmt: pts },
-  { id: "target", title: "Cibles", emoji: "🔴", tag: "Précision", rule: "Touche la cible avant qu'elle ne rétrécisse. Plus tu es rapide, plus ça rapporte.", seconds: 18, max: 120, fmt: pts },
-  { id: "flap", title: "Envol", emoji: "🐤", tag: "Arcade", rule: "Touche pour battre des ailes et passe entre les tuyaux.", seconds: 40, max: 40, fmt: (s) => `${s} tuyau${s > 1 ? "x" : ""}` },
-  { id: "runner", title: "Saute-obstacles", emoji: "🏃", tag: "Arcade", rule: "Touche pour sauter par-dessus les obstacles.", seconds: 40, max: 60, fmt: (s) => `${s} obstacle${s > 1 ? "s" : ""}` },
-  { id: "memgrid", title: "Mémo-grille", emoji: "🟦", tag: "Mémoire", rule: "Retiens les cases qui s'allument, puis touche-les.", seconds: 45, max: 20, fmt: (s) => `niveau ${s}` },
-  { id: "bigger", title: "Le plus grand", emoji: "📏", tag: "Réflexion", rule: "Touche le calcul qui donne le plus grand résultat.", seconds: 20, max: 80, fmt: pts },
-  { id: "arrows", title: "Flèches", emoji: "🧭", tag: "Réflexion", rule: "Touche la direction de la flèche. Si c'est écrit INVERSE, touche l'opposé !", seconds: 20, max: 80, fmt: pts },
-  { id: "beat", title: "Pierre-feuille-ciseaux", emoji: "✂️", tag: "Réflexion", rule: "La machine joue : touche ce qui la bat.", seconds: 20, max: 80, fmt: pts },
-  { id: "rhythm", title: "Rythme", emoji: "🥁", tag: "Précision", rule: "Touche quand le cercle touche l'anneau.", seconds: 22, max: 60, fmt: pts },
-  { id: "fgrun", title: "Course de haricots", emoji: "🏃", tag: "3D", rule: "Glisse à gauche ou à droite pour changer de voie, vers le haut pour sauter. Évite les murs et saute les barres.", seconds: 30, max: 420, fmt: (s) => `${s} m` },
-  { id: "hexfall", title: "Plancher fragile", emoji: "🟪", tag: "3D", rule: "Glisse pour courir : les dalles s'effondrent. Ne tombe pas !", seconds: 30, max: 400, fmt: pts },
-  { id: "sumo", title: "Sumo bonbon", emoji: "💥", tag: "3D", rule: "Reste sur l'arène qui rétrécit. Pousse les autres en fonçant !", seconds: 30, max: 600, fmt: pts },
-  { id: "jumpclub", title: "Barre tournante", emoji: "🌀", tag: "3D", rule: "Touche pour sauter par-dessus la barre qui tourne. Elle accélère et change de sens !", seconds: 30, max: 40, fmt: (s) => `${s} passage${s > 1 ? "s" : ""}` },
-  { id: "coinchase", title: "Chasse aux pièces", emoji: "🪙", tag: "3D", rule: "Glisse pour ramasser les pièces. Évite les boulets rouges !", seconds: 25, max: 260, fmt: pts },
-  { id: "tunnel", title: "Tunnel champêtre", emoji: "🌀", tag: "3D", rule: "Tourne autour du tunnel pour éviter les caisses. Plus tu avances, plus ça va vite !", seconds: 30, max: 420, fmt: (s) => `${s} m` },
-  { id: "shroom", title: "Cueillette de champis", emoji: "🍄", tag: "3D", rule: "Cueille les champignons quand ils brillent en vert. Trop tôt ou trop tard : points perdus. L'or vaut le triple !", seconds: 30, max: 300, fmt: pts },
-  { id: "safari", title: "Safari photo", emoji: "📸", tag: "3D", rule: "Glisse pour regarder autour, puis touche l'animal demandé pour le photographier. Attention : le modèle change !", seconds: 35, max: 300, fmt: pts },
-  { id: "bowling", title: "Bowling bonbon", emoji: "🎳", tag: "3D", rule: "Touche une fois pour fixer la direction, une fois pour la puissance. 4 lancers !", seconds: 40, max: 480, fmt: pts },
+  { id: "bombtag", title: "Patate explosive", icon: "bomb", tag: "Arène", rule: "Une bombe passe de main en main : touche quelqu'un pour la refiler ! Celui qui la tient quand la mèche s'éteint saute. Dernier debout gagne.", seconds: 40, max: 560, fmt: pts },
+  { id: "bomber", title: "Poseur de bombes", icon: "flame", tag: "Arène", rule: "Pose des bombes pour casser les caisses et faire sauter les autres. Ne reste pas dans la croix de flammes ! Ramasse les objets : flamme plus longue, bombe en plus.", seconds: 60, max: 1000, fmt: pts },
+  { id: "tanks", title: "Chars d'assaut", icon: "crosshair", tag: "Arène", rule: "Pilote ton petit char : il tire dans la direction où il regarde. Tes obus rebondissent une fois sur les murs. 3 touches et un char saute !", seconds: 45, max: 600, fmt: pts },
+  { id: "crown", title: "Roi de la colline", icon: "crown", tag: "Arène", rule: "Reste seul dans la zone dorée pour marquer. Pousse les autres dehors en fonçant ! La zone change de place : suis-la.", seconds: 35, max: 500, fmt: pts },
+  { id: "kart", title: "Grand Prix de karts", icon: "car", tag: "Course", rule: "Course de karts : tourne avec les flèches (ou en glissant le doigt), l'accélérateur est automatique. Passe sur les flèches vertes pour un turbo, prends les boîtes : champignon pour foncer, banane pour piéger les autres.", seconds: 40, max: 650, fmt: pts },
+  { id: "cannons", title: "Canons en cercle", icon: "anchor", tag: "Survie", rule: "Les canons visent : un couloir rouge s'allume, puis le boulet traverse l'arène. Esquive ou saute par-dessus ! 3 cœurs. Ramasse les gemmes pour des points.", seconds: 32, max: 520, fmt: pts },
+  { id: "sky", title: "Pilotes de l'extrême", icon: "plane", tag: "Course", rule: "Pilote ton avion dans le ciel : traverse un maximum d'anneaux (pile au centre = bonus), évite les mines, ramasse les boules bleues pour le turbo.", seconds: 36, max: 900, fmt: pts },
+  { id: "pucks", title: "Palets glacés", icon: "target", tag: "Adresse", rule: "Lance tes palets vers la cible : glisse vers où tu vises, plus tu pousses plus ça va loin, relâche pour tirer. Chasse les palets adverses hors du plateau !", seconds: 40, max: 250, fmt: pts },
+  { id: "maze", title: "Labyrinthe des gloutons", icon: "ghost", tag: "Collecte", rule: "Glisse dans le labyrinthe et mange un maximum de pastilles. Trois fantômes chassent ! La grosse boule rose te rend invincible : mange les fantômes et vole les pastilles des autres.", seconds: 45, max: 700, fmt: pts },
+  { id: "snow", title: "Boules de neige géantes", icon: "snow", tag: "Arène", rule: "Roule ta boule sur la neige fraîche pour la faire grossir. Les grosses boules écrasent les petites : pousse les adversaires hors du plateau pour leur voler de la neige !", seconds: 38, max: 350, fmt: pts },
+  { id: "hexfall", title: "Plancher fragile", icon: "hexagon", tag: "Survie", rule: "Les dalles s'effondrent sous tes pieds : cours, saute d'un étage à l'autre et sois le dernier à tomber !", seconds: 30, max: 400, fmt: pts },
+  { id: "sumo", title: "Sumo de l'arène", icon: "shield", tag: "Arène", rule: "Reste sur l'arène qui rétrécit. Pousse les autres dehors en fonçant !", seconds: 30, max: 600, fmt: pts },
+  { id: "coinchase", title: "Chasse aux pièces", icon: "coins", tag: "Collecte", rule: "Ramasse un maximum de pièces. Évite les boulets rouges : ils t'étourdissent !", seconds: 25, max: 260, fmt: pts },
+  { id: "jumpclub", title: "Barre tournante", icon: "repeat", tag: "Survie", rule: "Saute par-dessus la barre qui tourne. Elle accélère et change de sens : le dernier debout gagne !", seconds: 30, max: 40, fmt: (s) => `${s} passage${s > 1 ? "s" : ""}` },
+  { id: "paint", title: "Guerre de peinture", icon: "palette", tag: "Arène", rule: "Repeins le sol à ta couleur en marchant dessus. Fonce pour peindre large et bousculer les autres, ramasse le rouleau pour une traînée géante. Le plus de dalles à ta couleur gagne !", seconds: 35, max: 576, fmt: pts },
+  { id: "chairs", title: "Plateformes musicales", icon: "music", tag: "Survie", rule: "Tourne dans l'arène tant que la musique joue. Au « STOP ! », fonce sur une plateforme : il en manque toujours une. Sans plateforme, tu es éliminé. Bouscule les autres pour passer devant !", seconds: 45, max: 450, fmt: pts },
+  { id: "trails", title: "Traînées de lumière", icon: "bolt", tag: "Survie", rule: "Ta planche laisse un mur de lumière. Glisse pour tourner à angle droit, Turbo pour accélérer. Ne touche ni le bord ni une traînée : fais s'écraser les autres sur la tienne !", seconds: 32, max: 560, fmt: pts },
+  { id: "fgrun", title: "Course d'obstacles", icon: "steps", tag: "Course", rule: "Glisse à gauche ou à droite pour changer de voie, vers le haut pour sauter. Évite les murs et saute les barres.", seconds: 30, max: 420, fmt: (s) => `${s} m` },
 ];
 export const MG_BY = Object.fromEntries(MINIGAMES.map((g) => [g.id, g]));
+/** Poids de tirage : tous les jeux sont au même niveau (un jeu peut demander plus ou moins avec `w`). */
+export const gameWeight = (g) => g.w || 1;
+/**
+ * Tirage pondéré des mini-jeux : renvoie `draw()`. Un jeu qui vient de sortir ne revient pas avant `cool` autres tirages (pas de répétition).
+ * `rnd` = générateur aléatoire (injectable pour les tests), `list` = jeux possibles.
+ */
+export function makeDraw(rnd = Math.random, cool = 6, list = MINIGAMES) {
+  if (!list || !list.length) list = MINIGAMES;
+  const recent = [];
+  return () => {
+    const free = list.filter((g) => !recent.includes(g.id)), pool = free.length ? free : list;
+    let t = pool.reduce((a, g) => a + gameWeight(g), 0) * rnd(), pick = pool[pool.length - 1];
+    for (const g of pool) { t -= gameWeight(g); if (t < 0) { pick = g; break; } }
+    recent.push(pick.id); while (recent.length > Math.min(cool, list.length - 1)) recent.shift();
+    return pick.id;
+  };
+}
 /** Durée réelle d'un mini-jeu (très courte dans les tests automatiques). */
 export const playSeconds = (g) => (FAST ? Math.min(g.seconds, 6) : g.seconds);
 export const MG_GRACE_S = 6; // marge de réseau avant que le créateur clôture la manche
@@ -51,9 +55,14 @@ export function rankPoints(rank, n) {
    Chaque joueur joue le même mini-jeu sur son téléphone ; le score d'une équipe est la MOYENNE des scores de ses membres
    (équitable quelle que soit la taille des équipes). L'équipe gagnante gagne la manche, chacun de ses membres en même temps. */
 export const MG_SIDES = [
-  { id: 0, name: "Bleus", color: "#4aa8ff", ink: "#04203f", emoji: "🔵" },
-  { id: 1, name: "Rouges", color: "#ff5d73", ink: "#3a0610", emoji: "🔴" },
+  { id: 0, name: "Bleus", color: "#4aa8ff", ink: "#04203f" },
+  { id: 1, name: "Rouges", color: "#ff5d73", ink: "#3a0610" },
 ];
+/** Liste des jeux choisis par le créateur du lobby (vide = tous). Au moins 3 jeux pour garder de la variété. */
+export function pickList(ids) {
+  const ok = Array.isArray(ids) ? [...new Set(ids.filter((id) => MG_BY[id]))] : [];
+  return ok.length >= 3 ? ok.map((id) => MG_BY[id]) : MINIGAMES;
+}
 /** Mode (« ffa », « 2v2 », « 1v3 »…) d'après la répartition { id: 0|1 } des joueurs présents. */
 export function modeOf(teams, ids) {
   if (!teams) return "ffa";

@@ -44,7 +44,7 @@ const give = (e, id, items) => { e.S.bd.items[id] = items; };
 eq("32 cases, départ en case 0", [BD_SIZE, BD_LAYOUT.length, BD_LAYOUT[0]], [32, 32, "start"]);
 eq("types de cases connus", BD_LAYOUT.every((t) => SPACE_INFO[t]), true);
 eq("autant de rouges que possible face aux bleues (équilibre des modes)", [BD_LAYOUT.filter((t) => t === "blue").length, BD_LAYOUT.filter((t) => t === "red").length], [11, 8]);
-eq("chaque objet a nom, emoji, description", Object.values(ITEMS).every((i) => i.emoji && i.name && i.desc), true);
+eq("chaque objet a nom, icône, description", Object.values(ITEMS).every((i) => i.icon && i.name && i.desc), true);
 eq("au moins 15 objets", ITEM_IDS.length >= 15, true);
 eq("les boutiques ne vendent que des objets à prix", [...SHOP_POOL.a, ...SHOP_POOL.b].every((k) => ITEMS[k].price > 0), true);
 eq("un tirage donne un objet connu", ITEMS[randomItem(() => 0.5)] !== undefined, true);

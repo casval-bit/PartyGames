@@ -3,10 +3,10 @@ import { PlayerAvatar, Fuse, useNow, playerColor } from "../ui/parts.jsx";
 import { PB_CAT_BY, PB_MAX_LEN, startsWith, filled } from "../data/petitbac.js";
 import { PB_RESULT_SECONDS, PB_VOTE_SECONDS, PB_INTRO_MS } from "../config.js";
 import { vibrate } from "../lib/util.js";
+import { Icon, Medal } from "../ui/Icon.jsx";
 
-const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const ord = (n) => (n === 1 ? "1er" : `${n}e`);
-const catOf = (id) => PB_CAT_BY[id] || { id, name: id, emoji: "❔" };
+const catOf = (id) => PB_CAT_BY[id] || { id, name: id, icon: "help" };
 const nameOf = (room, me, id) => (id === me.id ? "Toi" : (room.players.find((p) => p.id === id) || {}).name || "?");
 
 export default function PetitBac({ room, me, api, onLeave }) {
@@ -31,7 +31,7 @@ function Intro({ pb }) {
       <div className="eyebrow">Petit bac · manche {pb.round}/{pb.total}</div>
       <div className="pbletter big" data-testid="pb-letter" style={{ animationDuration: PB_INTRO_MS + "ms" }}><span>{pb.letter}</span></div>
       <h2 style={{ fontSize: "1.4rem" }}>Trouve un mot par catégorie !</h2>
-      <ul className="pbcats">{pb.cats.map((id) => <li key={id}><span aria-hidden="true">{catOf(id).emoji}</span>{catOf(id).name}</li>)}</ul>
+      <ul className="pbcats">{pb.cats.map((id) => <li key={id}><span aria-hidden="true"><Icon name={catOf(id).icon} size={16} /></span>{catOf(id).name}</li>)}</ul>
       <p className="muted">Les réponses restent secrètes jusqu'à la fin. 10 points si tu es seul à l'avoir trouvée, 5 si un autre a la même.</p>
     </div>
   );
@@ -72,7 +72,7 @@ function Play({ room, me, api }) {
         </div>
       </div>
       {pb.stop ? (
-        <div className="pbstopbanner" role="alert" data-testid="pb-stopbanner">🛑 {mineStop ? "Tu as crié STOP !" : `${pb.stop.name} crie STOP !`} <small>Finis vite… {Math.max(0, Math.ceil(left / 1000))} s</small></div>
+        <div className="pbstopbanner" role="alert" data-testid="pb-stopbanner"><Icon name="stop" size={18} /> {mineStop ? "Tu as crié STOP !" : `${pb.stop.name} crie STOP !`} <small>Finis vite… {Math.max(0, Math.ceil(left / 1000))} s</small></div>
       ) : <Fuse deadline={room.deadline} total={pb.seconds} />}
       <div className="scroll pbscroll">
         <div className="pbform">
@@ -80,7 +80,7 @@ function Play({ room, me, api }) {
             const c = catOf(id), v = vals[i], bad = v.trim() && !ok[i];
             return (
               <label key={id} className={"pbrow" + (ok[i] ? " ok" : bad ? " ko" : "")}>
-                <span className="pbl"><span aria-hidden="true">{c.emoji}</span>{c.name}</span>
+                <span className="pbl"><span aria-hidden="true"><Icon name={c.icon} size={15} /></span>{c.name}</span>
                 <input data-testid={"pb-in-" + i} value={v} maxLength={PB_MAX_LEN} autoComplete="off" autoCorrect="off" spellCheck="false" autoCapitalize="words" enterKeyHint={i === pb.cats.length - 1 ? "done" : "next"}
                   placeholder={pb.letter + "…"} onChange={(e) => set(i, e.target.value)} onBlur={() => { clearTimeout(timer.current); send(vals); }} aria-invalid={bad ? "true" : undefined} />
                 {bad ? <small className="pbhint">Doit commencer par {pb.letter}</small> : null}
@@ -105,7 +105,7 @@ function Cards({ room, me, pb, onReject, readOnly }) {
         const c = catOf(pb.cats[row.c]);
         return (
           <section className="pbcard" key={row.c} aria-label={c.name}>
-            <h3><span aria-hidden="true">{c.emoji}</span> {c.name}</h3>
+            <h3><span aria-hidden="true"><Icon name={c.icon} size={18} /></span> {c.name}</h3>
             <ul>
               {row.items.map((it) => {
                 const p = room.players.find((x) => x.id === it.id);
@@ -121,7 +121,7 @@ function Cards({ room, me, pb, onReject, readOnly }) {
                     {(voters.length > 0 || can) && (
                       <button className={"pbrej" + (mine ? " on" : "")} data-testid={`pb-rej-${row.c}-${it.id}`} disabled={!can} aria-pressed={mine}
                         aria-label={`Contester la réponse de ${p.name}`} onClick={() => { vibrate(15); onReject(row.c, it.id, !mine); }}>
-                        ✋{voters.length ? <i>{voters.length}</i> : null}
+                        <Icon name="hand" size={16} />{voters.length ? <i>{voters.length}</i> : null}
                       </button>
                     )}
                   </li>
@@ -145,7 +145,7 @@ function Vote({ room, me, api }) {
       <div>
         <div className="eyebrow">Manche {pb.round}/{pb.total} · lettre {pb.letter}</div>
         <h2 style={{ fontSize: "1.3rem" }}>Toutes les réponses</h2>
-        <p className="muted pbnote">Une réponse bidon ? Touche ✋ pour la contester : si plus de la moitié des autres joueurs la conteste, elle est refusée.</p>
+        <p className="muted pbnote">Une réponse bidon ? Touche la main pour la contester : si plus de la moitié des autres joueurs la conteste, elle est refusée.</p>
       </div>
       <Fuse deadline={room.deadline} total={PB_VOTE_SECONDS} />
       <div className="scroll pbscroll"><Cards room={room} me={me} pb={pb} onReject={api.pbReject} /></div>
@@ -165,7 +165,7 @@ function Result({ room, me, api, isHost }) {
       <div>
         <div className="eyebrow">Manche {pb.round}/{pb.total} terminée · lettre {last.letter}</div>
         <h2 style={{ fontSize: "1.4rem" }}>{me.id && last.gain[me.id] != null ? `+${last.gain[me.id]} points` : "Résultats"}</h2>
-        {stopper && <small className="muted">🛑 STOP crié par {stopper}</small>}
+        {stopper && <small className="muted"><Icon name="stop" size={13} /> STOP crié par {stopper}</small>}
       </div>
       <div className="scroll">
         <ol className="rank mgstand">
@@ -211,7 +211,7 @@ function Final({ room, me, api, isHost, onLeave }) {
             <div key={r.id} className={"pod p" + Math.min(3, r.rank)} style={{ "--tc": playerColor(p.ci), "--tink": "#1d2457" }}>
               <PlayerAvatar name={p.name} look={p.look} showLv />
               <span className="who">{r.id === me.id ? "Toi" : p.name}</span>
-              <div className="blk"><b>{r.pts}</b><span>{MEDAL[r.rank] || ord(r.rank)}</span></div>
+              <div className="blk"><b>{r.pts}</b><span><Medal rank={r.rank} /></span></div>
             </div>
           );
         })}

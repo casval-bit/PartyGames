@@ -150,15 +150,16 @@ async function searchRetry(line, getJson, pause) {
     }
   }
 }
-export async function resolveLines(lines, getJson = deezerJson, onProgress = () => {}, pause = 120) {
+/** `max` : nombre de lignes traitées (1500 par défaut pour un texte collé ; la lecture directe de Spotify passe MAX_TOTAL pour les grandes playlists). */
+export async function resolveLines(lines, getJson = deezerJson, onProgress = () => {}, pause = 120, max = MAX_TEXT_LINES) {
   const out = [], missing = [];
   let done = 0;
-  const queue = lines.slice(0, MAX_TEXT_LINES);
+  const queue = lines.slice(0, max);
   const worker = async () => {
     while (queue.length) {
       const l = queue.shift();
       try { const t = await searchRetry(l, getJson, pause); if (t) out.push(t); else missing.push(l); } catch { missing.push(l); }
-      onProgress(++done, Math.min(lines.length, MAX_TEXT_LINES));
+      onProgress(++done, Math.min(lines.length, max));
       await sleep(pause); // l'API limite à ~50 requêtes / 5 s
     }
   };

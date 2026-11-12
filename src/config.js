@@ -39,6 +39,8 @@ export const GAMES = [
   { id: "petitbac", label: "Petit bac", note: "Une lettre, six catégories : sois le plus rapide et le plus original" },
   { id: "board", label: "Plateau", note: "Jeu de plateau : dé, cases, objets, gemmes… et un mini-jeu à chaque tour" },
   { id: "party", label: "Mini-jeux", note: "Mini-jeux sur chaque téléphone et tests d'amitié : le meilleur total gagne" },
+  { id: "trone", label: "Trône des Mondes", note: "Le jeu de cartes : 23 familles, défis, Domination… Le premier à atteindre l'objectif de Pouvoir gagne (2 à 4 joueurs)" },
+  { id: "loupgarou", label: "Loup-garou", note: "Version Stranger Things : les créatures du Monde à l'envers contre les habitants de Hawkins. Rôles du jeu de base, des extensions et fanmade (4 à 18 joueurs)" },
 ];
 export const QE_ROUNDS_OPTIONS = [5, 8, 10, 15];
 export const QE_DEFAULT_ROUNDS = 8;
@@ -104,7 +106,7 @@ export const MG_QREVEAL_MS = FAST ? 1200 : 5500;      // révélation de la rép
 export const MG_FRIEND_QS = FAST ? 2 : 3;             // questions par test d'amitié
 export const MG_FRIEND_EVERY = 3;                     // un test d'amitié toutes les 3 manches
 export const MG_FRIEND_PTS = 3;                       // points par bonne devinette
-export const MG_DEFAULTS = { mgRounds: 8 };
+export const MG_DEFAULTS = { mgRounds: 8, mgPick: [] };   // mgPick : mini-jeux choisis par le créateur (vide = tous)
 
 // ---- Plateau ----
 export const BD_ROUNDS_OPTIONS = FAST ? [2, 3, 5, 8] : [5, 8, 10, 12]; // tours de table au choix du créateur
