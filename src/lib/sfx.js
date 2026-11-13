@@ -80,6 +80,10 @@ export const sfx = {
   cardFlip() { whoosh(0.26, 3000, 900, 0.22); tone(196, 0.12, 0.25, 150, "triangle", 0.2); tone(1480, 0.2, 0.08, 1760, "sine", 0.24); },
   /** Changement de section dans le Trône des Mondes : une carte qui glisse sur la table. */
   slide() { whoosh(0.18, 1600, 4200, 0.18); },
+  /** On bat les cartes : une rafale de petits claquements (cartes qui s'entrecroisent). */
+  shuffle() { for (let i = 0; i < 14; i++) whoosh(0.035, 2600 + (i % 3) * 700, 6000, 0.13 + (i % 2) * 0.04, i * 0.045); tone(330, 0.08, 0.12, 260, "triangle", 0.66); },
+  /** Pièce d'Or qui tinte. */
+  coin() { tone(1568, 0.09, 0.3); tone(2093, 0.22, 0.24, null, "sine", 0.07); tone(3136, 0.12, 0.08, null, "sine", 0.1); },
   /** À appeler dans un geste : débloque l'audio des navigateurs stricts. */
   unlock() { ctx(); },
   open() { tone(520, 0.1, 0.5, 780); tone(1040, 0.14, 0.25, null, "sine", 0.06); },

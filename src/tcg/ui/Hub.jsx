@@ -405,7 +405,7 @@ function Quests({ t, setT, flash }) {
 
 /* ------------------------------ en-tête d'une partie du Trône des Mondes ------------------------------ */
 const VIEWS = {
-  decks: ["Mes decks", "layers"], coll: ["Collection", "library"], packs: ["Boosters", "gift"], shop: ["Boutique du jour", "store"],
+  decks: ["Mes decks", "layers"], coll: ["Mes cartes", "library"], packs: ["Boosters", "gift"], shop: ["Boutique du jour", "store"],
   quests: ["Quêtes et succès", "trophy"], profile: ["Mon profil", "user"],
 };
 function SectionHead({ view, t, go, nPacks, onSettings }) {
@@ -486,8 +486,10 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
       </div>
     );
   } else if (view === "home") {
+    const deck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
     content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} onSettings={() => { setSettings(true); sfx.open(); }}
-      onZoom={setZoom} onAlbum={() => { setAlbum(true); sfx.open(); }} nPacks={nPacks} nQuests={nQuests} />;
+      onZoom={(id) => setZoom({ id })} onFamily={() => deck && setZoom({ fam: deck.fam, pt: deck.pt })} onAlbum={() => { setAlbum(true); sfx.open(); }}
+      nPacks={nPacks} nQuests={nQuests} calm={prefs.motion === "reduced"} />;
   } else {
     content = (
       <div className="hs">
@@ -515,7 +517,9 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
             onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
         )}
         {album && <Album t={t} onClose={() => { setAlbum(false); sfx.close(); }} />}
-        {zoom && <CardZoom id={zoom} foil={(t.foil[zoom] || 0) > 0} owned={{ n: t.coll[zoom] || 0, f: t.foil[zoom] || 0 }} onClose={() => setZoom(null)} />}
+        {zoom && (zoom.id
+          ? <CardZoom id={zoom.id} foil={(t.foil[zoom.id] || 0) > 0} owned={CARD[zoom.id] && CARD[zoom.id].type !== "plot" ? { n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 } : null} onClose={() => setZoom(null)} />
+          : <CardZoom fam={zoom.fam} pt={zoom.pt} onClose={() => setZoom(null)} />)}
         {rules && <Rules onClose={() => setRules(false)} />}
         {settings && <TcgSettings acc={acc} onAccount={onAccount} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
       </div>

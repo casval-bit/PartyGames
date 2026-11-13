@@ -124,7 +124,7 @@ La partie du Trône des Mondes ne pivote pas sur PC, même dans une fenêtre plu
 **Mise en page PC** (`src/desktop.css`, classe `html.desktop`) : plus de colonne de téléphone, tout l'écran sert.
 - **Menu** : carte d'identité, badge du compte, pseudo et nom du lobby à gauche ; les quatre grandes tuiles (Créer, Rejoindre, Trône des Mondes, Salle d'arcade) à droite, avec la liste des jeux.
 - **Lobby** : le jeu et ses réglages à gauche, les joueurs (ou les équipes) à droite, « Lancer la partie » en bas à droite. **Profil** : la carte d'identité à gauche, les stats sur deux colonnes à droite. **Salle d'arcade** : grille de tous les mini-jeux.
-- **Trône des Mondes** : l'accueil du jeu prend tout l'écran (vitrine au centre, boutons des parties en bas à gauche, Jouer et Boosters en bas à droite, voir 11).
+- **Trône des Mondes** : l'accueil du jeu prend tout l'écran (plateau de jeu 3D au centre, « Tes cartes » à gauche, « Boosters et défis » à droite, Jouer en bas, voir 11).
   Le **constructeur de deck** montre les cartes à ajouter à gauche et le deck à droite, en même temps (fenêtre d'au moins 1 100 px de large après le zoom).
 - **Écrans de jeu** : centrés dans une colonne large (1 000 px), le plateau 3D est plus grand.
 
@@ -409,9 +409,14 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 
 **Accueil du jeu** (bouton « Trône des Mondes » du menu, ou depuis le lobby ; `src/tcg/ui/HubHome.jsx`) : un écran épuré, façon lobby de jeu de cartes.
 - En haut : ta **photo de profil du jeu** (pas ton personnage Party Hub) avec ton pseudo et ton niveau, tes boosters à ouvrir, tes **Éclats** (le diamant ; le « + » ouvre la boutique) et les **paramètres du jeu**.
-- Au centre : la **vitrine** du deck joué (ses trois personnages les plus forts, qui flottent doucement ; touche une carte pour la lire), son nom et « Changer ».
-- En bas : les boutons **Profil**, **Decks**, **Collection**, **Album**, **Boutique**, **Quêtes** (pastilles : quêtes à récupérer, nouvelle boutique du jour, nouveau cadre…),
-  et deux grandes actions : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et **Boosters**.
+- Au centre : un **plateau de jeu en 3D isométrique** (`HubBoard.jsx`, tout en CSS 3D), avec ton deck joué posé comme en partie : de ton côté tes 4 personnages
+  les plus forts (l'un agenouillé), ta carte de famille, un scénario, un lieu, ta pioche et ta défausse ; au milieu l'Or et le Pouvoir ; en face, la table d'un adversaire, face cachée.
+  Les cartes face visible se soulèvent au survol et s'ouvrent en grand ; les pioches se **mélangent** quand on les touche, la main adverse se bat, son scénario se révèle un instant,
+  les pièces d'Or sautent en tournant. À l'arrivée, tes cartes sont distribuées sur la table. Le plateau se met à l'échelle de l'écran (sur téléphone, les coins du tapis débordent un peu).
+- À gauche, **« Tes cartes »**, chaque bouton avec une phrase qui dit à quoi il sert : **Mes decks** (créer, modifier, choisir le deck que tu joues),
+  **Mes cartes** (les cartes que tu possèdes : chercher, recycler les doubles, illustrations) et **Album** (toutes les cartes du jeu, celles qui te manquent en gris).
+- À droite, **« Boosters et défis »** : **Boosters** (à ouvrir, à acheter), **Boutique du jour** (6 cartes à l'unité) et **Quêtes et succès** (pastilles : à récupérer, nouvelle boutique…).
+- En bas : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les six boutons.
   Chaque bouton ouvre sa partie en plein écran, avec un retour à l'accueil ; changer de partie fait glisser une carte (son).
 - **Profil du jeu** (`TcgProfile.jsx`) : statistiques du jeu de cartes (parties, victoires, défis gagnés, éliminations, Dominations, boosters, collection, brillantes, cartes 7, succès).
   **Photo** : n'importe quelle carte 7 que tu possèdes (par défaut, celle du deck joué ; sans carte 7, le blason du jeu).

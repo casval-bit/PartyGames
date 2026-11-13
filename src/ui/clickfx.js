@@ -6,7 +6,7 @@ import { sfx } from "../lib/sfx.js";
 
 const TARGET = "button, [role='button'], a[href], summary, .itm";
 /** Boutons qui « répondent » au survol (son) : les gros boutons, les onglets, les cartes cliquables… `data-hover` pour en ajouter. */
-const HOVER = ".btn, .bigbtn, .iconbtn, .seg button, .hub-tabs button, .hub-filters button, .hub-fambtn, .hub-starter, .arc-card, .arc-tags button, .accbadge, .profbtn, .alb-entry, .mgpcard, .itm, button.tc, .hh-nav-b, .hh-act, .hh-me, .hh-cur, .pf-pick, [data-hover]";
+const HOVER = ".btn, .bigbtn, .iconbtn, .seg button, .hub-tabs button, .hub-filters button, .hub-fambtn, .hub-starter, .arc-card, .arc-tags button, .accbadge, .profbtn, .alb-entry, .mgpcard, .itm, button.tc, .hh-nav-b, .hh-nb, .hh-act, .hh-me, .hh-cur, .hh-deck, .pf-pick, .ib-card, .ib-hit, [data-hover]";
 const MAX_LIVE = 40;
 let layer = null, live = 0, installed = false;
 
