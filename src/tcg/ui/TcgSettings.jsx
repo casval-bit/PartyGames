@@ -84,7 +84,7 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
                 const ids = illustratedIds();
                 const r = P.unlockCards(t, ids);
                 setT(r.t); sfx.win();
-                if (flash) flash(ids.length ? `${ids.length} cartes illustrées : ${r.added} débloquée${r.added > 1 ? "s" : ""} (2 exemplaires chacune).` : "Aucune carte illustrée trouvée (dossier illustrations vide ?).");
+                if (flash) flash(ids.length ? `${ids.length} cartes illustrées : ${r.added} débloquée${r.added > 1 ? "s" : ""} (2 exemplaires, 1 pour les cartes 7).` :"Aucune carte illustrée trouvée (dossier illustrations vide ?).");
               }}><Icon name="image" size={16} />Débloquer les cartes illustrées</button>
             </div>
           </div>

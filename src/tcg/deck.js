@@ -1,6 +1,6 @@
 // Trône des Mondes : règles de construction des decks, decks de départ et scénarios conseillés.
 import { CARD, ALL, PLOTS, FAMILY, FAMILIES, STARTER_SPECS, subOf, hasSubs, subWords } from "./cards/index.js";
-import { DECK_RULES as R, slug } from "./rules.js";
+import { DECK_RULES as R, slug, copiesOf } from "./rules.js";
 
 /** Nombre total de cartes d'un deck. */
 export const deckSize = (deck) => Object.values(deck.cards || {}).reduce((s, n) => s + n, 0);
@@ -23,7 +23,7 @@ export function validateDeck(deck, owned = null) {
     const d = CARD[id];
     if (!d || d.type === "plot") { errors.push("Carte inconnue dans le deck."); continue; }
     counts.total += n;
-    if (n > R.maxCopies) errors.push(`${d.name} : ${R.maxCopies} exemplaires au maximum.`);
+    if (n > copiesOf(d)) errors.push(d.cost >= 7 ? `${d.name} (7) est unique : un seul exemplaire par deck.` : `${d.name} : ${R.maxCopies} exemplaires au maximum.`);
     if (owned && (owned[id] || 0) < n) errors.push(`Il te manque ${n - (owned[id] || 0)} × ${d.name}.`);
     if (d.type === "char") counts.chars += n;
     else if (d.type === "loc") counts.locs += n;
@@ -79,7 +79,7 @@ export function starterFor(deck) {
 const RARITY_RANK = { L: 4, E: 3, R: 2, U: 1, C: 0 };
 /**
  * Complète un deck jusqu'à R.size cartes sans enfreindre les règles : cartes de sa famille (et de son type ou de sa région)
- * ou neutres, une version par personnage, R.maxCopies exemplaires au plus, plafonds des coûts 5, 6 et 7, des lieux, des objets
+ * ou neutres, une version par personnage, R.maxCopies exemplaires au plus (1 pour une carte 7), plafonds des coûts 5, 6 et 7, des lieux, des objets
  * et événements, assez de personnages. Les cartes du deck de départ le plus proche passent en premier.
  *   owned : { id: n } possédés (un exemplaire déjà dans le deck n'est plus libre) ;
  *   extra : s'il n'y a pas assez de cartes possédées, on en prend d'autres (renvoyées dans `granted`, à offrir au joueur) ;
@@ -105,7 +105,7 @@ export function fillDeck(deck, { owned = {}, extra = false, upTo = R.size } = {}
     || (a.fam === fam.id ? 0 : 1) - (b.fam === fam.id ? 0 : 1) || (a.type === "char" ? 0 : 1) - (b.type === "char" ? 0 : 1)
     || (best ? RARITY_RANK[b.r] - RARITY_RANK[a.r] : RARITY_RANK[a.r] - RARITY_RANK[b.r]) || a.cost - b.cost || a.id.localeCompare(b.id));
   const fits = (d) => {
-    if ((cards[d.id] || 0) >= R.maxCopies) return false;
+    if ((cards[d.id] || 0) >= copiesOf(d)) return false;
     if (keyOwner[d.key] && keyOwner[d.key] !== d.id) return false;
     if (d.cost >= 7 ? c.c7 >= R.cost7 : d.cost === 6 ? c.c6 >= R.cost6 : d.cost === 5 ? c.c5 >= R.cost5 : false) return false;
     if (d.type === "loc" ? c.locs >= R.maxLocs : d.type !== "char" && c.objEvt >= R.maxObjEvt) return false;
@@ -121,7 +121,7 @@ export function fillDeck(deck, { owned = {}, extra = false, upTo = R.size } = {}
   for (const d of order(true)) { while (need > 0 && free(d) > 0 && fits(d)) put(d, false); if (!need) break; }
   if (extra && need > 0) {
     for (const d of order(false)) {
-      if (!rank.has(d.id) && RARITY_RANK[d.r] >= RARITY_RANK.E) continue; // on n'offre pas d'épique ni de légendaire hors deck de départ
+      if (RARITY_RANK[d.r] >= RARITY_RANK.E || d.cost >= 7) continue; // on n'offre ni épique, ni légendaire, ni carte 7
       while (need > 0 && fits(d)) put(d, free(d) <= 0);
       if (!need) break;
     }
@@ -166,7 +166,7 @@ export function buildStarter(spec) {
   const counts = { c7: 0, c6: 0, c5: 0, chars: 0, locs: 0, oe: 0, total: 0 };
   const can = (d, n) => {
     if (keys.has(d.key) && !cards[d.id]) return false;
-    if ((cards[d.id] || 0) + n > R.maxCopies) return false;
+    if ((cards[d.id] || 0) + n > copiesOf(d)) return false;
     if (d.type === "char" && spec.maxChars && counts.chars + n > spec.maxChars) return false; // option : laisse de la place aux objets et événements
     if (d.cost >= 7 && counts.c7 + n > R.cost7) return false;
     if (d.cost === 6 && counts.c6 + n > 5) return false;
@@ -181,9 +181,10 @@ export function buildStarter(spec) {
     counts.total += n;
     return true;
   };
+  const two = (d) => Math.min(2, copiesOf(d)); // 2 exemplaires, ou 1 pour une carte 7 (unique)
   const leader = CARD[spec.leader];
-  if (leader) add(leader, 2);
-  for (const id of spec.excl || []) add(CARD[id], 2);
+  if (leader) add(leader, two(leader));
+  for (const id of spec.excl || []) if (CARD[id]) add(CARD[id], two(CARD[id]));
   // une version par personnage : la mieux notée, les moins chères d'abord à note égale (sauf le chef)
   const best = {};
   for (const d of pool) {
@@ -194,8 +195,8 @@ export function buildStarter(spec) {
   const chars = Object.values(best).filter((x) => x.sc > -3).sort((a, b) => b.sc - a.sc || a.d.cost - b.d.cost).map((x) => x.d);
   const curve = (d) => (d.cost <= 2 ? 0 : d.cost <= 4 ? 1 : 2);
   const want = [6, 6, 4]; const got = [0, 0, 0];
-  for (const d of chars) { const c = curve(d); if (got[c] < want[c] && add(d, 2)) got[c]++; }
-  for (const d of chars) { if (counts.chars >= 30) break; add(d, 2); }
+  for (const d of chars) { const c = curve(d); if (got[c] < want[c] && add(d, two(d))) got[c]++; }
+  for (const d of chars) { if (counts.chars >= 30) break; add(d, two(d)); }
   const picked = Object.keys(cards).map((id) => CARD[id]).filter((d) => d.type === "char");
   const share = (t) => picked.filter((d) => d.traitSet.has(String(t).toLowerCase())).length / Math.max(1, picked.length);
   const util = (d) => {
@@ -211,12 +212,12 @@ export function buildStarter(spec) {
     return u;
   };
   const support = pool.filter((d) => d.type !== "char").map((d) => ({ d, sc: util(d) })).filter((x) => x.sc > -5).sort((a, b) => b.sc - a.sc).map((x) => x.d);
-  for (const d of support.filter((x) => x.type === "loc")) { if (counts.locs >= 8) break; add(d, 2); }
-  for (const d of support.filter((x) => x.type !== "loc")) { if (counts.oe >= 12) break; add(d, 2); }
+  for (const d of support.filter((x) => x.type === "loc")) { if (counts.locs >= 8) break; add(d, two(d)); }
+  for (const d of support.filter((x) => x.type !== "loc")) { if (counts.oe >= 12) break; add(d, two(d)); }
   // complément neutre
   const neutral = ALL.filter((d) => d.fam === "neutre").sort((a, b) => (a.type === "char" ? -1 : 0) - (b.type === "char" ? -1 : 0) || a.cost - b.cost);
-  for (const d of neutral) { if (counts.total >= R.size) break; if (d.type === "char" || counts.chars >= R.minChars) add(d, Math.min(2, R.size - counts.total)); }
-  for (const d of chars) { if (counts.total >= R.size) break; if (!cards[d.id]) add(d, Math.min(2, R.size - counts.total)); else if (cards[d.id] === 1) add(d, 1); }
+  for (const d of neutral) { if (counts.total >= R.size) break; if (d.type === "char" || counts.chars >= R.minChars) add(d, Math.min(two(d), R.size - counts.total)); }
+  for (const d of chars) { if (counts.total >= R.size) break; if (!cards[d.id]) add(d, Math.min(two(d), R.size - counts.total)); else if (cards[d.id] === 1) add(d, 1); }
   for (const d of neutral) { if (counts.total >= R.size) break; add(d, 1); }
   return { id: spec.id, name: spec.name, fam, pt: spec.pt || null, desc: spec.desc || "", leader: spec.leader, cards, plots: defaultPlots(fam) };
 }

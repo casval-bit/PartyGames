@@ -253,7 +253,9 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
               {(foil || alwaysFoil(d)) && !missing && <span className="pill tz-foil">{alwaysFoil(d) ? "Brillante (toutes les cartes 7)" : "Brillante"}</span>}
               {d.pt && d.pt.map((t) => <span key={t} className="pill" style={{ borderColor: (TYPE_BONUS[t] || {}).color }}>{subWords(d.fam).One} {(TYPE_BONUS[t] || {}).name || t}</span>)}
             </div>
-            {d.uni && <p style={{ margin: 0, fontSize: ".78rem", color: "var(--txt-2)" }}>Unique : un seul exemplaire en jeu ; une copie en plus devient un doublon (elle le sauve d'une mort). Une seule version de {d.name} par deck.</p>}
+            {d.type !== "plot" && d.cost >= 7
+              ? <p style={{ margin: 0, fontSize: ".78rem", color: "var(--txt-2)" }}>Carte 7 unique : un seul exemplaire par deck.{d.uni ? ` Une seule version de ${d.name} par deck.` : ""}</p>
+              : d.uni && <p style={{ margin: 0, fontSize: ".78rem", color: "var(--txt-2)" }}>Unique : un seul exemplaire en jeu ; une copie en plus devient un doublon (elle le sauve d'une mort). Une seule version de {d.name} par deck.</p>}
             {st && <p style={{ margin: 0, fontSize: ".78rem", color: "#ffe6a8" }}>Exclusive au deck de départ « {st.name} » : ne sort jamais des boosters.</p>}
             {missing
               ? <p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>{st ? "Pas encore dans ta collection." : "Pas encore dans ta collection : elle sort des boosters et passe parfois dans la boutique du jour."}</p>

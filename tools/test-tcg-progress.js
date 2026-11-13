@@ -15,10 +15,21 @@ ok(t.ec === 0 && !t.starter && t.decks.length === 0, "profil de cartes vide");
 const r1 = P.chooseStarter(t, "leg-gryf");
 ok(!r1.error && r1.t.starter === "leg-gryf", "choix du deck de départ Gryfenfer");
 t = r1.t;
-ok(t.foil["legendaires-gryfenfer-7"] === 2 && !t.coll["legendaires-gryfenfer-7"] && t.coll["legendaires-shimy-4"] === 2, "Gryfenfer 7 (brillante, comme toutes les cartes 7) et Shimy 4 (exclusive) débloqués");
+ok(t.foil["legendaires-gryfenfer-7"] === 1 && !t.coll["legendaires-gryfenfer-7"] && t.coll["legendaires-shimy-4"] === 2, "Gryfenfer 7 (brillante et unique, comme toutes les cartes 7 : 1 exemplaire) et Shimy 4 (exclusive) débloqués");
 ok(P.normalizeTcg({ coll: { "legendaires-gryfenfer-7": 1 }, foil: { "legendaires-gryfenfer-7": 1 } }).foil["legendaires-gryfenfer-7"] === 2, "anciens exemplaires normaux d'une carte 7 : devenus brillants");
 ok(Array.from({ length: 40 }, () => P.rollPack("prestige")).flat().filter((c) => CARD[c.id].cost >= 7).every((c) => c.foil), "boosters : une carte 7 est toujours brillante");
-ok(P.recyclable({ coll: {}, foil: { "legendaires-gryfenfer-7": 2 } }).n === 0 && P.recyclable({ coll: {}, foil: { "legendaires-gryfenfer-7": 3 } }).gained === P.RECYCLE.L, "recyclage : une carte 7 se garde en 2 exemplaires, au prix normal");
+ok(P.recyclable({ coll: {}, foil: { "legendaires-gryfenfer-7": 1 } }).n === 0 && P.recyclable({ coll: {}, foil: { "legendaires-gryfenfer-7": 2 } }).gained === P.RECYCLE.L, "recyclage : une carte 7 se garde en 1 exemplaire (unique dans un deck), la deuxième se recycle au prix normal");
+ok(st.every((s) => Object.entries(s.cards).every(([id, k]) => CARD[id].cost < 7 || k === 1)), "decks de départ : chaque carte 7 en un seul exemplaire");
+{
+  const d7 = { ...t.decks[0], cards: { ...t.decks[0].cards, "legendaires-gryfenfer-7": 2 } };
+  ok(validateDeck(d7).errors.some((e) => e.includes("unique")), "deck : une carte 7 en 2 exemplaires est refusée (unique)");
+  const raw = JSON.parse(JSON.stringify(t));
+  raw.foil["legendaires-gryfenfer-7"] = 2;
+  const k = Object.keys(raw.decks[0].cards).find((id) => CARD[id].cost < 7 && raw.decks[0].cards[id] === 2);
+  raw.decks[0].cards[k] = 1; raw.decks[0].cards["legendaires-gryfenfer-7"] = 2; // ancien deck : 50 cartes dont la 7 en double
+  const fixed = P.normalizeTcg(raw);
+  ok(fixed.decks[0].cards["legendaires-gryfenfer-7"] === 1 && deckSize(fixed.decks[0]) === 50 && validateDeck(fixed.decks[0], P.owned(fixed)).ok, "ancien deck avec une carte 7 en double : ramenée à 1, deck complété à 50 et valide");
+}
 ok(validateDeck(t.decks[0], P.owned(t)).ok, "le deck de départ est jouable avec la collection");
 ok(P.playableDeck(t) && P.playableDeck(t).id === t.decks[0].id, "il est sélectionné pour jouer");
 ok(t.ec === P.START_GIFT.ec && t.packs.multi === 3, "cadeau de départ : 300 Éclats et 3 boosters");
@@ -110,7 +121,7 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   const g = P.testerGift(P.normalizeTcg({ ec: 5 }), { ec: 10000, jet: 50, packs: { multi: 10, prestige: 5, inconnu: 3 } });
   ok(g.ec === 10005 && g.jet === 50 && g.packs.multi === 10 && g.packs.prestige === 5 && !g.packs.inconnu, "testeur : Éclats, jetons et boosters ajoutés (booster inconnu ignoré)");
   const u = P.unlockCards(P.normalizeTcg({ coll: { "lyoko-krabe-3": 1 } }), ["lyoko-krabe-3", "lyoko-xana-7", "inconnue"]);
-  ok(u.added === 2 && u.t.coll["lyoko-krabe-3"] === 2 && u.t.foil["lyoko-xana-7"] === 2, "testeur : cartes illustrées débloquées en 2 exemplaires (les 7 en brillantes)");
+  ok(u.added === 2 && u.t.coll["lyoko-krabe-3"] === 2 && u.t.foil["lyoko-xana-7"] === 1, "testeur : cartes illustrées débloquées en 2 exemplaires (les 7 : une, brillante)");
 }
 
 // cartes renommées, remplacées et retirées : les anciennes sauvegardes suivent

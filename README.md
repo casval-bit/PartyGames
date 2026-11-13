@@ -446,7 +446,8 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 **Collection** :
 - **Deck de départ** : choisi une seule fois parmi 106 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
-  Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, **une seule version par personnage** ; au plus 3 cartes de coût 7+, 6 de coût 6, 8 de coût 5 ;
+  Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, mais **une carte 7 est unique (1 exemplaire)** ; **une seule version par personnage**
+  (Aelita 5 ou Aelita 7, pas les deux : dans « Ajouter », les autres versions sont grisées) ; au plus 3 cartes de coût 7+ (différentes), 6 de coût 6, 8 de coût 5 ;
   au moins 24 personnages ; au plus 18 objets + événements et 10 lieux ; jusqu'à 10 cartes d'UNE famille alliée (sauf les Fidèles).
 - **Album** (Collection > « Album : toutes les cartes ») : toutes les cartes qui existent, famille par famille avec le compte de chacune (ou toutes
   familles mêlées par coût), filtres Obtenues / Manquantes / Brillantes. Celles qui manquent sont grisées mais s'ouvrent en grand (toujours grisées).
@@ -456,7 +457,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
   **Brillantes** : une carte 7 l'est toujours (reflet arc-en-ciel, cadre doré). Les autres ne le sont jamais en sortant d'un booster ou de la boutique :
   on les rend brillantes avec des **jetons de brillance** (Mes cartes ou Album, touche une carte : 1 jeton jusqu'au coût 2, puis 2, 3, 4 et 5 jetons
-  pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté, paillettes. Les jetons viennent
+  pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté (sans paillettes : ni les 7 ni elles n'ont de grille de points). Les jetons viennent
   du recyclage des doubles (1 par commune ou peu commune, 2 par rare, 3 par épique, 5 par légendaire) et de chaque booster (1, ou 3 pour un Prestige ;
   un de plus une fois sur 4). 1 booster sur 200 est **doré** : que des rares ou mieux, et 10 jetons en plus. Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**

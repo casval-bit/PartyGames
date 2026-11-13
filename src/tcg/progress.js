@@ -8,7 +8,7 @@
 //   - quêtes du jour (XP + Éclats), succès permanents, XP de fin de partie (jamais 0, même en perdant).
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId } from "./cards/index.js";
 import { starterById, validateDeck, deckSize, fillDeck } from "./deck.js";
-import { RARITY_ORDER, DECK_RULES } from "./rules.js";
+import { RARITY_ORDER, DECK_RULES, copiesOf } from "./rules.js";
 
 export const CURRENCY = "Éclats";
 /** Les cartes de coût 7 sont toujours brillantes (tous leurs exemplaires). */
@@ -56,21 +56,24 @@ export function normalizeTcg(raw) {
   t.coll = cards(raw.coll);
   t.foil = cards(raw.foil);
   for (const [id, v] of Object.entries(t.coll)) if (alwaysFoil(CARD[id])) { t.foil[id] = Math.min(99, (t.foil[id] || 0) + v); delete t.coll[id]; } // cartes 7 : toujours brillantes
-  // decks : les cartes renommées suivent. S'il manque des cartes à cause d'une carte retirée du jeu, le deck est complété
-  // (cartes possédées d'abord, sinon cartes du deck de départ offertes) : il reste jouable. Les anciens profils (v < 2) ont
-  // déjà perdu Franz Hopper 7, le Clone de William, Anthea Hopper ou Aelita Gardienne : leurs decks Code Lyoko incomplets sont repris.
+  // decks : les cartes renommées suivent. S'il manque des cartes à cause d'une carte retirée du jeu, ou d'une carte 7 en double
+  // (elles sont uniques : un exemplaire par deck), le deck est complété (cartes possédées d'abord, sinon cartes du deck de départ
+  // offertes) : il reste jouable. Les anciens profils (v < 2) ont déjà perdu Franz Hopper 7, le Clone de William, Anthea Hopper
+  // ou Aelita Gardienne : leurs decks Code Lyoko incomplets sont repris.
   const old = !(Number(raw.v) >= 2);
+  const deckCards = (o) => { const m = moved(o, 2); for (const id of Object.keys(m)) m[id] = Math.min(m[id], copiesOf(CARD[id])); return m; };
   t.decks = Array.isArray(raw.decks) ? raw.decks.filter((d) => d && typeof d === "object" && FAMILY[d.fam]).slice(0, 40).map((d) => {
     const deck = {
       id: String(d.id || Math.random().toString(36).slice(2, 9)).slice(0, 20), name: String(d.name || "Mon deck").slice(0, 32), fam: d.fam, pt: typeof d.pt === "string" ? d.pt : null,
-      cards: moved(d.cards, 2),
+      cards: deckCards(d.cards),
       plots: Array.isArray(d.plots) ? d.plots.filter((id) => CARD[id] && CARD[id].type === "plot").slice(0, 7) : [],
     };
     const size = deckSize(deck);
     const before = Object.values(d.cards && typeof d.cards === "object" ? d.cards : {}).reduce((s, v) => s + Math.min(2, n(v)), 0);
     const lyoko = deck.fam === "lyoko" || Object.keys(deck.cards).some((id) => CARD[id].fam === "lyoko");
     // autant de cartes qu'avant (un brouillon reste un brouillon) ; deck Code Lyoko d'un ancien profil presque complet : 50
-    const upTo = before > size ? Math.min(DECK_RULES.size, before) : old && lyoko && size >= DECK_RULES.size - 6 ? DECK_RULES.size : size;
+    let upTo = before > size ? Math.min(DECK_RULES.size, before) : size;
+    if (old && lyoko && size >= DECK_RULES.size - 6) upTo = DECK_RULES.size;
     if (upTo > size) {
       const r = fillDeck(deck, { owned: owned(t), extra: true, upTo });
       deck.cards = r.cards;
@@ -123,15 +126,17 @@ export function testerGift(t0, { ec = 0, jet = 0, packs = {} } = {}) {
   return t;
 }
 
-/** Outil de test : chaque carte de la liste est possédée en n exemplaires au moins (les cartes 7, brillantes). Renvoie { t, added }. */
+/** Outil de test : chaque carte de la liste est possédée en n exemplaires au moins (les cartes 7 : une, brillante, puisqu'elles
+ *  sont uniques dans un deck). Renvoie { t, added }. */
 export function unlockCards(t0, ids, n = 2) {
   const t = clone(normalizeTcg(t0));
   let added = 0;
   for (const id of ids) {
     const d = CARD[id];
     if (!d || d.type === "plot") continue;
+    const want = Math.min(n, copiesOf(d));
     const have = (t.coll[id] || 0) + (t.foil[id] || 0);
-    if (have < n) { addCard(t, id, false, n - have); added++; }
+    if (have < want) { addCard(t, id, false, want - have); added++; }
   }
   return { t, added };
 }
@@ -217,10 +222,10 @@ export function owned(t) {
   return o;
 }
 export const RECYCLE = { C: 5, U: 15, R: 40, E: 100, L: 250 };
-/** Exemplaires gardés au recyclage : 2 normales et 1 brillante ; une carte 7 (toujours brillante) se garde en 2 exemplaires,
- *  puisque les decks en acceptent 2. Un exemplaire en trop rapporte des Éclats et des jetons de brillance selon sa rareté
+/** Exemplaires gardés au recyclage : 2 normales et 1 brillante ; une carte 7 (toujours brillante) se garde en 1 exemplaire,
+ *  puisqu'elle est unique dans un deck. Un exemplaire en trop rapporte des Éclats et des jetons de brillance selon sa rareté
  *  (brillant ou pas : les brillantes se fabriquent avec des jetons, elles ne valent pas plus). */
-const keepOf = (id, foil) => (foil ? (alwaysFoil(CARD[id]) ? 2 : 1) : 2);
+const keepOf = (id, foil) => (foil ? 1 : 2);
 const worthOf = (id) => RECYCLE[CARD[id].r];
 const jetOf = (id) => JET_RECYCLE[CARD[id].r] || 1;
 /** Transforme en Éclats et en jetons de brillance les exemplaires en trop. */

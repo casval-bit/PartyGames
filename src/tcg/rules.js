@@ -50,7 +50,8 @@ export const DECK_RULES = {
   size: 50,
   plots: 7,
   maxCopies: 2,
-  cost7: 3,       // cartes de coût 7 ou plus
+  max7: 1,        // une carte de coût 7 est unique : un seul exemplaire par deck
+  cost7: 3,       // cartes de coût 7 ou plus (différentes)
   cost6: 6,
   cost5: 8,
   minChars: 24,
@@ -58,6 +59,9 @@ export const DECK_RULES = {
   maxLocs: 10,
   maxAlliance: 10, // cartes non Fidèles d'une seule autre famille
 };
+
+/** Exemplaires d'une carte autorisés dans un deck : 2, ou 1 pour une carte de coût 7 (unique). */
+export const copiesOf = (d) => (d && d.type !== "plot" && d.cost >= 7 ? DECK_RULES.max7 : DECK_RULES.maxCopies);
 
 export const DEFAULT_GOAL = 15;
 export const SETUP_GOLD = 8;

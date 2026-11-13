@@ -2,7 +2,7 @@
 // ajout des cartes possédées (famille, neutres, une famille alliée), choix des 7 scénarios.
 import { useMemo, useState } from "react";
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, subOf, subWords } from "../cards/index.js";
-import { DECK_RULES as R, RARITY, CARD_TYPES } from "../rules.js";
+import { DECK_RULES as R, RARITY, CARD_TYPES, copiesOf } from "../rules.js";
 import { validateDeck, defaultPlots, fillDeck } from "../deck.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -52,13 +52,19 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
     const s = n > 1 ? "s" : "";
     note(r.missing ? `${n} carte${s} ajoutée${s}, il en manque encore ${r.missing} : ouvre des boosters !` : `${n} carte${s} ajoutée${s} : le deck fait ${R.size} cartes.`);
   };
+  // une autre version du même personnage déjà dans le deck (une seule par deck : Aelita 5 OU Aelita 7)
+  const otherOf = (d) => (keyOf[d.key] || []).find((x) => x !== d.id) || null;
   const setN = (id, n) => {
     const d = CARD[id];
     const have = owned[id] || 0;
-    if (n > Math.min(R.maxCopies, have)) { flash(have < n ? `Tu n'as que ${have} exemplaire${have > 1 ? "s" : ""} de ${d.name}.` : `${R.maxCopies} exemplaires au maximum par carte.`); return; }
+    const max = copiesOf(d);
+    if (n > Math.min(max, have)) {
+      flash(have < n ? `Tu n'as que ${have} exemplaire${have > 1 ? "s" : ""} de ${d.name}.` : d.cost >= 7 ? `${d.name} (7) est unique : un seul exemplaire par deck.` : `${R.maxCopies} exemplaires au maximum par carte.`);
+      return;
+    }
     if (n > (deck.cards[id] || 0)) {
-      const other = (keyOf[d.key] || []).filter((x) => x !== id);
-      if (other.length) flash(`Une seule version par personnage : ${d.name} (${d.cost}) et ${CARD[other[0]].name} (${CARD[other[0]].cost}) ne peuvent pas être dans le même deck. Retire l'autre version pour valider.`);
+      const other = otherOf(d);
+      if (other) { flash(`Une seule version par personnage : ${CARD[other].name} (${CARD[other].cost}) est déjà dans le deck. Retire-la d'abord pour prendre ${d.name} (${d.cost}).`); return; }
       if (d.fam !== deck.fam && d.fam !== "neutre" && d.loyal) { flash(`${d.name} est Fidèle : il ne rejoint pas une autre famille.`); return; }
       sfx.select();
     }
@@ -170,13 +176,16 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
               {pool.slice(0, lim).map((d) => {
                 const n = deck.cards[d.id] || 0;
                 const have = owned[d.id] || 0;
+                const other = n ? null : otherOf(d);
                 return (
-                  <div key={d.id} className="db-add">
-                    <CardFace d={d} onClick={() => setZoom(d.id)} dim={d.fam !== deck.fam && d.fam !== "neutre" && d.loyal} />
+                  <div key={d.id} className={"db-add" + (n ? " in" : "") + (other ? " blk" : "")}>
+                    <CardFace d={d} onClick={() => setZoom(d.id)} dim={Boolean(other) || (d.fam !== deck.fam && d.fam !== "neutre" && d.loyal)} />
+                    {n > 0 && <span className="db-in" aria-hidden="true">Dans le deck</span>}
+                    {other && <span className="db-in blk" title={`${CARD[other].name} (${CARD[other].cost}) est dans le deck : une seule version par personnage`}>Version {CARD[other].cost} dans le deck</span>}
                     <div className="qty">
                       <button onClick={() => setN(d.id, n - 1)} disabled={!n} aria-label={`Retirer ${d.name}`}><Icon name="minus" size={13} /></button>
-                      <span>{n}/{Math.min(R.maxCopies, have)}</span>
-                      <button className="add" onClick={() => setN(d.id, n + 1)} aria-label={`Ajouter ${d.name}`}><Icon name="plus" size={13} /></button>
+                      <span>{n}/{Math.min(copiesOf(d), have)}</span>
+                      <button className="add" onClick={() => setN(d.id, n + 1)} disabled={Boolean(other)} aria-label={`Ajouter ${d.name}`}><Icon name="plus" size={13} /></button>
                     </div>
                   </div>
                 );
@@ -220,7 +229,12 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
       {toast && <div className="toast hub-toast db-toast" role="alert">{toast}</div>}
       {zoom && <CardZoom id={zoom} owned={CARD[zoom].type !== "plot" ? { n: owned[zoom] || 0 } : null} onClose={() => setZoom(null)}
         acts={CARD[zoom].type === "plot" ? [{ label: deck.plots.includes(zoom) ? "Retirer des scénarios" : "Ajouter aux scénarios", onClick: () => { togglePlot(zoom); setZoom(null); } }]
-          : (owned[zoom] || 0) > 0 ? [{ label: `Ajouter au deck (${deck.cards[zoom] || 0}/${Math.min(R.maxCopies, owned[zoom] || 0)})`, icon: "plus", onClick: () => setN(zoom, (deck.cards[zoom] || 0) + 1) }, ...(deck.cards[zoom] ? [{ label: "Retirer un exemplaire", icon: "minus", onClick: () => setN(zoom, deck.cards[zoom] - 1) }] : [])] : []} />}
+          : (owned[zoom] || 0) > 0 ? (() => {
+            const d = CARD[zoom], n = deck.cards[zoom] || 0, max = Math.min(copiesOf(d), owned[zoom] || 0), other = n ? null : otherOf(d);
+            const add = other ? { label: `${CARD[other].name} (${CARD[other].cost}) est déjà dans le deck`, icon: "close", disabled: true, onClick: () => {} }
+              : { label: `Ajouter au deck (${n}/${max})`, icon: "plus", disabled: n >= max, onClick: () => setN(zoom, n + 1) };
+            return [add, ...(n ? [{ label: "Retirer un exemplaire", icon: "minus", onClick: () => setN(zoom, n - 1) }] : [])];
+          })() : []} />}
     </div>
   );
 }

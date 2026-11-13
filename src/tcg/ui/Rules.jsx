@@ -40,7 +40,7 @@ export default function Rules({ onClose }) {
         </div>
         <div className="tz-box">
           <h4>Construire un deck</h4>
-          <p style={{ margin: 0 }}>{R.size} cartes et {R.plots} Scénarios différents. {R.maxCopies} exemplaires au plus par carte, <b>une seule version par personnage</b>. Au plus {R.cost7} cartes de coût 7 ou plus, {R.cost6} de coût 6, {R.cost5} de coût 5. Au moins {R.minChars} personnages, au plus {R.maxObjEvt} objets et événements, {R.maxLocs} lieux. Jusqu'à {R.maxAlliance} cartes d'une famille alliée (sauf les cartes Fidèles). Les cartes Neutres vont partout.</p>
+          <p style={{ margin: 0 }}>{R.size} cartes et {R.plots} Scénarios différents. {R.maxCopies} exemplaires au plus par carte, mais <b>une carte 7 est unique : un seul exemplaire</b>. <b>Une seule version par personnage</b> (sa version 5 ou sa version 7, pas les deux). Au plus {R.cost7} cartes de coût 7 ou plus, {R.cost6} de coût 6, {R.cost5} de coût 5. Au moins {R.minChars} personnages, au plus {R.maxObjEvt} objets et événements, {R.maxLocs} lieux. Jusqu'à {R.maxAlliance} cartes d'une famille alliée (sauf les cartes Fidèles). Les cartes Neutres vont partout.</p>
         </div>
       </div>
     </div>
