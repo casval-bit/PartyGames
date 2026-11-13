@@ -15,9 +15,11 @@ import Rules from "./Rules.jsx";
 import { useArtInfo, importFiles, syncRemote } from "./artStore.js";
 import ArtList, { loadTri, saveTri } from "./ArtList.jsx";
 import Album from "./Album.jsx";
-import { APPAREIL, DESKTOP } from "../../lib/device.js";
-import AccountBadge from "../../ui/AccountBadge.jsx";
-import { useMedia, WIDE_QUERY } from "../../lib/useMedia.js";
+import { APPAREIL } from "../../lib/device.js";
+import { useTcgPrefs } from "../prefs.js";
+import HubHome, { HubCurrencies, markShopSeen } from "./HubHome.jsx";
+import TcgProfile from "./TcgProfile.jsx";
+import TcgSettings from "./TcgSettings.jsx";
 
 const EC = ({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
 const famStyle = (f, pt) => ({ "--fc": subOf(f.id, pt) ? subOf(f.id, pt).color : f.color });
@@ -254,7 +256,7 @@ function packRow(p, right) {
 function PacksMine({ t, onOpen }) {
   const mine = Object.entries(t.packs).filter(([, n]) => n > 0).map(([id, n]) => ({ p: P.packDef(id), n })).filter((x) => x.p);
   return (
-    <div className="hub-sec">
+    <div className="hub-sec hp-mine">
       <h3>Mes boosters <small>{mine.reduce((s, x) => s + x.n, 0)} à ouvrir</small></h3>
       {mine.length ? mine.map(({ p, n }) => packRow(p, <><span className="cnt">{n}</span><button className="btn small primary" onClick={() => onOpen(p.id)}>Ouvrir</button></>)) : <div className="hub-empty">Aucun booster. Monte de niveau, termine des quêtes ou achète-en ci-dessous.</div>}
     </div>
@@ -266,7 +268,7 @@ function PacksBuy({ t, setT, flash, note = true }) {
   const buy = (p) => { const r = P.buyPack(t, p.id); if (r.error) { flash(r.error); sfx.error(); return; } setT(r.t); sfx.apply(); flash(`${p.name} acheté !`); };
   return (
     <>
-      <div className="hub-sec">
+      <div className="hub-sec hp-buy">
         <h3>Acheter des boosters <small>tu as <EC n={t.ec} /></small></h3>
         {P.PACKS.filter((p) => !p.fam).map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
         <button className="btn ghost small" onClick={() => setFamOpen(!famOpen)}><Icon name={famOpen ? "minus" : "plus"} size={16} />Boosters d'une seule famille</button>
@@ -286,7 +288,7 @@ function Packs({ t, setT, flash, onOpen }) {
 }
 
 /* ------------------------------ boutique ------------------------------ */
-function Shop({ t, setT, flash, compact = false }) {
+function Shop({ t, setT, flash }) {
   const day = P.today();
   const offers = useMemo(() => P.shopOffers(t, day), [t.seed, day]); // eslint-disable-line react-hooks/exhaustive-deps
   const bought = t.shop && t.shop.day === day ? t.shop.bought : [];
@@ -302,12 +304,10 @@ function Shop({ t, setT, flash, compact = false }) {
     setT(r.t); sfx.win(); flash(`${CARD[o.id].name}${o.foil ? " brillante" : ""} rejoint ta collection !`);
   };
   return (
-    <div className={"hub-body" + (compact ? " hub-shop compact" : " hub-shop")}>
-      {compact
-        ? <div className="hub-sec"><h3><Icon name="store" size={17} />Boutique du jour <small>nouvelle sélection dans {fmtTime(left)}</small></h3></div>
-        : <div className="hub-card">
-            <div className="hub-row"><div className="grow"><b>Boutique du jour</b><small>6 cartes au hasard parmi toutes les cartes du jeu. Nouvelle sélection dans {fmtTime(left)}.</small></div><EC n={t.ec} /></div>
-          </div>}
+    <div className="hub-body hub-shop">
+      <div className="hub-card">
+        <div className="hub-row"><div className="grow"><b>6 cartes au hasard parmi toutes les cartes du jeu</b><small>Nouvelle sélection dans {fmtTime(left)}. La carte vedette est la plus rare.</small></div><EC n={t.ec} /></div>
+      </div>
       <div className="hub-grid">
         {offers.map((o) => {
           const d = CARD[o.id];
@@ -338,7 +338,7 @@ function DailyQuests({ t, setT, flash }) {
   };
   const reroll = (i) => { const r = P.rerollQuest(t, i); if (r.error) { flash(r.error); return; } setT(r.t); sfx.select(); };
   return (
-    <div className="hub-sec">
+    <div className="hub-sec hq-daily">
       <h3>Quêtes du jour <small>nouvelles dans {fmtTime(P.msToMidnight())}</small></h3>
       {t.quests.list.map((q, i) => {
         const d = P.QUEST_BY[q.id];
@@ -376,7 +376,7 @@ function Milestones({ t, setT, flash, sorted = false }) {
   const list = sorted ? [...P.MILESTONES].sort((a, b) => rank(a) - rank(b)) : P.MILESTONES;
   const n = Object.keys(t.ms).length;
   return (
-    <div className="hub-sec">
+    <div className="hub-sec hq-ms">
       <h3>Succès <small>{n} / {P.MILESTONES.length}</small></h3>
       {list.map((m) => {
         const got = t.ms[m.id];
@@ -398,78 +398,53 @@ function Quests({ t, setT, flash }) {
     <div className="hub-body">
       <DailyQuests t={t} setT={setT} flash={flash} />
       <LevelInfo t={t} />
-      <Milestones t={t} setT={setT} flash={flash} />
+      <Milestones t={t} setT={setT} flash={flash} sorted />
     </div>
   );
 }
 
-/* ------------------------------ tableau de bord (PC, écran large) ------------------------------ */
-/** Anneau de niveau : le chiffre au centre, l'XP du niveau en cours sur le pourtour. */
-function LevelRing({ lv }) {
-  const r = 46, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, lv.cur / lv.need));
+/* ------------------------------ en-tête d'une partie du Trône des Mondes ------------------------------ */
+const VIEWS = {
+  decks: ["Mes decks", "layers"], coll: ["Collection", "library"], packs: ["Boosters", "gift"], shop: ["Boutique du jour", "store"],
+  quests: ["Quêtes et succès", "trophy"], profile: ["Mon profil", "user"],
+};
+function SectionHead({ view, t, go, nPacks, onSettings }) {
+  const [title, icon] = VIEWS[view];
   return (
-    <div className="hubx-ring" role="img" aria-label={`Niveau ${lv.lvl}, ${lv.cur} sur ${lv.need} XP`}>
-      <svg viewBox="0 0 108 108" aria-hidden="true">
-        <defs><linearGradient id="hubxRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff1b8" /><stop offset=".55" stopColor="#ffd166" /><stop offset="1" stopColor="#ff9f43" /></linearGradient></defs>
-        <circle cx="54" cy="54" r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="8" />
-        <circle cx="54" cy="54" r={r} fill="none" stroke="url(#hubxRing)" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${c * f} ${c}`} transform="rotate(-90 54 54)" />
-      </svg>
-      <span><small>Niveau</small><b>{lv.lvl}</b></span>
-    </div>
-  );
-}
-/** Colonne de gauche : le joueur (niveau, stats, deck joué), puis quêtes et succès. */
-function PlayerPanel({ t, own, onDecks }) {
-  const lv = P.levelOf(t.xp);
-  const distinct = Object.keys(own).length;
-  const deck = t.decks.find((d) => d.id === t.sel) || null;
-  const v = deck ? validateDeck(deck, own) : null;
-  const f = deck ? FAMILY[deck.fam] : null;
-  return (
-    <section className="hubx-panel hubx-me">
-      <div className="hubx-me-top">
-        <LevelRing lv={lv} />
-        <div className="hubx-me-txt">
-          <span className="eyebrow">Progression</span>
-          <b>{lv.cur} / {lv.need} XP</b>
-          <small>Prochain niveau : {nextRewardText(lv.lvl)}</small>
-        </div>
-      </div>
-      <dl className="hubx-stats">
-        <div><dt>Parties</dt><dd>{t.st.games}</dd></div>
-        <div><dt>Victoires</dt><dd>{t.st.wins}</dd></div>
-        <div><dt>Boosters ouverts</dt><dd>{t.st.packs}</dd></div>
-        <div><dt>Brillantes</dt><dd>{Object.keys(t.foil).length}</dd></div>
-      </dl>
-      <div className="hubx-coll">
-        <div className="hub-row"><span className="grow"><b>Collection</b><small>{distinct} / {ALL.length} cartes différentes</small></span><b className="hubx-pct">{Math.floor((100 * distinct) / ALL.length)} %</b></div>
-        <span className="bar2 blue"><i style={{ width: `${(100 * distinct) / ALL.length}%` }} /></span>
-      </div>
-      {deck && (
-        <button className="hubx-deck" style={famStyle(f, deck.pt)} onClick={onDecks}>
-          <span className="hub-fam" style={famStyle(f, deck.pt)}><Icon name={f.icon} size={20} /></span>
-          <span className="grow"><small className="eyebrow">Deck joué</small><b>{deck.name}</b></span>
-          {v && v.ok ? <span className="pill ok">Prêt</span> : <span className="pill pink">À compléter</span>}
-        </button>
-      )}
-    </section>
+    <header className="hs-top">
+      <button className="iconbtn" onClick={() => go("home")} aria-label="Retour à l'accueil du Trône des Mondes" data-testid="hub-home-back"><Icon name="back" /></button>
+      <span className="hs-ico" aria-hidden="true"><Icon name={icon} size={20} /></span>
+      <div className="hs-title"><small>Trône des Mondes</small><h2>{title}</h2></div>
+      <span className="grow" />
+      <HubCurrencies t={t} go={go} nPacks={nPacks} />
+      <button className="iconbtn" onClick={onSettings} aria-label="Paramètres du jeu" title="Paramètres du jeu"><Icon name="settings" /></button>
+    </header>
   );
 }
 
 /* ------------------------------ écran principal ------------------------------ */
-export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount }) {
+/**
+ * Trône des Mondes : accueil (HubHome) et ses parties (decks, collection, boosters, boutique, quêtes, profil).
+ * initialTab : partie ouverte d'emblée ("home" par défaut ; "decks" ou "packs" depuis le lobby).
+ * onPlay : « Jouer » (retour au lobby, ou nouveau lobby Trône des Mondes) ; inRoom : on est déjà dans un lobby.
+ */
+export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, name, onPlay, inRoom }) {
   const t = useMemo(() => P.ensureQuests(P.normalizeTcg(tcg)), [tcg]);
   const own = useMemo(() => P.owned(t), [t]);
-  const [tab, setTab] = useState(initialTab || "decks");
+  const [view, setView] = useState(VIEWS[initialTab] ? initialTab : "home");
   const [edit, setEdit] = useState(null);
   const [opening, setOpening] = useState(null);
   const [toast, setToast] = useState("");
   const [rules, setRules] = useState(false);
-  // appli PC, fenêtre large : tableau de bord (joueur et quêtes | decks et collection | boosters et boutique) au lieu des onglets
-  const wide = useMedia(WIDE_QUERY, DESKTOP);
+  const [settings, setSettings] = useState(false);
+  const [album, setAlbum] = useState(false);
+  const [zoom, setZoom] = useState(null);
+  const prefs = useTcgPrefs();
+  useEffect(() => sfx.enter("tcg"), []); // sons du Trône des Mondes : ses propres réglages tant qu'il est ouvert
+  useEffect(() => { if (view === "shop") markShopSeen(); }, [view]);
   const flash = (m) => { setToast(m); setTimeout(() => setToast((x) => (x === m ? "" : x)), 3000); };
   const setT = (nt) => setTcg(nt);
-  const lv = P.levelOf(t.xp);
+  const go = (v) => { if (v === view) return; setView(v); sfx.slide(); };
   const nPacks = Object.values(t.packs).reduce((s, n) => s + n, 0);
   const nQuests = t.quests.list.filter((q) => !q.got && q.n >= P.QUEST_BY[q.id].goal).length + P.claimableMilestones(t).length;
 
@@ -482,105 +457,68 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount }
 
   if (edit) {
     return (
-      <DeckBuilder deck={edit} owned={own} onCancel={() => setEdit(null)} onSave={(d, ok) => {
-        let nt = P.saveDeck(t, d);
-        const saved = nt.decks.find((x) => x.name === d.name && x.fam === d.fam && (d.id ? x.id === d.id : true)) || nt.decks[0];
-        if (ok && (!P.playableDeck(nt) || !t.decks.length)) nt = P.selectDeck(nt, saved.id);
-        setT(nt); setEdit(null); sfx.apply();
-        flash(ok ? "Deck enregistré : il est prêt à jouer." : "Brouillon enregistré. Il faut corriger les erreurs avant de pouvoir le jouer.");
-      }} />
+      <>
+        <div className="hub-bg" aria-hidden="true" />
+        <DeckBuilder deck={edit} owned={own} onCancel={() => setEdit(null)} onSave={(d, ok) => {
+          let nt = P.saveDeck(t, d);
+          const saved = nt.decks.find((x) => x.name === d.name && x.fam === d.fam && (d.id ? x.id === d.id : true)) || nt.decks[0];
+          if (ok && (!P.playableDeck(nt) || !t.decks.length)) nt = P.selectDeck(nt, saved.id);
+          setT(nt); setEdit(null); sfx.apply();
+          flash(ok ? "Deck enregistré : il est prêt à jouer." : "Brouillon enregistré. Il faut corriger les erreurs avant de pouvoir le jouer.");
+        }} />
+      </>
     );
   }
 
-  const overlays = (
-    <>
-      {toast && <div className="toast hub-toast" role="status">{toast}</div>}
-      {opening && (
-        <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} left={t.packs[opening.id] || 0}
-          onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
-      )}
-      {rules && <Rules onClose={() => setRules(false)} />}
-    </>
-  );
-  const pickStarter = (id) => { const r = P.chooseStarter(t, id); if (r.error) { flash(r.error); return; } setT(r.t); sfx.win(); setTab(wide ? "decks" : "packs"); flash("Deck débloqué ! +300 Éclats et 3 boosters offerts : ouvre-les !"); };
-
-  if (wide && t.starter) {
-    const mainTab = tab === "coll" ? "coll" : "decks";
-    return (
-      <div className="screen hub hubx" data-testid="hub-dash">
-        <header className="hubx-top">
+  const pickStarter = (id) => { const r = P.chooseStarter(t, id); if (r.error) { flash(r.error); return; } setT(r.t); sfx.win(); setView("home"); flash("Deck débloqué ! +300 Éclats et 3 boosters offerts : ouvre-les !"); };
+  let content;
+  if (!t.starter) {
+    content = (
+      <div className="hs">
+        <header className="hs-top">
           <button className="iconbtn" onClick={onClose} aria-label="Retour"><Icon name="back" /></button>
-          <div className="hubx-brand">
-            <span className="hubx-crest" aria-hidden="true"><Icon name="crown" size={24} /></span>
-            <div><div className="eyebrow">Jeu de cartes</div><h2>Trône des Mondes</h2></div>
-          </div>
-          <div className="hubx-lv" title={`${lv.cur} / ${lv.need} XP`}>
-            <span className="badge">{lv.lvl}</span>
-            <div><small>Niveau {lv.lvl}</small><span className="bar2 blue"><i style={{ width: `${(100 * lv.cur) / lv.need}%` }} /></span></div>
-          </div>
-          <span className="hubx-ec" title="Éclats : la monnaie du jeu (boosters, boutique)"><Icon name="gem" size={20} /><b>{t.ec.toLocaleString("fr-FR")}</b><small>Éclats</small></span>
-          <AccountBadge acc={acc} onClick={onAccount} compact testId="hub-account" />
-          <button className="iconbtn" onClick={() => setRules(true)} aria-label="Règles du jeu" title="Règles du jeu"><Icon name="book" size={18} /></button>
+          <span className="hs-ico" aria-hidden="true"><Icon name="crown" size={20} /></span>
+          <div className="hs-title"><small>Trône des Mondes</small><h2>Deck de départ</h2></div>
+          <span className="grow" />
+          <button className="iconbtn" onClick={() => setRules(true)} aria-label="Règles du jeu"><Icon name="book" size={18} /></button>
         </header>
-        <div className="hubx-grid">
-          <aside className="hubx-col hubx-left" aria-label="Progression">
-            <PlayerPanel t={t} own={own} onDecks={() => setTab("decks")} />
-            <section className="hubx-panel"><DailyQuests t={t} setT={setT} flash={flash} /></section>
-            <section className="hubx-panel"><Milestones t={t} setT={setT} flash={flash} sorted /></section>
-          </aside>
-          <main className="hubx-col hubx-main">
-            <div className="hubx-tabs" role="tablist">
-              <button role="tab" aria-selected={mainTab === "decks"} onClick={() => { setTab("decks"); sfx.select(); }}><Icon name="layers" size={18} />Mes decks<small>{t.decks.length}</small></button>
-              <button role="tab" aria-selected={mainTab === "coll"} onClick={() => { setTab("coll"); sfx.select(); }}><Icon name="library" size={18} />Collection<small>{Object.keys(own).length}</small></button>
-            </div>
-            {mainTab === "decks" ? <Decks t={t} own={own} setT={setT} onEdit={setEdit} flash={flash} /> : <Collection t={t} own={own} setT={setT} flash={flash} />}
-          </main>
-          <aside className="hubx-col hubx-right" aria-label="Boosters et boutique">
-            <section className={"hubx-panel hubx-packs" + (nPacks ? " has" : "")}><PacksMine t={t} onOpen={openPack} /></section>
-            <section className="hubx-panel"><Shop t={t} setT={setT} flash={flash} compact /></section>
-            <section className="hubx-panel"><PacksBuy t={t} setT={setT} flash={flash} /></section>
-          </aside>
+        <div className="hs-body"><StarterPick onPick={pickStarter} /></div>
+      </div>
+    );
+  } else if (view === "home") {
+    content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} onSettings={() => { setSettings(true); sfx.open(); }}
+      onZoom={setZoom} onAlbum={() => { setAlbum(true); sfx.open(); }} nPacks={nPacks} nQuests={nQuests} />;
+  } else {
+    content = (
+      <div className="hs">
+        <SectionHead view={view} t={t} go={go} nPacks={nPacks} onSettings={() => { setSettings(true); sfx.open(); }} />
+        <div className={"hs-body v-" + view} key={view}>
+          {view === "decks" && <Decks t={t} own={own} setT={setT} onEdit={setEdit} flash={flash} />}
+          {view === "coll" && <Collection t={t} own={own} setT={setT} flash={flash} />}
+          {view === "packs" && <Packs t={t} setT={setT} flash={flash} onOpen={openPack} />}
+          {view === "shop" && <Shop t={t} setT={setT} flash={flash} />}
+          {view === "quests" && <Quests t={t} setT={setT} flash={flash} />}
+          {view === "profile" && <TcgProfile t={t} setT={setT} name={name} acc={acc} onAccount={onAccount} flash={flash} />}
         </div>
-        {overlays}
       </div>
     );
   }
 
   return (
-    <div className="screen hub">
-      <div className="hub-top">
-        <button className="iconbtn" onClick={onClose} aria-label="Retour"><Icon name="back" /></button>
-        <div className="hub-title"><div className="eyebrow">Jeu de cartes</div><h2>Trône des Mondes</h2></div>
-        <button className="iconbtn" onClick={() => setRules(true)} aria-label="Règles du jeu"><Icon name="book" size={18} /></button>
-        <span className="hub-ec" title="Éclats"><Icon name="gem" size={15} />{t.ec.toLocaleString("fr-FR")}</span>
+    <>
+      <div className="hub-bg" aria-hidden="true" />
+      <div className={"screen hub hubh" + (prefs.motion === "reduced" ? " calm" : "")} data-view={t.starter ? view : "starter"}>
+        {content}
+        {toast && <div className="toast hub-toast" role="status">{toast}</div>}
+        {opening && (
+          <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} left={t.packs[opening.id] || 0}
+            onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
+        )}
+        {album && <Album t={t} onClose={() => { setAlbum(false); sfx.close(); }} />}
+        {zoom && <CardZoom id={zoom} foil={(t.foil[zoom] || 0) > 0} owned={{ n: t.coll[zoom] || 0, f: t.foil[zoom] || 0 }} onClose={() => setZoom(null)} />}
+        {rules && <Rules onClose={() => setRules(false)} />}
+        {settings && <TcgSettings acc={acc} onAccount={onAccount} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
       </div>
-      {t.starter && (
-        <div className="hub-lv">
-          <span className="badge">{lv.lvl}</span>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
-            <small className="muted" style={{ fontSize: ".74rem" }}>Niveau {lv.lvl} · {lv.cur} / {lv.need} XP</small>
-            <span className="bar2 blue"><i style={{ width: `${(100 * lv.cur) / lv.need}%` }} /></span>
-          </div>
-          {acc && <AccountBadge acc={acc} onClick={onAccount} compact testId="hub-account" />}
-        </div>
-      )}
-      {!t.starter ? (
-        <StarterPick onPick={pickStarter} />
-      ) : (
-        <>
-          <div className="hub-tabs" role="tablist">
-            {[["decks", "Decks", "layers"], ["coll", "Collection", "library"], ["packs", "Boosters", "gift"], ["shop", "Boutique", "store"], ["quests", "Quêtes", "trophy"]].map(([id, label, ic]) => (
-              <button key={id} aria-pressed={tab === id} onClick={() => { setTab(id); sfx.select(); }}><Icon name={ic} size={18} />{label}{(id === "packs" && nPacks > 0) || (id === "quests" && nQuests > 0) ? <i className="dot" /> : null}</button>
-            ))}
-          </div>
-          {tab === "decks" && <Decks t={t} own={own} setT={setT} onEdit={setEdit} flash={flash} />}
-          {tab === "coll" && <Collection t={t} own={own} setT={setT} flash={flash} />}
-          {tab === "packs" && <Packs t={t} setT={setT} flash={flash} onOpen={openPack} />}
-          {tab === "shop" && <Shop t={t} setT={setT} flash={flash} />}
-          {tab === "quests" && <Quests t={t} setT={setT} flash={flash} />}
-        </>
-      )}
-      {overlays}
-    </div>
+    </>
   );
 }

@@ -16,13 +16,12 @@
 html.desktop .app { max-width: none; padding: 18px clamp(18px, 2.6vw, 48px); }
 /* écrans de jeu (souvent dans une enveloppe : .bt-root, .pbroot…) : colonne large centrée */
 html.desktop .app .screen { width: 100%; max-width: 1000px; margin-inline: auto; }
-html.desktop .app .screen.menu, html.desktop .app .screen.lobby, html.desktop .app .screen.hubx,
+html.desktop .app .screen.menu, html.desktop .app .screen.lobby, html.desktop .app .screen.hub,
 html.desktop .app .screen.prof, html.desktop .app .screen[data-testid="lab-list"] { max-width: 1640px; }
 html.desktop .app .screen.acct { max-width: 620px; }
 html.desktop .app .screen.lobbylist { max-width: 860px; }
-/* deck de départ et constructeur de deck : une largeur de lecture confortable */
-html.desktop .app .screen.hub:not(.hubx) { max-width: 1280px; }
-html.desktop .app .screen.hub.dbx { max-width: 1640px; }
+/* constructeur de deck en un seul volet (fenêtre étroite) : une largeur de lecture confortable */
+html.desktop .app .screen.hub:not(.hubh):not(.dbx) { max-width: 1280px; }
 /* plateau 3D : plus grand qu'au téléphone */
 html.desktop .bdboard.b3d { max-width: 980px; height: clamp(360px, 62vh, 680px); }
 html.desktop .scroll { scrollbar-width: thin; scrollbar-color: rgba(94,225,255,.28) transparent; }

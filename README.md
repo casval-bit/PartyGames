@@ -7,7 +7,7 @@ Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en te
 Tablette high-tech nuit bleue : fond marine très sombre avec deux halos (bleu, cyan) et une grille cyan très fine, panneaux arrondis en dégradé marine, pastilles, barres de progression arrondies (vertes, orange quand il reste peu), contours lumineux cyan pour la sélection. Polices embarquées : **Sora** (titres, cartes, chiffres) et **Noto Sans KR** (texte). **Aucune émoji** : toutes les icônes sont des traits fins Lucide (`src/ui/Icon.jsx`, `<Icon name="trophy" />` ; `src/ui/iconPaint.js` les dessine aussi sur les textures 3D).
 Dans un navigateur sur grand écran (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone et dans l'appli PC, plein écran, sans cadre. Variante de coque rouge et blanche dans les réglages du profil (navigateur).
 **Écran d'accueil** (`src/screens/Splash.jsx`) : un emblème holographique (anneaux qui tournent en sens contraires, rayons, étoile qui pulse en ondes), les icônes des jeux en orbite qui s'allument chacune leur tour, des poussières de lumière qui montent, et le nom PARTY HUB dont les lettres montent d'un flou puis s'éclairent l'une après l'autre. On touche l'écran (ou clic / Entrée sur PC) pour entrer.
-**Matérialisation** (`src/ui/Materialize.jsx`) : à chaque changement d'écran, un damier de blocs s'allume du centre vers les bords, flashe et disparaît de bas en haut. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
+**Transitions** (`src/ui/ScreenFx.jsx`) : à chaque changement d'écran, un voile s'efface pendant qu'un balayage de lumière traverse l'écran ; pour le Trône des Mondes (collection, partie), une grande carte au dos doré couvre l'écran, recule puis se retourne pour révéler le jeu. **Survol à la souris** (PC) : les boutons se soulèvent, s'éclairent et leur icône sautille, avec un petit son (`ui/clickfx.js`, `sfx.hover`), réglable dans Profil > Réglages. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
 **Cartes** : cartes holographiques (grille, coins lumineux, nom en Sora) ; boosters en « cartouche de données ». Les mini-jeux se jouent dans des **secteurs virtuels** (sol sombre quadrillé, horizon en grille, colonnes de lumière) à la couleur de leur zone : forêt (vert), désert (orange), banquise (bleu-blanc), montagne (gris-violet), noyau (cyan) — `candyWorld(THREE, scene, { zone })` dans `src/minigames/three/kit3d.jsx`.
 Tout le thème est dans `src/tablet.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
 
@@ -124,10 +124,8 @@ La partie du Trône des Mondes ne pivote pas sur PC, même dans une fenêtre plu
 **Mise en page PC** (`src/desktop.css`, classe `html.desktop`) : plus de colonne de téléphone, tout l'écran sert.
 - **Menu** : carte d'identité, badge du compte, pseudo et nom du lobby à gauche ; les quatre grandes tuiles (Créer, Rejoindre, Trône des Mondes, Salle d'arcade) à droite, avec la liste des jeux.
 - **Lobby** : le jeu et ses réglages à gauche, les joueurs (ou les équipes) à droite, « Lancer la partie » en bas à droite. **Profil** : la carte d'identité à gauche, les stats sur deux colonnes à droite. **Salle d'arcade** : grille de tous les mini-jeux.
-- **Trône des Mondes**, fenêtre d'au moins 1 100 px de large (après le zoom) : un **tableau de bord** au lieu des onglets. En-tête : niveau, **Éclats** (le diamant), compte, règles.
-  Colonne de gauche : ta progression (anneau de niveau, prochaine récompense, parties, victoires, boosters ouverts, brillantes, collection, deck joué), les quêtes du jour et les succès (ceux à récupérer en premier).
-  Au centre : Mes decks ou Collection (avec l'Album). À droite : les boosters à ouvrir, la boutique du jour et les boosters à acheter. Chaque colonne défile seule.
-  Le **constructeur de deck** montre les cartes à ajouter à gauche et le deck à droite, en même temps. Fenêtre plus étroite : les mêmes onglets que sur téléphone.
+- **Trône des Mondes** : l'accueil du jeu prend tout l'écran (vitrine au centre, boutons des parties en bas à gauche, Jouer et Boosters en bas à droite, voir 11).
+  Le **constructeur de deck** montre les cartes à ajouter à gauche et le deck à droite, en même temps (fenêtre d'au moins 1 100 px de large après le zoom).
 - **Écrans de jeu** : centrés dans une colonne large (1 000 px), le plateau 3D est plus grand.
 
 ### Option A : GitHub Actions (rien à installer)
@@ -409,7 +407,21 @@ Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran to
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
 
-**Collection** (bouton « Trône des Mondes » du menu, ou depuis le lobby) :
+**Accueil du jeu** (bouton « Trône des Mondes » du menu, ou depuis le lobby ; `src/tcg/ui/HubHome.jsx`) : un écran épuré, façon lobby de jeu de cartes.
+- En haut : ta **photo de profil du jeu** (pas ton personnage Party Hub) avec ton pseudo et ton niveau, tes boosters à ouvrir, tes **Éclats** (le diamant ; le « + » ouvre la boutique) et les **paramètres du jeu**.
+- Au centre : la **vitrine** du deck joué (ses trois personnages les plus forts, qui flottent doucement ; touche une carte pour la lire), son nom et « Changer ».
+- En bas : les boutons **Profil**, **Decks**, **Collection**, **Album**, **Boutique**, **Quêtes** (pastilles : quêtes à récupérer, nouvelle boutique du jour, nouveau cadre…),
+  et deux grandes actions : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et **Boosters**.
+  Chaque bouton ouvre sa partie en plein écran, avec un retour à l'accueil ; changer de partie fait glisser une carte (son).
+- **Profil du jeu** (`TcgProfile.jsx`) : statistiques du jeu de cartes (parties, victoires, défis gagnés, éliminations, Dominations, boosters, collection, brillantes, cartes 7, succès).
+  **Photo** : n'importe quelle carte 7 que tu possèdes (par défaut, celle du deck joué ; sans carte 7, le blason du jeu).
+  **Cadres** à débloquer par des missions : Bronze (offert), Argent (5 victoires), Duelliste (60 défis gagnés), Voyageur des mondes (8 familles jouées), Bourreau (40 éliminations),
+  Collectionneur (300 cartes différentes), Or (25 victoires), Holographique (15 brillantes, animé), Dominateur (30 Dominations), Légende (niveau 20, animé), Trône (tous les succès, avec une couronne).
+- **Paramètres du jeu** (roue dentée, `TcgSettings.jsx`, propres au Trône des Mondes et enregistrés sur l'appareil, `src/tcg/prefs.js`) : sons du jeu (oui / coupés), volume,
+  son au survol des boutons, animations complètes ou réduites, ouverture des boosters (déchirer en glissant, ou directe), plein écran sur PC ; le compte (connecté ou profil local) y est rappelé.
+  Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Trône des Mondes (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
+
+**Collection** :
 - **Deck de départ** : choisi une seule fois parmi 106 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, **une seule version par personnage** ; au plus 3 cartes de coût 7+, 6 de coût 6, 8 de coût 5 ;
@@ -424,8 +436,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
   (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; ×3 pour une brillante en plus, les cartes 7, toujours brillantes, gardant leur prix).
 - **Niveaux** : un booster à chaque niveau (un Prestige tous les 5). **3 quêtes par jour** (une peut être changée) et 13 succès.
-- **Sur PC** (fenêtre large) : tout ça sur un seul écran, en tableau de bord (voir 3 ter).
-- Tout est enregistré dans le profil (`profile.tcg`), donc sauvegardé sur le compte quand on est connecté.
+- Tout est enregistré dans le profil (`profile.tcg`, y compris la photo `av`, le cadre `fr` et les compteurs à vie de `st`), donc sauvegardé sur le compte quand on est connecté.
 
 **Illustrations** : chaque carte a une illustration originale générée par l'appli (décor de sa famille, plus riche selon la rareté : les légendaires sont en pleine carte).
 Tu peux la remplacer par tes propres images : touche une carte > « Choisir une image », ou Collection > Illustrations > « Importer des images » (plusieurs d'un coup) en nommant

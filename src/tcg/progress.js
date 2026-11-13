@@ -21,7 +21,8 @@ function rng(seed) { let s = seed >>> 0 || 1; return () => { s = (s + 0x6d2b79f5
 const pickW = (r, table) => { let x = r() * table.reduce((s, [, w]) => s + w, 0); for (const [v, w] of table) { x -= w; if (x <= 0) return v; } return table[table.length - 1][0]; };
 
 /* ------------------------------ profil vide ------------------------------ */
-export const emptyTcg = () => ({ v: 1, starter: null, ec: 0, xp: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [], st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [] }, ms: {}, seed: Math.random().toString(36).slice(2, 10) });
+export const emptyTcg = () => ({ v: 1, starter: null, ec: 0, xp: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [],
+  st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"], seed: Math.random().toString(36).slice(2, 10) });
 
 /** Remet un profil lu du stockage dans une forme valide (cartes inconnues retirées, nombres vérifiés). */
 export function normalizeTcg(raw) {
@@ -46,8 +47,12 @@ export function normalizeTcg(raw) {
   t.shop = raw.shop && typeof raw.shop === "object" ? { day: String(raw.shop.day || ""), bought: Array.isArray(raw.shop.bought) ? raw.shop.bought.filter((i) => Number.isInteger(i) && i >= 0 && i < 6) : [] } : null;
   t.games = Array.isArray(raw.games) ? raw.games.filter((g) => typeof g === "string").slice(-40) : [];
   const st = raw.st || {};
-  t.st = { games: n(st.games), wins: n(st.wins), packs: n(st.packs), bought: n(st.bought), fams: Array.isArray(st.fams) ? [...new Set(st.fams.filter((f) => FAMILY[f]))].slice(0, 80) : [] };
+  t.st = { games: n(st.games), wins: n(st.wins), packs: n(st.packs), bought: n(st.bought), fams: Array.isArray(st.fams) ? [...new Set(st.fams.filter((f) => FAMILY[f]))].slice(0, 80) : [],
+    chal: n(st.chal), kills: n(st.kills), dom: n(st.dom), played: n(st.played) };
   t.ms = Object.fromEntries(Object.entries(raw.ms || {}).filter(([k]) => MILESTONE_BY[k]).map(([k]) => [k, true]));
+  t.av = typeof raw.av === "string" && CARD[raw.av] && avatarOk(CARD[raw.av]) ? raw.av : null;
+  t.fr = typeof raw.fr === "string" && FRAME_BY[raw.fr] ? raw.fr : "bronze";
+  t.frSeen = Array.isArray(raw.frSeen) ? [...new Set(["bronze", ...raw.frSeen.filter((f) => FRAME_BY[f])])] : ["bronze"];
   t.seed = typeof raw.seed === "string" && raw.seed ? raw.seed.slice(0, 12) : t.seed;
   return t;
 }
@@ -345,6 +350,8 @@ export function recordTcgGame(t0, sum, key, day = today()) {
   t.xp += xp; t.ec += ec;
   t.st.games++; if (sum.win) t.st.wins++;
   if (sum.fam && !t.st.fams.includes(sum.fam)) t.st.fams.push(sum.fam);
+  t.st.chal += (sum.won.combat || 0) + (sum.won.ruse || 0) + (sum.won.influence || 0);
+  t.st.kills += sum.kills || 0; t.st.dom += sum.dom || 0; t.st.played += sum.played || 0;
   bumpQuest(t, "games", 1);
   if (sum.win) { bumpQuest(t, "win", 1); bumpQuest(t, "famwin", 1, sum.fam); }
   for (const k of ["combat", "ruse", "influence"]) bumpQuest(t, k, sum.won[k] || 0);
@@ -364,6 +371,68 @@ export function summaryFromView(ag, meId) {
     win: ag.winner === meId, power: me.power, fam: me.fam, won: st.won || {}, kills: st.kills || 0, dom: st.dom || 0, unopp: st.unopp || 0, played: st.played || 0,
     bots: ag.players.filter((p) => p.id !== meId).every((p) => p.bot),
   };
+}
+
+/* ------------------------------ profil du jeu : photo et cadres ------------------------------ */
+/** Photo de profil du Trône des Mondes : une carte de coût 7 (personnage) que le joueur possède. */
+export const avatarOk = (d) => Boolean(d) && d.type === "char" && d.cost >= 7;
+/** Cartes 7 possédées (photos possibles), de la plus rare à la moins rare puis par nom. */
+export function avatarChoices(t) {
+  const own = owned(t);
+  return ALL.filter((d) => avatarOk(d) && own[d.id]).sort((a, b) => RARITY_ORDER.indexOf(b.r) - RARITY_ORDER.indexOf(a.r) || a.name.localeCompare(b.name, "fr"));
+}
+/** Photo affichée : celle choisie si elle est toujours possédée, sinon la carte 7 du deck joué, sinon la première carte 7 possédée. */
+export function avatarOf(t) {
+  const own = owned(t);
+  if (t.av && own[t.av] && avatarOk(CARD[t.av])) return t.av;
+  const deck = t.decks.find((d) => d.id === t.sel);
+  const inDeck = deck ? Object.keys(deck.cards).filter((id) => own[id] && avatarOk(CARD[id])) : [];
+  if (inDeck.length) return inDeck.sort((a, b) => RARITY_ORDER.indexOf(CARD[b].r) - RARITY_ORDER.indexOf(CARD[a].r))[0];
+  const all = avatarChoices(t);
+  return all.length ? all[0].id : null;
+}
+export function setAvatar(t0, id) {
+  const t = clone(normalizeTcg(t0));
+  if (!avatarOk(CARD[id]) || !owned(t)[id]) return { error: "Il faut posséder cette carte 7." };
+  t.av = id;
+  return { t };
+}
+
+/**
+ * Cadres de la photo de profil. Chacun se débloque par une mission (sauf le bronze) ; `got(t)` donne l'avancement (0 à goal).
+ * Le style de chaque cadre est dans tcg.css (.pfr.f-<id>).
+ */
+export const FRAMES = [
+  { id: "bronze", name: "Bronze", text: "Offert", goal: 1, got: () => 1 },
+  { id: "argent", name: "Argent", text: "Gagne 5 parties", goal: 5, got: (t) => t.st.wins },
+  { id: "duel", name: "Duelliste", text: "Gagne 60 défis", goal: 60, got: (t) => t.st.chal },
+  { id: "voyage", name: "Voyageur des mondes", text: "Joue avec 8 familles différentes", goal: 8, got: (t) => t.st.fams.length },
+  { id: "bourreau", name: "Bourreau", text: "Élimine 40 personnages adverses", goal: 40, got: (t) => t.st.kills },
+  { id: "emeraude", name: "Collectionneur", text: "Possède 300 cartes différentes", goal: 300, got: (t) => Object.keys(owned(t)).length },
+  { id: "or", name: "Or", text: "Gagne 25 parties", goal: 25, got: (t) => t.st.wins },
+  { id: "holo", name: "Holographique", text: "Possède 15 cartes brillantes", goal: 15, got: (t) => Object.keys(t.foil).length },
+  { id: "dominion", name: "Dominateur", text: "Remporte 30 fois la Domination", goal: 30, got: (t) => t.st.dom },
+  { id: "legende", name: "Légende", text: "Atteins le niveau 20", goal: 20, got: (t) => levelOf(t.xp).lvl },
+  { id: "trone", name: "Trône", text: "Obtiens tous les succès", goal: MILESTONES.length, got: (t) => Object.keys(t.ms).length },
+];
+export const FRAME_BY = Object.fromEntries(FRAMES.map((f) => [f.id, f]));
+export const frameProgress = (t, f) => Math.min(f.goal, Math.max(0, f.got(t) || 0));
+export const frameUnlocked = (t, f) => frameProgress(t, f) >= f.goal;
+/** Cadre affiché : celui choisi s'il est débloqué, sinon le bronze. */
+export const frameOf = (t) => (FRAME_BY[t.fr] && frameUnlocked(t, FRAME_BY[t.fr]) ? t.fr : "bronze");
+export function setFrame(t0, id) {
+  const t = clone(normalizeTcg(t0));
+  const f = FRAME_BY[id];
+  if (!f || !frameUnlocked(t, f)) return { error: "Ce cadre n'est pas encore débloqué." };
+  t.fr = id;
+  return { t };
+}
+/** Cadres débloqués que le joueur n'a pas encore vus (pastille « nouveau » sur le profil). */
+export const newFrames = (t) => FRAMES.filter((f) => frameUnlocked(t, f) && !t.frSeen.includes(f.id));
+export function markFramesSeen(t0) {
+  const t = clone(normalizeTcg(t0));
+  t.frSeen = [...new Set([...t.frSeen, ...FRAMES.filter((f) => frameUnlocked(t, f)).map((f) => f.id)])];
+  return t;
 }
 
 export { PLOTS };

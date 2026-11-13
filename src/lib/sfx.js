@@ -1,17 +1,28 @@
 // Sons d'interface synthétisés (aucun fichier) : bips sinus doux, glissandos, souffle filtré. Un son par animation importante,
 // volume général bas. Coupés si l'utilisateur l'a demandé (réglage enregistré sur le téléphone).
+// Un jeu peut avoir ses propres réglages (sons, volume, son au survol) : le Trône des Mondes les applique tant qu'il est ouvert
+// (sfx.enter("tcg") au montage, la fonction renvoyée au démontage ; réglages passés par sfx.configure).
 let ac = null, master = null, noiseBuf = null;
-const KEY = "ph-sfx";
-let enabled = (() => { try { return localStorage.getItem(KEY) !== "0"; } catch { return true; } })();
+const KEY = "ph-sfx", HKEY = "ph-sfx-hover";
+const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+let enabled = read(KEY) !== "0";
+let hoverOn = read(HKEY) !== "0";
+const conf = {}; // réglages propres à un jeu : { tcg: { sound, volume, hover } }
+const depth = {}; // nombre d'écrans ouverts de chaque jeu
+let scope = null;
+const cur = () => (scope && conf[scope]) || null;
+const active = () => enabled && !(cur() && cur().sound === false);
 
 function ctx() {
-  if (!enabled || typeof window === "undefined") return null;
+  if (!active() || typeof window === "undefined") return null;
   if (!ac) {
     const C = window.AudioContext || window.webkitAudioContext;
     if (!C) return null;
     try { ac = new C(); } catch { return null; }
-    master = ac.createGain(); master.gain.value = 0.07; master.connect(ac.destination);
+    master = ac.createGain(); master.connect(ac.destination);
   }
+  const c = cur();
+  master.gain.value = 0.07 * (c && Number.isFinite(c.volume) ? Math.max(0, Math.min(1, c.volume)) : 1);
   if (ac.state === "suspended") ac.resume().catch(() => {});
   return ac.state === "running" ? ac : null;
 }
@@ -40,9 +51,35 @@ function whoosh(d = 0.5, f0 = 600, f1 = 2400, v = 0.35, delay = 0) {
   s.connect(bp); bp.connect(g); g.connect(master); s.start(t); s.stop(t + d + 0.05);
 }
 
+let lastHover = 0;
 export const sfx = {
   get on() { return enabled; },
   set(on) { enabled = !!on; try { localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* stockage indisponible */ } },
+  /** Son au survol des boutons (souris), réglage général. */
+  get hoverOn() { return hoverOn; },
+  setHover(on) { hoverOn = !!on; try { localStorage.setItem(HKEY, on ? "1" : "0"); } catch { /* stockage indisponible */ } },
+  /** Réglages propres à un jeu (ex. "tcg") : { sound, volume (0 à 1), hover }. */
+  configure(name, c) { conf[name] = { ...c }; },
+  /** Un écran de ce jeu s'ouvre : ses réglages s'appliquent jusqu'à l'appel de la fonction renvoyée. */
+  enter(name) {
+    depth[name] = (depth[name] || 0) + 1; scope = name;
+    return () => { depth[name] = Math.max(0, (depth[name] || 0) - 1); if (!depth[name] && scope === name) scope = null; };
+  },
+  get scope() { return scope; },
+  /** Survol d'un bouton à la souris : petit « tic » cristallin (Party Hub) ou carte qui glisse (Trône des Mondes). */
+  hover() {
+    const c = cur(), on = c && typeof c.hover === "boolean" ? c.hover : hoverOn;
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (!on || now - lastHover < 55) return;
+    lastHover = now;
+    if (scope === "tcg") { whoosh(0.075, 2200, 5200, 0.16); tone(1320 + Math.random() * 90, 0.05, 0.07, 1560, "sine", 0.012); }
+    else tone(1650 + Math.random() * 140, 0.045, 0.1, 2150, "sine");
+  },
+  /** Transitions d'écran : balayage de lumière (Party Hub), carte qui se retourne (Trône des Mondes). */
+  sweep() { whoosh(0.42, 700, 3400, 0.16); tone(1180, 0.16, 0.06, 1560, "sine", 0.1); },
+  cardFlip() { whoosh(0.26, 3000, 900, 0.22); tone(196, 0.12, 0.25, 150, "triangle", 0.2); tone(1480, 0.2, 0.08, 1760, "sine", 0.24); },
+  /** Changement de section dans le Trône des Mondes : une carte qui glisse sur la table. */
+  slide() { whoosh(0.18, 1600, 4200, 0.18); },
   /** À appeler dans un geste : débloque l'audio des navigateurs stricts. */
   unlock() { ctx(); },
   open() { tone(520, 0.1, 0.5, 780); tone(1040, 0.14, 0.25, null, "sine", 0.06); },

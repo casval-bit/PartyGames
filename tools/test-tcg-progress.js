@@ -84,6 +84,31 @@ const n = P.normalizeTcg({ ec: -5, coll: { "inconnue": 3, "lyoko-krabe-3": 2 }, 
 ok(n.ec === 0 && !n.coll.inconnue && n.coll["lyoko-krabe-3"] === 2 && n.decks.length === 0, "normalisation : valeurs invalides retirées");
 ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde la progression la plus avancée");
 
+// profil du jeu : photo (carte 7 possédée) et cadres à débloquer
+{
+  const base = P.chooseStarter(P.normalizeTcg(null), "leg-gryf").t;
+  ok(P.avatarOf(base) === "legendaires-gryfenfer-7", "photo par défaut : la carte 7 du deck joué");
+  ok(P.avatarChoices(base).every((d) => d.cost >= 7 && d.type === "char"), "photos possibles : seulement des cartes 7 possédées");
+  ok(P.setAvatar(base, "lyoko-xana-7").error, "impossible de prendre en photo une carte 7 non possédée");
+  ok(P.setAvatar(base, "legendaires-shimy-4").error, "une carte de coût 4 ne peut pas être une photo");
+  const withX = P.normalizeTcg({ ...base, foil: { ...base.foil, "lyoko-xana-7": 1 } });
+  const sa = P.setAvatar(withX, "lyoko-xana-7");
+  ok(!sa.error && P.avatarOf(sa.t) === "lyoko-xana-7", "choisir une autre carte 7 possédée comme photo");
+  ok(P.avatarOf(P.normalizeTcg({ ...sa.t, foil: {} , coll: base.coll })) !== "lyoko-xana-7", "photo d'une carte plus possédée : on revient à une carte possédée");
+  ok(P.avatarOf(P.normalizeTcg(null)) === null, "aucune carte 7 : pas de photo (blason du jeu)");
+  ok(P.frameOf(base) === "bronze" && P.frameUnlocked(base, P.FRAME_BY.bronze), "cadre de bronze offert");
+  ok(P.setFrame(base, "or").error, "cadre d'or verrouillé au départ");
+  const winner = P.normalizeTcg({ ...base, st: { ...base.st, wins: 25 } });
+  ok(P.frameUnlocked(winner, P.FRAME_BY.argent) && P.frameUnlocked(winner, P.FRAME_BY.or), "25 victoires : cadres d'argent et d'or débloqués");
+  const sf = P.setFrame(winner, "or");
+  ok(!sf.error && P.frameOf(sf.t) === "or", "choisir le cadre d'or");
+  ok(P.newFrames(winner).map((f) => f.id).join() === "argent,or" && P.newFrames(P.markFramesSeen(winner)).length === 0, "nouveaux cadres signalés jusqu'à la visite du profil");
+  ok(P.frameOf(P.normalizeTcg({ ...base, fr: "or" })) === "bronze", "cadre choisi mais pas débloqué : bronze affiché");
+  const rec = P.recordTcgGame(P.ensureQuests(base, "2026-11-13"), { win: true, power: 12, fam: "legendaires", won: { combat: 3, ruse: 2, influence: 1 }, kills: 2, dom: 1, unopp: 0, played: 9 }, "k1", "2026-11-13").t;
+  ok(rec.st.chal === 6 && rec.st.kills === 2 && rec.st.dom === 1 && rec.st.played === 9, "compteurs à vie : défis, éliminations, dominations, cartes jouées");
+  ok(P.normalizeTcg(JSON.parse(JSON.stringify(sf.t))).fr === "or", "photo et cadre gardés à la sauvegarde");
+}
+
 // vues réseau
 const g = new Game({ players: [{ id: "a", name: "A", deck: st[0] }, { id: "b", name: "B", bot: true, deck: st[3] }], seed: 3 });
 const pv = publicView(g);

@@ -1,7 +1,12 @@
 // Retour visuel au toucher, façon terminal holographique : une onde cyan part du point touché et quelques « pixels » s'en échappent.
 // Une seule écoute globale : tous les boutons de l'appli en profitent sans rien changer aux écrans.
 // Désactivée si le téléphone demande moins d'animations (prefers-reduced-motion). `data-nofx` sur un élément (ou un parent) l'exclut.
+// Au survol à la souris (PC), les boutons principaux font un petit son (sfx.hover, réglable) ; leur animation est en CSS (:hover).
+import { sfx } from "../lib/sfx.js";
+
 const TARGET = "button, [role='button'], a[href], summary, .itm";
+/** Boutons qui « répondent » au survol (son) : les gros boutons, les onglets, les cartes cliquables… `data-hover` pour en ajouter. */
+const HOVER = ".btn, .bigbtn, .iconbtn, .seg button, .hub-tabs button, .hub-filters button, .hub-fambtn, .hub-starter, .arc-card, .arc-tags button, .accbadge, .profbtn, .alb-entry, .mgpcard, .itm, button.tc, .hh-nav-b, .hh-act, .hh-me, .hh-cur, .pf-pick, [data-hover]";
 const MAX_LIVE = 40;
 let layer = null, live = 0, installed = false;
 
@@ -33,6 +38,15 @@ export function burst(x, y, n = 6) {
 export function installClickFx() {
   if (installed || typeof document === "undefined") return;
   installed = true;
+  let hovered = null;
+  document.addEventListener("pointerover", (e) => {
+    if (e.pointerType && e.pointerType !== "mouse") return; // pas de son au toucher
+    const el = e.target && e.target.closest ? e.target.closest(HOVER) : null;
+    if (el === hovered) return; // on bouge encore dans le même bouton
+    hovered = el;
+    if (!el || el.disabled || el.getAttribute("aria-disabled") === "true" || el.closest("[data-nohover]")) return;
+    sfx.hover();
+  }, true);
   const reduce = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
   document.addEventListener("click", (e) => {
     if (reduce.matches) return;

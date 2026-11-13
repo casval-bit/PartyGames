@@ -271,6 +271,7 @@ function EndScreen({ me, api, ag, gain, onHub, onLeave, isHost, setZoom }) {
 }
 
 export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, isHost }) {
+  useEffect(() => sfx.enter("tcg"), []); // paramètres du Trône des Mondes (sons, volume) pendant la partie
   const ag = room.ag;
   const playing = room.phase === "ag_play" && ag && !ag.over;
   const [zoom, setZoom] = useState(null);

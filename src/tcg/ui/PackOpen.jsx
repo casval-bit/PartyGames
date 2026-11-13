@@ -7,6 +7,7 @@ import { CARD, FAMILY } from "../cards/index.js";
 import { RARITY, RARITY_ORDER } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
+import { tcgPrefs } from "../prefs.js";
 import { vibrate } from "../../lib/util.js";
 import { CardFace, CardBack } from "./Card.jsx";
 
@@ -99,7 +100,7 @@ function Sparks({ color, n = 18 }) {
  * onDone() ferme ; onAgain() ouvre le booster suivant du même type (si `left` > 0).
  */
 export default function PackOpen({ pack, cards, left = 0, onDone, onAgain }) {
-  const [stage, setStage] = useState("sealed"); // sealed | cards | done
+  const [stage, setStage] = useState(() => (tcgPrefs().tear ? "sealed" : "cards")); // sealed | cards | done (paramètres : ouverture directe)
   const [i, setI] = useState(0);
   const [up, setUp] = useState(false);
   const [gone, setGone] = useState(0);

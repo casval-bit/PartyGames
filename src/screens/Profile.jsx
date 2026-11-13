@@ -162,7 +162,8 @@ export default function Profile({ name, profile, equip, onBack, acc, onAccount, 
 
 /** Réglages rapides : sons d'interface, couleur de la coque (grand écran). */
 function Settings() {
-  const [open, setOpen] = useState(false), [on, setOn] = useState(sfx.on);
+  const [open, setOpen] = useState(false), [on, setOn] = useState(sfx.on), [hov, setHov] = useState(sfx.hoverOn);
+  const mouse = DESKTOP || (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
   const [red, setRed] = useState(() => { try { return localStorage.getItem("ph-shell") === "red"; } catch { return false; } });
   const shell = (v) => { setRed(v); try { localStorage.setItem("ph-shell", v ? "red" : "dark"); } catch { /* rien */ } window.dispatchEvent(new Event("ph-shell")); };
   const full = useFullscreen();
@@ -175,6 +176,7 @@ function Settings() {
           <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Réglages">
             <div className="row spread"><h3>Réglages</h3><button className="iconbtn" onClick={() => setOpen(false)} aria-label="Fermer"><Icon name="close" /></button></div>
             <div className="setrow"><span><Icon name={on ? "sound" : "mute"} /> Sons d'interface</span><div className="seg"><button aria-pressed={on} onClick={() => { sfx.set(true); setOn(true); sfx.select(); }}>Oui</button><button aria-pressed={!on} onClick={() => { sfx.set(false); setOn(false); }}>Non</button></div></div>
+            {mouse && <div className="setrow"><span><Icon name="hand" /> Son au survol des boutons</span><div className="seg"><button aria-pressed={hov} disabled={!on} onClick={() => { sfx.setHover(true); setHov(true); sfx.hover(); }}>Oui</button><button aria-pressed={!hov} disabled={!on} onClick={() => { sfx.setHover(false); setHov(false); }}>Non</button></div></div>}
             {DESKTOP
               ? <div className="setrow"><span><Icon name="scan" /> Plein écran (F11)</span><div className="seg"><button aria-pressed={full} onClick={() => setFullscreenOn(true)}>Oui</button><button aria-pressed={!full} onClick={() => setFullscreenOn(false)}>Non</button></div></div>
               : <div className="setrow"><span><Icon name="tablet" /> Coque (grand écran)</span><div className="seg"><button aria-pressed={!red} onClick={() => shell(false)}>Noire</button><button aria-pressed={red} onClick={() => shell(true)}>Rouge et blanche</button></div></div>}
