@@ -8,9 +8,12 @@ export const SUPABASE_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_UR
 export const SUPABASE_KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || "";
 export const ONLINE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 /** Comptes testeurs (adresses e-mail séparées par des virgules) : VITE_TESTEURS dans le fichier .env de l'ordinateur, jamais dans le dépôt.
- *  Connecté avec une de ces adresses, les paramètres du Trône des Mondes montrent des outils de test (Éclats, boosters). */
+ *  Connecté avec une de ces adresses (ou sans compte, sur le profil local de cet ordinateur), les paramètres du Trône des Mondes
+ *  montrent des outils de test : Éclats, jetons, boosters, cartes illustrées débloquées. */
 export const TESTERS = String((import.meta.env && import.meta.env.VITE_TESTEURS) || "").split(/[,;\s]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
 export const isTester = (acc) => Boolean(acc && acc.user && acc.user.email && TESTERS.includes(String(acc.user.email).toLowerCase()));
+/** Outils de test visibles : sur un ordinateur où VITE_TESTEURS est rempli, pour le profil local (pas connecté) ou un compte testeur. */
+export const canTest = (acc) => TESTERS.length > 0 && (!(acc && acc.user) || isTester(acc));
 
 export const TEAMS = [
   { id: 0, name: "jaune", label: "Jaune", color: "#ffd23f", ink: "#2b2100" },

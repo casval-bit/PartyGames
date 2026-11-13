@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { CARD, FAMILY, TYPE_BONUS, subOf, subWords } from "../cards/index.js";
 import { KEYWORDS, RARITY, CARD_TYPES, TYPE_NAME } from "../rules.js";
 import { starterById } from "../deck.js";
-import { alwaysFoil } from "../progress.js";
+import { alwaysFoil, shineCost } from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, FamilyFace, PlotFace, RichText, TYPE_ICON } from "./Card.jsx";
@@ -174,9 +174,10 @@ function ArtTools({ d }) {
 /**
  * Carte zoomée. Props : id (carte ou scénario) | fam (+ pt) ; foil ; inst (pion en jeu) ; who (nom du contrôleur) ;
  * owned { n, f } ; acts [{ label, onClick, kind, disabled, icon }] ; art (outils d'illustration) ; onOpen(id) pour zoomer un objet attaché.
+ * shine { jet, onShine } : jetons de brillance du joueur et rendre brillante cette carte (collection ; cartes de coût 0 à 6).
  * missing : carte pas encore obtenue (grisée) ; onPrev / onNext / pos : feuilleter (album).
  */
-export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who, owned, acts = [], art = false, note, onClose, onOpen, onPrev, onNext, pos }) {
+export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who, owned, acts = [], art = false, note, onClose, onOpen, onPrev, onNext, pos, shine }) {
   const tilt = useTilt();
   useEffect(() => {
     const k = (e) => {
@@ -259,6 +260,19 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
               : owned && (alwaysFoil(d)
                 ? <p style={{ margin: 0, fontSize: ".82rem" }}>Dans ta collection : <b>{(owned.n || 0) + (owned.f || 0)}</b> brillante{(owned.n || 0) + (owned.f || 0) > 1 ? "s" : ""}.</p>
                 : <p style={{ margin: 0, fontSize: ".82rem" }}>Dans ta collection : <b>{owned.n || 0}</b> normale{(owned.n || 0) > 1 ? "s" : ""}{owned.f ? <>, <b>{owned.f}</b> brillante{owned.f > 1 ? "s" : ""}</> : null}.</p>)}
+          </div>
+        )}
+        {shine && d && !plot && !missing && !alwaysFoil(d) && owned && (owned.n || 0) + (owned.f || 0) > 0 && (
+          <div className="tz-box tz-shine" data-testid="tz-shine">
+            <h4>Brillance</h4>
+            {owned.f > 0
+              ? <p style={{ margin: 0, fontSize: ".82rem" }}>Cette carte est déjà brillante dans ta collection.</p>
+              : <>
+                <p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Rends un exemplaire brillant avec des jetons de brillance (tu en as <b style={{ color: "var(--txt)" }}>{shine.jet}</b>). Ils se gagnent en recyclant tes doubles et dans chaque booster.</p>
+                <button className="btn good small" disabled={shine.jet < shineCost(d)} onClick={() => shine.onShine(d.id)}>
+                  <Icon name="sparkles" size={16} />Rendre brillante · {shineCost(d)} jeton{shineCost(d) > 1 ? "s" : ""}
+                </button>
+              </>}
           </div>
         )}
         {plot && <div className="tz-box"><h4>Scénario</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Revenu : l'or de la phase de Recrutement. Initiative : la plus haute choisit le premier joueur. Revendication : ce que coûte un défi perdu contre vous. Réserve : cartes gardées en main à la fin du round.</p></div>}

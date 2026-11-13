@@ -99,7 +99,7 @@ function Sparks({ color, n = 18 }) {
  * Ouverture complète. cards = [{ id, foil, isNew }] (triées de la moins rare à la plus rare).
  * onDone() ferme ; onAgain() ouvre le booster suivant du même type (si `left` > 0).
  */
-export default function PackOpen({ pack, cards, left = 0, onDone, onAgain }) {
+export default function PackOpen({ pack, cards, jet = 0, golden = false, left = 0, onDone, onAgain }) {
   const [stage, setStage] = useState(() => (tcgPrefs().tear ? "sealed" : "cards")); // sealed | cards | done (paramètres : ouverture directe)
   const [i, setI] = useState(0);
   const [up, setUp] = useState(false);
@@ -108,7 +108,6 @@ export default function PackOpen({ pack, cards, left = 0, onDone, onAgain }) {
   const drag = useRef({ x0: 0, dx: 0, live: false, node: null });
   const best = cards.reduce((b, c) => Math.max(b, RARITY_ORDER.indexOf(CARD[c.id].r)), 0);
   const glow = best >= 4 ? "L" : best >= 3 ? "E" : best >= 2 ? "R" : null;
-  const golden = cards.length > 0 && cards.every((c) => c.foil);
   const cur = cards[i];
   const d = cur ? CARD[cur.id] : null;
 
@@ -155,7 +154,7 @@ export default function PackOpen({ pack, cards, left = 0, onDone, onAgain }) {
       {stage === "sealed" && <TearPack pack={pack} onOpen={() => { setStage("cards"); if (glow) sfx.materialize(); }} />}
       {stage === "cards" && cur && (
         <>
-          {golden && <div className="bo-golden">Booster doré : tout est brillant !</div>}
+          {golden && <div className="bo-golden">Booster doré : que des rares ou mieux, et 10 jetons de brillance !</div>}
           <div className="bo-stack">
             {cards.map((c, k) => {
               if (k < i) return null;
@@ -186,6 +185,7 @@ export default function PackOpen({ pack, cards, left = 0, onDone, onAgain }) {
         <>
           <h2 style={{ textAlign: "center" }}>{cards.some((c) => c.isNew) ? `${cards.filter((c) => c.isNew).length} nouvelle${cards.filter((c) => c.isNew).length > 1 ? "s" : ""} carte${cards.filter((c) => c.isNew).length > 1 ? "s" : ""} !` : "Booster ouvert"}</h2>
           <div className="bo-sum">{cards.map((c, k) => <div key={k} className="it" style={{ "--i": k }}><CardFace d={CARD[c.id]} foil={c.foil} isNew={c.isNew} /></div>)}</div>
+          {jet > 0 && <div className="bo-jet" data-testid="bo-jet"><Icon name="sparkles" size={18} />+{jet} jeton{jet > 1 ? "s" : ""} de brillance{golden ? " (booster doré)" : ""}</div>}
           <div className="bo-acts">
             {left > 0 && onAgain && <button className="btn primary" onClick={onAgain}><Icon name="gift" size={18} />Ouvrir le suivant ({left})</button>}
             <button className={"btn " + (left > 0 && onAgain ? "ghost" : "primary")} onClick={onDone}>Terminé</button>

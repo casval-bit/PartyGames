@@ -1,9 +1,10 @@
 // Trône des Mondes : collection et progression du joueur (module pur, sauvegardé dans profile.tcg).
 //
 //   - deck de départ choisi une fois : toutes ses cartes sont débloquées ;
-//   - boosters (gagnés en montant de niveau, en quêtes, ou achetés avec des Éclats), cartes brillantes (foil) :
-//     les cartes de coût 7 sont toujours brillantes ; pour les autres, plus la carte est rare, plus elle a de chances de briller ;
-//   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (surtout les brillantes) ;
+//   - boosters (gagnés en montant de niveau, en quêtes, ou achetés avec des Éclats) ; cartes brillantes (foil) :
+//     les cartes de coût 7 sont toujours brillantes ; les autres ne le sont jamais d'office : on les rend brillantes avec des
+//     jetons de brillance (gagnés en recyclant les doubles et en bonus dans chaque booster), plus il en faut que la carte coûte cher ;
+//   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (pas de brillante en vente, sauf les cartes 7) ;
 //   - quêtes du jour (XP + Éclats), succès permanents, XP de fin de partie (jamais 0, même en perdant).
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId } from "./cards/index.js";
 import { starterById, validateDeck } from "./deck.js";
@@ -12,8 +13,12 @@ import { RARITY_ORDER } from "./rules.js";
 export const CURRENCY = "Éclats";
 /** Les cartes de coût 7 sont toujours brillantes (tous leurs exemplaires). */
 export const alwaysFoil = (d) => Boolean(d) && d.type !== "plot" && d.cost >= 7;
-/** Chance qu'une carte tirée d'un booster soit brillante, selon sa rareté (multipliée selon le booster, voir PACKS.foilX). */
-export const FOIL_CHANCE = { C: 0.02, U: 0.03, R: 0.05, E: 0.08, L: 0.12 };
+/** Jetons de brillance pour rendre brillante une carte de coût 0 à 6 (les cartes 7 le sont d'office) : 1 jusqu'au coût 2, puis +1 par coût. */
+export const shineCost = (d) => (!d || alwaysFoil(d) ? 0 : Math.max(1, Math.min(5, (d.cost || 0) - 1)));
+/** Jetons rapportés par un exemplaire recyclé, selon sa rareté. */
+export const JET_RECYCLE = { C: 1, U: 1, R: 2, E: 3, L: 5 };
+/** Jetons en bonus dans un booster doré (1 sur 200 : que des rares ou mieux). */
+export const JET_GOLDEN = 10;
 const clone = (o) => JSON.parse(JSON.stringify(o));
 export const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -21,7 +26,7 @@ function rng(seed) { let s = seed >>> 0 || 1; return () => { s = (s + 0x6d2b79f5
 const pickW = (r, table) => { let x = r() * table.reduce((s, [, w]) => s + w, 0); for (const [v, w] of table) { x -= w; if (x <= 0) return v; } return table[table.length - 1][0]; };
 
 /* ------------------------------ profil vide ------------------------------ */
-export const emptyTcg = () => ({ v: 1, starter: null, ec: 0, xp: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [],
+export const emptyTcg = () => ({ v: 1, starter: null, ec: 0, xp: 0, jet: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [],
   st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"], seed: Math.random().toString(36).slice(2, 10) });
 
 /** Remet un profil lu du stockage dans une forme valide (cartes inconnues retirées, nombres vérifiés). */
@@ -45,6 +50,7 @@ export function normalizeTcg(raw) {
   t.starter = typeof raw.starter === "string" && starterById(raw.starter) ? raw.starter : null;
   t.ec = Math.min(1e7, n(raw.ec) + refund);
   t.xp = Math.min(1e8, n(raw.xp));
+  t.jet = Math.min(1e6, n(raw.jet));
   t.coll = cards(raw.coll);
   t.foil = cards(raw.foil);
   for (const [id, v] of Object.entries(t.coll)) if (alwaysFoil(CARD[id])) { t.foil[id] = Math.min(99, (t.foil[id] || 0) + v); delete t.coll[id]; } // cartes 7 : toujours brillantes
@@ -77,11 +83,25 @@ export function mergeTcg(a, b) {
 }
 
 /** Outils de test (compte testeur, voir TESTERS dans config.js) : ajoute des Éclats et des boosters. */
-export function testerGift(t0, { ec = 0, packs = {} } = {}) {
+export function testerGift(t0, { ec = 0, jet = 0, packs = {} } = {}) {
   const t = clone(normalizeTcg(t0));
   t.ec = Math.min(1e7, t.ec + Math.max(0, Math.floor(ec)));
+  t.jet = Math.min(1e6, t.jet + Math.max(0, Math.floor(jet)));
   for (const [k, v] of Object.entries(packs)) if (packDef(k) && v > 0) t.packs[k] = Math.min(999, (t.packs[k] || 0) + Math.floor(v));
   return t;
+}
+
+/** Outil de test : chaque carte de la liste est possédée en n exemplaires au moins (les cartes 7, brillantes). Renvoie { t, added }. */
+export function unlockCards(t0, ids, n = 2) {
+  const t = clone(normalizeTcg(t0));
+  let added = 0;
+  for (const id of ids) {
+    const d = CARD[id];
+    if (!d || d.type === "plot") continue;
+    const have = (t.coll[id] || 0) + (t.foil[id] || 0);
+    if (have < n) { addCard(t, id, false, n - have); added++; }
+  }
+  return { t, added };
 }
 
 /* ------------------------------ niveaux ------------------------------ */
@@ -100,24 +120,25 @@ const BASE = [[["C", 85], ["U", 15]], [["C", 85], ["U", 15]], [["C", 85], ["U", 
 const PRESTIGE = [[["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["E", 80], ["L", 20]], [["E", 60], ["L", 40]]];
 const collectible = (d) => d.type !== "plot" && !d.st;
 export const PACKS = [
-  { id: "multi", name: "Booster Multivers", price: 120, desc: "5 cartes de toutes les familles. Une rare au moins.", filter: () => true, slots: BASE, foilX: 1 },
-  { id: "heros", name: "Booster Héros", price: 140, desc: "5 personnages, sans objet ni événement.", filter: (d) => d.type === "char", slots: BASE, foilX: 1 },
-  { id: "arsenal", name: "Booster Arsenal", price: 140, desc: "5 cartes : lieux, objets et événements seulement.", filter: (d) => d.type !== "char", slots: BASE, foilX: 1.5 },
-  { id: "prestige", name: "Booster Prestige", price: 600, desc: "5 cartes rares ou mieux, dont une épique au moins.", filter: () => true, slots: PRESTIGE, foilX: 1.5 },
-  ...PLAYABLE.map((f) => ({ id: "fam:" + f.id, fam: f.id, name: `Booster ${f.short || f.name}`, price: 160, desc: `5 cartes de la famille ${f.name}.`, filter: (d) => d.fam === f.id, slots: BASE, foilX: 1 })),
+  { id: "multi", name: "Booster Multivers", price: 120, desc: "5 cartes de toutes les familles. Une rare au moins.", filter: () => true, slots: BASE, jet: 1 },
+  { id: "heros", name: "Booster Héros", price: 140, desc: "5 personnages, sans objet ni événement.", filter: (d) => d.type === "char", slots: BASE, jet: 1 },
+  { id: "arsenal", name: "Booster Arsenal", price: 140, desc: "5 cartes : lieux, objets et événements seulement.", filter: (d) => d.type !== "char", slots: BASE, jet: 1 },
+  { id: "prestige", name: "Booster Prestige", price: 600, desc: "5 cartes rares ou mieux, dont une épique au moins.", filter: () => true, slots: PRESTIGE, jet: 3 },
+  ...PLAYABLE.map((f) => ({ id: "fam:" + f.id, fam: f.id, name: `Booster ${f.short || f.name}`, price: 160, desc: `5 cartes de la famille ${f.name}.`, filter: (d) => d.fam === f.id, slots: BASE, jet: 1 })),
 ];
 export function packDef(id) { return PACKS.find((p) => p.id === id) || null; }
 
 /**
- * Tire le contenu d'un booster (5 cartes). `r` : fonction aléatoire. 1 chance sur 200 : booster doré (tout brillant, rares ou mieux).
- * Brillante : toujours pour une carte 7, sinon FOIL_CHANCE selon la rareté × le multiplicateur du booster.
+ * Tire le contenu d'un booster (5 cartes). `r` : fonction aléatoire. 1 chance sur 200 : booster doré (rares ou mieux, et
+ * JET_GOLDEN jetons en bonus : info.golden). Seules les cartes 7 sortent brillantes ; les autres se rendent brillantes avec des jetons.
  */
-export function rollPack(packId, r = Math.random) {
+export function rollPack(packId, r = Math.random, info = {}) {
   const p = packDef(packId);
   if (!p) return [];
   const pool = ALL.filter((d) => collectible(d) && p.filter(d));
   const byR = Object.fromEntries(RARITY_ORDER.map((k) => [k, pool.filter((d) => d.r === k)]));
   const golden = r() < 0.005;
+  info.golden = golden;
   const out = [];
   for (const slot of p.slots) {
     let rar = golden ? pickW(r, [["R", 60], ["E", 30], ["L", 10]]) : pickW(r, slot);
@@ -125,21 +146,27 @@ export function rollPack(packId, r = Math.random) {
     while (!byR[RARITY_ORDER[i]].length && i > 0) i--;   // rareté absente de ce booster : on descend
     const list = byR[RARITY_ORDER[i]].filter((d) => !out.some((o) => o.id === d.id));
     const d = (list.length ? list : byR[RARITY_ORDER[i]])[Math.floor(r() * (list.length || byR[RARITY_ORDER[i]].length))];
-    if (d) out.push({ id: d.id, foil: golden || alwaysFoil(d) || r() < (FOIL_CHANCE[d.r] || 0) * (p.foilX || 1) });
+    if (d) out.push({ id: d.id, foil: alwaysFoil(d) });
   }
   return out.sort((a, b) => RARITY_ORDER.indexOf(CARD[a.id].r) - RARITY_ORDER.indexOf(CARD[b.id].r));
 }
 const addCard = (t, id, foil, n = 1) => { const k = foil || alwaysFoil(CARD[id]) ? "foil" : "coll"; t[k][id] = (t[k][id] || 0) + n; };
-/** Ouvre un booster possédé. Renvoie { t, cards: [{id, foil, isNew}] } ou { error }. */
+/**
+ * Ouvre un booster possédé. Renvoie { t, cards: [{id, foil, isNew}], jet, golden } ou { error }.
+ * Jetons de brillance en bonus : ceux du booster (1, ou 3 pour un Prestige), 1 de plus une fois sur 4, 10 de plus si le booster est doré.
+ */
 export function openPack(t0, packId, r = Math.random) {
   const t = clone(normalizeTcg(t0));
   if (!(t.packs[packId] > 0)) return { error: "Tu n'as pas ce booster." };
   t.packs[packId]--; if (!t.packs[packId]) delete t.packs[packId];
-  const cards = rollPack(packId, r).map((c) => ({ ...c, isNew: !t.coll[c.id] && !t.foil[c.id] }));
+  const info = {};
+  const cards = rollPack(packId, r, info).map((c) => ({ ...c, isNew: !t.coll[c.id] && !t.foil[c.id] }));
   for (const c of cards) addCard(t, c.id, c.foil);
+  const jet = ((packDef(packId) || {}).jet || 1) + (r() < 0.25 ? 1 : 0) + (info.golden ? JET_GOLDEN : 0);
+  t.jet = Math.min(1e6, t.jet + jet);
   t.st.packs++;
   bumpQuest(t, "packs", 1);
-  return { t, cards };
+  return { t, cards, jet, golden: Boolean(info.golden) };
 }
 export function buyPack(t0, packId) {
   const p = packDef(packId);
@@ -158,28 +185,48 @@ export function owned(t) {
   return o;
 }
 export const RECYCLE = { C: 5, U: 15, R: 40, E: 100, L: 250 };
-/** Exemplaires gardés au recyclage, et valeur d'un exemplaire en trop : 2 normales et 1 brillante ; une carte 7 (toujours
- *  brillante) se garde en 2 exemplaires, puisque les decks en acceptent 2, et vaut son prix normal. */
+/** Exemplaires gardés au recyclage : 2 normales et 1 brillante ; une carte 7 (toujours brillante) se garde en 2 exemplaires,
+ *  puisque les decks en acceptent 2. Un exemplaire en trop rapporte des Éclats et des jetons de brillance selon sa rareté
+ *  (brillant ou pas : les brillantes se fabriquent avec des jetons, elles ne valent pas plus). */
 const keepOf = (id, foil) => (foil ? (alwaysFoil(CARD[id]) ? 2 : 1) : 2);
-const worthOf = (id, foil) => RECYCLE[CARD[id].r] * (foil && !alwaysFoil(CARD[id]) ? 3 : 1);
-/** Transforme en Éclats les exemplaires en trop. */
+const worthOf = (id) => RECYCLE[CARD[id].r];
+const jetOf = (id) => JET_RECYCLE[CARD[id].r] || 1;
+/** Transforme en Éclats et en jetons de brillance les exemplaires en trop. */
 export function recycle(t0) {
   const t = clone(normalizeTcg(t0));
-  let gained = 0, n = 0;
+  let gained = 0, n = 0, jet = 0;
   for (const k of ["coll", "foil"]) for (const [id, c] of Object.entries(t[k])) {
     const keep = keepOf(id, k === "foil");
-    if (c > keep) { gained += (c - keep) * worthOf(id, k === "foil"); n += c - keep; t[k][id] = keep; }
+    if (c > keep) { gained += (c - keep) * worthOf(id); jet += (c - keep) * jetOf(id); n += c - keep; t[k][id] = keep; }
   }
   t.ec += gained;
-  return { t, gained, n };
+  t.jet = Math.min(1e6, t.jet + jet);
+  return { t, gained, n, jet };
 }
 export function recyclable(t) {
-  let gained = 0, n = 0;
+  let gained = 0, n = 0, jet = 0;
   for (const k of ["coll", "foil"]) for (const [id, c] of Object.entries(t[k] || {})) {
     const keep = keepOf(id, k === "foil");
-    if (c > keep) { gained += (c - keep) * worthOf(id, k === "foil"); n += c - keep; }
+    if (c > keep) { gained += (c - keep) * worthOf(id); jet += (c - keep) * jetOf(id); n += c - keep; }
   }
-  return { gained, n };
+  return { gained, n, jet };
+}
+/**
+ * Rend brillant un exemplaire normal d'une carte de coût 0 à 6, contre shineCost(carte) jetons de brillance.
+ * Renvoie { t, cost } ou { error }.
+ */
+export function shineCard(t0, id) {
+  const d = CARD[id];
+  const t = clone(normalizeTcg(t0));
+  if (!d || d.type === "plot") return { error: "Carte inconnue." };
+  if (alwaysFoil(d)) return { error: "Les cartes 7 sont déjà brillantes." };
+  if (!(t.coll[id] > 0)) return { error: "Il faut un exemplaire normal de cette carte." };
+  const cost = shineCost(d);
+  if (t.jet < cost) return { error: `Il te manque ${cost - t.jet} jeton${cost - t.jet > 1 ? "s" : ""} de brillance.` };
+  t.jet -= cost;
+  t.coll[id]--; if (!t.coll[id]) delete t.coll[id];
+  t.foil[id] = (t.foil[id] || 0) + 1;
+  return { t, cost };
 }
 
 /* ------------------------------ deck de départ ------------------------------ */
@@ -220,7 +267,6 @@ export function playableDeck(t) {
 
 /* ------------------------------ boutique du jour ------------------------------ */
 export const PRICE = { C: 80, U: 200, R: 500, E: 1200, L: 3000 };
-export const FOIL_MULT = 3;
 /** Les 6 cartes à vendre aujourd'hui (les mêmes toute la journée pour ce joueur). */
 export function shopOffers(t, day = today()) {
   const r = rng(hash(`${t.seed}|${day}|boutique`));
@@ -232,8 +278,8 @@ export function shopOffers(t, day = today()) {
     const rar = pickW(r, sl);
     const list = byR[rar].filter((d) => !out.some((o) => o.id === d.id));
     const d = list[Math.floor(r() * list.length)];
-    const roll = r(), bonus = !alwaysFoil(d) && roll < (i === 5 ? 0.3 : Math.min(0.3, (FOIL_CHANCE[d.r] || 0) * 2)); // brillante « en plus » : plus chère
-    out.push({ i, id: d.id, foil: bonus || alwaysFoil(d), price: PRICE[d.r] * (bonus ? FOIL_MULT : 1), star: i === 5 });
+    r(); // (ancien tirage d'une brillante « en plus » : gardé pour que les offres du jour restent les mêmes)
+    out.push({ i, id: d.id, foil: alwaysFoil(d), price: PRICE[d.r], star: i === 5 });
   });
   return out;
 }

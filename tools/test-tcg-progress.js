@@ -30,13 +30,20 @@ for (let i = 0; i < 3000; i++) { const p = P.rollPack("multi"); rolls += p.lengt
 ok(rolls === 15000, "un booster contient 5 cartes");
 ok(excl === 0, "les cartes exclusives aux decks de départ ne sortent jamais des boosters");
 ok(rare === 3000, "au moins une rare (ou mieux) par booster");
-ok(foils > 300 && foils < 1100, `cartes brillantes : ${(100 * foils / rolls).toFixed(1)} % des cartes`);
+ok(foils > 0 && foils < 600, `seules les cartes 7 sortent brillantes des boosters (${(100 * foils / rolls).toFixed(1)} % des cartes)`);
+ok(Array.from({ length: 300 }, () => P.rollPack("prestige")).flat().every((c) => c.foil === (CARD[c.id].cost >= 7)), "boosters : brillante si et seulement si c'est une carte 7");
 const fam = P.rollPack("fam:pokemon");
 ok(fam.every((c) => CARD[c.id].fam === "pokemon"), "booster de famille : uniquement cette famille");
 ok(P.rollPack("arsenal").every((c) => CARD[c.id].type !== "char") && P.rollPack("heros").every((c) => CARD[c.id].type === "char"), "boosters Arsenal (sans personnage) et Héros (que des personnages)");
 const before = Object.values(t.coll).reduce((s, n) => s + n, 0) + Object.values(t.foil).reduce((s, n) => s + n, 0);
 const op = P.openPack(t, "multi");
 ok(!op.error && op.cards.length === 5 && op.t.packs.multi === 2, "ouvrir un booster consomme le booster");
+ok(op.jet >= 1 && op.t.jet === (t.jet || 0) + op.jet, `jetons de brillance en bonus dans le booster (+${op.jet})`);
+{
+  let r0 = 0; const seq = [0.001, ...Array(40).fill(0.5)]; const fake = () => seq[r0++] ?? 0.5; // premier tirage < 0,5 % : booster doré
+  const gold = P.openPack({ ...t, packs: { prestige: 1 } }, "prestige", fake);
+  ok(gold.golden && gold.jet >= P.JET_GOLDEN + 3 && gold.cards.every((c) => ["R", "E", "L"].includes(CARD[c.id].r)), `booster doré : rares ou mieux et ${gold.jet} jetons`);
+}
 t = op.t;
 ok(Object.values(t.coll).reduce((s, n) => s + n, 0) + Object.values(t.foil).reduce((s, n) => s + n, 0) === before + 5, "les 5 cartes rejoignent la collection");
 ok(P.openPack({ ...t, packs: {} }, "multi").error, "pas de booster : refusé");
@@ -46,7 +53,7 @@ ok(P.buyPack({ ...t, ec: 10 }, "multi").error && !P.buyPack({ ...t, ec: 500 }, "
 const offers = P.shopOffers(t, "2026-11-09");
 ok(offers.length === 6 && JSON.stringify(offers) === JSON.stringify(P.shopOffers(t, "2026-11-09")), "boutique : 6 cartes, les mêmes toute la journée");
 ok(JSON.stringify(offers) !== JSON.stringify(P.shopOffers(t, "2026-11-10")), "la boutique change le lendemain");
-ok(offers.every((o) => o.price >= P.PRICE[CARD[o.id].r]), "prix selon la rareté (brillante = ×3)");
+ok(offers.every((o) => o.price === P.PRICE[CARD[o.id].r] && o.foil === (CARD[o.id].cost >= 7)), "prix selon la rareté ; pas de brillante en vente (sauf les cartes 7)");
 ok(["E", "L"].includes(CARD[offers[5].id].r), "la carte vedette est épique ou légendaire");
 const rich = { ...t, ec: 100000 };
 const b1 = P.buyOffer(rich, 0, "2026-11-09");
@@ -57,6 +64,20 @@ ok(P.buyOffer(b1.t, 0, "2026-11-09").error, "chaque offre ne s'achète qu'une fo
 const many = { ...t, coll: { ...t.coll, "lyoko-krabe-3": 5 } };
 const rc = P.recycle(many);
 ok(rc.t.coll["lyoko-krabe-3"] === 2 && rc.gained >= 3 * P.RECYCLE.C, "recyclage des doubles en Éclats");
+ok(rc.jet >= 3 * P.JET_RECYCLE.C && rc.t.jet === (many.jet || 0) + rc.jet && P.recyclable(many).jet === rc.jet, `recyclage : jetons de brillance aussi (+${rc.jet})`);
+
+// jetons de brillance : rendre brillante une carte de coût 0 à 6
+{
+  ok(P.shineCost(CARD["lyoko-kankrelat-1"]) === 1 && P.shineCost(CARD["lyoko-blok-2"]) === 1 && P.shineCost(CARD["lyoko-krabe-3"]) === 2
+    && P.shineCost(CARD["lyoko-tarentule-4"]) === 3 && P.shineCost(CARD["lyoko-megatank-5"]) === 4 && P.shineCost(CARD["lyoko-william-dunbar-6"]) === 5
+    && P.shineCost(CARD["lyoko-xana-7"]) === 0, "prix en jetons : 1 jusqu'au coût 2, puis 2, 3, 4, 5 pour les coûts 3 à 6");
+  const base = P.normalizeTcg({ jet: 4, coll: { "lyoko-krabe-3": 2, "lyoko-megatank-5": 1 }, foil: { "lyoko-xana-7": 1 } });
+  const sh = P.shineCard(base, "lyoko-krabe-3");
+  ok(!sh.error && sh.t.jet === 2 && sh.t.coll["lyoko-krabe-3"] === 1 && sh.t.foil["lyoko-krabe-3"] === 1, "Krabe 3 rendu brillant pour 2 jetons (un exemplaire normal devient brillant)");
+  ok(P.shineCard(sh.t, "lyoko-megatank-5").error && P.shineCard(base, "lyoko-xana-7").error && P.shineCard(base, "lyoko-blok-2").error, "refusé : pas assez de jetons, carte 7, ou carte non possédée");
+  const rich2 = P.normalizeTcg({ jet: 0, coll: { "lyoko-krabe-3": 1 }, foil: { "lyoko-krabe-3": 2 } });
+  ok(P.recyclable(rich2).gained === P.RECYCLE.C, "une brillante en trop ne vaut pas plus qu'une normale au recyclage");
+}
 
 // quêtes, niveaux, fin de partie
 t = P.ensureQuests(t, "2026-11-09");
@@ -86,8 +107,10 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
 
 // outils du compte testeur
 {
-  const g = P.testerGift(P.normalizeTcg({ ec: 5 }), { ec: 10000, packs: { multi: 10, prestige: 5, inconnu: 3 } });
-  ok(g.ec === 10005 && g.packs.multi === 10 && g.packs.prestige === 5 && !g.packs.inconnu, "testeur : Éclats et boosters ajoutés (booster inconnu ignoré)");
+  const g = P.testerGift(P.normalizeTcg({ ec: 5 }), { ec: 10000, jet: 50, packs: { multi: 10, prestige: 5, inconnu: 3 } });
+  ok(g.ec === 10005 && g.jet === 50 && g.packs.multi === 10 && g.packs.prestige === 5 && !g.packs.inconnu, "testeur : Éclats, jetons et boosters ajoutés (booster inconnu ignoré)");
+  const u = P.unlockCards(P.normalizeTcg({ coll: { "lyoko-krabe-3": 1 } }), ["lyoko-krabe-3", "lyoko-xana-7", "inconnue"]);
+  ok(u.added === 2 && u.t.coll["lyoko-krabe-3"] === 2 && u.t.foil["lyoko-xana-7"] === 2, "testeur : cartes illustrées débloquées en 2 exemplaires (les 7 en brillantes)");
 }
 
 // cartes renommées, remplacées et retirées : les anciennes sauvegardes suivent

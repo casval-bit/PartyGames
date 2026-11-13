@@ -18,12 +18,15 @@ export const shopSeenToday = () => { try { return localStorage.getItem(SHOP_KEY)
 export const markShopSeen = () => { try { localStorage.setItem(SHOP_KEY, P.today()); } catch { /* stockage indisponible */ } };
 const fmtLeft = (ms) => { const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000); return h ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`; };
 
-/** Boosters à ouvrir et Éclats (la monnaie, le diamant) : en haut de l'accueil et de chaque partie du Trône des Mondes. */
+/** Boosters à ouvrir, jetons de brillance et Éclats (la monnaie, le diamant) : en haut de l'accueil et de chaque partie du Trône des Mondes. */
 export function HubCurrencies({ t, go, nPacks }) {
   return (
     <div className="hh-curs">
       <button className="hh-cur packs" onClick={() => go("packs")} title="Boosters à ouvrir" aria-label={`Boosters : ${nPacks} à ouvrir`}>
         <Icon name="gift" size={18} /><b>{nPacks}</b>
+      </button>
+      <button className="hh-cur jet" onClick={() => go("coll")} title="Jetons de brillance : rendent une de tes cartes brillante (Mes cartes, touche une carte)" aria-label={`${t.jet} jetons de brillance, ouvrir Mes cartes`} data-testid="hub-jet">
+        <Icon name="sparkles" size={18} /><b>{t.jet.toLocaleString("fr-FR")}</b>
       </button>
       <button className="hh-cur ec" onClick={() => go("shop")} title="Éclats, la monnaie du jeu : boutique du jour et boosters" aria-label={`${t.ec} Éclats, ouvrir la boutique`}>
         <Icon name="gem" size={18} /><b>{t.ec.toLocaleString("fr-FR")}</b><span className="plus" aria-hidden="true"><Icon name="plus" size={13} stroke={2.4} /></span>

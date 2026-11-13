@@ -117,6 +117,9 @@ async function loadBundled() {
   } catch { /* pas d'images intégrées */ }
 }
 
+/** Cartes qui ont une vraie image (intégrée à l'appli ou choisie sur cet appareil) : outil testeur « débloquer les cartes illustrées ». */
+export const illustratedIds = () => [...new Set([...bundled.keys(), ...mem.keys()])].filter((id) => CARD[id]);
+
 function start() {
   if (started || typeof indexedDB === "undefined") return;
   started = true;

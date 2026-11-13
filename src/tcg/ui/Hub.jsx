@@ -22,6 +22,15 @@ import TcgProfile from "./TcgProfile.jsx";
 import TcgSettings from "./TcgSettings.jsx";
 
 const EC = ({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
+/** Rendre brillante une carte de la collection (CardZoom, prop shine) : jetons de brillance du joueur. */
+const shineOf = (t, setT, flash) => ({
+  jet: t.jet,
+  onShine: (id) => {
+    const r = P.shineCard(t, id);
+    if (r.error) { flash(r.error); sfx.error(); return; }
+    setT(r.t); sfx.win(); flash(`${CARD[id].name} est maintenant brillante (-${r.cost} jeton${r.cost > 1 ? "s" : ""}).`);
+  },
+});
 const famStyle = (f, pt) => ({ "--fc": subOf(f.id, pt) ? subOf(f.id, pt).color : f.color });
 const fmtTime = (ms) => { const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000); return h ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`; };
 
@@ -184,10 +193,11 @@ function Collection({ t, own, setT, flash }) {
         <div className="hub-row">
           <div className="grow"><b>{distinct} / {ALL.length} cartes différentes</b><small>{Object.keys(t.foil).length} brillante{Object.keys(t.foil).length > 1 ? "s" : ""} · {Object.values(own).reduce((s, n) => s + n, 0)} cartes en tout</small></div>
           {rec.n > 0 && (rc
-            ? <button className="btn small good" onClick={() => { const r = P.recycle(t); setT(r.t); setRc(false); flash(`${r.n} doubles recyclés : +${r.gained} Éclats.`); sfx.apply(); }}>Confirmer +{rec.gained}</button>
+            ? <button className="btn small good" onClick={() => { const r = P.recycle(t); setT(r.t); setRc(false); flash(`${r.n} doubles recyclés : +${r.gained} Éclats, +${r.jet} jeton${r.jet > 1 ? "s" : ""} de brillance.`); sfx.apply(); }}>Confirmer +{rec.gained}</button>
             : <button className="btn small" onClick={() => setRc(true)}><Icon name="repeat" size={16} />Recycler</button>)}
         </div>
-        {rec.n > 0 && <small className="muted" style={{ fontSize: ".76rem" }}>Recycler transforme les exemplaires en trop ({rec.n} : au-delà de 2 normales et 1 brillante) en {rec.gained} Éclats.</small>}
+        {rec.n > 0 && <small className="muted" style={{ fontSize: ".76rem" }}>Recycler transforme les exemplaires en trop ({rec.n} : au-delà de 2 normales et 1 brillante) en {rec.gained} Éclats et {rec.jet} jeton{rec.jet > 1 ? "s" : ""} de brillance.</small>}
+        <small className="muted" style={{ fontSize: ".76rem" }}><Icon name="sparkles" size={13} /> {t.jet} jeton{t.jet > 1 ? "s" : ""} de brillance : touche une de tes cartes (coût 6 ou moins) pour la rendre brillante. Les cartes 7 le sont toujours.</small>
         <span className="bar2 blue" style={{ display: "block" }}><i style={{ width: `${(100 * distinct) / ALL.length}%` }} /></span>
       </div>
       <button className="hub-card alb-entry" onClick={() => { setAlbum(true); sfx.select(); }}>
@@ -236,8 +246,8 @@ function Collection({ t, own, setT, flash }) {
         </div>
       </div>
       {names && <ArtList flash={flash} onZoom={setZoom} onClose={() => setNames(false)} />}
-      {album && <Album t={t} onClose={() => setAlbum(false)} />}
-      {zoom && <CardZoom id={zoom} foil={(t.foil[zoom] || 0) > 0} owned={{ n: t.coll[zoom] || 0, f: t.foil[zoom] || 0 }} art onClose={() => setZoom(null)} />}
+      {album && <Album t={t} shine={shineOf(t, setT, flash)} onClose={() => setAlbum(false)} />}
+      {zoom && <CardZoom id={zoom} foil={(t.foil[zoom] || 0) > 0} owned={{ n: t.coll[zoom] || 0, f: t.foil[zoom] || 0 }} art shine={shineOf(t, setT, flash)} onClose={() => setZoom(null)} />}
     </div>
   );
 }
@@ -274,7 +284,7 @@ function PacksBuy({ t, setT, flash, note = true }) {
         <button className="btn ghost small" onClick={() => setFamOpen(!famOpen)}><Icon name={famOpen ? "minus" : "plus"} size={16} />Boosters d'une seule famille</button>
         {famOpen && P.PACKS.filter((p) => p.fam).map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
       </div>
-      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare. Brillantes : les cartes 7 le sont toujours ; les autres de 2 % (commune) à 12 % (légendaire) de chances, une fois et demie plus dans les boosters Arsenal et Prestige. 1 booster sur 200 est doré (que des rares ou mieux, toutes brillantes). Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>}
+      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>}
     </>
   );
 }
@@ -322,7 +332,7 @@ function Shop({ t, setT, flash }) {
           );
         })}
       </div>
-      <p className="muted hub-note">Prix : commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 Éclats ; ×3 pour une brillante en plus (les cartes 7, toujours brillantes, gardent leur prix).</p>
+      <p className="muted hub-note">Prix : commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 Éclats. Les cartes 7 sont toujours brillantes ; les autres se rendent brillantes avec des jetons de brillance.</p>
       {zoom && <CardZoom id={zoom.id} foil={zoom.foil} owned={{ n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 }} onClose={() => setZoom(null)} />}
     </div>
   );
@@ -452,7 +462,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
     const r = P.openPack(t, id);
     if (r.error) { flash(r.error); return; }
     setT(r.t);
-    setOpening({ id, cards: r.cards, key: Date.now() });
+    setOpening({ id, cards: r.cards, jet: r.jet, golden: r.golden, key: Date.now() });
   };
 
   if (edit) {
@@ -513,12 +523,12 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
         {content}
         {toast && <div className="toast hub-toast" role="status">{toast}</div>}
         {opening && (
-          <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} left={t.packs[opening.id] || 0}
+          <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} jet={opening.jet} golden={opening.golden} left={t.packs[opening.id] || 0}
             onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
         )}
-        {album && <Album t={t} onClose={() => { setAlbum(false); sfx.close(); }} />}
+        {album && <Album t={t} shine={shineOf(t, setT, flash)} onClose={() => { setAlbum(false); sfx.close(); }} />}
         {zoom && (zoom.id
-          ? <CardZoom id={zoom.id} foil={(t.foil[zoom.id] || 0) > 0} owned={CARD[zoom.id] && CARD[zoom.id].type !== "plot" ? { n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 } : null} onClose={() => setZoom(null)} />
+          ? <CardZoom id={zoom.id} foil={(t.foil[zoom.id] || 0) > 0} owned={CARD[zoom.id] && CARD[zoom.id].type !== "plot" ? { n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 } : null} shine={shineOf(t, setT, flash)} onClose={() => setZoom(null)} />
           : <CardZoom fam={zoom.fam} pt={zoom.pt} onClose={() => setZoom(null)} />)}
         {rules && <Rules onClose={() => setRules(false)} />}
         {settings && <TcgSettings acc={acc} onAccount={onAccount} t={t} setT={setT} flash={flash} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}

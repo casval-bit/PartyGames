@@ -408,8 +408,9 @@ Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-l
 
 **Tester sur son compte en local** (`npm run dev`, `npm run desktop`) : le fichier `.env` à la racine du projet (jamais versionné) donne
 `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (les mêmes que les secrets GitHub) ; sans lui, l'appli locale reste en mode local, sans compte.
-`VITE_TESTEURS` (adresses séparées par des virgules) : connecté avec une de ces adresses, Trône des Mondes > Paramètres montre des boutons
-pour ajouter des Éclats et des boosters, sauvegardés sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
+`VITE_TESTEURS` (adresses séparées par des virgules) : sur un ordinateur où elle est remplie, Trône des Mondes > Paramètres montre des outils de test
+pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, boosters, et « Débloquer les cartes illustrées »
+(2 exemplaires de chaque carte qui a une vraie image). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
 **Jouer** : dans le lobby, Jeu > **Trône des Mondes** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
 Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
 (Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés
@@ -448,10 +449,14 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   et se renforce quand on penche ou agite la carte (pas de balayage lumineux en grand ; sur la table et dans la collection, un éclat passe toutes les 11 s environ,
   décalé d'une carte à l'autre), et on feuillette l'album avec les flèches (← → au clavier).
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
-  **Brillantes** : une carte 7 l'est toujours ; les autres le sont d'autant plus souvent qu'elles sont rares (commune 2 %, peu commune 3 %,
-  rare 5 %, épique 8 %, légendaire 12 %, ×1,5 dans les boosters Arsenal et Prestige). 1 booster sur 200 est **doré** (que des rares ou mieux, toutes brillantes). Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
+  **Brillantes** : une carte 7 l'est toujours (reflet arc-en-ciel, cadre doré). Les autres ne le sont jamais en sortant d'un booster ou de la boutique :
+  on les rend brillantes avec des **jetons de brillance** (Mes cartes ou Album, touche une carte : 1 jeton jusqu'au coût 2, puis 2, 3, 4 et 5 jetons
+  pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté, paillettes. Les jetons viennent
+  du recyclage des doubles (1 par commune ou peu commune, 2 par rare, 3 par épique, 5 par légendaire) et de chaque booster (1, ou 3 pour un Prestige ;
+  un de plus une fois sur 4). 1 booster sur 200 est **doré** : que des rares ou mieux, et 10 jetons en plus. Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
-  (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; ×3 pour une brillante en plus, les cartes 7, toujours brillantes, gardant leur prix).
+  (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; pas de brillante en vente, sauf les cartes 7).
+  Recycler les doubles (au-delà de 2 normales et 1 brillante) rapporte des Éclats selon la rareté, et des jetons de brillance.
 - **Niveaux** : un booster à chaque niveau (un Prestige tous les 5). **3 quêtes par jour** (une peut être changée) et 13 succès.
 - Tout est enregistré dans le profil (`profile.tcg`, y compris la photo `av`, le cadre `fr` et les compteurs à vie de `st`), donc sauvegardé sur le compte quand on est connecté.
 

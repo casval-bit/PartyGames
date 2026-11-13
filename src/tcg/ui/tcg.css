@@ -242,6 +242,25 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 /* vraie image (choisie ou intégrée) : reflet arc-en-ciel plus léger, pour ne pas délaver l'illustration */
 .tc.foil.photo::after { opacity: .26; }
 .tz-card .tc.foil.photo::after { opacity: calc(.3 + .34 * var(--hi, 0)); }
+/* brillante faite avec des jetons (cartes de coût 0 à 6) : un autre foil que l'arc-en-ciel des cartes 7, un peu moins éclatant :
+   cadre chromé argenté qui miroite, bandes de reflet argentées qui glissent sur la carte, paillettes qui scintillent ; pas de balayage */
+.tc.foil.lite .tc-fr { background: linear-gradient(125deg, #eef4ff 0%, #9aabc4 18%, #ffffff 34%, #7f91ad 52%, #f2f7ff 68%, #a7b6cc 84%, #ffffff 100%) 0 0 / 220% 220%;
+  animation: liteFrame 6s linear infinite; box-shadow: inset 0 0 0 .55cqw rgba(255,255,255,.5); }
+@keyframes liteFrame { to { background-position: 220% 220%; } }
+.tc.foil.lite::after { mix-blend-mode: overlay; opacity: .8; animation: liteSheen 6.5s ease-in-out infinite;
+  background: repeating-linear-gradient(var(--fa, 120deg), rgba(255,255,255,0) 0%, rgba(255,255,255,0) 7%, rgba(255,255,255,.6) 11%, rgba(205,228,255,.4) 14%, rgba(255,255,255,0) 19%) 0 0 / 220% 220%; }
+@keyframes liteSheen { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
+.tc.foil.lite::before { mix-blend-mode: color-dodge; opacity: .5; animation: liteTwinkle 2.8s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255,255,255,.95) 0 .3cqw, transparent .52cqw) 0 0 / 9.3cqw 11.1cqw,
+    radial-gradient(circle, rgba(220,235,255,.9) 0 .22cqw, transparent .42cqw) 4.1cqw 5.3cqw / 12.7cqw 8.9cqw,
+    radial-gradient(circle, rgba(255,250,235,.85) 0 .18cqw, transparent .36cqw) 7.4cqw 2.2cqw / 15.1cqw 13.3cqw,
+    radial-gradient(circle at var(--sx, 30%) var(--sy, 20%), rgba(255,255,255,.5), transparent 36%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 52%, rgba(0,0,0,.3) 64%, rgba(0,0,0,.18)); mask-image: linear-gradient(to bottom, #000 0 52%, rgba(0,0,0,.3) 64%, rgba(0,0,0,.18)); }
+@keyframes liteTwinkle { 0%, 100% { opacity: .32; } 50% { opacity: .68; } }
+.tc.foil.lite .tc-shine { display: none; }
+.tc.foil.lite.photo::after { opacity: .65; }
+.tz-card .tc.foil.lite::after { opacity: calc(.7 + .3 * var(--hi, 0)); filter: brightness(calc(1 + .25 * var(--hi, 0))); }
+.tz-card .tc.foil.lite.photo::after { opacity: calc(.6 + .3 * var(--hi, 0)); }
 .tz-card .tc.missing { filter: grayscale(1) brightness(.78); }
 .tz-card .tc.missing .tc-art img { opacity: .75; }
 .tz-stage { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -939,6 +958,8 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .hh-cur.packs > svg { color: #7fd3ff; }
 .hh-cur.ec { padding-right: 6px; border-color: rgba(206,178,255,.6); background: linear-gradient(180deg, rgba(180,140,255,.24), rgba(40,20,90,.55)); box-shadow: 0 0 16px rgba(180,140,255,.2), var(--card-hi); }
 .hh-cur.ec > svg { color: #e7dbff; filter: drop-shadow(0 0 5px rgba(206,178,255,.9)); }
+.hh-cur.jet { border-color: rgba(190,230,255,.45); background: linear-gradient(180deg, rgba(160,220,255,.16), rgba(10,30,60,.55)); }
+.hh-cur.jet > svg { color: #dff4ff; filter: drop-shadow(0 0 5px rgba(160,220,255,.9)); }
 .hh-cur .plus { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(180deg, #c9a7ff, #7c4ddb); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
 
 /* nom du jeu */
@@ -1125,6 +1146,7 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 /* téléphone : en-têtes plus compacts */
 @container hubh (max-width: 560px) {
   .hh-cur.packs, .hh-cur .plus, .hs-ico, .hh-me-go { display: none; }
+  .hh-cur.jet { padding: 0 10px; gap: 5px; }
   .hh-cur.ec { padding-right: 12px; }
   .hh-me { padding-right: 10px; }
   .hh-me-txt b { max-width: 104px; }
@@ -1259,3 +1281,9 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 /* paramètres : outils du compte testeur */
 .tset-test { display: flex; flex-wrap: wrap; gap: 8px; }
 .tset-test .btn { flex: 1 1 140px; }
+
+/* fin d'un booster : jetons de brillance gagnés */
+.bo-jet { align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; font: 700 .95rem var(--display); color: #eaf6ff;
+  background: linear-gradient(180deg, rgba(160,220,255,.18), rgba(10,30,60,.6)); border: 1px solid rgba(190,230,255,.5); box-shadow: 0 0 18px rgba(160,220,255,.25); animation: tzIn .4s ease-out both .35s; }
+.bo-jet svg { color: #dff4ff; }
+.tz-shine .btn { align-self: flex-start; }

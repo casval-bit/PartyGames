@@ -50,7 +50,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   const full = d && d.r === "L";
   const art = useCardArt(d, big || (typeof w === "number" && w > 170), full);
   const photo = Boolean(useArt(d && d.id)); // vraie image (choisie ou intégrée) : reflet brillant plus doux, pour ne pas la délaver
-  const shiny = (foil || alwaysFoil(d)) && !missing; // les cartes 7 sont toujours brillantes
+  const shiny = (foil || alwaysFoil(d)) && !missing; // les cartes 7 sont toujours brillantes (arc-en-ciel) ; les autres le deviennent avec des jetons (« lite » : foil argenté)
   if (!d) return null;
   if (d.type === "plot") return <PlotFace d={d} w={w} big={big} className={className} style={style} onClick={onClick} {...rest} />;
   const f = famOf(d);
@@ -61,7 +61,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   const Tag = onClick ? "button" : "div";
   const s = str !== undefined && d.type === "char" ? str : d.str;
   return (
-    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
+    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && !alwaysFoil(d) ? " lite" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
       aria-label={onClick ? `${d.name}${d.title ? ", " + d.title : ""}` : undefined} {...rest}>
       <span className="tc-fr" />
       <div className="tc-in">

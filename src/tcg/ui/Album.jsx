@@ -20,7 +20,7 @@ const byFamily = (a, b) => FAM_ORDER.indexOf(a.fam) - FAM_ORDER.indexOf(b.fam) |
 const byCost = (a, b) => a.cost - b.cost || a.name.localeCompare(b.name, "fr") || FAM_ORDER.indexOf(a.fam) - FAM_ORDER.indexOf(b.fam) || a.id.localeCompare(b.id);
 const SHOW = [["all", "Toutes"], ["own", "Obtenues"], ["miss", "Manquantes"], ["foil", "Brillantes"]];
 
-export default function Album({ t, onClose }) {
+export default function Album({ t, onClose, shine }) {
   const [q, setQ] = useState("");
   const [fam, setFam] = useState("all");
   const [show, setShow] = useState("all");
@@ -114,10 +114,10 @@ export default function Album({ t, onClose }) {
           );
         })}
         {list.length > lim && <div ref={end} className="alb-more"><button className="btn ghost small" onClick={() => setLim(lim + STEP * 2)}>Voir plus ({list.length - lim})</button></div>}
-        {!list.length && <div className="hub-empty">{show === "foil" ? "Aucune carte brillante pour l'instant : environ 4 % des cartes des boosters le sont." : show === "own" ? "Aucune carte obtenue avec ces filtres." : show === "miss" ? "Tu as toutes les cartes de ce choix !" : "Aucune carte avec ces filtres."}</div>}
+        {!list.length && <div className="hub-empty">{show === "foil" ? "Aucune carte brillante pour l'instant : les cartes 7 le sont toujours, et les autres se rendent brillantes avec des jetons de brillance (touche une de tes cartes)." : show === "own" ? "Aucune carte obtenue avec ces filtres." : show === "miss" ? "Tu as toutes les cartes de ce choix !" : "Aucune carte avec ces filtres."}</div>}
       </div>
       {zd && (
-        <CardZoom id={zd.id} foil={(t.foil[zd.id] || 0) > 0} missing={!has(zd.id)} owned={{ n: t.coll[zd.id] || 0, f: t.foil[zd.id] || 0 }} art
+        <CardZoom id={zd.id} foil={(t.foil[zd.id] || 0) > 0} missing={!has(zd.id)} owned={{ n: t.coll[zd.id] || 0, f: t.foil[zd.id] || 0 }} art shine={shine}
           pos={`${zoom + 1} / ${list.length}`} onPrev={zoom > 0 ? () => go(zoom - 1) : undefined} onNext={zoom < list.length - 1 ? () => go(zoom + 1) : undefined}
           onClose={() => setZoom(null)} />
       )}

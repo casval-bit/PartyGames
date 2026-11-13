@@ -6,7 +6,8 @@ import { APPAREIL, DESKTOP, desktop } from "../../lib/device.js";
 import { useFullscreen } from "../../lib/orientation.js";
 import AccountBadge from "../../ui/AccountBadge.jsx";
 import { setTcgPrefs, useTcgPrefs } from "../prefs.js";
-import { isTester } from "../../config.js";
+import { canTest } from "../../config.js";
+import { illustratedIds } from "./artStore.js";
 import * as P from "../progress.js";
 
 function Row({ icon, label, hint, children }) {
@@ -67,14 +68,21 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
           )}
         </div>
 
-        {isTester(acc) && t && setT && (
+        {canTest(acc) && t && setT && (
           <div className="tset-group" data-testid="tset-tester">
-            <span className="eyebrow">Testeur ({acc.user.email})</span>
-            <p className="muted tset-note">Seulement pour les comptes de VITE_TESTEURS (fichier .env de cet ordinateur). Sauvegardé sur ton compte.</p>
+            <span className="eyebrow">Testeur ({acc && acc.user ? acc.user.email : "profil local"})</span>
+            <p className="muted tset-note">Seulement sur cet ordinateur (VITE_TESTEURS dans le fichier .env) : profil local, ou compte de la liste.{acc && acc.user ? " Sauvegardé sur ton compte." : ""}</p>
             <div className="tset-test">
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { ec: 10000 })); sfx.coin(); if (flash) flash("+10 000 Éclats"); }}><Icon name="gem" size={16} />+10 000 Éclats</button>
+              <button className="btn small" onClick={() => { setT(P.testerGift(t, { jet: 50 })); sfx.coin(); if (flash) flash("+50 jetons de brillance"); }}><Icon name="sparkles" size={16} />+50 jetons</button>
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { packs: { multi: 10 } })); sfx.apply(); if (flash) flash("+10 boosters Multivers"); }}><Icon name="gift" size={16} />+10 Multivers</button>
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { packs: { prestige: 5 } })); sfx.apply(); if (flash) flash("+5 boosters Prestige"); }}><Icon name="gift" size={16} />+5 Prestige</button>
+              <button className="btn small" data-testid="tset-unlock" onClick={() => {
+                const ids = illustratedIds();
+                const r = P.unlockCards(t, ids);
+                setT(r.t); sfx.win();
+                if (flash) flash(ids.length ? `${ids.length} cartes illustrées : ${r.added} débloquée${r.added > 1 ? "s" : ""} (2 exemplaires chacune).` : "Aucune carte illustrée trouvée (dossier illustrations vide ?).");
+              }}><Icon name="image" size={16} />Débloquer les cartes illustrées</button>
             </div>
           </div>
         )}
