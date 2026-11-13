@@ -2,7 +2,7 @@
 // Lancer : node tools/test-tcg-progress.js
 import * as P from "../src/tcg/progress.js";
 import { CARD } from "../src/tcg/cards/index.js";
-import { starters, validateDeck } from "../src/tcg/deck.js";
+import { starters, validateDeck, deckSize, fillDeck } from "../src/tcg/deck.js";
 import { Game } from "../src/tcg/engine.js";
 import { publicView, privateView } from "../src/tcg/view.js";
 
@@ -131,6 +131,61 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(P.normalizeTcg(m).ec === m.ec, "remboursement une seule fois (sauvegarde déjà à jour)");
   ok(m.av === null, "photo d'une carte retirée : abandonnée");
   ok(P.normalizeTcg({ coll: { "lyoko-aelita-hopper-4": 1, "lyoko-aelita-stones-4": 1 } }).coll["lyoko-aelita-hopper-4"] === 2, "ancien et nouvel identifiant : les exemplaires s'additionnent");
+  ok(deckSize(m.decks[0]) === 7 && d["lyoko-ninjas-de-tyron-2"] === 1, "deck : la carte retirée est remplacée (autant de cartes qu'avant), d'abord par une carte possédée libre");
+  ok(P.normalizeTcg({ coll: { "lyoko-aelita-hopper-4-2": 1 } }).coll["lyoko-aelita-hopper-4"] === 1, "Aelita Hopper 4 « Gardienne » (version de test) devient L'elfe de Lyoko");
+}
+
+// decks de 50 cartes abîmés par les cartes retirées (Franz Hopper 7, le Clone de William, Anthea Hopper…) : réparés
+{
+  const cut = (sid, v) => { // deck de départ déjà réenregistré sans 2 cartes (comme après la mise à jour du 13/11), profil version v
+    const t0 = P.chooseStarter(P.normalizeTcg(null), sid).t;
+    const deck = t0.decks[0], gone = Object.keys(deck.cards).filter((id) => CARD[id].type === "char" && CARD[id].cost === 3)[0];
+    delete deck.cards[gone]; delete t0.coll[gone];
+    return { raw: { ...JSON.parse(JSON.stringify(t0)), v }, gone };
+  };
+  for (const sid of ["lyoko-guerriers", "lyoko-xana"]) {
+    const { raw, gone } = cut(sid, 1);
+    ok(deckSize(raw.decks[0]) === 48, `${sid} : deck à 48/50 (cas de Brice)`);
+    const t1 = P.normalizeTcg(raw);
+    ok(deckSize(t1.decks[0]) === 50 && validateDeck(t1.decks[0], P.owned(t1)).ok && P.playableDeck(t1), `${sid} : deck réparé à 50 cartes, jouable avec la collection`);
+    ok(Object.entries(t1.decks[0].cards).every(([id, k]) => (P.owned(t1)[id] || 0) >= k) && (t1.coll[gone] || 0) <= 2, `${sid} : les cartes ajoutées sont dans la collection (${CARD[gone].name} rendu)`);
+    ok(JSON.stringify(P.normalizeTcg(JSON.parse(JSON.stringify(t1)))) === JSON.stringify(t1), `${sid} : réparation faite une seule fois (résultat stable)`);
+  }
+  ok(deckSize(P.normalizeTcg(cut("lyoko-xana", 2).raw).decks[0]) === 48, "profil déjà à jour (v2) : un deck incomplet reste un brouillon");
+  ok(deckSize(P.normalizeTcg(cut("leg-gryf", 1).raw).decks[0]) === 48, "ancien profil : un deck incomplet d'une autre famille n'est pas touché");
+  const old = P.chooseStarter(P.normalizeTcg(null), "lyoko-guerriers").t;
+  const raw = JSON.parse(JSON.stringify(old));
+  const k = Object.keys(raw.decks[0].cards).find((id) => CARD[id].type === "char" && CARD[id].cost < 7);
+  delete raw.decks[0].cards[k]; raw.decks[0].cards["lyoko-franz-hopper-7"] = 1; raw.decks[0].cards["lyoko-anthea-hopper-3"] = 1;
+  const t2 = P.normalizeTcg(raw);
+  ok(deckSize(t2.decks[0]) === 50 && validateDeck(t2.decks[0], P.owned(t2)).ok, "deck contenant encore Franz Hopper 7 et Anthea Hopper : complété dès l'ouverture");
+}
+
+// « Compléter avec mes cartes » (constructeur de deck) : seulement des cartes possédées, règles respectées
+{
+  const t0 = P.chooseStarter(P.normalizeTcg(null), "lyoko-xana").t;
+  const deck = JSON.parse(JSON.stringify(t0.decks[0]));
+  const ids = Object.keys(deck.cards).slice(-2);
+  for (const id of ids) delete deck.cards[id];
+  const own = P.owned(t0);
+  for (const id of ids) delete own[id];
+  const r0 = fillDeck(deck, { owned: own });
+  ok(deckSize({ cards: r0.cards }) === 46 && r0.missing === 4 && !Object.keys(r0.granted).length, "rien de libre dans la collection : rien d'ajouté, il manque 4 cartes");
+  const own2 = { ...own };
+  for (const id of ids) own2[id] = 2;
+  const r1 = fillDeck(deck, { owned: own2 });
+  const filled = { ...deck, cards: r1.cards };
+  ok(r1.missing === 0 && deckSize(filled) === 50 && validateDeck(filled, own2).ok, "cartes possédées libres : deck complété à 50, valide");
+  ok(Object.values(r1.added).reduce((s, x) => s + x, 0) === 4 && !Object.keys(r1.granted).length, "seules les places libres sont remplies, rien n'est offert");
+}
+
+// compte testeur : recharge automatique ; fusion de deux copies à égalité : la plus récente
+{
+  const low = P.normalizeTcg({ ec: 12, jet: 3 });
+  const f = P.testerFloor(low);
+  ok(f && f.ec === P.TEST_FLOOR.ec && f.jet === P.TEST_FLOOR.jet, "testeur : Éclats et jetons rechargés");
+  ok(P.testerFloor(f) === null && P.testerFloor({ ec: 2e5, jet: 900 }) === null, "testeur : rien à faire quand il y en a assez (pas de boucle)");
+  ok(P.mergeTcg({ xp: 5, ec: 10, at: 100 }, { xp: 5, ec: 99999, at: 200 }).ec === 99999 && P.mergeTcg({ xp: 5, ec: 99999, at: 200 }, { xp: 5, ec: 10, at: 100 }).ec === 99999, "fusion à égalité : la copie la plus récente gagne (Éclats offerts pas perdus)");
 }
 
 // profil du jeu : photo (carte 7 possédée) et cadres à débloquer

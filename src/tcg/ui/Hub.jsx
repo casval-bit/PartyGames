@@ -20,8 +20,9 @@ import { useTcgPrefs } from "../prefs.js";
 import HubHome, { HubCurrencies, markShopSeen } from "./HubHome.jsx";
 import TcgProfile from "./TcgProfile.jsx";
 import TcgSettings from "./TcgSettings.jsx";
+import { canTest } from "../../config.js";
 
-const EC = ({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
+const EC =({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
 /** Rendre brillante une carte de la collection (CardZoom, prop shine) : jetons de brillance du joueur. */
 const shineOf = (t, setT, flash) => ({
   jet: t.jet,
@@ -452,6 +453,13 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
   const prefs = useTcgPrefs();
   useEffect(() => sfx.enter("tcg"), []); // sons du Trône des Mondes : ses propres réglages tant qu'il est ouvert
   useEffect(() => { if (view === "shop") markShopSeen(); }, [view]);
+  // compte testeur (VITE_TESTEURS, sur cet ordinateur) : Éclats et jetons rechargés tout seuls (désactivable dans les paramètres)
+  const tester = canTest(acc);
+  useEffect(() => {
+    if (!tester || !prefs.unlimited) return;
+    const nt = P.testerFloor(t);
+    if (nt) setTcg(nt);
+  }, [tester, prefs.unlimited, t, setTcg]);
   const flash = (m) => { setToast(m); setTimeout(() => setToast((x) => (x === m ? "" : x)), 3000); };
   const setT = (nt) => setTcg(nt);
   const go = (v) => { if (v === view) return; setView(v); sfx.slide(); };

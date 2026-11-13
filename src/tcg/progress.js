@@ -7,8 +7,8 @@
 //   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (pas de brillante en vente, sauf les cartes 7) ;
 //   - quêtes du jour (XP + Éclats), succès permanents, XP de fin de partie (jamais 0, même en perdant).
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId } from "./cards/index.js";
-import { starterById, validateDeck } from "./deck.js";
-import { RARITY_ORDER } from "./rules.js";
+import { starterById, validateDeck, deckSize, fillDeck } from "./deck.js";
+import { RARITY_ORDER, DECK_RULES } from "./rules.js";
 
 export const CURRENCY = "Éclats";
 /** Les cartes de coût 7 sont toujours brillantes (tous leurs exemplaires). */
@@ -26,7 +26,8 @@ function rng(seed) { let s = seed >>> 0 || 1; return () => { s = (s + 0x6d2b79f5
 const pickW = (r, table) => { let x = r() * table.reduce((s, [, w]) => s + w, 0); for (const [v, w] of table) { x -= w; if (x <= 0) return v; } return table[table.length - 1][0]; };
 
 /* ------------------------------ profil vide ------------------------------ */
-export const emptyTcg = () => ({ v: 1, starter: null, ec: 0, xp: 0, jet: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [],
+// v : version du format (2 : les decks abîmés par des cartes retirées ont été réparés) ; at : dernière modification (ms)
+export const emptyTcg = () => ({ v: 2, at: 0, starter: null, ec: 0, xp: 0, jet: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [],
   st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"], seed: Math.random().toString(36).slice(2, 10) });
 
 /** Remet un profil lu du stockage dans une forme valide (cartes inconnues retirées, nombres vérifiés). */
@@ -47,6 +48,7 @@ export function normalizeTcg(raw) {
     refund += n(raw.coll && raw.coll[id]) * RECYCLE[x.r];
     refund += n(raw.foil && raw.foil[id]) * RECYCLE[x.r] * (x.seven ? 1 : 3);
   }
+  t.at = n(raw.at);
   t.starter = typeof raw.starter === "string" && starterById(raw.starter) ? raw.starter : null;
   t.ec = Math.min(1e7, n(raw.ec) + refund);
   t.xp = Math.min(1e8, n(raw.xp));
@@ -54,11 +56,28 @@ export function normalizeTcg(raw) {
   t.coll = cards(raw.coll);
   t.foil = cards(raw.foil);
   for (const [id, v] of Object.entries(t.coll)) if (alwaysFoil(CARD[id])) { t.foil[id] = Math.min(99, (t.foil[id] || 0) + v); delete t.coll[id]; } // cartes 7 : toujours brillantes
-  t.decks = Array.isArray(raw.decks) ? raw.decks.filter((d) => d && typeof d === "object" && FAMILY[d.fam]).slice(0, 40).map((d) => ({
-    id: String(d.id || Math.random().toString(36).slice(2, 9)).slice(0, 20), name: String(d.name || "Mon deck").slice(0, 32), fam: d.fam, pt: typeof d.pt === "string" ? d.pt : null,
-    cards: moved(d.cards, 2),
-    plots: Array.isArray(d.plots) ? d.plots.filter((id) => CARD[id] && CARD[id].type === "plot").slice(0, 7) : [],
-  })) : [];
+  // decks : les cartes renommées suivent. S'il manque des cartes à cause d'une carte retirée du jeu, le deck est complété
+  // (cartes possédées d'abord, sinon cartes du deck de départ offertes) : il reste jouable. Les anciens profils (v < 2) ont
+  // déjà perdu Franz Hopper 7, le Clone de William, Anthea Hopper ou Aelita Gardienne : leurs decks Code Lyoko incomplets sont repris.
+  const old = !(Number(raw.v) >= 2);
+  t.decks = Array.isArray(raw.decks) ? raw.decks.filter((d) => d && typeof d === "object" && FAMILY[d.fam]).slice(0, 40).map((d) => {
+    const deck = {
+      id: String(d.id || Math.random().toString(36).slice(2, 9)).slice(0, 20), name: String(d.name || "Mon deck").slice(0, 32), fam: d.fam, pt: typeof d.pt === "string" ? d.pt : null,
+      cards: moved(d.cards, 2),
+      plots: Array.isArray(d.plots) ? d.plots.filter((id) => CARD[id] && CARD[id].type === "plot").slice(0, 7) : [],
+    };
+    const size = deckSize(deck);
+    const before = Object.values(d.cards && typeof d.cards === "object" ? d.cards : {}).reduce((s, v) => s + Math.min(2, n(v)), 0);
+    const lyoko = deck.fam === "lyoko" || Object.keys(deck.cards).some((id) => CARD[id].fam === "lyoko");
+    // autant de cartes qu'avant (un brouillon reste un brouillon) ; deck Code Lyoko d'un ancien profil presque complet : 50
+    const upTo = before > size ? Math.min(DECK_RULES.size, before) : old && lyoko && size >= DECK_RULES.size - 6 ? DECK_RULES.size : size;
+    if (upTo > size) {
+      const r = fillDeck(deck, { owned: owned(t), extra: true, upTo });
+      deck.cards = r.cards;
+      for (const [id, k] of Object.entries(r.granted)) { const w = alwaysFoil(CARD[id]) ? "foil" : "coll"; t[w][id] = Math.min(99, (t[w][id] || 0) + k); }
+    }
+    return deck;
+  }) : [];
   t.sel = t.decks.some((d) => d.id === raw.sel) ? raw.sel : (t.decks[0] || {}).id || null;
   t.packs = Object.fromEntries(Object.entries(raw.packs || {}).filter(([id, v]) => packDef(id) && n(v) > 0).map(([id, v]) => [id, Math.min(999, n(v))]));
   t.quests = raw.quests && typeof raw.quests === "object" && Array.isArray(raw.quests.list) ? { day: String(raw.quests.day || ""), rr: n(raw.quests.rr), list: raw.quests.list.filter((q) => q && QUEST_BY[q.id]).slice(0, 3).map((q) => ({ id: q.id, n: n(q.n), got: Boolean(q.got), fam: typeof q.fam === "string" && FAMILY[q.fam] ? q.fam : null })) } : null;
@@ -79,7 +98,20 @@ export function normalizeTcg(raw) {
 export function mergeTcg(a, b) {
   const A = normalizeTcg(a), B = normalizeTcg(b);
   const score = (t) => t.xp * 1000 + Object.values(t.coll).reduce((s, v) => s + v, 0);
-  return score(A) >= score(B) ? A : B;
+  if (score(A) !== score(B)) return score(A) > score(B) ? A : B;
+  return B.at > A.at ? B : A; // à égalité (Éclats ou jetons seulement), la copie la plus récente
+}
+
+/** Outil de test : recharge automatique des Éclats et des jetons (compte testeur, voir TESTERS dans config.js). */
+export const TEST_FLOOR = { ec: 100000, jet: 500 };
+/** Le profil rechargé (au moins TEST_FLOOR Éclats et jetons), ou null s'il en a déjà assez. */
+export function testerFloor(t0, floor = TEST_FLOOR) {
+  const t = normalizeTcg(t0);
+  if (t.ec >= floor.ec && t.jet >= floor.jet) return null;
+  const out = clone(t);
+  out.ec = Math.max(out.ec, floor.ec);
+  out.jet = Math.max(out.jet, floor.jet);
+  return out;
 }
 
 /** Outils de test (compte testeur, voir TESTERS dans config.js) : ajoute des Éclats et des boosters. */

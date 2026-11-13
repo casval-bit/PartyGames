@@ -59,5 +59,13 @@ m = mergeProfiles(local, { xp: "999999", stats: 5, look: { a: "<x>" }, ach: { bi
 ok(m.stats.played === 3 && !m.ach.bidon && m.history.length === 3, "données cloud invalides : ignorées sans casser");
 ok(mergeProfiles(null, undefined).xp === 0, "deux profils absents : profil vide");
 
+// Trône des Mondes : même progression sur deux appareils, seuls les Éclats diffèrent -> la copie la plus récente
+{
+  const tA = { xp: 40, coll: { "lyoko-krabe-3": 2 }, ec: 10, at: 1000 }, tB = { xp: 40, coll: { "lyoko-krabe-3": 2 }, ec: 100000, at: 2000 };
+  const pa = { ...P.emptyProfile(), tcg: tA }, pb = { ...P.emptyProfile(), tcg: tB };
+  ok(mergeProfiles(pa, pb).tcg.ec === 100000 && mergeProfiles(pb, pa).tcg.ec === 100000, "TCG à égalité : la copie modifiée le plus récemment gagne");
+  ok(mergeProfiles({ ...pa, tcg: { ...tA, xp: 41 } }, pb).tcg.xp === 41, "TCG : la progression la plus avancée gagne toujours d'abord");
+}
+
 console.log(fail ? `\n${fail} ÉCHEC(S)` : "\nRÉSULTAT: TOUT BON");
 process.exit(fail ? 1 : 0);

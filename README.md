@@ -411,6 +411,11 @@ Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-l
 `VITE_TESTEURS` (adresses séparées par des virgules) : sur un ordinateur où elle est remplie, Trône des Mondes > Paramètres montre des outils de test
 pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, boosters, et « Débloquer les cartes illustrées »
 (2 exemplaires de chaque carte qui a une vraie image). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
+« Éclats et jetons à volonté » (activé par défaut, réglable au même endroit) : jamais moins de 100 000 Éclats et 500 jetons sur ces profils.
+**Decks et cartes retirées** : si une carte disparaît du jeu, chaque deck qui la contenait est complété tout seul (cartes possédées d'abord,
+sinon cartes du deck de départ de la famille offertes) ; les decks Code Lyoko abîmés par le retrait de Franz Hopper 7, du Clone de William
+et d'Anthea Hopper (48/50) sont réparés à l'ouverture. Dans le constructeur, « Compléter avec mes cartes » remplit les places libres d'un deck
+avec des cartes possédées (et les scénarios manquants avec la sélection conseillée).
 **Jouer** : dans le lobby, Jeu > **Trône des Mondes** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
 Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
 (Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés

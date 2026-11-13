@@ -63,6 +63,72 @@ export function legalPool(fam, pt) {
   return ALL.filter((d) => d.fam === "neutre" || (d.fam === fam && (!subs || !d.pt.length || !pt || d.pt.includes(pt))));
 }
 
+/** Le deck de départ le plus proche d'un deck : même famille (et même sous-groupe si possible), le plus de cartes en commun. */
+export function starterFor(deck) {
+  const all = starters().filter((s) => s.fam === deck.fam);
+  const same = all.filter((s) => (s.pt || null) === (deck.pt || null));
+  let best = null, bv = -1;
+  for (const s of same.length ? same : all) {
+    let v = 0;
+    for (const [id, n] of Object.entries(deck.cards || {})) v += Math.min(n, s.cards[id] || 0);
+    if (v > bv) { best = s; bv = v; }
+  }
+  return best;
+}
+
+const RARITY_RANK = { L: 4, E: 3, R: 2, U: 1, C: 0 };
+/**
+ * Complète un deck jusqu'à R.size cartes sans enfreindre les règles : cartes de sa famille (et de son type ou de sa région)
+ * ou neutres, une version par personnage, R.maxCopies exemplaires au plus, plafonds des coûts 5, 6 et 7, des lieux, des objets
+ * et événements, assez de personnages. Les cartes du deck de départ le plus proche passent en premier.
+ *   owned : { id: n } possédés (un exemplaire déjà dans le deck n'est plus libre) ;
+ *   extra : s'il n'y a pas assez de cartes possédées, on en prend d'autres (renvoyées dans `granted`, à offrir au joueur) ;
+ *   upTo : nombre de cartes visé (R.size par défaut ; moins pour ne remplacer que quelques cartes perdues).
+ * Renvoie { cards, added: { id: n }, granted: { id: n }, missing } (missing > 0 : il manque encore des cartes).
+ */
+export function fillDeck(deck, { owned = {}, extra = false, upTo = R.size } = {}) {
+  const cards = {};
+  for (const [id, n] of Object.entries(deck.cards || {})) if (n > 0 && CARD[id] && CARD[id].type !== "plot") cards[id] = n;
+  const added = {}, granted = {};
+  const fam = FAMILY[deck.fam];
+  let need = Math.min(R.size, upTo) - deckSize({ cards });
+  if (!fam || fam.id === "neutre" || need <= 0) return { cards, added, granted, missing: Math.max(0, need) };
+  const c = { ...validateDeck({ ...deck, cards }).counts };
+  const keyOwner = {};
+  for (const id of Object.keys(cards)) keyOwner[CARD[id].key] = id;
+  const st = starterFor({ ...deck, cards });
+  const rank = new Map(Object.keys((st && st.cards) || {}).map((id, i) => [id, i]));
+  const free = (d) => (owned[d.id] || 0) - (cards[d.id] || 0);
+  const base = legalPool(fam.id, deck.pt).filter((d) => !d.st || rank.has(d.id) || free(d) > 0);
+  // ordre : deck de départ, sa famille avant les neutres, personnages d'abord ; les meilleures cartes possédées, les plus simples à offrir
+  const order = (best) => [...base].sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 1e6) - (rank.has(b.id) ? rank.get(b.id) : 1e6)
+    || (a.fam === fam.id ? 0 : 1) - (b.fam === fam.id ? 0 : 1) || (a.type === "char" ? 0 : 1) - (b.type === "char" ? 0 : 1)
+    || (best ? RARITY_RANK[b.r] - RARITY_RANK[a.r] : RARITY_RANK[a.r] - RARITY_RANK[b.r]) || a.cost - b.cost || a.id.localeCompare(b.id));
+  const fits = (d) => {
+    if ((cards[d.id] || 0) >= R.maxCopies) return false;
+    if (keyOwner[d.key] && keyOwner[d.key] !== d.id) return false;
+    if (d.cost >= 7 ? c.c7 >= R.cost7 : d.cost === 6 ? c.c6 >= R.cost6 : d.cost === 5 ? c.c5 >= R.cost5 : false) return false;
+    if (d.type === "loc" ? c.locs >= R.maxLocs : d.type !== "char" && c.objEvt >= R.maxObjEvt) return false;
+    return d.type === "char" || R.minChars - c.chars < need; // les dernières places vont aux personnages s'il en manque
+  };
+  const put = (d, gift) => {
+    cards[d.id] = (cards[d.id] || 0) + 1; keyOwner[d.key] = d.id; need--;
+    added[d.id] = (added[d.id] || 0) + 1;
+    if (gift) granted[d.id] = (granted[d.id] || 0) + 1;
+    if (d.type === "char") c.chars++; else if (d.type === "loc") c.locs++; else c.objEvt++;
+    if (d.cost >= 7) c.c7++; else if (d.cost === 6) c.c6++; else if (d.cost === 5) c.c5++;
+  };
+  for (const d of order(true)) { while (need > 0 && free(d) > 0 && fits(d)) put(d, false); if (!need) break; }
+  if (extra && need > 0) {
+    for (const d of order(false)) {
+      if (!rank.has(d.id) && RARITY_RANK[d.r] >= RARITY_RANK.E) continue; // on n'offre pas d'épique ni de légendaire hors deck de départ
+      while (need > 0 && fits(d)) put(d, free(d) <= 0);
+      if (!need) break;
+    }
+  }
+  return { cards, added, granted, missing: need };
+}
+
 /** Valeur d'un scénario pour un deck « moyen » (revenu surtout, puis revendication, initiative et effet). */
 function plotScore(p) {
   let v = p.inc * 1.0 + p.clm * 1.4 + p.ini * 0.18 + p.res * 0.15;

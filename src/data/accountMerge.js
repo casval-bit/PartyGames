@@ -31,9 +31,12 @@ export function mergeProfiles(a, b) {
     .filter((h) => { const k = `${h.t}|${h.game}|${h.pts}`; if (sig.has(k)) return false; sig.add(k); return true; })
     .slice(0, 30);
   out.look = { ...out.look, ...fixLook(out) };
-  // Trône des Mondes : on garde la collection la plus avancée (XP de collectionneur, puis nombre de cartes)
+  // Trône des Mondes : on garde la collection la plus avancée (XP de collectionneur, puis nombre de cartes) ;
+  // à égalité (seuls les Éclats ou les jetons diffèrent), la copie modifiée le plus récemment (champ `at`)
   const tcgScore = (t) => (t ? (Number(t.xp) || 0) * 1000 + Object.keys(t.coll || {}).length : -1);
-  out.tcg = tcgScore(A.tcg) >= tcgScore(B.tcg) ? A.tcg : B.tcg;
+  const at = (t) => (t && Number(t.at)) || 0;
+  const sa = tcgScore(A.tcg), sb = tcgScore(B.tcg);
+  out.tcg = sa !== sb ? (sa > sb ? A.tcg : B.tcg) : at(B.tcg) > at(A.tcg) ? B.tcg : A.tcg;
   return normalizeProfile(out);
 }
 

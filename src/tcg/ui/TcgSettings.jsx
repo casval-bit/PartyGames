@@ -72,6 +72,9 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
           <div className="tset-group" data-testid="tset-tester">
             <span className="eyebrow">Testeur ({acc && acc.user ? acc.user.email : "profil local"})</span>
             <p className="muted tset-note">Seulement sur cet ordinateur (VITE_TESTEURS dans le fichier .env) : profil local, ou compte de la liste.{acc && acc.user ? " Sauvegardé sur ton compte." : ""}</p>
+            <Row icon="gem" label="Éclats et jetons à volonté" hint={`Jamais moins de ${P.TEST_FLOOR.ec.toLocaleString("fr-FR")} Éclats et ${P.TEST_FLOOR.jet} jetons`}>
+              <Two value={p.unlimited} a={[true, "Oui"]} b={[false, "Non"]} onPick={(v) => set({ unlimited: v })} />
+            </Row>
             <div className="tset-test">
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { ec: 10000 })); sfx.coin(); if (flash) flash("+10 000 Éclats"); }}><Icon name="gem" size={16} />+10 000 Éclats</button>
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { jet: 50 })); sfx.coin(); if (flash) flash("+50 jetons de brillance"); }}><Icon name="sparkles" size={16} />+50 jetons</button>

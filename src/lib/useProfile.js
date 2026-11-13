@@ -34,12 +34,13 @@ export function useProfile() {
     commit(n);
   }, [commit]);
 
-  /** Trône des Mondes : met à jour la collection (fonction tcg => nouveau tcg, ou objet). */
+  /** Trône des Mondes : met à jour la collection (fonction tcg => nouveau tcg, ou objet). `at` : date du changement,
+   *  pour garder la copie la plus récente quand deux appareils ont la même progression (voir data/accountMerge.js). */
   const setTcg = useCallback((next) => {
     const cur = ref.current;
     const tcg = typeof next === "function" ? next(cur.tcg) : next;
     if (!tcg) return;
-    commit({ ...cur, tcg });
+    commit({ ...cur, tcg: { ...tcg, at: Date.now() } });
   }, [commit]);
   const clearGain = useCallback(() => setGain(null), []);
   return { profile, gain, clearGain, equip, record, replace, setTcg, level: levelOf(profile.xp) };

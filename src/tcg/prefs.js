@@ -5,7 +5,8 @@ import { useSyncExternalStore } from "react";
 import { sfx } from "../lib/sfx.js";
 
 const KEY = "ph-tcg-prefs";
-export const TCG_PREFS_DEFAULT = { sound: true, volume: 0.8, hover: true, motion: "full", tear: true };
+// unlimited : compte testeur seulement (VITE_TESTEURS) — Éclats et jetons rechargés automatiquement
+export const TCG_PREFS_DEFAULT = { sound: true, volume: 0.8, hover: true, motion: "full", tear: true, unlimited: true };
 const subs = new Set();
 
 function clean(o) {
@@ -16,6 +17,7 @@ function clean(o) {
     hover: typeof v.hover === "boolean" ? v.hover : d.hover,
     motion: v.motion === "reduced" ? "reduced" : "full",
     tear: typeof v.tear === "boolean" ? v.tear : d.tear,
+    unlimited: typeof v.unlimited === "boolean" ? v.unlimited : d.unlimited,
   };
 }
 let cur = clean((() => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } })());

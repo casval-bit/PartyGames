@@ -75,6 +75,7 @@ export const RENAMED = {};
 /** Carte remplacée par une autre à la même place : les exemplaires possédés deviennent la nouvelle carte. */
 export const REPLACED = {
   "lyoko-aelita-stones-4": "lyoko-aelita-hopper-4", // Aelita Stones (même personnage, même coût) : une seule Aelita Hopper 4, L'elfe de Lyoko
+  "lyoko-aelita-hopper-4-2": "lyoko-aelita-hopper-4", // Aelita Hopper 4 « Gardienne de Lyoko » (version de test du 13/11, fusionnée avec L'elfe)
   "lyoko-spectre-de-xana-2": "lyoko-ninjas-de-tyron-2",
   "lyoko-spectre-polymorphe-evt": "lyoko-champ-de-force-evt",
 };

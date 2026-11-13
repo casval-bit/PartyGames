@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, subOf, subWords } from "../cards/index.js";
 import { DECK_RULES as R, RARITY, CARD_TYPES } from "../rules.js";
-import { validateDeck, defaultPlots } from "../deck.js";
+import { validateDeck, defaultPlots, fillDeck } from "../deck.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, PlotFace } from "./Card.jsx";
@@ -37,7 +37,21 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
   const c = v.counts || {};
   const keyOf = useMemo(() => { const m = {}; for (const [id, n] of Object.entries(deck.cards)) if (n > 0) (m[CARD[id].key] = m[CARD[id].key] || []).push(id); return m; }, [deck.cards]);
 
-  const flash = (m) => { setToast(m); sfx.error(); setTimeout(() => setToast((t) => (t === m ? "" : t)), 3200); };
+  const note = (m) => { setToast(m); setTimeout(() => setToast((t) => (t === m ? "" : t)), 3200); };
+  const flash = (m) => { note(m); sfx.error(); };
+  // « Compléter » : les places libres sont remplies avec des cartes possédées (celles du deck de départ de la famille d'abord),
+  // et les scénarios manquants avec la sélection conseillée
+  const short = R.size - (v.counts && v.counts.total ? v.counts.total : 0);
+  const complete = () => {
+    const r = fillDeck(deck, { owned });
+    const n = Object.values(r.added).reduce((s, x) => s + x, 0);
+    const plots = deck.plots.length < R.plots ? [...deck.plots, ...defaultPlots(deck.fam).filter((p) => !deck.plots.includes(p))].slice(0, R.plots) : deck.plots;
+    if (!n && plots === deck.plots) { flash(`Aucune de tes cartes ne peut compléter ce deck : il en manque ${short}. Ouvre des boosters !`); return; }
+    setDeck({ ...deck, cards: r.cards, plots });
+    sfx.apply();
+    const s = n > 1 ? "s" : "";
+    note(r.missing ? `${n} carte${s} ajoutée${s}, il en manque encore ${r.missing} : ouvre des boosters !` : `${n} carte${s} ajoutée${s} : le deck fait ${R.size} cartes.`);
+  };
   const setN = (id, n) => {
     const d = CARD[id];
     const have = owned[id] || 0;
@@ -198,6 +212,9 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
           <b>Ce deck ne peut pas encore être joué :</b>
           {v.errors.slice(0, 4).map((e, i) => <span key={i}>• {e}</span>)}
           {v.errors.length > 4 && <span>… et {v.errors.length - 4} autre(s).</span>}
+          {(short > 0 || deck.plots.length < R.plots) && (
+            <button className="btn small db-fill" onClick={complete} data-testid="db-fill"><Icon name="sparkles" size={16} />Compléter avec mes cartes{short > 0 ? ` (${short})` : ""}</button>
+          )}
         </div>
       )}
       {toast && <div className="toast hub-toast db-toast" role="alert">{toast}</div>}
