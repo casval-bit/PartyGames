@@ -10,6 +10,7 @@ import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, FamilyFace, PlotFace, RichText, TYPE_ICON } from "./Card.jsx";
 import { useArtSource, fileToArt, prepareArt, setArt, removeArt, artFile, remote, recentFile, rememberFile } from "./artStore.js";
+import { cardColors } from "./art.js";
 import { ONLINE } from "../../config.js";
 import { APPAREIL } from "../../lib/device.js";
 
@@ -200,7 +201,12 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
       <button className="iconbtn tz-close" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
       <div className="tz-stage" onClick={(e) => e.stopPropagation()}>
         <div key={id || fam} className={"tz-card" + (plot ? " land" : "")} {...tilt}>
-          {d ? (plot ? <PlotFace d={d} big /> : <CardFace d={d} big foil={foil && !missing} missing={missing} str={inst ? inst.s : undefined} tilt />) : <FamilyFace fam={fam} pt={pt} big />}
+          {/* tranche de la carte (épaisseur en 3D), de la couleur de son cadre : voir .tz-3d dans tcg.css */}
+          <div className={"tz-3d " + (plot ? "plot" : d ? `r-${d.r}${foil && !missing && !alwaysFoil(d) ? " lite" : ""}${missing ? " missing" : ""}` : "r-E")}
+            style={{ "--fc": d && !plot ? cardColors(d).c : (f || FAMILY.neutre).color }}>
+            {[1, 2, 3, 4, 5].map((z) => <i key={z} className={"tz-slab" + (z === 5 ? " lo" : "")} style={{ "--z": z }} aria-hidden="true" />)}
+            {d ? (plot ? <PlotFace d={d} big /> : <CardFace d={d} big foil={foil && !missing} missing={missing} str={inst ? inst.s : undefined} tilt />) : <FamilyFace fam={fam} pt={pt} big />}
+          </div>
         </div>
         {(onPrev || onNext) && (
           <div className="tz-nav">

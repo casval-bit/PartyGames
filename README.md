@@ -454,6 +454,9 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   En grand, la carte s'incline un peu sous le doigt ou la souris (et quand on penche le téléphone) ; le reflet arc-en-ciel des brillantes suit la direction
   et se renforce quand on penche ou agite la carte (pas de balayage lumineux en grand ; sur la table et dans la collection, un éclat passe toutes les 11 s environ,
   décalé d'une carte à l'autre), et on feuillette l'album avec les flèches (← → au clavier).
+  Chaque carte a une **tranche** (son épaisseur), de la couleur de son cadre : commune dans la couleur de la famille, argentée (peu commune
+  ou brillante faite avec des jetons), dorée (rare, légendaire, carte 7), dorée et violette (épique). À plat, elle dépasse sous la carte ;
+  en grand, c'est une vraie tranche en 3D qui se voit aussi sur le côté quand la carte penche.
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
   **Brillantes** : une carte 7 l'est toujours (reflet arc-en-ciel, cadre doré). Les autres ne le sont jamais en sortant d'un booster ou de la boutique :
   on les rend brillantes avec des **jetons de brillance** (Mes cartes ou Album, touche une carte : 1 jeton jusqu'au coût 2, puis 2, 3, 4 et 5 jetons

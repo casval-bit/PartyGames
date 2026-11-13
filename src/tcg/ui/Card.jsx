@@ -66,7 +66,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
       <span className="tc-fr" />
       <div className="tc-in">
         <div className="tc-head">
-          <div className={"tc-name" + (n > 26 ? " n4" : n > 21 ? " n3" : n > 15 ? " n2" : "")}>{d.uni && <i className="tc-uni" aria-label="Unique" />}<span>{d.name}</span></div>
+          <div className={"tc-name" + (n > 26 ? " n4" : n > 21 ? " n3" : n > 15 ? " n2" : "")}><span>{d.name}</span></div>
           {d.title && <div className="tc-sub">{d.title}</div>}
         </div>
         <div className="tc-art">
