@@ -1,4 +1,4 @@
-// Retour visuel au toucher, façon terminal de virtualisation : une onde cyan part du point touché et quelques « pixels » s'en échappent.
+// Retour visuel au toucher, façon terminal holographique : une onde cyan part du point touché et quelques « pixels » s'en échappent.
 // Une seule écoute globale : tous les boutons de l'appli en profitent sans rien changer aux écrans.
 // Désactivée si le téléphone demande moins d'animations (prefers-reduced-motion). `data-nofx` sur un élément (ou un parent) l'exclut.
 const TARGET = "button, [role='button'], a[href], summary, .itm";

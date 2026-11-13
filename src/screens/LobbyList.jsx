@@ -7,7 +7,7 @@ export default function LobbyList({ busy, notice, clearNotice, onBack, onJoin })
   useEffect(() => transport.watchLobbies((l) => setList(l.filter((x) => x.status === "lobby").sort((a, b) => b.count - a.count))), []);
 
   return (
-    <div className="screen">
+    <div className="screen lobbylist">
       <div className="row">
         <button className="iconbtn" onClick={onBack} aria-label="Retour">←</button>
         <h2 style={{ fontSize: "1.3rem" }}>Lobbys ouverts</h2>

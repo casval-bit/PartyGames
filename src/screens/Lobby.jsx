@@ -192,7 +192,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile, tcg, 
   const biggest = Math.max(...Array.from({ length: settings.teamCount }, (_, t) => players.filter((p) => p.team === t).length));
 
   return (
-    <div className="screen">
+    <div className="screen lobby">
       <div className="row spread">
         <div className="row" style={{ minWidth: 0 }}>
           <button className="iconbtn" onClick={onLeave} aria-label="Quitter le lobby"><Icon name="back" /></button>
@@ -208,7 +208,9 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile, tcg, 
         </div>
       </div>
 
-      <div className="scroll">
+      {/* deux colonnes sur PC (jeu et réglages | joueurs) ; sur téléphone, une seule colonne : jeu, joueurs, réglages */}
+      <div className="scroll lobby-scroll">
+        <div className="lobby-a">
         <div className="gamepick">
           <div className="eyebrow" style={{ marginBottom: 6 }}>Jeu</div>
           <div className="seg games">
@@ -231,6 +233,8 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile, tcg, 
         </div>
         {(bt || tl) && <PlaylistPanel room={room} isHost={isHost} api={api} spotify={tl} />}
         {trone && onTrone && <TronePanel room={room} me={me} api={api} tcg={tcg} setTcg={setTcg} onTrone={onTrone} />}
+        </div>
+        <div className="lobby-b">
         {soloBt && (
           <section className="team solo" style={{ "--tc": "var(--blue)", "--tink": "#fff" }} aria-label="Joueurs">
             <header>Joueurs<small>{players.length}/{cap}</small></header>
@@ -272,6 +276,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile, tcg, 
             );
           })}
         </div>}
+        </div>
 
         <div className="settings">
           {settings.game === "party" && (

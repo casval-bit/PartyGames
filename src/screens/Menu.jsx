@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { ONLINE } from "../config.js";
+import { ONLINE, GAMES } from "../config.js";
+import { DESKTOP } from "../lib/device.js";
 import { Avatar } from "../ui/Avatar.jsx";
 import { Icon } from "../ui/Icon.jsx";
 import { progressOf } from "../data/profile.js";
+import AccountBadge from "../ui/AccountBadge.jsx";
+
+const GICON = { timesup: "hourglass", quiest: "eye", blindtest: "music", timeline: "history", party: "gamepad", board: "dice", petitbac: "edit", celeb: "image", trone: "crown", loupgarou: "moon" };
 
 export default function Menu({ name, setName, notice, clearNotice, busy, onCreate, onJoinList, look, level, xp, onProfile, onStudio, acc, onAccount, onLab, onTrone }) {
   const [roomName, setRoomName] = useState("");
@@ -28,10 +32,11 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
       )}
 
       <div className="scroll menu-main">
+        <div className="menu-side">
         {/* carte d'identité : on touche pour le profil, le bouton pour personnaliser */}
         <div className="idmini">
           <button className="idmini-av scanv" onClick={onStudio || onProfile} aria-label="Personnaliser mon personnage" data-testid="menu-studio">
-            <Avatar look={look} size={72} view="bust" />
+            <Avatar look={look} size={DESKTOP ? 116 : 72} view="bust" />
           </button>
           <button className="idmini-txt" onClick={onProfile} aria-label="Mon profil">
             <span className="eyebrow">Carte d'identité</span>
@@ -41,13 +46,8 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
           </button>
           <button className="iconbtn" onClick={onProfile} aria-label="Stats et succès"><Icon name="chart" /></button>
         </div>
-        {acc && acc.enabled && (
-          <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="menu-account">
-            <span className="accdot" aria-hidden="true"><Icon name={acc.user ? "check" : "mail"} size={18} /></span>
-            <span><strong>{acc.user ? "Compte connecté" : "Se connecter"}</strong><small>{acc.user ? acc.user.email : "Sauvegarde ton niveau et ton personnage avec ton e-mail"}</small></span>
-            <Icon name="next" />
-          </button>
-        )}
+        {/* à qui est cette progression : compte connecté (sauvegardé) ou profil local de cet appareil */}
+        <AccountBadge acc={acc} onClick={onAccount} testId="menu-account" />
         <div className="field">
           <label className="eyebrow" htmlFor="pseudo">Ton pseudo</label>
           <input id="pseudo" value={name} maxLength={16} placeholder="Ex. Brice" autoComplete="off" onChange={(e) => setName(e.target.value)} />
@@ -56,6 +56,8 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
           <label className="eyebrow" htmlFor="roomname">Nom du lobby (facultatif)</label>
           <input id="roomname" value={roomName} maxLength={24} placeholder={clean ? `Salon de ${clean}` : "Salon"} autoComplete="off" onChange={(e) => setRoomName(e.target.value)} />
         </div>
+        </div>
+        <div className="menu-actions">
         <button className="bigbtn a" disabled={!clean || busy} onClick={() => onCreate(roomName.trim())} style={{ opacity: clean ? 1 : 0.45 }}>
           <span className="bigico" aria-hidden="true"><Icon name="plus" size={26} /></span>
           <strong>Créer une partie</strong>
@@ -80,6 +82,13 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
             <span>Tous les mini-jeux, seul contre des bots</span>
           </button>
         )}
+        {DESKTOP && (
+          <div className="menu-games" aria-label="Jeux disponibles dans un lobby">
+            <span className="eyebrow">Au programme</span>
+            {GAMES.map((g) => <span key={g.id}><Icon name={GICON[g.id] || "gamepad"} size={15} />{g.label}</span>)}
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );

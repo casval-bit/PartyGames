@@ -232,6 +232,9 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .tz-card .tc, .tz-card .tp { transition: transform .45s cubic-bezier(.2,.8,.2,1); transform: rotateX(calc(var(--rx, 0deg) + var(--irx))) rotateY(calc(var(--ry, 0deg) + var(--iry))); }
 .tz-card.held .tc, .tz-card.held .tp { transition-duration: .12s; }
 .tz-card .tc.foil::after { opacity: .6; }
+/* vraie image (choisie ou intégrée) : reflet arc-en-ciel plus léger, pour ne pas délaver l'illustration */
+.tc.foil.photo::after { opacity: .26; }
+.tz-card .tc.foil.photo::after { opacity: .34; }
 .tz-card .tc.missing { filter: grayscale(1) brightness(.78); }
 .tz-card .tc.missing .tc-art img { opacity: .75; }
 .tz-stage { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -875,3 +878,97 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
   .tz-card { animation: none; }
   .tc-shine::before { animation: none; opacity: 0; }
 }
+
+/* ===================== Trône des Mondes : notes, message flottant ===================== */
+.hub-note { font-size: .78rem; margin: 0; }
+.hub-played { align-self: center; gap: 5px; padding: 6px 10px; }
+.hub-toast { position: fixed; left: 16px; right: 16px; bottom: calc(var(--safe-b) + 20px); z-index: 85; }
+html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-content; max-width: min(560px, calc(100vw - 32px)); }
+.hub-lv .accbadge.compact { flex: none; max-width: 46%; }
+
+/* ===================== Trône des Mondes : tableau de bord (appli PC, fenêtre large) =====================
+   En-tête : retour, blason, niveau, Éclats, compte, règles.
+   Trois colonnes qui défilent chacune : le joueur (niveau, stats, deck joué), les quêtes et les succès |
+   les decks ou la collection | les boosters à ouvrir, la boutique du jour et les boosters à acheter. */
+.hubx { gap: 16px; }
+.hubx-top { flex: none; display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-radius: 24px;
+  background: linear-gradient(90deg, rgba(255,209,102,.13), rgba(13,26,51,.88) 26%, rgba(13,26,51,.88) 70%, rgba(180,140,255,.16));
+  border: 1px solid var(--line); box-shadow: var(--card-hi), var(--panel-shadow); }
+.hubx-brand { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.hubx-brand h2 { font-size: 1.55rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hubx-crest { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; color: var(--gold);
+  background: radial-gradient(circle at 30% 25%, rgba(255,209,102,.4), rgba(70,46,8,.5)); border: 1px solid rgba(255,209,102,.6); box-shadow: 0 0 24px rgba(255,209,102,.28), inset 0 1px 0 rgba(255,255,255,.25); }
+.hubx-lv { flex: 0 1 260px; min-width: 190px; display: flex; align-items: center; gap: 10px; }
+.hubx-lv .badge { flex: none; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font: 800 1.1rem var(--display); color: #2a1a00;
+  background: radial-gradient(circle at 35% 30%, #fff1b8, #ffd166 55%, #c7901c); box-shadow: 0 6px 16px rgba(255,209,102,.3); }
+.hubx-lv > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.hubx-lv small { font: 600 .74rem var(--display); color: var(--txt-2); }
+.hubx-ec { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px 8px 12px; border-radius: 99px; color: #f3ecff;
+  background: linear-gradient(180deg, rgba(180,140,255,.34), rgba(90,50,170,.32)); border: 1px solid rgba(206,178,255,.75);
+  box-shadow: 0 0 24px rgba(180,140,255,.3), inset 0 1px 0 rgba(255,255,255,.22); }
+.hubx-ec svg { color: #e7dbff; filter: drop-shadow(0 0 6px rgba(206,178,255,.9)); }
+.hubx-ec b { font: 800 1.25rem var(--display); font-variant-numeric: tabular-nums; }
+.hubx-ec small { font: 700 .66rem var(--display); letter-spacing: .14em; text-transform: uppercase; color: #cfbdf7; }
+
+.hubx-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(320px, 390px); gap: 18px; }
+.hubx-col { min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 14px; padding: 0 4px 10px 0;
+  scrollbar-width: thin; scrollbar-color: rgba(94,225,255,.25) transparent; }
+.hubx-col .hub-body { flex: none; overflow: visible; padding-bottom: 0; }
+.hubx-main { overflow: hidden; padding-right: 0; }
+.hubx-main .hub-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 6px 12px 0; scrollbar-width: thin; scrollbar-color: rgba(94,225,255,.25) transparent; }
+.hubx-panel { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 22px; background: rgba(8,15,32,.62); border: 1px solid var(--line); box-shadow: var(--card-hi); }
+.hubx-panel .hub-sec > h3 { font-size: 1rem; }
+.hubx-panel .hub-quest { padding: 10px 12px; }
+.hubx-panel .hub-row .grow > b { white-space: normal; }
+
+/* joueur */
+.hubx-me { background: linear-gradient(180deg, rgba(255,209,102,.08), rgba(8,15,32,.66) 45%); border-color: rgba(255,209,102,.3); }
+.hubx-me-top { display: flex; align-items: center; gap: 14px; }
+.hubx-ring { position: relative; flex: none; width: 104px; height: 104px; }
+.hubx-ring svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(255,209,102,.35)); }
+.hubx-ring > span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.hubx-ring small { font: 600 .6rem var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--txt-3); }
+.hubx-ring b { font: 800 2.1rem/1 var(--display); color: #ffe7a6; text-shadow: 0 0 16px rgba(255,209,102,.45); }
+.hubx-me-txt { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.hubx-me-txt b { font: 700 1.05rem var(--display); }
+.hubx-me-txt small { font-size: .78rem; color: var(--txt-2); }
+.hubx-stats { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hubx-stats div { padding: 8px 10px; border-radius: 14px; background: rgba(255,255,255,.035); border: 1px solid rgba(94,225,255,.12); }
+.hubx-stats dt { font: 600 .62rem var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--txt-3); }
+.hubx-stats dd { margin: 2px 0 0; font: 800 1.25rem var(--display); font-variant-numeric: tabular-nums; }
+.hubx-coll { display: flex; flex-direction: column; gap: 6px; }
+.hubx-coll .grow b { font: 700 .92rem var(--display); display: block; }
+.hubx-coll .grow small { font-size: .76rem; color: var(--txt-2); }
+.hubx-pct { font: 800 1.05rem var(--display); color: var(--cyan); }
+.hubx-deck { --fc: #5ee1ff; display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border-radius: 16px; text-align: left; color: var(--txt);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--fc) 24%, #0e1d3b), #0b1630 75%); border: 1px solid color-mix(in srgb, var(--fc) 50%, #1f3a66); }
+.hubx-deck .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.hubx-deck .grow b { font: 700 .95rem var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hubx-deck .eyebrow { font-size: .6rem; }
+
+/* decks et collection */
+.hubx-tabs { flex: none; display: flex; gap: 6px; padding: 5px; border-radius: 18px; background: var(--track); border: 1px solid var(--line); }
+.hubx-tabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; border-radius: 13px; font: 700 .98rem var(--display); color: var(--txt-2); }
+.hubx-tabs button small { font: 700 .72rem var(--display); padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.08); color: var(--txt-2); }
+.hubx-tabs button[aria-selected="true"] { color: #fff; background: linear-gradient(180deg, rgba(94,225,255,.2), rgba(47,139,255,.14)); box-shadow: var(--halo); }
+.hubx-tabs button[aria-selected="true"] small { background: rgba(94,225,255,.2); color: #dffcff; }
+.hubx-main .hub-decks { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; align-items: start; }
+.hubx-main .hub-decks > h3 { grid-column: 1 / -1; }
+.hubx-main .hub-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; }
+
+/* boosters et boutique */
+.hubx-packs.has { border-color: rgba(93,255,154,.5); box-shadow: var(--card-hi), 0 0 26px rgba(93,255,154,.14); }
+.hubx-right .hub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hubx-right .hub-offer .btn { min-height: 32px; padding: 4px 6px; font-size: .76rem; }
+.hubx-right .hub-pack { padding: 9px 10px; gap: 10px; }
+.hubx-right .hub-pack small { display: none !important; }
+.hubx-right .hub-note { font-size: .72rem; }
+
+/* constructeur de deck : deux volets sur PC (cartes à ajouter | le deck), un seul sur téléphone */
+.db-one { display: contents; }
+.db-wide { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 420px); gap: 18px; }
+.db-wide > .hub-body { min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(94,225,255,.25) transparent; padding-right: 4px; }
+.db-side { padding: 12px; border-radius: 20px; background: rgba(8,15,32,.62); border: 1px solid var(--line); box-shadow: var(--card-hi); }
+.db-side-h { font-size: 1rem; display: flex; align-items: baseline; gap: 8px; }
+.db-side-h small { font: 500 .78rem var(--body); color: var(--txt-2); }
+.db-toast { bottom: calc(var(--safe-b) + 90px); z-index: 75; }

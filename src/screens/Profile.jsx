@@ -4,6 +4,7 @@ import { Avatar3DImg } from "../avatar3d/Avatar3D.jsx";
 import { Avatar } from "../ui/Avatar.jsx";
 import { Icon } from "../ui/Icon.jsx";
 import AchTree from "../ui/AchTree.jsx";
+import AccountBadge from "../ui/AccountBadge.jsx";
 import { ACHIEVEMENTS, BORDERS, COLORS, isUnlocked, ruleText, progressOf, pct, secs, xOf } from "../data/profile.js";
 import { sfx } from "../lib/sfx.js";
 import { APPAREIL, DESKTOP, desktop } from "../lib/device.js";
@@ -113,6 +114,7 @@ export default function Profile({ name, profile, equip, onBack, acc, onAccount, 
       </div>
 
       <div className="scroll">
+        <div className="prof-a">
         {/* carte d'identité recto / verso */}
         <div className={"idcard" + (flip ? " flipped" : "")}>
           <div className="idc-in">
@@ -146,18 +148,13 @@ export default function Profile({ name, profile, equip, onBack, acc, onAccount, 
           </div>
         </div>
 
+        <div className="prof-b-acc"><AccountBadge acc={acc} onClick={onAccount} testId="prof-account" />
+        {!(acc && acc.enabled) && <p className="muted pnote">Ton profil est enregistré sur {APPAREIL.ce} uniquement. Il ne suit pas d'un appareil à l'autre.</p>}</div>
+        </div>
+        <div className="prof-b">
         <Stats s={s} history={profile.history} />
         <Badge profile={profile} equip={equip} />
-
-        {acc && acc.enabled ? (
-          <button className={"profbtn accbtn" + (acc.user ? " in" : "")} onClick={onAccount} data-testid="prof-account">
-            <span className="accdot" aria-hidden="true"><Icon name={acc.user ? "check" : "mail"} size={18} /></span>
-            <span><strong>{acc.user ? "Sauvegardé sur ton compte" : `Profil enregistré sur ${APPAREIL.ce}`}</strong><small>{acc.user ? acc.user.email : "Connecte-toi par e-mail pour ne pas le perdre"}</small></span>
-            <Icon name="next" />
-          </button>
-        ) : (
-          <p className="muted pnote">Ton profil est enregistré sur {APPAREIL.ce} uniquement. Il ne suit pas d'un appareil à l'autre.</p>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -95,14 +95,14 @@ export default function App() {
 
   let body;
   const overlay = profileOpen || accountOpen || labOpen || studioOpen || Boolean(hubOpen);
-  if (hubOpen) {
-    body = <Hub key={hubOpen} tcg={prof.profile.tcg} setTcg={prof.setTcg} initialTab={hubOpen} onClose={() => setHubOpen(null)} />;
+  if (accountOpen) {
+    body = <Account acc={acc} profile={prof.profile} onBack={() => setAccountOpen(false)} />; // par-dessus tout (on y revient du Trône des Mondes)
+  } else if (hubOpen) {
+    body = <Hub key={hubOpen} tcg={prof.profile.tcg} setTcg={prof.setTcg} initialTab={hubOpen} acc={acc} onAccount={() => setAccountOpen(true)} onClose={() => setHubOpen(null)} />;
   } else if (studioOpen) {
     body = <Studio profile={prof.profile} equip={equip} onClose={() => setStudioOpen(false)} />;
   } else if (labOpen) {
     body = <MiniLab onBack={() => setLabOpen(false)} />;
-  } else if (accountOpen) {
-    body = <Account acc={acc} profile={prof.profile} onBack={() => setAccountOpen(false)} />;
   } else if (profileOpen) {
     body = <Profile name={name} profile={prof.profile} equip={equip} acc={acc} onAccount={() => setAccountOpen(true)} onStudio={() => setStudioOpen(true)} onBack={() => setProfileOpen(false)} />;
   } else if (room) {
@@ -148,7 +148,7 @@ export default function App() {
   }
 
   // effet de matérialisation à chaque grand changement d'écran (pas à chaque manche d'un même jeu)
-  const matKey = hubOpen ? "hub" : studioOpen ? "studio" : labOpen ? "lab" : accountOpen ? "account" : profileOpen ? "profile" : room ? "room:" + String(room.phase).split("_")[0] : screen;
+  const matKey = accountOpen ? "account" : hubOpen ? "hub" : studioOpen ? "studio" : labOpen ? "lab" : profileOpen ? "profile" : room ? "room:" + String(room.phase).split("_")[0] : screen;
   return (
     <div className={"app" + (room && room.phase !== "lobby" && !overlay && room.players.some((p) => p.id === id && !p.bot) ? " ingame" : "")}>
       {body}

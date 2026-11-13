@@ -74,6 +74,7 @@ export const cards = [
   // --- Piltover et Zaun : la cité du progrès et sa ville basse
   c("Caitlyn", "La Shérif de Piltover", 6, 5, "CI", PZ, "Piltover|Police|Kiramman", "", "enterKill:3@As dans la manche ; ifName:Vi,1@Partenaires", "E"),
   c("Caitlyn", "L'enquêtrice", 3, 2, "RI", PZ, "Piltover|Police|Kiramman", "", "winDraw:ruse,1@La piste ; ifName:Vi,1@Partenaires", "R"),
+  c("Caitlyn", "La Commandante de Piltover", 7, 6, "CI", PZ, "Piltover|Police|Kiramman", "", "enterFreeze:4@Piège à yordle ; winKill:combat,3@Tir dans la tête", "L"),
   c("Vi", "La Gardienne de Piltover", 5, 5, "C", PZ, "Piltover|Police|Hextech", "", "atkKneel:3@Interpellation ; ifName:Caitlyn,1@Partenaires", "E"),
   c("Vi", "La gamine des bas-fonds", 2, 2, "C", PZ, "Zaun", "", "ifAtk:1@Poings nus", "U"),
   c("Renata Glasc", "La Chimio-baronne", 5, 4, "RI", PZ, "Zaun|Chimie|Baron", "", "winSteal:influence,2@Effet de levier ; guard:*@Renflouement", "E"),
@@ -118,6 +119,7 @@ export const cards = [
   // --- Demacia : la couronne, l'Avant-garde intrépide et ses mages cachés
   c("Poppy", "La Gardienne du marteau", 5, 4, "CI", DEBA, "Yordle", "", "atkKneel:3@Charge héroïque ; ifBehind:2@Pas une héroïne", "E"),
   c("Poppy", "L'Ambassadrice de fer", 2, 2, "C", DEBA, "Yordle", "", "ifDef:1@Bouclier de fer", "U"),
+  c("Poppy", "L'héroïne malgré elle", 6, 5, "CI", DEBA, "Yordle", "", "ifDef:2@Présence inébranlable ; winBounce:combat,3@Verdict du gardien", "E"),
   c("Garen", "La Force de Demacia", 6, 6, "CI", DE, "Avant-garde|Crownguard", "", "ifDef:1@Courage ; winKill:combat,3@Justice de Demacia", "E"),
   c("Lux", "La Dame de lumière", 5, 4, "RI", DE, "Crownguard|Mage", "discret", "enterKneel:4@Lien de lumière", "E"),
   c("Jarvan IV", "Le Modèle de Demacia", 6, 5, "CI", DE, "Lightshield", "", "aura:Demacia,1@Étendard de Demacia", "E"),

@@ -8,6 +8,8 @@ import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, PlotFace } from "./Card.jsx";
 import CardZoom from "./CardZoom.jsx";
+import { DESKTOP } from "../../lib/device.js";
+import { useMedia, WIDE_QUERY } from "../../lib/useMedia.js";
 
 const ORDER = { char: 0, loc: 1, obj: 2, evt: 3 };
 const TYPE_PL = { char: "Personnages", loc: "Lieux", obj: "Objets", evt: "Événements" };
@@ -27,6 +29,9 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
   const [zoom, setZoom] = useState(null);
   const [toast, setToast] = useState("");
   const [lim, setLim] = useState(40);
+  // appli PC, fenêtre large : le deck reste affiché à droite pendant qu'on ajoute des cartes à gauche
+  const wide = useMedia(WIDE_QUERY, DESKTOP);
+  const cur = wide && tab === "list" ? "add" : tab;
   const fam = FAMILY[deck.fam];
   const v = useMemo(() => validateDeck(deck, owned), [deck, owned]);
   const c = v.counts || {};
@@ -72,42 +77,8 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
     setDeck({ ...deck, plots: has ? deck.plots.filter((x) => x !== id) : [...deck.plots, id] });
   };
 
-  return (
-    <div className="screen hub">
-      <div className="hub-top">
-        <button className="iconbtn" onClick={onCancel} aria-label="Annuler"><Icon name="back" /></button>
-        <div className="hub-title">
-          <div className="eyebrow">{fam.name}{subOf(deck.fam, deck.pt) ? ` · ${subOf(deck.fam, deck.pt).name}` : ""}</div>
-          <input className="hub-search" style={{ height: 38, fontWeight: 700 }} value={deck.name} maxLength={32} onChange={(e) => setDeck({ ...deck, name: e.target.value })} aria-label="Nom du deck" />
-        </div>
-        <button className={"btn small " + (v.ok ? "good" : "")} onClick={() => onSave(deck, v.ok)}><Icon name="save" size={16} />{v.ok ? "Valider" : "Brouillon"}</button>
-      </div>
-
-      <div className="db-counts">
-        <Count label="Cartes" v={c.total || 0} total={R.size} />
-        <Count label="Persos" v={c.chars || 0} min={R.minChars} />
-        <Count label="Coût 7+" v={c.c7 || 0} max={R.cost7} />
-        <Count label="Coût 6" v={c.c6 || 0} max={R.cost6} />
-        <Count label="Coût 5" v={c.c5 || 0} max={R.cost5} />
-        <Count label="Obj.+Évts" v={c.objEvt || 0} max={R.maxObjEvt} />
-        <Count label="Lieux" v={c.locs || 0} max={R.maxLocs} />
-        <Count label={v.alli ? `Alliés ${FAMILY[v.alli].short || ""}` : "Alliés"} v={c.alli || 0} max={R.maxAlliance} />
-      </div>
-
-      <div className="seg">
-        <button aria-pressed={tab === "list"} onClick={() => setTab("list")}>Mon deck ({c.total || 0})</button>
-        <button aria-pressed={tab === "add"} onClick={() => setTab("add")}>Ajouter</button>
-        <button aria-pressed={tab === "plots"} onClick={() => setTab("plots")}>Scénarios ({deck.plots.length}/{R.plots})</button>
-      </div>
-
-      <div className="hub-body">
-        {subs.length > 0 && (
-          <div className="hub-filters" aria-label={`${subWords(deck.fam).One} du deck`}>
-            {subs.map((t) => <button key={t.id} aria-pressed={deck.pt === t.id} onClick={() => setDeck({ ...deck, pt: t.id })} style={deck.pt === t.id ? { borderColor: t.color, background: `color-mix(in srgb, ${t.color} 25%, transparent)` } : undefined}>{t.name}</button>)}
-          </div>
-        )}
-        {tab === "list" && (
-          <>
+  const listView = (
+    <>
             <div className="db-curve" aria-label="Courbe des coûts des personnages">{curve.map((n, k) => <div key={k}><span>{n || ""}</span><i style={{ height: `${(n / cmax) * 36}px` }} /><span>{k === 7 ? "7+" : k}</span></div>)}</div>
             {["char", "loc", "obj", "evt"].map((ty) => {
               const l = inDeck.filter((x) => x.d.type === ty);
@@ -129,9 +100,46 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
               );
             })}
             {!inDeck.length && <div className="hub-empty">Deck vide : va dans « Ajouter ».</div>}
-          </>
+    </>
+  );
+
+  return (
+    <div className={"screen hub" + (wide ? " dbx" : "")}>
+      <div className="hub-top">
+        <button className="iconbtn" onClick={onCancel} aria-label="Annuler"><Icon name="back" /></button>
+        <div className="hub-title">
+          <div className="eyebrow">{fam.name}{subOf(deck.fam, deck.pt) ? ` · ${subOf(deck.fam, deck.pt).name}` : ""}</div>
+          <input className="hub-search" style={{ height: 38, fontWeight: 700 }} value={deck.name} maxLength={32} onChange={(e) => setDeck({ ...deck, name: e.target.value })} aria-label="Nom du deck" />
+        </div>
+        <button className={"btn small " + (v.ok ? "good" : "")} onClick={() => onSave(deck, v.ok)}><Icon name="save" size={16} />{v.ok ? "Valider" : "Brouillon"}</button>
+      </div>
+
+      <div className="db-counts">
+        <Count label="Cartes" v={c.total || 0} total={R.size} />
+        <Count label="Persos" v={c.chars || 0} min={R.minChars} />
+        <Count label="Coût 7+" v={c.c7 || 0} max={R.cost7} />
+        <Count label="Coût 6" v={c.c6 || 0} max={R.cost6} />
+        <Count label="Coût 5" v={c.c5 || 0} max={R.cost5} />
+        <Count label="Obj.+Évts" v={c.objEvt || 0} max={R.maxObjEvt} />
+        <Count label="Lieux" v={c.locs || 0} max={R.maxLocs} />
+        <Count label={v.alli ? `Alliés ${FAMILY[v.alli].short || ""}` : "Alliés"} v={c.alli || 0} max={R.maxAlliance} />
+      </div>
+
+      <div className="seg">
+        {!wide && <button aria-pressed={cur === "list"} onClick={() => setTab("list")}>Mon deck ({c.total || 0})</button>}
+        <button aria-pressed={cur === "add"} onClick={() => setTab("add")}>Ajouter{wide ? " des cartes" : ""}</button>
+        <button aria-pressed={cur === "plots"} onClick={() => setTab("plots")}>Scénarios ({deck.plots.length}/{R.plots})</button>
+      </div>
+
+      <div className={wide ? "db-wide" : "db-one"}>
+      <div className="hub-body">
+        {subs.length > 0 && (
+          <div className="hub-filters" aria-label={`${subWords(deck.fam).One} du deck`}>
+            {subs.map((t) => <button key={t.id} aria-pressed={deck.pt === t.id} onClick={() => setDeck({ ...deck, pt: t.id })} style={deck.pt === t.id ? { borderColor: t.color, background: `color-mix(in srgb, ${t.color} 25%, transparent)` } : undefined}>{t.name}</button>)}
+          </div>
         )}
-        {tab === "add" && (
+        {cur === "list" && listView}
+        {cur === "add" && (
           <>
             <input className="hub-search" placeholder="Chercher un nom, un trait…" value={q} onChange={(e) => { setQ(e.target.value); setLim(40); }} aria-label="Chercher" />
             <div className="hub-filters">
@@ -164,7 +172,7 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
             {!pool.length && <div className="hub-empty">Aucune carte possédée ici. Ouvre des boosters pour en gagner !</div>}
           </>
         )}
-        {tab === "plots" && (
+        {cur === "plots" && (
           <>
             <div className="row" style={{ gap: 8 }}>
               <button className="btn small ghost" onClick={() => setDeck({ ...deck, plots: defaultPlots(deck.fam) })}><Icon name="sparkles" size={16} />Sélection conseillée</button>
@@ -177,6 +185,13 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
           </>
         )}
       </div>
+      {wide && (
+        <aside className="hub-body db-side" aria-label="Mon deck">
+          <h3 className="db-side-h">Mon deck <small>{c.total || 0} / {R.size} cartes</small></h3>
+          {listView}
+        </aside>
+      )}
+      </div>
 
       {v.ok ? <div className="db-ok"><Icon name="check" size={18} />Deck valide : il peut être joué.</div> : (
         <div className="db-errs" role="alert">
@@ -185,7 +200,7 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
           {v.errors.length > 4 && <span>… et {v.errors.length - 4} autre(s).</span>}
         </div>
       )}
-      {toast && <div className="toast" role="alert" style={{ position: "fixed", left: 16, right: 16, bottom: "calc(var(--safe-b) + 90px)", zIndex: 75 }}>{toast}</div>}
+      {toast && <div className="toast hub-toast db-toast" role="alert">{toast}</div>}
       {zoom && <CardZoom id={zoom} owned={CARD[zoom].type !== "plot" ? { n: owned[zoom] || 0 } : null} onClose={() => setZoom(null)}
         acts={CARD[zoom].type === "plot" ? [{ label: deck.plots.includes(zoom) ? "Retirer des scénarios" : "Ajouter aux scénarios", onClick: () => { togglePlot(zoom); setZoom(null); } }]
           : (owned[zoom] || 0) > 0 ? [{ label: `Ajouter au deck (${deck.cards[zoom] || 0}/${Math.min(R.maxCopies, owned[zoom] || 0)})`, icon: "plus", onClick: () => setN(zoom, (deck.cards[zoom] || 0) + 1) }, ...(deck.cards[zoom] ? [{ label: "Retirer un exemplaire", icon: "minus", onClick: () => setN(zoom, deck.cards[zoom] - 1) }] : [])] : []} />}

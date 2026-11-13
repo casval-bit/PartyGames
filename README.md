@@ -3,9 +3,10 @@
 Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en temps réel et équipes. Huit jeux : **Time's Up** (classique ou mode Bonus), **Qui est-ce ?**, **Blind test**, **Frise** (frise musicale), **Célébrité** (photo pixellisée, façon golf), **Petit bac**, **Plateau** (façon Mario Party) et **Mini-jeux** (18 jeux 3D façon Pummel Party). Chaque joueur a son **Doudou**, une petite créature 3D à personnaliser.
 « Time's Up » est une marque déposée : le nom de la plateforme et des jeux est à changer avant le Play Store (`APP_NAME` dans `src/config.js`, `capacitor.config.json`, textes de `Splash.jsx` et `Menu.jsx`).
 
-## Look & feel (« Tablette de virtualisation »)
+## Look & feel (« Tablette » bleu nuit)
 Tablette high-tech nuit bleue : fond marine très sombre avec deux halos (bleu, cyan) et une grille cyan très fine, panneaux arrondis en dégradé marine, pastilles, barres de progression arrondies (vertes, orange quand il reste peu), contours lumineux cyan pour la sélection. Polices embarquées : **Sora** (titres, cartes, chiffres) et **Noto Sans KR** (texte). **Aucune émoji** : toutes les icônes sont des traits fins Lucide (`src/ui/Icon.jsx`, `<Icon name="trophy" />` ; `src/ui/iconPaint.js` les dessine aussi sur les textures 3D).
 Dans un navigateur sur grand écran (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone et dans l'appli PC, plein écran, sans cadre. Variante de coque rouge et blanche dans les réglages du profil (navigateur).
+**Écran d'accueil** (`src/screens/Splash.jsx`) : un emblème holographique (anneaux qui tournent en sens contraires, rayons, étoile qui pulse en ondes), les icônes des jeux en orbite qui s'allument chacune leur tour, des poussières de lumière qui montent, et le nom PARTY HUB dont les lettres montent d'un flou puis s'éclairent l'une après l'autre. On touche l'écran (ou clic / Entrée sur PC) pour entrer.
 **Matérialisation** (`src/ui/Materialize.jsx`) : à chaque changement d'écran, un damier de blocs s'allume du centre vers les bords, flashe et disparaît de bas en haut. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
 **Cartes** : cartes holographiques (grille, coins lumineux, nom en Sora) ; boosters en « cartouche de données ». Les mini-jeux se jouent dans des **secteurs virtuels** (sol sombre quadrillé, horizon en grille, colonnes de lumière) à la couleur de leur zone : forêt (vert), désert (orange), banquise (bleu-blanc), montagne (gris-violet), noyau (cyan) — `candyWorld(THREE, scene, { zone })` dans `src/minigames/three/kit3d.jsx`.
 Tout le thème est dans `src/tablet.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
@@ -31,6 +32,11 @@ S'il quitte, le lobby se ferme. Pas encore de reconnexion en cours de partie.
 ## 2 ter. Comptes : connexion par e-mail (niveau et avatars sauvegardés)
 
 Dans l'appli : **Se connecter** (menu ou profil) > ton e-mail > un **code** arrive par e-mail > tu le tapes. Pas de mot de passe, pas de lien à ouvrir (un lien ne reviendrait pas dans l'appli Android).
+
+**À qui est la progression affichée ?** Un badge le dit partout où on la voit (menu sous la carte d'identité, profil, en-tête du Trône des Mondes ; `src/ui/AccountBadge.jsx`) :
+- vert, **Compte connecté** + ton e-mail : tout est sauvegardé sur ton compte (orange si la dernière sauvegarde a échoué : touche pour réessayer) ;
+- orange en pointillés, **Profil local, pas sauvegardé** (« seulement sur ce téléphone / cet ordinateur ») : un profil de cet appareil, perdu si on efface les données ; touche le badge pour te connecter et le garder ;
+- gris, **Profil local (hors ligne)** : l'appli tourne sans Supabase, les comptes n'existent pas.
 Le profil (niveau, XP, stats, succès, avatar, bordure, couleur) et le pseudo sont alors sauvegardés sur le compte, pas seulement sur le téléphone : on les retrouve sur un autre téléphone ou après une réinstallation.
 
 **À faire une fois dans Supabase** (sans ça, l'envoi du code échoue) :
@@ -114,6 +120,15 @@ Pas de fausse tablette autour : l'appli occupe tout l'écran, et l'interface gra
 **Ctrl 0** pour revenir à la taille normale). Le profil, les decks et les illustrations restent sur l'ordinateur ; connecté par e-mail,
 on retrouve son compte comme sur le téléphone. Comme dans l'APK, les liens Spotify (playlist, morceaux) et Deezer marchent sans blocage.
 La partie du Trône des Mondes ne pivote pas sur PC, même dans une fenêtre plus haute que large.
+
+**Mise en page PC** (`src/desktop.css`, classe `html.desktop`) : plus de colonne de téléphone, tout l'écran sert.
+- **Menu** : carte d'identité, badge du compte, pseudo et nom du lobby à gauche ; les quatre grandes tuiles (Créer, Rejoindre, Trône des Mondes, Salle d'arcade) à droite, avec la liste des jeux.
+- **Lobby** : le jeu et ses réglages à gauche, les joueurs (ou les équipes) à droite, « Lancer la partie » en bas à droite. **Profil** : la carte d'identité à gauche, les stats sur deux colonnes à droite. **Salle d'arcade** : grille de tous les mini-jeux.
+- **Trône des Mondes**, fenêtre d'au moins 1 100 px de large (après le zoom) : un **tableau de bord** au lieu des onglets. En-tête : niveau, **Éclats** (le diamant), compte, règles.
+  Colonne de gauche : ta progression (anneau de niveau, prochaine récompense, parties, victoires, boosters ouverts, brillantes, collection, deck joué), les quêtes du jour et les succès (ceux à récupérer en premier).
+  Au centre : Mes decks ou Collection (avec l'Album). À droite : les boosters à ouvrir, la boutique du jour et les boosters à acheter. Chaque colonne défile seule.
+  Le **constructeur de deck** montre les cartes à ajouter à gauche et le deck à droite, en même temps. Fenêtre plus étroite : les mêmes onglets que sur téléphone.
+- **Écrans de jeu** : centrés dans une colonne large (1 000 px), le plateau 3D est plus grand.
 
 ### Option A : GitHub Actions (rien à installer)
 À chaque push sur `main` (ou Actions > « Appli PC (Windows) » > Run workflow), avec les mêmes secrets que l'APK :
@@ -366,9 +381,9 @@ League of Legends (un deck par **région** de Runeterra, comme les types Pokémo
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
 Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli
 et Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella), plus des cartes Neutres.
-2186 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
+2188 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
 
-**Les cartes de coût 7** (les plus puissantes, souvent légendaires) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
+**Les cartes de coût 7** (les plus puissantes, souvent légendaires ; **toujours brillantes**) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
 (ex. Monkey D. Luffy en Gear Fourth et en Gear Fifth : une seule des deux par deck). Elles ont des pouvoirs à part, tirés de leur univers :
 le Haki des rois (Luffy, Gear Fourth : les petits personnages n'osent pas défendre), le festin de Sanji (il redresse tout l'équipage),
 le séisme de Barbe Blanche (il agenouille tous les petits adversaires en arrivant), Kaido impossible à tuer (il s'agenouille pour survivre),
@@ -404,10 +419,12 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   En grand, la carte s'incline un peu sous le doigt ou la souris, les brillantes ont leur reflet arc-en-ciel et un éclat de lumière qui les balaie,
   et on feuillette l'album avec les flèches (← → au clavier).
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
-  Environ 4 % des cartes sont **brillantes**, et 1 booster sur 200 est **doré** (que des rares ou mieux, toutes brillantes). Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
+  **Brillantes** : une carte 7 l'est toujours ; les autres le sont d'autant plus souvent qu'elles sont rares (commune 2 %, peu commune 3 %,
+  rare 5 %, épique 8 %, légendaire 12 %, ×1,5 dans les boosters Arsenal et Prestige). 1 booster sur 200 est **doré** (que des rares ou mieux, toutes brillantes). Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
-  (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; ×3 si brillante).
+  (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; ×3 pour une brillante en plus, les cartes 7, toujours brillantes, gardant leur prix).
 - **Niveaux** : un booster à chaque niveau (un Prestige tous les 5). **3 quêtes par jour** (une peut être changée) et 13 succès.
+- **Sur PC** (fenêtre large) : tout ça sur un seul écran, en tableau de bord (voir 3 ter).
 - Tout est enregistré dans le profil (`profile.tcg`), donc sauvegardé sur le compte quand on est connecté.
 
 **Illustrations** : chaque carte a une illustration originale générée par l'appli (décor de sa famille, plus riche selon la rareté : les légendaires sont en pleine carte).
@@ -431,7 +448,7 @@ reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt
 Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
 ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
 
-**League of Legends** (`cards/lol.js`, 161 cartes) : un deck choisit une région, qui donne un bonus à la famille ; il joue les champions de cette région
+**League of Legends** (`cards/lol.js`, 170 cartes) : un deck choisit une région, qui donne un bonus à la famille ; il joue les champions de cette région
 (un champion de deux régions compte pour les deux : Mel est de Noxus et de Piltover, les yordles Poppy, Gnar, Kennen, Heimerdinger, Ziggs et Kled sont aussi de Bandle City),
 plus ce qui va partout : Bard et ses meeps, les sbires, le Héraut, le Baron Nashor, les objets (Ange gardien, Lame d'infini…) et les sorts d'invocateur (Saut éclair, Embrasement…).
 

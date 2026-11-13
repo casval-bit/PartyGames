@@ -1,7 +1,8 @@
 // Trône des Mondes : collection et progression du joueur (module pur, sauvegardé dans profile.tcg).
 //
 //   - deck de départ choisi une fois : toutes ses cartes sont débloquées ;
-//   - boosters (gagnés en montant de niveau, en quêtes, ou achetés avec des Éclats), cartes brillantes (foil) ;
+//   - boosters (gagnés en montant de niveau, en quêtes, ou achetés avec des Éclats), cartes brillantes (foil) :
+//     les cartes de coût 7 sont toujours brillantes ; pour les autres, plus la carte est rare, plus elle a de chances de briller ;
 //   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (surtout les brillantes) ;
 //   - quêtes du jour (XP + Éclats), succès permanents, XP de fin de partie (jamais 0, même en perdant).
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS } from "./cards/index.js";
@@ -9,6 +10,10 @@ import { starterById, validateDeck } from "./deck.js";
 import { RARITY_ORDER } from "./rules.js";
 
 export const CURRENCY = "Éclats";
+/** Les cartes de coût 7 sont toujours brillantes (tous leurs exemplaires). */
+export const alwaysFoil = (d) => Boolean(d) && d.type !== "plot" && d.cost >= 7;
+/** Chance qu'une carte tirée d'un booster soit brillante, selon sa rareté (multipliée selon le booster, voir PACKS.foilX). */
+export const FOIL_CHANCE = { C: 0.02, U: 0.03, R: 0.05, E: 0.08, L: 0.12 };
 const clone = (o) => JSON.parse(JSON.stringify(o));
 export const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -29,6 +34,7 @@ export function normalizeTcg(raw) {
   t.xp = Math.min(1e8, n(raw.xp));
   t.coll = cards(raw.coll);
   t.foil = cards(raw.foil);
+  for (const [id, v] of Object.entries(t.coll)) if (alwaysFoil(CARD[id])) { t.foil[id] = Math.min(99, (t.foil[id] || 0) + v); delete t.coll[id]; } // cartes 7 : toujours brillantes
   t.decks = Array.isArray(raw.decks) ? raw.decks.filter((d) => d && typeof d === "object" && FAMILY[d.fam]).slice(0, 40).map((d) => ({
     id: String(d.id || Math.random().toString(36).slice(2, 9)).slice(0, 20), name: String(d.name || "Mon deck").slice(0, 32), fam: d.fam, pt: typeof d.pt === "string" ? d.pt : null,
     cards: Object.fromEntries(Object.entries(d.cards || {}).filter(([id, v]) => CARD[id] && CARD[id].type !== "plot" && n(v) > 0).map(([id, v]) => [id, Math.min(2, n(v))])),
@@ -68,15 +74,18 @@ const BASE = [[["C", 85], ["U", 15]], [["C", 85], ["U", 15]], [["C", 85], ["U", 
 const PRESTIGE = [[["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["E", 80], ["L", 20]], [["E", 60], ["L", 40]]];
 const collectible = (d) => d.type !== "plot" && !d.st;
 export const PACKS = [
-  { id: "multi", name: "Booster Multivers", price: 120, desc: "5 cartes de toutes les familles. Une rare au moins.", filter: () => true, slots: BASE, foil: 0.04 },
-  { id: "heros", name: "Booster Héros", price: 140, desc: "5 personnages, sans objet ni événement.", filter: (d) => d.type === "char", slots: BASE, foil: 0.04 },
-  { id: "arsenal", name: "Booster Arsenal", price: 140, desc: "5 cartes : lieux, objets et événements seulement.", filter: (d) => d.type !== "char", slots: BASE, foil: 0.05 },
-  { id: "prestige", name: "Booster Prestige", price: 600, desc: "5 cartes rares ou mieux, dont une épique au moins.", filter: () => true, slots: PRESTIGE, foil: 0.1 },
-  ...PLAYABLE.map((f) => ({ id: "fam:" + f.id, fam: f.id, name: `Booster ${f.short || f.name}`, price: 160, desc: `5 cartes de la famille ${f.name}.`, filter: (d) => d.fam === f.id, slots: BASE, foil: 0.04 })),
+  { id: "multi", name: "Booster Multivers", price: 120, desc: "5 cartes de toutes les familles. Une rare au moins.", filter: () => true, slots: BASE, foilX: 1 },
+  { id: "heros", name: "Booster Héros", price: 140, desc: "5 personnages, sans objet ni événement.", filter: (d) => d.type === "char", slots: BASE, foilX: 1 },
+  { id: "arsenal", name: "Booster Arsenal", price: 140, desc: "5 cartes : lieux, objets et événements seulement.", filter: (d) => d.type !== "char", slots: BASE, foilX: 1.5 },
+  { id: "prestige", name: "Booster Prestige", price: 600, desc: "5 cartes rares ou mieux, dont une épique au moins.", filter: () => true, slots: PRESTIGE, foilX: 1.5 },
+  ...PLAYABLE.map((f) => ({ id: "fam:" + f.id, fam: f.id, name: `Booster ${f.short || f.name}`, price: 160, desc: `5 cartes de la famille ${f.name}.`, filter: (d) => d.fam === f.id, slots: BASE, foilX: 1 })),
 ];
 export function packDef(id) { return PACKS.find((p) => p.id === id) || null; }
 
-/** Tire le contenu d'un booster (5 cartes). `r` : fonction aléatoire. 1 chance sur 200 : booster doré (tout brillant, rares ou mieux). */
+/**
+ * Tire le contenu d'un booster (5 cartes). `r` : fonction aléatoire. 1 chance sur 200 : booster doré (tout brillant, rares ou mieux).
+ * Brillante : toujours pour une carte 7, sinon FOIL_CHANCE selon la rareté × le multiplicateur du booster.
+ */
 export function rollPack(packId, r = Math.random) {
   const p = packDef(packId);
   if (!p) return [];
@@ -90,11 +99,11 @@ export function rollPack(packId, r = Math.random) {
     while (!byR[RARITY_ORDER[i]].length && i > 0) i--;   // rareté absente de ce booster : on descend
     const list = byR[RARITY_ORDER[i]].filter((d) => !out.some((o) => o.id === d.id));
     const d = (list.length ? list : byR[RARITY_ORDER[i]])[Math.floor(r() * (list.length || byR[RARITY_ORDER[i]].length))];
-    if (d) out.push({ id: d.id, foil: golden || r() < p.foil * (d.r === "L" ? 0.6 : 1) });
+    if (d) out.push({ id: d.id, foil: golden || alwaysFoil(d) || r() < (FOIL_CHANCE[d.r] || 0) * (p.foilX || 1) });
   }
   return out.sort((a, b) => RARITY_ORDER.indexOf(CARD[a.id].r) - RARITY_ORDER.indexOf(CARD[b.id].r));
 }
-const addCard = (t, id, foil, n = 1) => { const k = foil ? "foil" : "coll"; t[k][id] = (t[k][id] || 0) + n; };
+const addCard = (t, id, foil, n = 1) => { const k = foil || alwaysFoil(CARD[id]) ? "foil" : "coll"; t[k][id] = (t[k][id] || 0) + n; };
 /** Ouvre un booster possédé. Renvoie { t, cards: [{id, foil, isNew}] } ou { error }. */
 export function openPack(t0, packId, r = Math.random) {
   const t = clone(normalizeTcg(t0));
@@ -123,19 +132,27 @@ export function owned(t) {
   return o;
 }
 export const RECYCLE = { C: 5, U: 15, R: 40, E: 100, L: 250 };
-/** Transforme en Éclats les exemplaires en trop (au-delà de 2 normales et 1 brillante). */
+/** Exemplaires gardés au recyclage, et valeur d'un exemplaire en trop : 2 normales et 1 brillante ; une carte 7 (toujours
+ *  brillante) se garde en 2 exemplaires, puisque les decks en acceptent 2, et vaut son prix normal. */
+const keepOf = (id, foil) => (foil ? (alwaysFoil(CARD[id]) ? 2 : 1) : 2);
+const worthOf = (id, foil) => RECYCLE[CARD[id].r] * (foil && !alwaysFoil(CARD[id]) ? 3 : 1);
+/** Transforme en Éclats les exemplaires en trop. */
 export function recycle(t0) {
   const t = clone(normalizeTcg(t0));
   let gained = 0, n = 0;
-  for (const [id, c] of Object.entries(t.coll)) if (c > 2) { gained += (c - 2) * RECYCLE[CARD[id].r]; n += c - 2; t.coll[id] = 2; }
-  for (const [id, c] of Object.entries(t.foil)) if (c > 1) { gained += (c - 1) * RECYCLE[CARD[id].r] * 3; n += c - 1; t.foil[id] = 1; }
+  for (const k of ["coll", "foil"]) for (const [id, c] of Object.entries(t[k])) {
+    const keep = keepOf(id, k === "foil");
+    if (c > keep) { gained += (c - keep) * worthOf(id, k === "foil"); n += c - keep; t[k][id] = keep; }
+  }
   t.ec += gained;
   return { t, gained, n };
 }
 export function recyclable(t) {
   let gained = 0, n = 0;
-  for (const [id, c] of Object.entries(t.coll || {})) if (c > 2) { gained += (c - 2) * RECYCLE[CARD[id].r]; n += c - 2; }
-  for (const [id, c] of Object.entries(t.foil || {})) if (c > 1) { gained += (c - 1) * RECYCLE[CARD[id].r] * 3; n += c - 1; }
+  for (const k of ["coll", "foil"]) for (const [id, c] of Object.entries(t[k] || {})) {
+    const keep = keepOf(id, k === "foil");
+    if (c > keep) { gained += (c - keep) * worthOf(id, k === "foil"); n += c - keep; }
+  }
   return { gained, n };
 }
 
@@ -148,7 +165,7 @@ export function chooseStarter(t0, starterId) {
   if (!s) return { error: "Deck inconnu." };
   if (t.starter) return { error: "Le deck de départ est déjà choisi." };
   t.starter = s.id;
-  for (const [id, n] of Object.entries(s.cards)) t.coll[id] = Math.max(t.coll[id] || 0, n);
+  for (const [id, n] of Object.entries(s.cards)) { const k = alwaysFoil(CARD[id]) ? "foil" : "coll"; t[k][id] = Math.max(t[k][id] || 0, n); }
   const deck = { id: "d" + Math.random().toString(36).slice(2, 8), name: s.name, fam: s.fam, pt: s.pt || null, cards: { ...s.cards }, plots: [...s.plots] };
   t.decks.unshift(deck);
   t.sel = deck.id;
@@ -189,8 +206,8 @@ export function shopOffers(t, day = today()) {
     const rar = pickW(r, sl);
     const list = byR[rar].filter((d) => !out.some((o) => o.id === d.id));
     const d = list[Math.floor(r() * list.length)];
-    const foil = r() < (i === 5 ? 0.3 : 0.08);
-    out.push({ i, id: d.id, foil, price: PRICE[d.r] * (foil ? FOIL_MULT : 1), star: i === 5 });
+    const roll = r(), bonus = !alwaysFoil(d) && roll < (i === 5 ? 0.3 : Math.min(0.3, (FOIL_CHANCE[d.r] || 0) * 2)); // brillante « en plus » : plus chère
+    out.push({ i, id: d.id, foil: bonus || alwaysFoil(d), price: PRICE[d.r] * (bonus ? FOIL_MULT : 1), star: i === 5 });
   });
   return out;
 }
@@ -279,7 +296,7 @@ export const MILESTONES = [
   { id: "c250", text: "Posséder 250 cartes différentes", test: (t) => Object.keys(owned(t)).length >= 250, ec: 500, packs: { prestige: 1 } },
   { id: "c500", text: "Posséder 500 cartes différentes", test: (t) => Object.keys(owned(t)).length >= 500, ec: 1500, packs: { prestige: 2 } },
   { id: "f1", text: "Obtenir une carte brillante", test: (t) => Object.keys(t.foil).length >= 1, ec: 100, packs: {} },
-  { id: "fl", text: "Obtenir une Légendaire brillante", test: (t) => Object.keys(t.foil).some((id) => CARD[id].r === "L"), ec: 1000, packs: { prestige: 1 } },
+  { id: "fl", text: "Obtenir une Épique brillante (hors cartes 7)", test: (t) => Object.keys(t.foil).some((id) => CARD[id].r === "E" && !alwaysFoil(CARD[id])), ec: 1000, packs: { prestige: 1 } },
   { id: "fam5", text: "Jouer avec 5 familles différentes", test: (t) => t.st.fams.length >= 5, ec: 300, packs: { multi: 2 } },
   { id: "fam16", text: `Jouer avec les ${PLAYABLE.length} familles`, test: (t) => PLAYABLE.every((f) => t.st.fams.includes(f.id)), ec: 1500, packs: { prestige: 2 } },
 ];

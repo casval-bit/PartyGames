@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { CARD, FAMILY, TYPE_BONUS, subOf, subWords } from "../cards/index.js";
 import { KEYWORDS, RARITY, CARD_TYPES, TYPE_NAME } from "../rules.js";
 import { starterById } from "../deck.js";
+import { alwaysFoil } from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, FamilyFace, PlotFace, RichText, TYPE_ICON } from "./Card.jsx";
@@ -208,14 +209,16 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
               <span className="pill dim">{CARD_TYPES[d.type]}</span>
               <span className="pill" style={{ color: RARITY[d.r].gem, borderColor: RARITY[d.r].gem }}>{RARITY[d.r].name}</span>
               {d.uni && <span className="pill dim">Unique</span>}
-              {foil && !missing && <span className="pill tz-foil">Brillante</span>}
+              {(foil || alwaysFoil(d)) && !missing && <span className="pill tz-foil">{alwaysFoil(d) ? "Brillante (toutes les cartes 7)" : "Brillante"}</span>}
               {d.pt && d.pt.map((t) => <span key={t} className="pill" style={{ borderColor: (TYPE_BONUS[t] || {}).color }}>{subWords(d.fam).One} {(TYPE_BONUS[t] || {}).name || t}</span>)}
             </div>
             {d.uni && <p style={{ margin: 0, fontSize: ".78rem", color: "var(--txt-2)" }}>Unique : un seul exemplaire en jeu ; une copie en plus devient un doublon (elle le sauve d'une mort). Une seule version de {d.name} par deck.</p>}
             {st && <p style={{ margin: 0, fontSize: ".78rem", color: "#ffe6a8" }}>Exclusive au deck de départ « {st.name} » : ne sort jamais des boosters.</p>}
             {missing
               ? <p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>{st ? "Pas encore dans ta collection." : "Pas encore dans ta collection : elle sort des boosters et passe parfois dans la boutique du jour."}</p>
-              : owned && <p style={{ margin: 0, fontSize: ".82rem" }}>Dans ta collection : <b>{owned.n || 0}</b> normale{(owned.n || 0) > 1 ? "s" : ""}{owned.f ? <>, <b>{owned.f}</b> brillante{owned.f > 1 ? "s" : ""}</> : null}.</p>}
+              : owned && (alwaysFoil(d)
+                ? <p style={{ margin: 0, fontSize: ".82rem" }}>Dans ta collection : <b>{(owned.n || 0) + (owned.f || 0)}</b> brillante{(owned.n || 0) + (owned.f || 0) > 1 ? "s" : ""}.</p>
+                : <p style={{ margin: 0, fontSize: ".82rem" }}>Dans ta collection : <b>{owned.n || 0}</b> normale{(owned.n || 0) > 1 ? "s" : ""}{owned.f ? <>, <b>{owned.f}</b> brillante{owned.f > 1 ? "s" : ""}</> : null}.</p>)}
           </div>
         )}
         {plot && <div className="tz-box"><h4>Scénario</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Revenu : l'or de la phase de Recrutement. Initiative : la plus haute choisit le premier joueur. Revendication : ce que coûte un défi perdu contre vous. Réserve : cartes gardées en main à la fin du round.</p></div>}

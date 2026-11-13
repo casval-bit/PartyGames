@@ -15,7 +15,9 @@ import Rules from "./Rules.jsx";
 import { useArtInfo, importFiles, syncRemote } from "./artStore.js";
 import ArtList, { loadTri, saveTri } from "./ArtList.jsx";
 import Album from "./Album.jsx";
-import { APPAREIL } from "../../lib/device.js";
+import { APPAREIL, DESKTOP } from "../../lib/device.js";
+import AccountBadge from "../../ui/AccountBadge.jsx";
+import { useMedia, WIDE_QUERY } from "../../lib/useMedia.js";
 
 const EC = ({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
 const famStyle = (f, pt) => ({ "--fc": subOf(f.id, pt) ? subOf(f.id, pt).color : f.color });
@@ -92,7 +94,7 @@ function Decks({ t, own, setT, onEdit, flash }) {
   const [del, setDel] = useState(null);
   return (
     <div className="hub-body">
-      <div className="hub-sec">
+      <div className="hub-sec hub-decks">
         <h3>Mes decks <small>le deck coché est celui que tu joues en partie</small></h3>
         {t.decks.map((d) => {
           const v = validateDeck(d, own);
@@ -107,7 +109,9 @@ function Decks({ t, own, setT, onEdit, flash }) {
               </div>
               {!v.ok && <small style={{ color: "#ffd3e1", fontSize: ".78rem" }}>{v.errors[0]}{v.errors.length > 1 ? ` (+${v.errors.length - 1})` : ""}</small>}
               <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-                <button className={"btn small " + (on ? "good" : "")} disabled={!v.ok || on} onClick={() => { setT(P.selectDeck(t, d.id)); sfx.apply(); }}><Icon name={on ? "check" : "play"} size={16} />{on ? "Deck joué" : "Jouer avec"}</button>
+                {on
+                  ? <span className="pill ok hub-played"><Icon name="check" size={14} />Deck joué en partie</span>
+                  : <button className="btn small" disabled={!v.ok} onClick={() => { setT(P.selectDeck(t, d.id)); sfx.apply(); }}><Icon name="play" size={16} />Jouer avec</button>}
                 <button className="btn small ghost" onClick={() => onEdit(d)}><Icon name="edit" size={16} />Modifier</button>
                 <button className="btn small ghost" onClick={() => { setT(P.saveDeck(t, { ...d, id: null, name: `${d.name} (copie)`.slice(0, 32) })); flash("Deck copié."); }}><Icon name="layers" size={16} />Copier</button>
                 {del === d.id
@@ -237,36 +241,52 @@ function Collection({ t, own, setT, flash }) {
 }
 
 /* ------------------------------ boosters ------------------------------ */
-function Packs({ t, setT, flash, onOpen }) {
-  const [famOpen, setFamOpen] = useState(false);
-  const mine = Object.entries(t.packs).filter(([, n]) => n > 0).map(([id, n]) => ({ p: P.packDef(id), n })).filter((x) => x.p);
-  const buy = (p) => { const r = P.buyPack(t, p.id); if (r.error) { flash(r.error); sfx.error(); return; } setT(r.t); sfx.apply(); flash(`${p.name} acheté !`); };
-  const row = (p, right) => (
-    <div key={p.id} className="hub-pack" style={{ "--pc": packColor(p) }}>
+function packRow(p, right) {
+  return (
+    <div key={p.id} className="hub-pack" style={{ "--pc": packColor(p) }} title={p.desc}>
       <span className="pi"><Icon name={packIcon(p)} size={18} /></span>
       <div className="grow" style={{ flex: 1, minWidth: 0 }}><b style={{ fontFamily: "var(--display)", fontSize: ".92rem" }}>{p.name}</b><small style={{ display: "block", fontSize: ".74rem", color: "var(--txt-2)" }}>{p.desc}</small></div>
       {right}
     </div>
   );
+}
+/** Boosters à ouvrir. */
+function PacksMine({ t, onOpen }) {
+  const mine = Object.entries(t.packs).filter(([, n]) => n > 0).map(([id, n]) => ({ p: P.packDef(id), n })).filter((x) => x.p);
+  return (
+    <div className="hub-sec">
+      <h3>Mes boosters <small>{mine.reduce((s, x) => s + x.n, 0)} à ouvrir</small></h3>
+      {mine.length ? mine.map(({ p, n }) => packRow(p, <><span className="cnt">{n}</span><button className="btn small primary" onClick={() => onOpen(p.id)}>Ouvrir</button></>)) : <div className="hub-empty">Aucun booster. Monte de niveau, termine des quêtes ou achète-en ci-dessous.</div>}
+    </div>
+  );
+}
+/** Boosters à acheter avec les Éclats. */
+function PacksBuy({ t, setT, flash, note = true }) {
+  const [famOpen, setFamOpen] = useState(false);
+  const buy = (p) => { const r = P.buyPack(t, p.id); if (r.error) { flash(r.error); sfx.error(); return; } setT(r.t); sfx.apply(); flash(`${p.name} acheté !`); };
+  return (
+    <>
+      <div className="hub-sec">
+        <h3>Acheter des boosters <small>tu as <EC n={t.ec} /></small></h3>
+        {P.PACKS.filter((p) => !p.fam).map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
+        <button className="btn ghost small" onClick={() => setFamOpen(!famOpen)}><Icon name={famOpen ? "minus" : "plus"} size={16} />Boosters d'une seule famille</button>
+        {famOpen && P.PACKS.filter((p) => p.fam).map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
+      </div>
+      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare. Brillantes : les cartes 7 le sont toujours ; les autres de 2 % (commune) à 12 % (légendaire) de chances, une fois et demie plus dans les boosters Arsenal et Prestige. 1 booster sur 200 est doré (que des rares ou mieux, toutes brillantes). Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>}
+    </>
+  );
+}
+function Packs({ t, setT, flash, onOpen }) {
   return (
     <div className="hub-body">
-      <div className="hub-sec">
-        <h3>Mes boosters <small>{mine.reduce((s, x) => s + x.n, 0)} à ouvrir</small></h3>
-        {mine.length ? mine.map(({ p, n }) => row(p, <><span className="cnt">{n}</span><button className="btn small primary" onClick={() => onOpen(p.id)}>Ouvrir</button></>)) : <div className="hub-empty">Aucun booster. Monte de niveau, termine des quêtes ou achète-en ci-dessous.</div>}
-      </div>
-      <div className="hub-sec">
-        <h3>Acheter <small>tu as <EC n={t.ec} /></small></h3>
-        {P.PACKS.filter((p) => !p.fam).map((p) => row(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
-        <button className="btn ghost small" onClick={() => setFamOpen(!famOpen)}><Icon name={famOpen ? "minus" : "plus"} size={16} />Boosters d'une seule famille</button>
-        {famOpen && P.PACKS.filter((p) => p.fam).map((p) => row(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
-      </div>
-      <p className="muted" style={{ fontSize: ".78rem", margin: 0 }}>Chaque booster : 5 cartes, au moins une rare. Environ 4 % des cartes sont brillantes, et 1 booster sur 200 est doré (que des rares ou mieux, toutes brillantes). Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>
+      <PacksMine t={t} onOpen={onOpen} />
+      <PacksBuy t={t} setT={setT} flash={flash} />
     </div>
   );
 }
 
 /* ------------------------------ boutique ------------------------------ */
-function Shop({ t, setT, flash }) {
+function Shop({ t, setT, flash, compact = false }) {
   const day = P.today();
   const offers = useMemo(() => P.shopOffers(t, day), [t.seed, day]); // eslint-disable-line react-hooks/exhaustive-deps
   const bought = t.shop && t.shop.day === day ? t.shop.bought : [];
@@ -282,10 +302,12 @@ function Shop({ t, setT, flash }) {
     setT(r.t); sfx.win(); flash(`${CARD[o.id].name}${o.foil ? " brillante" : ""} rejoint ta collection !`);
   };
   return (
-    <div className="hub-body">
-      <div className="hub-card">
-        <div className="hub-row"><div className="grow"><b>Boutique du jour</b><small>6 cartes au hasard parmi toutes les cartes du jeu. Nouvelle sélection dans {fmtTime(left)}.</small></div><EC n={t.ec} /></div>
-      </div>
+    <div className={"hub-body" + (compact ? " hub-shop compact" : " hub-shop")}>
+      {compact
+        ? <div className="hub-sec"><h3><Icon name="store" size={17} />Boutique du jour <small>nouvelle sélection dans {fmtTime(left)}</small></h3></div>
+        : <div className="hub-card">
+            <div className="hub-row"><div className="grow"><b>Boutique du jour</b><small>6 cartes au hasard parmi toutes les cartes du jeu. Nouvelle sélection dans {fmtTime(left)}.</small></div><EC n={t.ec} /></div>
+          </div>}
       <div className="hub-grid">
         {offers.map((o) => {
           const d = CARD[o.id];
@@ -300,17 +322,14 @@ function Shop({ t, setT, flash }) {
           );
         })}
       </div>
-      <p className="muted" style={{ fontSize: ".78rem", margin: 0 }}>Prix : commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 Éclats ; ×3 pour une brillante.</p>
+      <p className="muted hub-note">Prix : commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 Éclats ; ×3 pour une brillante en plus (les cartes 7, toujours brillantes, gardent leur prix).</p>
       {zoom && <CardZoom id={zoom.id} foil={zoom.foil} owned={{ n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 }} onClose={() => setZoom(null)} />}
     </div>
   );
 }
 
 /* ------------------------------ quêtes ------------------------------ */
-function Quests({ t, setT, flash }) {
-  const lv = P.levelOf(t.xp);
-  const next = P.levelReward(lv.lvl + 1);
-  const ms = P.claimableMilestones(t);
+function DailyQuests({ t, setT, flash }) {
   const claim = (i) => {
     const r = P.claimQuest(t, i);
     if (r.error) { flash(r.error); return; }
@@ -319,51 +338,126 @@ function Quests({ t, setT, flash }) {
   };
   const reroll = (i) => { const r = P.rerollQuest(t, i); if (r.error) { flash(r.error); return; } setT(r.t); sfx.select(); };
   return (
+    <div className="hub-sec">
+      <h3>Quêtes du jour <small>nouvelles dans {fmtTime(P.msToMidnight())}</small></h3>
+      {t.quests.list.map((q, i) => {
+        const d = P.QUEST_BY[q.id];
+        const done = q.n >= d.goal;
+        return (
+          <div key={i} className={"hub-quest" + (q.got ? " got" : done ? " ok" : "")}>
+            <div className="hub-row">
+              <div className="grow"><b>{d.text}{d.fam && q.fam ? ` : ${FAMILY[q.fam].name}` : ""}</b><small>+{d.xp} XP · +{d.ec} Éclats</small></div>
+              {q.got ? <span className="pill ok"><Icon name="check" size={12} />Fait</span>
+                : done ? <button className="btn small good" onClick={() => claim(i)}>Récupérer</button>
+                : t.quests.rr < 1 ? <button className="iconbtn" onClick={() => reroll(i)} aria-label="Changer cette quête (une fois par jour)" title="Changer cette quête"><Icon name="reset" size={16} /></button> : null}
+            </div>
+            <span className="bar2"><i style={{ width: `${(100 * Math.min(q.n, d.goal)) / d.goal}%` }} /></span>
+            <small className="muted" style={{ fontSize: ".72rem" }}>{Math.min(q.n, d.goal)} / {d.goal}</small>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+const nextRewardText = (lv) => { const n = P.levelReward(lv + 1); return `${Object.entries(n.packs).map(([k, x]) => `${x} ${P.packDef(k).name}`).join(" + ")} et ${n.ec} Éclats`; };
+function LevelInfo({ t }) {
+  const lv = P.levelOf(t.xp);
+  return (
+    <div className="hub-sec">
+      <h3>Niveaux</h3>
+      <div className="hub-card"><small className="muted">Chaque niveau : un Booster Multivers et 50 Éclats. Tous les 5 niveaux : un Booster Prestige et 200 Éclats de plus. Prochain niveau ({lv.lvl + 1}) : {nextRewardText(lv.lvl)}. Chaque partie rapporte de l'XP, même perdue.</small></div>
+    </div>
+  );
+}
+/** Succès : ceux à récupérer d'abord, puis ceux à faire, puis ceux obtenus. */
+function Milestones({ t, setT, flash, sorted = false }) {
+  const ms = P.claimableMilestones(t);
+  const rank = (m) => (ms.some((x) => x.id === m.id) ? 0 : t.ms[m.id] ? 2 : 1);
+  const list = sorted ? [...P.MILESTONES].sort((a, b) => rank(a) - rank(b)) : P.MILESTONES;
+  const n = Object.keys(t.ms).length;
+  return (
+    <div className="hub-sec">
+      <h3>Succès <small>{n} / {P.MILESTONES.length}</small></h3>
+      {list.map((m) => {
+        const got = t.ms[m.id];
+        const can = ms.some((x) => x.id === m.id);
+        return (
+          <div key={m.id} className={"hub-quest" + (got ? " got" : can ? " ok" : "")}>
+            <div className="hub-row">
+              <div className="grow"><b>{m.text}</b><small>+{m.ec} Éclats{Object.entries(m.packs).map(([k, x]) => ` · ${x} ${P.packDef(k).name}`).join("")}</small></div>
+              {got ? <span className="pill ok"><Icon name="check" size={12} />Obtenu</span> : can ? <button className="btn small good" onClick={() => { const r = P.claimMilestone(t, m.id); if (!r.error) { setT(r.t); sfx.win(); flash(`Succès : +${r.ec} Éclats !`); } }}>Récupérer</button> : <span className="pill dim">À faire</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+function Quests({ t, setT, flash }) {
+  return (
     <div className="hub-body">
-      <div className="hub-sec">
-        <h3>Quêtes du jour <small>nouvelles dans {fmtTime(P.msToMidnight())}</small></h3>
-        {t.quests.list.map((q, i) => {
-          const d = P.QUEST_BY[q.id];
-          const done = q.n >= d.goal;
-          return (
-            <div key={i} className={"hub-quest" + (q.got ? " got" : done ? " ok" : "")}>
-              <div className="hub-row">
-                <div className="grow"><b>{d.text}{d.fam && q.fam ? ` : ${FAMILY[q.fam].name}` : ""}</b><small>+{d.xp} XP · +{d.ec} Éclats</small></div>
-                {q.got ? <span className="pill ok"><Icon name="check" size={12} />Fait</span>
-                  : done ? <button className="btn small good" onClick={() => claim(i)}>Récupérer</button>
-                  : t.quests.rr < 1 ? <button className="iconbtn" onClick={() => reroll(i)} aria-label="Changer cette quête (une fois par jour)" title="Changer cette quête"><Icon name="reset" size={16} /></button> : null}
-              </div>
-              <span className="bar2"><i style={{ width: `${(100 * Math.min(q.n, d.goal)) / d.goal}%` }} /></span>
-              <small className="muted" style={{ fontSize: ".72rem" }}>{Math.min(q.n, d.goal)} / {d.goal}</small>
-            </div>
-          );
-        })}
-      </div>
-      <div className="hub-sec">
-        <h3>Niveaux</h3>
-        <div className="hub-card"><small className="muted">Chaque niveau : un Booster Multivers et 50 Éclats. Tous les 5 niveaux : un Booster Prestige et 200 Éclats de plus. Prochain niveau ({lv.lvl + 1}) : {Object.entries(next.packs).map(([k, n]) => `${n} ${P.packDef(k).name}`).join(" + ")} et {next.ec} Éclats. Chaque partie rapporte de l'XP, même perdue.</small></div>
-      </div>
-      <div className="hub-sec">
-        <h3>Succès</h3>
-        {P.MILESTONES.map((m) => {
-          const got = t.ms[m.id];
-          const can = ms.some((x) => x.id === m.id);
-          return (
-            <div key={m.id} className={"hub-quest" + (got ? " got" : can ? " ok" : "")}>
-              <div className="hub-row">
-                <div className="grow"><b>{m.text}</b><small>+{m.ec} Éclats{Object.entries(m.packs).map(([k, n]) => ` · ${n} ${P.packDef(k).name}`).join("")}</small></div>
-                {got ? <span className="pill ok"><Icon name="check" size={12} />Obtenu</span> : can ? <button className="btn small good" onClick={() => { const r = P.claimMilestone(t, m.id); if (!r.error) { setT(r.t); sfx.win(); flash(`Succès : +${r.ec} Éclats !`); } }}>Récupérer</button> : <span className="pill dim">À faire</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <DailyQuests t={t} setT={setT} flash={flash} />
+      <LevelInfo t={t} />
+      <Milestones t={t} setT={setT} flash={flash} />
     </div>
   );
 }
 
+/* ------------------------------ tableau de bord (PC, écran large) ------------------------------ */
+/** Anneau de niveau : le chiffre au centre, l'XP du niveau en cours sur le pourtour. */
+function LevelRing({ lv }) {
+  const r = 46, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, lv.cur / lv.need));
+  return (
+    <div className="hubx-ring" role="img" aria-label={`Niveau ${lv.lvl}, ${lv.cur} sur ${lv.need} XP`}>
+      <svg viewBox="0 0 108 108" aria-hidden="true">
+        <defs><linearGradient id="hubxRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff1b8" /><stop offset=".55" stopColor="#ffd166" /><stop offset="1" stopColor="#ff9f43" /></linearGradient></defs>
+        <circle cx="54" cy="54" r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="8" />
+        <circle cx="54" cy="54" r={r} fill="none" stroke="url(#hubxRing)" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${c * f} ${c}`} transform="rotate(-90 54 54)" />
+      </svg>
+      <span><small>Niveau</small><b>{lv.lvl}</b></span>
+    </div>
+  );
+}
+/** Colonne de gauche : le joueur (niveau, stats, deck joué), puis quêtes et succès. */
+function PlayerPanel({ t, own, onDecks }) {
+  const lv = P.levelOf(t.xp);
+  const distinct = Object.keys(own).length;
+  const deck = t.decks.find((d) => d.id === t.sel) || null;
+  const v = deck ? validateDeck(deck, own) : null;
+  const f = deck ? FAMILY[deck.fam] : null;
+  return (
+    <section className="hubx-panel hubx-me">
+      <div className="hubx-me-top">
+        <LevelRing lv={lv} />
+        <div className="hubx-me-txt">
+          <span className="eyebrow">Progression</span>
+          <b>{lv.cur} / {lv.need} XP</b>
+          <small>Prochain niveau : {nextRewardText(lv.lvl)}</small>
+        </div>
+      </div>
+      <dl className="hubx-stats">
+        <div><dt>Parties</dt><dd>{t.st.games}</dd></div>
+        <div><dt>Victoires</dt><dd>{t.st.wins}</dd></div>
+        <div><dt>Boosters ouverts</dt><dd>{t.st.packs}</dd></div>
+        <div><dt>Brillantes</dt><dd>{Object.keys(t.foil).length}</dd></div>
+      </dl>
+      <div className="hubx-coll">
+        <div className="hub-row"><span className="grow"><b>Collection</b><small>{distinct} / {ALL.length} cartes différentes</small></span><b className="hubx-pct">{Math.floor((100 * distinct) / ALL.length)} %</b></div>
+        <span className="bar2 blue"><i style={{ width: `${(100 * distinct) / ALL.length}%` }} /></span>
+      </div>
+      {deck && (
+        <button className="hubx-deck" style={famStyle(f, deck.pt)} onClick={onDecks}>
+          <span className="hub-fam" style={famStyle(f, deck.pt)}><Icon name={f.icon} size={20} /></span>
+          <span className="grow"><small className="eyebrow">Deck joué</small><b>{deck.name}</b></span>
+          {v && v.ok ? <span className="pill ok">Prêt</span> : <span className="pill pink">À compléter</span>}
+        </button>
+      )}
+    </section>
+  );
+}
+
 /* ------------------------------ écran principal ------------------------------ */
-export default function Hub({ tcg, setTcg, onClose, initialTab }) {
+export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount }) {
   const t = useMemo(() => P.ensureQuests(P.normalizeTcg(tcg)), [tcg]);
   const own = useMemo(() => P.owned(t), [t]);
   const [tab, setTab] = useState(initialTab || "decks");
@@ -371,6 +465,8 @@ export default function Hub({ tcg, setTcg, onClose, initialTab }) {
   const [opening, setOpening] = useState(null);
   const [toast, setToast] = useState("");
   const [rules, setRules] = useState(false);
+  // appli PC, fenêtre large : tableau de bord (joueur et quêtes | decks et collection | boosters et boutique) au lieu des onglets
+  const wide = useMedia(WIDE_QUERY, DESKTOP);
   const flash = (m) => { setToast(m); setTimeout(() => setToast((x) => (x === m ? "" : x)), 3000); };
   const setT = (nt) => setTcg(nt);
   const lv = P.levelOf(t.xp);
@@ -396,6 +492,60 @@ export default function Hub({ tcg, setTcg, onClose, initialTab }) {
     );
   }
 
+  const overlays = (
+    <>
+      {toast && <div className="toast hub-toast" role="status">{toast}</div>}
+      {opening && (
+        <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} left={t.packs[opening.id] || 0}
+          onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
+      )}
+      {rules && <Rules onClose={() => setRules(false)} />}
+    </>
+  );
+  const pickStarter = (id) => { const r = P.chooseStarter(t, id); if (r.error) { flash(r.error); return; } setT(r.t); sfx.win(); setTab(wide ? "decks" : "packs"); flash("Deck débloqué ! +300 Éclats et 3 boosters offerts : ouvre-les !"); };
+
+  if (wide && t.starter) {
+    const mainTab = tab === "coll" ? "coll" : "decks";
+    return (
+      <div className="screen hub hubx" data-testid="hub-dash">
+        <header className="hubx-top">
+          <button className="iconbtn" onClick={onClose} aria-label="Retour"><Icon name="back" /></button>
+          <div className="hubx-brand">
+            <span className="hubx-crest" aria-hidden="true"><Icon name="crown" size={24} /></span>
+            <div><div className="eyebrow">Jeu de cartes</div><h2>Trône des Mondes</h2></div>
+          </div>
+          <div className="hubx-lv" title={`${lv.cur} / ${lv.need} XP`}>
+            <span className="badge">{lv.lvl}</span>
+            <div><small>Niveau {lv.lvl}</small><span className="bar2 blue"><i style={{ width: `${(100 * lv.cur) / lv.need}%` }} /></span></div>
+          </div>
+          <span className="hubx-ec" title="Éclats : la monnaie du jeu (boosters, boutique)"><Icon name="gem" size={20} /><b>{t.ec.toLocaleString("fr-FR")}</b><small>Éclats</small></span>
+          <AccountBadge acc={acc} onClick={onAccount} compact testId="hub-account" />
+          <button className="iconbtn" onClick={() => setRules(true)} aria-label="Règles du jeu" title="Règles du jeu"><Icon name="book" size={18} /></button>
+        </header>
+        <div className="hubx-grid">
+          <aside className="hubx-col hubx-left" aria-label="Progression">
+            <PlayerPanel t={t} own={own} onDecks={() => setTab("decks")} />
+            <section className="hubx-panel"><DailyQuests t={t} setT={setT} flash={flash} /></section>
+            <section className="hubx-panel"><Milestones t={t} setT={setT} flash={flash} sorted /></section>
+          </aside>
+          <main className="hubx-col hubx-main">
+            <div className="hubx-tabs" role="tablist">
+              <button role="tab" aria-selected={mainTab === "decks"} onClick={() => { setTab("decks"); sfx.select(); }}><Icon name="layers" size={18} />Mes decks<small>{t.decks.length}</small></button>
+              <button role="tab" aria-selected={mainTab === "coll"} onClick={() => { setTab("coll"); sfx.select(); }}><Icon name="library" size={18} />Collection<small>{Object.keys(own).length}</small></button>
+            </div>
+            {mainTab === "decks" ? <Decks t={t} own={own} setT={setT} onEdit={setEdit} flash={flash} /> : <Collection t={t} own={own} setT={setT} flash={flash} />}
+          </main>
+          <aside className="hubx-col hubx-right" aria-label="Boosters et boutique">
+            <section className={"hubx-panel hubx-packs" + (nPacks ? " has" : "")}><PacksMine t={t} onOpen={openPack} /></section>
+            <section className="hubx-panel"><Shop t={t} setT={setT} flash={flash} compact /></section>
+            <section className="hubx-panel"><PacksBuy t={t} setT={setT} flash={flash} /></section>
+          </aside>
+        </div>
+        {overlays}
+      </div>
+    );
+  }
+
   return (
     <div className="screen hub">
       <div className="hub-top">
@@ -407,14 +557,15 @@ export default function Hub({ tcg, setTcg, onClose, initialTab }) {
       {t.starter && (
         <div className="hub-lv">
           <span className="badge">{lv.lvl}</span>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
             <small className="muted" style={{ fontSize: ".74rem" }}>Niveau {lv.lvl} · {lv.cur} / {lv.need} XP</small>
             <span className="bar2 blue"><i style={{ width: `${(100 * lv.cur) / lv.need}%` }} /></span>
           </div>
+          {acc && <AccountBadge acc={acc} onClick={onAccount} compact testId="hub-account" />}
         </div>
       )}
       {!t.starter ? (
-        <StarterPick onPick={(id) => { const r = P.chooseStarter(t, id); if (r.error) { flash(r.error); return; } setT(r.t); sfx.win(); setTab("packs"); flash("Deck débloqué ! +300 Éclats et 3 boosters offerts : ouvre-les !"); }} />
+        <StarterPick onPick={pickStarter} />
       ) : (
         <>
           <div className="hub-tabs" role="tablist">
@@ -429,12 +580,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab }) {
           {tab === "quests" && <Quests t={t} setT={setT} flash={flash} />}
         </>
       )}
-      {toast && <div className="toast" role="status" style={{ position: "fixed", left: 16, right: 16, bottom: "calc(var(--safe-b) + 20px)", zIndex: 85 }}>{toast}</div>}
-      {opening && (
-        <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} left={t.packs[opening.id] || 0}
-          onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
-      )}
-      {rules && <Rules onClose={() => setRules(false)} />}
+      {overlays}
     </div>
   );
 }

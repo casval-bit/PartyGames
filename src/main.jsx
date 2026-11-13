@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./styles.css";
 import "./tablet.css";
+import "./desktop.css";
 import { installClickFx } from "./ui/clickfx.js";
 import { Icon } from "./ui/Icon.jsx";
 import { sfx } from "./lib/sfx.js";

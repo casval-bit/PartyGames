@@ -5,6 +5,7 @@ import { RARITY, KEYWORDS, TYPE_NAME, CARD_TYPES } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { cardArt, cardColors } from "./art.js";
 import { useArt } from "./artStore.js";
+import { alwaysFoil } from "../progress.js";
 import "./tcg.css";
 
 export const TYPE_ICON = { combat: "sword", ruse: "mask", influence: "crown" };
@@ -46,6 +47,8 @@ const styleOf = (d, w, extra) => {
 export const CardFace = memo(function CardFace({ d, w, big = false, foil = false, str, isNew, own, missing, dim, className = "", style, onClick, children, tilt, ...rest }) {
   const full = d && d.r === "L";
   const art = useCardArt(d, big || (typeof w === "number" && w > 170), full);
+  const photo = Boolean(useArt(d && d.id)); // vraie image (choisie ou intégrée) : reflet brillant plus doux, pour ne pas la délaver
+  const shiny = (foil || alwaysFoil(d)) && !missing; // les cartes 7 sont toujours brillantes
   if (!d) return null;
   if (d.type === "plot") return <PlotFace d={d} w={w} big={big} className={className} style={style} onClick={onClick} {...rest} />;
   const f = famOf(d);
@@ -56,7 +59,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   const Tag = onClick ? "button" : "div";
   const s = str !== undefined && d.type === "char" ? str : d.str;
   return (
-    <Tag className={`tc ${d.type} r-${d.r}${foil ? " foil" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, style)} onClick={onClick}
+    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, style)} onClick={onClick}
       aria-label={onClick ? `${d.name}${d.title ? ", " + d.title : ""}` : undefined} {...rest}>
       <span className="tc-fr" />
       <div className="tc-in">
@@ -86,7 +89,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
       {d.type === "char" && <span className={"tc-str" + (s > d.str ? " up" : s < d.str ? " down" : "")}>{s}</span>}
       {d.st && <span className="tc-st">Exclusive</span>}
       {isNew && <span className="tc-new">NEW</span>}
-      {foil && !missing && <span className="tc-shine" aria-hidden="true" />}
+      {shiny && <span className="tc-shine" aria-hidden="true" />}
       {own && <span className="tc-own">{own}</span>}
       {children}
     </Tag>

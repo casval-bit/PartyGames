@@ -1,0 +1,77 @@
+/* =====================================================================
+   APPLI PC (Electron : classe html.desktop, voir lib/device.js)
+   L'appli prend toute la fenêtre : plus de colonne de téléphone au milieu de l'écran.
+   Menu, lobby, profil, salle d'arcade et Trône des Mondes passent en mise en page paysage ;
+   les écrans de jeu restent centrés dans une colonne large (ils sont faits pour être lus d'un coup d'œil).
+   Sur téléphone et dans le navigateur, rien ne change : les colonnes ajoutées ici n'existent pas pour la mise en page.
+   ===================================================================== */
+
+/* colonnes des écrans paysage : invisibles hors PC (leurs enfants restent dans la colonne du téléphone) */
+.menu-side, .menu-actions, .lobby-a, .lobby-b, .prof-a, .prof-b { display: contents; }
+.menu-games { display: none; }
+/* téléphone : l'ordre du lobby reste jeu, joueurs, réglages */
+.lobby-b > * { order: 1; }
+.lobby-scroll > .settings { order: 2; }
+
+html.desktop .app { max-width: none; padding: 18px clamp(18px, 2.6vw, 48px); }
+/* écrans de jeu (souvent dans une enveloppe : .bt-root, .pbroot…) : colonne large centrée */
+html.desktop .app .screen { width: 100%; max-width: 1000px; margin-inline: auto; }
+html.desktop .app .screen.menu, html.desktop .app .screen.lobby, html.desktop .app .screen.hubx,
+html.desktop .app .screen.prof, html.desktop .app .screen[data-testid="lab-list"] { max-width: 1640px; }
+html.desktop .app .screen.acct { max-width: 620px; }
+html.desktop .app .screen.lobbylist { max-width: 860px; }
+/* deck de départ et constructeur de deck : une largeur de lecture confortable */
+html.desktop .app .screen.hub:not(.hubx) { max-width: 1280px; }
+html.desktop .app .screen.hub.dbx { max-width: 1640px; }
+/* plateau 3D : plus grand qu'au téléphone */
+html.desktop .bdboard.b3d { max-width: 980px; height: clamp(360px, 62vh, 680px); }
+html.desktop .scroll { scrollbar-width: thin; scrollbar-color: rgba(94,225,255,.28) transparent; }
+
+@media (min-width: 900px) {
+  /* ------------------------------ menu ------------------------------ */
+  html.desktop .menu .brand h1 { font-size: 1.6rem; }
+  html.desktop .menu .brandmark { width: 44px; height: 44px; border-radius: 14px; }
+  html.desktop .menu-main { display: grid; grid-template-columns: minmax(330px, 410px) minmax(0, 1fr); gap: clamp(20px, 2.6vw, 40px); align-content: center; align-items: center; padding: 4px 2px 10px; }
+  html.desktop .menu-side { display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 28px; background: rgba(8,15,32,.55); border: 1px solid var(--line); box-shadow: var(--card-hi), var(--panel-shadow); }
+  html.desktop .menu-side .idmini { flex-direction: column; text-align: center; padding: 20px 16px 16px; position: relative; }
+  html.desktop .menu-side .idmini-av { width: 132px; height: 132px; border-radius: 26px; }
+  html.desktop .menu-side .idmini-av .pav { --s: 116px; }
+  html.desktop .menu-side .idmini-txt { align-items: center; text-align: center; width: 100%; }
+  html.desktop .menu-side .idmini-txt strong { font-size: 1.5rem; }
+  html.desktop .menu-side .idmini > .iconbtn { position: absolute; top: 12px; right: 12px; }
+  html.desktop .menu-actions { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, minmax(170px, 240px)) auto; gap: 18px; }
+  html.desktop .menu-actions .bigbtn { grid-template-columns: 1fr; grid-template-rows: 1fr auto auto; row-gap: 6px; align-items: end; padding: 22px 24px; border-radius: 28px; position: relative; overflow: hidden; }
+  html.desktop .menu-actions .bigbtn .bigico { grid-row: auto; align-self: start; width: 68px; height: 68px; border-radius: 22px; }
+  html.desktop .menu-actions .bigbtn .bigico svg { width: 34px; height: 34px; }
+  html.desktop .menu-actions .bigbtn strong { font-size: clamp(1.4rem, 1.9vw, 1.9rem); }
+  html.desktop .menu-actions .bigbtn span:not(.bigico) { font-size: .95rem; }
+  html.desktop .menu-actions .bigbtn::after { content: ""; position: absolute; right: -40px; bottom: -60px; width: 220px; height: 220px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(255,255,255,.14), transparent 65%); transition: transform .35s ease; }
+  html.desktop .menu-actions .bigbtn:not(:disabled):hover { border-color: rgba(160,230,255,.7); box-shadow: var(--card-hi), var(--panel-shadow), 0 0 26px rgba(94,225,255,.22); }
+  html.desktop .menu-actions .bigbtn:not(:disabled):hover::after { transform: scale(1.25); }
+  html.desktop .menu-games { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; align-content: start; gap: 8px; padding: 4px 2px 0; }
+  html.desktop .menu-games .eyebrow { margin-right: 6px; }
+  html.desktop .menu-games span:not(.eyebrow) { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; font: 600 .8rem var(--display); color: var(--txt-2);
+    background: rgba(10,18,38,.7); border: 1px solid var(--line); }
+  html.desktop .menu-games svg { color: var(--cyan); }
+
+  /* ------------------------------ lobby : jeu et réglages | joueurs ------------------------------ */
+  html.desktop .lobby-scroll { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(330px, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "a b" "s b";
+    column-gap: 24px; row-gap: 14px; align-items: start; padding-right: 4px; }
+  html.desktop .lobby-a { grid-area: a; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  html.desktop .lobby-b { grid-area: b; display: flex; flex-direction: column; gap: 14px; min-width: 0; position: sticky; top: 0; }
+  html.desktop .lobby-scroll > .settings { grid-area: s; }
+  html.desktop .lobby .teams { grid-template-columns: 1fr 1fr; }
+  html.desktop .lobby .gamepick .seg.games button { flex-basis: 18%; }
+  html.desktop .lobby > .btn.primary, html.desktop .lobby > p.muted, html.desktop .lobby > .wait { align-self: flex-end; width: min(100%, 440px); }
+
+  /* ------------------------------ profil : carte d'identité | stats ------------------------------ */
+  html.desktop .prof > .scroll { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); column-gap: 28px; align-items: start; align-content: start; }
+  html.desktop .prof-a { grid-column: 1; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 0; }
+  html.desktop .prof-b { grid-column: 2; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); gap: 12px; align-items: start; min-width: 0; }
+  html.desktop .prof-b > .gcard:last-child { grid-column: 1 / -1; }
+
+  /* ------------------------------ salle d'arcade, liste des lobbys ------------------------------ */
+  html.desktop [data-testid="lab-list"] .arc-grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+}
+.prof-b-acc { display: contents; }
