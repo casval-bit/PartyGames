@@ -9,3 +9,5 @@ desktop/web
 desktop/release
 public/art
 illustrations/
+.env.local
+.env.*.local

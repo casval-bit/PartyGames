@@ -5,7 +5,7 @@
 //     les cartes de coût 7 sont toujours brillantes ; pour les autres, plus la carte est rare, plus elle a de chances de briller ;
 //   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (surtout les brillantes) ;
 //   - quêtes du jour (XP + Éclats), succès permanents, XP de fin de partie (jamais 0, même en perdant).
-import { ALL, CARD, FAMILY, PLAYABLE, PLOTS } from "./cards/index.js";
+import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId } from "./cards/index.js";
 import { starterById, validateDeck } from "./deck.js";
 import { RARITY_ORDER } from "./rules.js";
 
@@ -29,16 +29,28 @@ export function normalizeTcg(raw) {
   const t = emptyTcg();
   if (!raw || typeof raw !== "object") return t;
   const n = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
-  const cards = (o) => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).filter(([id, v]) => CARD[id] && CARD[id].type !== "plot" && n(v) > 0).map(([id, v]) => [id, Math.min(99, n(v))]));
+  // cartes renommées ou remplacées : l'ancien identifiant devient le nouveau (les exemplaires s'additionnent)
+  const moved = (o, cap) => {
+    const out = {};
+    for (const [id, v] of Object.entries(o && typeof o === "object" ? o : {})) { const k = currentId(id); if (k && CARD[k].type !== "plot" && n(v) > 0) out[k] = Math.min(cap, (out[k] || 0) + n(v)); }
+    return out;
+  };
+  const cards = (o) => moved(o, 99);
+  // cartes retirées du jeu : remboursées en Éclats (valeur de recyclage, comme un double)
+  let refund = 0;
+  for (const [id, x] of Object.entries(RETIRED)) {
+    refund += n(raw.coll && raw.coll[id]) * RECYCLE[x.r];
+    refund += n(raw.foil && raw.foil[id]) * RECYCLE[x.r] * (x.seven ? 1 : 3);
+  }
   t.starter = typeof raw.starter === "string" && starterById(raw.starter) ? raw.starter : null;
-  t.ec = Math.min(1e7, n(raw.ec));
+  t.ec = Math.min(1e7, n(raw.ec) + refund);
   t.xp = Math.min(1e8, n(raw.xp));
   t.coll = cards(raw.coll);
   t.foil = cards(raw.foil);
   for (const [id, v] of Object.entries(t.coll)) if (alwaysFoil(CARD[id])) { t.foil[id] = Math.min(99, (t.foil[id] || 0) + v); delete t.coll[id]; } // cartes 7 : toujours brillantes
   t.decks = Array.isArray(raw.decks) ? raw.decks.filter((d) => d && typeof d === "object" && FAMILY[d.fam]).slice(0, 40).map((d) => ({
     id: String(d.id || Math.random().toString(36).slice(2, 9)).slice(0, 20), name: String(d.name || "Mon deck").slice(0, 32), fam: d.fam, pt: typeof d.pt === "string" ? d.pt : null,
-    cards: Object.fromEntries(Object.entries(d.cards || {}).filter(([id, v]) => CARD[id] && CARD[id].type !== "plot" && n(v) > 0).map(([id, v]) => [id, Math.min(2, n(v))])),
+    cards: moved(d.cards, 2),
     plots: Array.isArray(d.plots) ? d.plots.filter((id) => CARD[id] && CARD[id].type === "plot").slice(0, 7) : [],
   })) : [];
   t.sel = t.decks.some((d) => d.id === raw.sel) ? raw.sel : (t.decks[0] || {}).id || null;
@@ -50,7 +62,8 @@ export function normalizeTcg(raw) {
   t.st = { games: n(st.games), wins: n(st.wins), packs: n(st.packs), bought: n(st.bought), fams: Array.isArray(st.fams) ? [...new Set(st.fams.filter((f) => FAMILY[f]))].slice(0, 80) : [],
     chal: n(st.chal), kills: n(st.kills), dom: n(st.dom), played: n(st.played) };
   t.ms = Object.fromEntries(Object.entries(raw.ms || {}).filter(([k]) => MILESTONE_BY[k]).map(([k]) => [k, true]));
-  t.av = typeof raw.av === "string" && CARD[raw.av] && avatarOk(CARD[raw.av]) ? raw.av : null;
+  const av = typeof raw.av === "string" ? currentId(raw.av) : null;
+  t.av = av && avatarOk(CARD[av]) ? av : null;
   t.fr = typeof raw.fr === "string" && FRAME_BY[raw.fr] ? raw.fr : "bronze";
   t.frSeen = Array.isArray(raw.frSeen) ? [...new Set(["bronze", ...raw.frSeen.filter((f) => FRAME_BY[f])])] : ["bronze"];
   t.seed = typeof raw.seed === "string" && raw.seed ? raw.seed.slice(0, 12) : t.seed;
@@ -61,6 +74,14 @@ export function mergeTcg(a, b) {
   const A = normalizeTcg(a), B = normalizeTcg(b);
   const score = (t) => t.xp * 1000 + Object.values(t.coll).reduce((s, v) => s + v, 0);
   return score(A) >= score(B) ? A : B;
+}
+
+/** Outils de test (compte testeur, voir TESTERS dans config.js) : ajoute des Éclats et des boosters. */
+export function testerGift(t0, { ec = 0, packs = {} } = {}) {
+  const t = clone(normalizeTcg(t0));
+  t.ec = Math.min(1e7, t.ec + Math.max(0, Math.floor(ec)));
+  for (const [k, v] of Object.entries(packs)) if (packDef(k) && v > 0) t.packs[k] = Math.min(999, (t.packs[k] || 0) + Math.floor(v));
+  return t;
 }
 
 /* ------------------------------ niveaux ------------------------------ */

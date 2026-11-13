@@ -521,7 +521,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
           ? <CardZoom id={zoom.id} foil={(t.foil[zoom.id] || 0) > 0} owned={CARD[zoom.id] && CARD[zoom.id].type !== "plot" ? { n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 } : null} onClose={() => setZoom(null)} />
           : <CardZoom fam={zoom.fam} pt={zoom.pt} onClose={() => setZoom(null)} />)}
         {rules && <Rules onClose={() => setRules(false)} />}
-        {settings && <TcgSettings acc={acc} onAccount={onAccount} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
+        {settings && <TcgSettings acc={acc} onAccount={onAccount} t={t} setT={setT} flash={flash} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
       </div>
     </>
   );

@@ -39,8 +39,12 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
 .tc-ic svg { width: 6cqw; height: 6cqw; }
 .tc-ic.combat { --ic: var(--c-combat); } .tc-ic.ruse { --ic: #1fb57a; } .tc-ic.influence { --ic: #8f63f0; }
 .tc-ic.off { background: rgba(10,18,38,.7); box-shadow: 0 0 0 .4cqw rgba(255,255,255,.25); opacity: .55; }
-.tc-pts { position: absolute; z-index: 2; right: 1.6cqw; top: 1.8cqw; display: flex; flex-direction: column; align-items: flex-end; gap: 1cqw; }
-.tc-pt { padding: .6cqw 2cqw; border-radius: 99px; font: 700 3.6cqw/1.1 var(--display); color: #fff; background: var(--ptc); box-shadow: 0 .5cqw 1.2cqw rgba(0,0,0,.45), inset 0 0 0 .35cqw rgba(255,255,255,.35); text-shadow: 0 .3cqw .6cqw rgba(0,0,0,.4); }
+/* région / type : petites pastilles dans le bandeau du bas (à droite de la force), jamais sur l'illustration */
+.tc-pts { display: flex; align-items: center; gap: 1.1cqw; margin-right: auto; min-width: 0; overflow: hidden; }
+.tc-pt { flex: 0 1 auto; min-width: 0; padding: .45cqw 1.7cqw; border-radius: 99px; font: 700 3.2cqw/1.15 var(--display); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: color-mix(in srgb, var(--ptc) 82%, #0b1426); box-shadow: inset 0 0 0 .3cqw rgba(255,255,255,.3); text-shadow: 0 .3cqw .6cqw rgba(0,0,0,.45); }
+.tc:not(.char) .tc-foot .tc-pts { margin-left: 16cqw; } /* après « LIEU », « OBJET », « ÉVÉNEMENT » */
+@container (max-width: 120px) { .tc-pts { display: none; } } /* vignettes : illisible, on laisse la place */
 .tc-traits { flex: none; padding: 1.3cqw 3cqw .5cqw; font: italic 600 4.1cqw/1.15 var(--body); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: color-mix(in srgb, var(--fc) 50%, #fff); }
 .tc-text { flex: 1; min-height: 0; padding: .6cqw 3.4cqw 1cqw; font: 500 4.25cqw/1.2 var(--body); color: #e3ebfb; overflow: hidden; display: flex; flex-direction: column; gap: 1.1cqw; }
@@ -101,7 +105,6 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
 /* l'illustration remplit la carte : icônes de défi et sous-types restent sous le bandeau du nom, comme sur les autres cartes
    (sinon l'icône du haut passe sous la pastille de coût) */
 .tc.r-L .tc-icons { top: 17.7cqw; }
-.tc.r-L .tc-pts { top: 17.3cqw; }
 
 /* carte brillante (foil) : reflet holographique qui défile, et suit le doigt dans le zoom */
 .tc.foil::after { content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none; border-radius: inherit; mix-blend-mode: color-dodge; opacity: .45;
@@ -116,12 +119,13 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
 .tc.missing { filter: grayscale(1) brightness(.5) contrast(1.05); }
 .tc.missing .tc-art img { opacity: .5; }
 
-/* brillante : en plus du reflet arc-en-ciel, un éclat de lumière balaie la carte de temps en temps */
+/* brillante : en plus du reflet arc-en-ciel, un éclat de lumière balaie la carte de temps en temps (sur la table, dans la collection ;
+   jamais dans la vue en grand). Toutes les 11 s environ, décalé d'une carte à l'autre (--sd, voir Card.jsx) */
 .tc-shine { position: absolute; inset: 0; z-index: 7; pointer-events: none; border-radius: inherit; overflow: hidden; mix-blend-mode: screen; }
 .tc-shine::before { content: ""; position: absolute; top: -30%; bottom: -30%; left: 0; width: 45%;
-  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,.45) 45%, rgba(255,244,214,.7) 50%, rgba(255,255,255,.45) 55%, rgba(255,255,255,0) 78%, transparent 100%);
-  transform: translateX(-120%) skewX(-14deg); animation: tcShine 3.8s cubic-bezier(.45,.05,.3,1) infinite; }
-@keyframes tcShine { 0% { transform: translateX(-120%) skewX(-14deg); } 55%, 100% { transform: translateX(330%) skewX(-14deg); } }
+  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,.38) 45%, rgba(255,244,214,.6) 50%, rgba(255,255,255,.38) 55%, rgba(255,255,255,0) 78%, transparent 100%);
+  transform: translateX(-120%) skewX(-14deg); animation: tcShine 11s cubic-bezier(.45,.05,.3,1) infinite; animation-delay: calc(var(--sd, 0) * -1s); }
+@keyframes tcShine { 0% { transform: translateX(-120%) skewX(-14deg); } 19%, 100% { transform: translateX(330%) skewX(-14deg); } }
 .tc.dim { filter: brightness(.5) saturate(.4); }
 
 /* dos de carte */
@@ -231,10 +235,13 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 @keyframes tzIdle { 0%, 100% { --irx: 0deg; --iry: 0deg; } 25% { --irx: 2deg; --iry: -5deg; } 50% { --irx: -1.5deg; --iry: 0deg; } 75% { --irx: 2deg; --iry: 5deg; } }
 .tz-card .tc, .tz-card .tp { transition: transform .45s cubic-bezier(.2,.8,.2,1); transform: rotateX(calc(var(--rx, 0deg) + var(--irx))) rotateY(calc(var(--ry, 0deg) + var(--iry))); }
 .tz-card.held .tc, .tz-card.held .tp { transition-duration: .12s; }
-.tz-card .tc.foil::after { opacity: .6; }
+/* vue en grand : pas de balayage ; le reflet arc-en-ciel reste, et se renforce quand on penche ou agite la carte (--hi, --fa : useTilt) */
+.tz-card .tc-shine { display: none; }
+.tz-card .tc.foil::after { opacity: calc(.5 + .38 * var(--hi, 0)); filter: saturate(calc(1 + .5 * var(--hi, 0))) brightness(calc(1 + .22 * var(--hi, 0))); }
+.tz-card .tc.foil::before { opacity: calc(.32 + .55 * var(--hi, 0)); }
 /* vraie image (choisie ou intégrée) : reflet arc-en-ciel plus léger, pour ne pas délaver l'illustration */
 .tc.foil.photo::after { opacity: .26; }
-.tz-card .tc.foil.photo::after { opacity: .34; }
+.tz-card .tc.foil.photo::after { opacity: calc(.3 + .34 * var(--hi, 0)); }
 .tz-card .tc.missing { filter: grayscale(1) brightness(.78); }
 .tz-card .tc.missing .tc-art img { opacity: .75; }
 .tz-stage { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -1248,3 +1255,7 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .tset-l small { display: block; font-size: .74rem; color: var(--txt-2); }
 .tset-seg button { min-width: 72px; padding: 7px 12px; }
 .tset-range { width: 190px; accent-color: #ffd166; }
+
+/* paramètres : outils du compte testeur */
+.tset-test { display: flex; flex-wrap: wrap; gap: 8px; }
+.tset-test .btn { flex: 1 1 140px; }

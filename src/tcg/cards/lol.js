@@ -162,6 +162,7 @@ export const cards = [
   c("Lulu", "La Sorcière féerique", 3, 2, "RI", BA, "Yordle|Fée|Mage", "", "actBuff:*,2@Croissance démesurée", "R"),
   c("Pix", "Le compagnon de Lulu", 1, 1, "R", BA, "Fée", "", "ifName:Lulu,1@Pix !", "C"),
   c("Veigar", "Le Petit Maître du mal", 5, 4, "RI", BA, "Yordle|Mage", "genie", "enterKill:3@Explosion primordiale", "E"),
+  c("Veigar", "Le Seigneur du mal", 6, 5, "RI", BA, "Yordle|Mage", "genie", "winKill:ruse,2@Matière noire ; foeDiePower:1@Frappe maléfique", "E"),
   c("Corki", "Le Bombardier audacieux", 4, 3, "C", BA, "Yordle|Pilote", "", "ifAtk:1@Le Paquet", "U"),
   c("Rumble", "La Menace mécanisée", 4, 4, "C", BA, "Yordle|Machine", "", "winDiscard:combat,1@L'Égaliseur", "U"),
   c("Yuumi", "La Chatte magique", 2, 1, "I", BA, "Chat|Fée", "", "actBuff:*,1@Toi et moi !", "U"),

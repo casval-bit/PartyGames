@@ -379,7 +379,7 @@ League of Legends (un deck par **région** de Runeterra, comme les types Pokémo
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
 Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli
 et Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella), plus des cartes Neutres.
-2188 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
+2185 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
 
 **Les cartes de coût 7** (les plus puissantes, souvent légendaires ; **toujours brillantes**) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
 (ex. Monkey D. Luffy en Gear Fourth et en Gear Fifth : une seule des deux par deck). Elles ont des pouvoirs à part, tirés de leur univers :
@@ -394,11 +394,22 @@ Katniss (*Le Geai moqueur* / *La fille du feu*), Onze (*Pouvoirs déchaînés* /
 Wolverine (*Arme X* / *Old Man Logan*), Jean Grey (*Le Phénix* / *Le Phénix noir*), Batman, Superman, Scooby-Doo, Aelita…
 Marvel et DC suivent maintenant les comics : X-Men, Quatre Fantastiques, Fatalis, Galactus, Spider-verse et Défenseurs ; Corps des Green Lantern, Bat-famille,
 Teen Titans, Doomsday, Ra's al Ghul… (decks de départ : Les X-Men, Le Spider-verse, Les Quatre Fantastiques, Le Corps des Green Lantern, La Bat-famille).
-Code Lyoko gagne Odd, Yumi, William, Franz Hopper, Aelita et le Kolosse à 7, et Aelita a aussi deux versions moins chères
-(4 : *L'elfe de Lyoko*, qui redresse un allié de Lyoko ; 5 : *La Lyoko-guerrière*, qui agenouille un défenseur et reprend en main un personnage de la défausse) ; Scooby-Doo gagne Sammy « à 1 % de sa puissance », Véra, Daphné, Scrappy
-et l'École des Goules de Miss Grimwood (nouveau deck de départ).
+Code Lyoko a neuf cartes 7 dont aucune ne partage ses deux pouvoirs avec une autre carte 7 du jeu : Aelita (*Fille de Franz Hopper* / *L'ange de Lyoko*),
+Jérémie (le retour vers le passé), Ulrich (Super sprint, et son Impact augmente la revendication), Yumi (sa télékinésie renvoie un vaincu en main),
+Odd (ses flèches laser font fuir les petits défenseurs ; neuf vies), William (il mène l'assaut des monstres et XANA le reprogramme),
+XANA (il active une tour : un monstre entre en jeu) et le Kolosse (il écrase un lieu ou un objet du perdant). Aelita a aussi deux versions moins chères
+(4 : *L'elfe de Lyoko*, qui redresse un allié ; 5 : *La Lyoko-guerrière*) ; l'ancienne « Aelita Stones » 4 est devenue cette Aelita Hopper 4. L'événement *Champ de Force* (l'attaque d'Aelita, 1 or) fait perdre 2 force à un adversaire, 4 si Aelita est dans le défi,
+et le tue s'il tombe à 0 ; les *Ninjas de Tyron* (Code Lyoko Évolution) surgissent du sol (Embuscade) et immobilisent un petit personnage avec leurs encodeurs.
+Franz Hopper 7, le Clone de William et Anthea Hopper ont été retirés : les exemplaires possédés sont remboursés en Éclats (valeur de recyclage),
+et les sauvegardes suivent les cartes remplacées (`RENAMED`, `REPLACED`, `RETIRED` dans `cards/index.js`).
+League of Legends : Veigar a une version 6, *Le Seigneur du mal* (sa Matière noire tue un petit vaincu, et il gagne du Pouvoir à chaque mort adverse).
+Scooby-Doo gagne Sammy « à 1 % de sa puissance », Véra, Daphné, Scrappy et l'École des Goules de Miss Grimwood (nouveau deck de départ).
 Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-la… » ; liste dans `cards/gender.js`).
 
+**Tester sur son compte en local** (`npm run dev`, `npm run desktop`) : le fichier `.env` à la racine du projet (jamais versionné) donne
+`VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (les mêmes que les secrets GitHub) ; sans lui, l'appli locale reste en mode local, sans compte.
+`VITE_TESTEURS` (adresses séparées par des virgules) : connecté avec une de ces adresses, Trône des Mondes > Paramètres montre des boutons
+pour ajouter des Éclats et des boosters, sauvegardés sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
 **Jouer** : dans le lobby, Jeu > **Trône des Mondes** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
 Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
 (Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés
@@ -433,8 +444,9 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   au moins 24 personnages ; au plus 18 objets + événements et 10 lieux ; jusqu'à 10 cartes d'UNE famille alliée (sauf les Fidèles).
 - **Album** (Collection > « Album : toutes les cartes ») : toutes les cartes qui existent, famille par famille avec le compte de chacune (ou toutes
   familles mêlées par coût), filtres Obtenues / Manquantes / Brillantes. Celles qui manquent sont grisées mais s'ouvrent en grand (toujours grisées).
-  En grand, la carte s'incline un peu sous le doigt ou la souris, les brillantes ont leur reflet arc-en-ciel et un éclat de lumière qui les balaie,
-  et on feuillette l'album avec les flèches (← → au clavier).
+  En grand, la carte s'incline un peu sous le doigt ou la souris (et quand on penche le téléphone) ; le reflet arc-en-ciel des brillantes suit la direction
+  et se renforce quand on penche ou agite la carte (pas de balayage lumineux en grand ; sur la table et dans la collection, un éclat passe toutes les 11 s environ,
+  décalé d'une carte à l'autre), et on feuillette l'album avec les flèches (← → au clavier).
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
   **Brillantes** : une carte 7 l'est toujours ; les autres le sont d'autant plus souvent qu'elles sont rares (commune 2 %, peu commune 3 %,
   rare 5 %, épique 8 %, légendaire 12 %, ×1,5 dans les boosters Arsenal et Prestige). 1 booster sur 200 est **doré** (que des rares ou mieux, toutes brillantes). Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
@@ -456,7 +468,7 @@ dans le cadre avant de valider. Après un import en lot, les cartes illustrées 
 (par défaut `<ton-pseudo>/PartyGames-illustrations`, ou la variable `ILLUSTRATIONS_REPO`), nommées comme pour l'import (sous-dossiers permis).
 Sur ton PC, ce dépôt est le dossier `illustrations/` du projet, que le dépôt public ignore. À chaque build (`npm run dev`, `npm run build`,
 APK, appli PC), `tools/build-art.mjs` reconnaît chaque image, la recadre au format de sa carte (même cadrage automatique que l'appli,
-réglable à la main dans `cadrages.json`) et la range dans `public/art/` (généré, jamais versionné). Les workflows « Build APK » et
+réglable à la main dans `cadrages.json` : position, et zoom pour dézoomer une image trop serrée, le vide étant rempli par la même image floutée) et la range dans `public/art/` (généré, jamais versionné). Les workflows « Build APK » et
 « Appli PC (Windows) » récupèrent le dépôt privé grâce au secret `ILLUSTRATIONS_TOKEN` (jeton GitHub en lecture seule sur ce seul dépôt) ;
 sans ce secret, ils construisent sans images. Le site GitHub Pages ne contient jamais ces images (`PARTY_ART=off`), et le dépôt public
 reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt privé : `tools/LISEZ-MOI-illustrations.txt`.

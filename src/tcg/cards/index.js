@@ -68,6 +68,27 @@ for (const d of buildCards("plot", plots.cards, used)) { CARD[d.id] = d; PLOTS.p
 /** Familles jouables (sans « Neutre »). */
 export const PLAYABLE = FAMILIES.filter((f) => f.id !== "neutre");
 
+/* ------------------------- cartes renommées, remplacées ou retirées -------------------------
+   Les sauvegardes (collection, brillantes, decks, photo de profil) suivent : voir normalizeTcg dans progress.js. */
+/** Même carte, nouvel identifiant (les illustrations importées suivent aussi). */
+export const RENAMED = {};
+/** Carte remplacée par une autre à la même place : les exemplaires possédés deviennent la nouvelle carte. */
+export const REPLACED = {
+  "lyoko-aelita-stones-4": "lyoko-aelita-hopper-4", // Aelita Stones (même personnage, même coût) : une seule Aelita Hopper 4, L'elfe de Lyoko
+  "lyoko-spectre-de-xana-2": "lyoko-ninjas-de-tyron-2",
+  "lyoko-spectre-polymorphe-evt": "lyoko-champ-de-force-evt",
+};
+/** Cartes retirées du jeu (rareté, carte 7 toujours brillante) : chaque exemplaire possédé est remboursé en Éclats. */
+export const RETIRED = {
+  "lyoko-franz-hopper-7": { r: "L", seven: true },
+  "lyoko-le-clone-de-william-3": { r: "U", seven: false },
+  "lyoko-anthea-hopper-3": { r: "U", seven: false },
+};
+/** Identifiant actuel d'une carte d'une ancienne sauvegarde (null si elle n'existe plus). */
+export const currentId = (id) => { const k = RENAMED[id] || REPLACED[id] || id; return CARD[k] ? k : null; };
+for (const [a, b] of Object.entries({ ...RENAMED, ...REPLACED })) if (CARD[a] || !CARD[b]) throw new Error(`Carte renommée ou remplacée invalide : ${a} -> ${b}`);
+for (const id of Object.keys(RETIRED)) if (CARD[id]) throw new Error(`Carte retirée encore présente : ${id}`);
+
 /** Sous-groupe choisi par un deck de cette famille (type Pokémon, région…), ou null. */
 export const subOf = (fam, pt) => (pt && TYPE_BONUS[pt] && TYPE_BONUS[pt].fam === fam ? TYPE_BONUS[pt] : null);
 /** Vrai si un deck de cette famille doit choisir un sous-groupe. */

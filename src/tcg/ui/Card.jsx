@@ -35,6 +35,8 @@ function useCardArt(d, big, full) {
   const gen = useMemo(() => (custom || !d ? null : full ? cardArt(d, big ? 300 : 150, big ? 424 : 212, true) : cardArt(d, big ? 320 : 170, big ? 184 : 98)), [d, big, full, custom]);
   return custom || gen;
 }
+/** Décalage du balayage lumineux des brillantes (0 à 11 s), propre à chaque carte : elles ne brillent pas toutes en même temps. */
+const sweepDelay = (id) => { let h = 7; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return (h % 110) / 10; };
 const styleOf = (d, w, extra) => {
   const c = cardColors(d);
   return { "--fc": c.c, "--fc2": c.c2, "--gem": (RARITY[d.r] || RARITY.C).gem, ...(w ? { width: typeof w === "number" ? w + "px" : w } : null), ...extra };
@@ -59,7 +61,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   const Tag = onClick ? "button" : "div";
   const s = str !== undefined && d.type === "char" ? str : d.str;
   return (
-    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, style)} onClick={onClick}
+    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
       aria-label={onClick ? `${d.name}${d.title ? ", " + d.title : ""}` : undefined} {...rest}>
       <span className="tc-fr" />
       <div className="tc-in">
@@ -70,7 +72,6 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
         <div className="tc-art">
           {art && <img src={art} alt="" draggable={false} />}
           {d.type === "char" && <div className="tc-icons">{ICONS.filter((t) => d.icons[t]).map((t) => <i key={t} className={"tc-ic " + t} title={TYPE_NAME[t]}><Icon name={TYPE_ICON[t]} size={12} stroke={2.2} /></i>)}</div>}
-          {d.pt && d.pt.length > 0 && <div className="tc-pts">{d.pt.map((t) => <span key={t} className="tc-pt" style={{ "--ptc": (TYPE_BONUS[t] || {}).color || "#888" }}>{(TYPE_BONUS[t] || {}).short || (TYPE_BONUS[t] || {}).name || t}</span>)}</div>}
         </div>
         <div className="tc-traits">{d.traits.length ? d.traits.join(". ") + "." : " "}</div>
         <div className={"tc-text" + (len > 215 ? " t3" : len > 150 ? " t2" : "")}>
@@ -81,6 +82,8 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
         </div>
         <div className="tc-foot">
           <span className="tc-kind">{CARD_TYPES[d.type]}</span>
+          {/* région de Runeterra, type Pokémon… : dans le bandeau du bas, jamais sur le dessin */}
+          {d.pt && d.pt.length > 0 && <span className="tc-pts">{d.pt.map((t) => <span key={t} className="tc-pt" style={{ "--ptc": (TYPE_BONUS[t] || {}).color || "#888" }}>{(TYPE_BONUS[t] || {}).short || (TYPE_BONUS[t] || {}).name || t}</span>)}</span>}
           <Icon name={f.icon} size={14} className="tc-fam" />
           <i className="tc-gem" title={(RARITY[d.r] || {}).name} />
         </div>

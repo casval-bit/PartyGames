@@ -7,6 +7,10 @@ export const SPOTIFY_REDIRECT = (import.meta.env && import.meta.env.VITE_SPOTIFY
 export const SUPABASE_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || "";
 export const SUPABASE_KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || "";
 export const ONLINE = Boolean(SUPABASE_URL && SUPABASE_KEY);
+/** Comptes testeurs (adresses e-mail séparées par des virgules) : VITE_TESTEURS dans le fichier .env de l'ordinateur, jamais dans le dépôt.
+ *  Connecté avec une de ces adresses, les paramètres du Trône des Mondes montrent des outils de test (Éclats, boosters). */
+export const TESTERS = String((import.meta.env && import.meta.env.VITE_TESTEURS) || "").split(/[,;\s]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+export const isTester = (acc) => Boolean(acc && acc.user && acc.user.email && TESTERS.includes(String(acc.user.email).toLowerCase()));
 
 export const TEAMS = [
   { id: 0, name: "jaune", label: "Jaune", color: "#ffd23f", ink: "#2b2100" },

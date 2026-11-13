@@ -227,7 +227,7 @@ export function makeApi(G) {
     const min = Math.min(o.min ?? 1, cands.length), max = Math.min(o.max ?? 1, cands.length);
     if (!cands.length || max === 0) return [];
     if (min === cands.length && max === cands.length && !o.ask) return cands; // pas le choix
-    const ans = yield ask(G, [p.id], { kind: "choose", title: o.title || "Choisir", cands, min, max, src: o.src || null, harm: Boolean(o.harm), zone: o.zone || null },
+    const ans = yield ask(G, [p.id], { kind: "choose", title: o.title || "Choisir", cands, min, max, src: o.src || null, harm: Boolean(o.harm), zone: o.zone || null, lethal: o.lethal || null },
       (pid, a) => { const pick = Array.isArray(a && a.pick) ? [...new Set(a.pick)] : null; return pick && pick.length >= min && pick.length <= max && pick.every((x) => cands.includes(x)) ? pick : null; },
       () => cands.slice(0, min));
     return ans;

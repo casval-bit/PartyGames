@@ -8,7 +8,7 @@
 import { useSyncExternalStore } from "react";
 import { ONLINE } from "../../config.js";
 import { getSupa } from "../../net/supa.js";
-import { CARD } from "../cards/index.js";
+import { CARD, RENAMED } from "../cards/index.js";
 import { ART_W, ART_H, artBox, artFile, artFileName, matchFile, thumbSize, interestFromRGBA, focusFor } from "../artNames.js";
 
 export { ART_W, ART_H, artBox, artFile, artFileName, matchFile };
@@ -20,6 +20,8 @@ export const remote = { state: ONLINE ? "idle" : "off", msg: "" }; // off | idle
 
 const emit = () => { ver++; for (const f of subs) f(); };
 const sub = (f) => { subs.add(f); return () => subs.delete(f); };
+/** Identifiant actuel d'une carte (une carte renommée garde son illustration), ou null. */
+const artId = (k) => (CARD[k] ? k : RENAMED[k] && CARD[RENAMED[k]] ? RENAMED[k] : null);
 const okImg = (s) => typeof s === "string" && /^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$/.test(s) && s.length < 400000;
 
 /* ------------------------------ IndexedDB ------------------------------ */
@@ -58,7 +60,8 @@ async function loadAll() {
       rq.onsuccess = () => {
         const c = rq.result;
         if (!c) return res();
-        if (CARD[c.key] && c.value && okImg(c.value.img)) mem.set(c.key, c.value);
+        const id = artId(c.key);
+        if (id && c.value && okImg(c.value.img) && (id === c.key || !mem.has(id))) mem.set(id, c.value);
         c.continue();
       };
       rq.onerror = () => res();
@@ -81,13 +84,13 @@ export async function syncRemote(force = false) {
     const s = await getSupa();
     const { data, error } = await s.from("tcg_art").select("card_id,updated_at");
     if (error) { remote.state = missing(error) ? "missing" : "error"; remote.msg = error.message || ""; emit(); return; }
-    const rows = (data || []).filter((r) => CARD[r.card_id]);
-    const there = new Set(rows.map((r) => r.card_id));
+    const rows = (data || []).map((r) => ({ ...r, id: artId(r.card_id) })).filter((r) => r.id);
+    const there = new Set(rows.map((r) => r.id));
     for (const [id, v] of mem) if (v.src === "remote" && !there.has(id)) delLocal(id); // retirée par un ami
-    const need = rows.filter((r) => { const m = mem.get(r.card_id); return !m || (m.t || 0) < Date.parse(r.updated_at); }).map((r) => r.card_id);
+    const need = rows.filter((r) => { const m = mem.get(r.id); return !m || (m.t || 0) < Date.parse(r.updated_at); }).map((r) => r.card_id);
     for (let i = 0; i < need.length; i += 12) {
       const { data: part } = await s.from("tcg_art").select("card_id,img,updated_at").in("card_id", need.slice(i, i + 12));
-      for (const r of part || []) if (okImg(r.img)) putLocal(r.card_id, { img: r.img, t: Date.parse(r.updated_at) || Date.now(), src: "remote", up: true });
+      for (const r of part || []) { const id = artId(r.card_id); if (id && okImg(r.img)) putLocal(id, { img: r.img, t: Date.parse(r.updated_at) || Date.now(), src: "remote", up: true }); }
       emit();
     }
     remote.state = "ok";

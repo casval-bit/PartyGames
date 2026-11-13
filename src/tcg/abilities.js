@@ -77,6 +77,8 @@ function* recallFromDiscard(X, p, t, me, kinds = ["char"]) {
   if (u) X.fromDiscardToHand(p, u);
 }
 const partChar = (X) => X.participants();
+/** Lieux et objets que contrôle un joueur (cibles des effets qui « écrasent » le décor). */
+const razeable = (X, p) => [...p.locs, ...X.allChars().flatMap((o) => o.att).filter((a) => X.ctrl(a) === p)];
 
 /* ================================ MODÈLES ================================ */
 export const TPL = {
@@ -196,6 +198,15 @@ export const TPL = {
   defWinPower: ([n], c) => react("win", (X, me, ev) => ev.p === X.ctrl(me) && ev.ch.dfd.includes(me.u) && ev.ch.parts.includes(me.u), function* (X, me) { X.gainPower(X.ctrl(me), num(n), null, me); }, {
     text: `Réaction : après avoir gagné un défi où ${c.name} défend, gagnez ${num(n)} Pouvoir.`,
   }),
+  /** Le géant qui écrase le décor : un lieu ou un objet du perdant est défaussé. */
+  winRaze: ([t], c) => react("win", (X, me, ev) => wonWith(X, me, ev, t) && razeable(X, ev.loser).length > 0, function* (X, me, ev) {
+    const pool = razeable(X, ev.loser);
+    const [u] = yield* X.choose(X.ctrl(me), { title: "Défausser un lieu ou un objet du perdant", cands: pool.map((o) => o.u), min: 1, max: 1, src: me.id, harm: true });
+    const o = u && X.inst(u);
+    if (!o) return;
+    X.log(`${ev.loser.name} perd ${X.name(o)} (${c.name}).`, { p: ev.loser.id });
+    yield* X.discardFromPlay(o);
+  }, { text: `Réaction : après avoir gagné ${unDefi(t)} auquel ${c.name} participe, défaussez un lieu ou un objet du perdant.` }),
   loseStand: ([], c) => react("lose", (X, me, ev) => lostWith(X, me, ev) && me.k, function* (X, me) { X.stand(me); }, { text: `Réaction : après avoir perdu un défi auquel ${c.name} participe, redressez-${gn(c).le}.` }),
   loseDraw: ([n], c) => react("lose", (X, me, ev) => lostWith(X, me, ev), function* (X, me) { X.draw(X.ctrl(me), num(n)); }, { text: `Réaction : après avoir perdu un défi auquel ${c.name} participe, piochez ${carte(num(n))}.` }),
   atkKneel: ([m], c) => react("atk", (X, me, ev) => ev.ch.atk.includes(me.u), function* (X, me, ev) { yield* kneelOpp(X, me, num(m), "Agenouiller un personnage du défenseur", ev.defender); }, { text: `Réaction : après ${que(c.name)} a été déclar${ée(c)} ${gn(c).att}, agenouillez un personnage du défenseur de force ${num(m)} ou moins.` }),
@@ -208,6 +219,10 @@ export const TPL = {
   dieDraw: ([n], c) => react("killed", (X, me, ev) => ev.inst === me, function* (X, me, ev) { X.draw(ev.p, num(n)); }, { text: `Réaction : après ${que(c.name)} a été tu${ée(c)}, piochez ${carte(num(n))}.` }),
   dieKill: ([m], c) => react("killed", (X, me, ev) => ev.inst === me, function* (X, me, ev) { yield* killOpp(X, { ...me, _owner: ev.p }, (o) => X.str(o) <= num(m), "Tuer un personnage adverse"); }, { text: `Réaction : après ${que(c.name)} a été tu${ée(c)}, tuez un personnage adverse de force ${num(m)} ou moins.` }),
   dieReturn: ([], c) => react("killed", (X, me, ev) => ev.inst === me && me.z === "dead", function* (X, me, ev) { X.fromDeadToHand(ev.p, me.u); }, { text: `Réaction : après ${que(c.name)} a été tu${ée(c)}, reprenez-${gn(c).le} dans votre main.` }),
+  /** Il se nourrit des défaites adverses : le Pouvoir va sur le personnage (perdu s'il quitte le jeu). */
+  foeDiePower: ([n], c) => react("killed", (X, me, ev) => me.z === "char" && ev.inst !== me && ev.p !== X.ctrl(me), function* (X, me) { X.gainPower(X.ctrl(me), num(n), me, me); }, {
+    text: `Réaction : après la mort d'un personnage adverse, ${c.name} gagne ${num(n)} Pouvoir (une fois par round).`,
+  }),
   domSteal: ([n], c) => react("dom", (X, me, ev) => ev.p === X.ctrl(me) && X.opps(X.ctrl(me)).some((o) => o.power > 0), function* (X, me) {
     const p = X.ctrl(me);
     const o = yield* X.chooseOpp(p, "Prendre du Pouvoir à…", (q) => q.power > 0);
@@ -294,6 +309,19 @@ export const TPL = {
     for (const o of partChar(X)) if (mine(X, me, o) && X.hasTrait(o, t)) X.mod({ t: "str", u: o.u, n: num(n), until: "challenge" });
   }, text: `Action : chacun de vos ${perso(t, true)} participants gagne +${num(n)} force jusqu'à la fin du défi.` }),
   evMinus: ([n]) => evt("action", { when: "challenge", can: (X, me) => partChar(X).some((o) => !mine(X, me, o) && X.targetable(o, me)), run: function* (X, me) { yield* buffOne(X, me, () => true, -num(n), `-${num(n)} force`, "opp"); }, text: `Action : un personnage adverse participant perd ${num(n)} force jusqu'à la fin du défi.` }),
+  /** Décharge d'énergie : -n force (b si le personnage nommé participe de votre côté) ; tombé à 0 force, il est tué. */
+  evZap: ([n, b, nm]) => evt("action", { when: "challenge", can: (X, me) => partChar(X).some((o) => !mine(X, me, o) && X.targetable(o, me)), run: function* (X, me) {
+    const p = X.ctrl(me);
+    const k = nm && partChar(X).some((o) => X.ctrl(o) === p && X.card(o).name === nm) ? num(b) : num(n);
+    const pool = partChar(X).filter((o) => X.ctrl(o) !== p && X.targetable(o, me));
+    const [u] = yield* X.choose(p, { title: `-${k} force (à 0, il est tué)`, cands: pool.map((o) => o.u), min: 1, max: 1, src: me.id, harm: true, lethal: k });
+    const o = u && X.inst(u);
+    if (!o) return;
+    X.mod({ t: "str", u, n: -k, until: "challenge" });
+    if (o.z === "char" && X.str(o) <= 0) yield* X.kill(o, me);
+  }, text: nm
+    ? `Action : un personnage adverse participant perd ${num(n)} force jusqu'à la fin du défi (${num(b)} si votre ${nm} participe au défi). S'il tombe à 0 force, tuez-le.`
+    : `Action : un personnage adverse participant perd ${num(n)} force jusqu'à la fin du défi. S'il tombe à 0 force, tuez-le.` }),
   evStand: ([t]) => evt("action", { when: "any", can: (X, me) => X.chars(X.ctrl(me)).some((o) => o.k && (anyT(t) || X.hasTrait(o, t))), run: function* (X, me) { yield* standMine(X, me, t, "Redresser un personnage"); }, text: `Action : redressez un de vos ${perso(t, true)}.` }),
   evStandAll: ([t]) => evt("action", { when: "any", can: (X, me) => X.chars(X.ctrl(me)).some((o) => o.k && (anyT(t) || X.hasTrait(o, t))), run: function* (X, me) {
     for (const o of X.chars(X.ctrl(me))) if (anyT(t) || X.hasTrait(o, t)) X.stand(o);

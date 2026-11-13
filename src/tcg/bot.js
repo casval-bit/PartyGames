@@ -240,6 +240,13 @@ function action(X, P, q) {
     const sd = ch.dfd.map(C).filter((x) => x && x.z === "char").reduce((s, x) => s + X.str(x), 0);
     const losing = mine === "atk" ? sa < sd : sd <= sa;
     const gap = Math.abs(sa - sd) + (mine === "dfd" ? 1 : 0);
+    if (tpl === "evZap") { // décharge : on tue si on peut, sinon on s'en sert pour renverser un défi perdu
+      const [n, b, nm] = d.abs[0].args;
+      const k = nm && X.participants().some((x) => X.ctrl(x) === P && X.card(x).name === nm) ? +b || 1 : +n || 1;
+      const kills = X.participants().some((x) => X.ctrl(x) !== P && X.targetable(x, c) && X.str(x) <= k);
+      if (ch.stage === "act" && (kills || (losing && k >= gap))) return o;
+      continue;
+    }
     const amount = +((o.k === "act" ? X.abs(c)[o.i].args : d.abs[0].args) || [])[1] || +((o.k === "act" ? X.abs(c)[o.i].args : d.abs[0].args) || [])[0] || 1;
     if (losing && ch.stage === "act" && /Buff|Minus|actPay|evBuffTrait/.test(tpl) && amount >= gap) return o;
     if (tpl === "evClaim" && mine === "atk" && sa >= sd && ch.stage === "act") return o;
@@ -264,6 +271,11 @@ function choose(X, P, q) {
   }
   if (mineAll && /Redresser|\+/.test(q.title)) return cands.sort((a, b) => val(b) - val(a)).slice(0, Math.max(1, n));
   if (mineAll && /Attacher/.test(q.title)) return cands.sort((a, b) => val(b) - val(a)).slice(0, 1);
+  // effet qui tue à 0 force : d'abord un personnage qu'il tue vraiment (le plus précieux)
+  if (q.lethal) {
+    const dies = cands.filter((u) => X.ctrl(C(u)) !== P && X.str(C(u)) <= q.lethal);
+    if (dies.length) return dies.sort((a, b) => val(b) - val(a)).slice(0, Math.max(1, n));
+  }
   // cible adverse : la plus forte
   const theirs = cands.filter((u) => X.ctrl(C(u)) !== P);
   const pool = theirs.length ? theirs : cands;

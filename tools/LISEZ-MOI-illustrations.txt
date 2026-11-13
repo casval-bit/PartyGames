@@ -14,8 +14,10 @@ Formats : JPG, PNG, WEBP, AVIF. Sous-dossiers permis (lol/Darius 7.jpg).
 Chaque image est recadrée automatiquement au format de sa carte (pleine carte pour les légendaires, bandeau pour les autres).
 
 Recadrer à la main : cadrages.json à la racine de ce dépôt, avec pour chaque image x puis y entre 0 et 1
-(0 = bord gauche / haut, 1 = bord droit / bas ; 0.5 = milieu) :
-  { "Ulrich Stern 7.jpg": [0.7, 0.3], "Yumi Ishiyama 3.jpg": [0.5, 0.9] }
+(0 = bord gauche / haut, 1 = bord droit / bas ; 0.5 = milieu), puis un zoom facultatif (1 = l'image remplit la carte,
+0.7 = dézoomée : on voit plus de l'image, et le reste de la carte est rempli par la même image floutée) :
+  { "Ulrich Stern 7.jpg": [0.95, 0.15, 0.67], "Yumi Ishiyama 3.jpg": [0.5, 0.9] }
+Le nom peut s'écrire avec des espaces ou des _, et sans tenir compte de l'extension (jpg, webp…).
 
 Ajouter des images : copie-les ici, vérifie les noms depuis le projet avec « npm run art », puis
   git add -A ; git commit -m "Nouvelles illustrations" ; git push

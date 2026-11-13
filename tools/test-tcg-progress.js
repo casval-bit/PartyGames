@@ -84,6 +84,32 @@ const n = P.normalizeTcg({ ec: -5, coll: { "inconnue": 3, "lyoko-krabe-3": 2 }, 
 ok(n.ec === 0 && !n.coll.inconnue && n.coll["lyoko-krabe-3"] === 2 && n.decks.length === 0, "normalisation : valeurs invalides retirées");
 ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde la progression la plus avancée");
 
+// outils du compte testeur
+{
+  const g = P.testerGift(P.normalizeTcg({ ec: 5 }), { ec: 10000, packs: { multi: 10, prestige: 5, inconnu: 3 } });
+  ok(g.ec === 10005 && g.packs.multi === 10 && g.packs.prestige === 5 && !g.packs.inconnu, "testeur : Éclats et boosters ajoutés (booster inconnu ignoré)");
+}
+
+// cartes renommées, remplacées et retirées : les anciennes sauvegardes suivent
+{
+  const old = {
+    ec: 100, av: "lyoko-franz-hopper-7",
+    coll: { "lyoko-aelita-stones-4": 2, "lyoko-spectre-de-xana-2": 1, "lyoko-le-clone-de-william-3": 2, "lyoko-anthea-hopper-3": 1 },
+    foil: { "lyoko-franz-hopper-7": 1, "lyoko-spectre-polymorphe-evt": 1, "lyoko-anthea-hopper-3": 1 },
+    decks: [{ id: "d1", name: "Lyoko", fam: "lyoko", cards: { "lyoko-aelita-stones-4": 2, "lyoko-spectre-polymorphe-evt": 2, "lyoko-franz-hopper-7": 1, "lyoko-krabe-3": 2 } }],
+  };
+  const m = P.normalizeTcg(old);
+  ok(m.coll["lyoko-aelita-hopper-4"] === 2 && !m.coll["lyoko-aelita-stones-4"], "Aelita Stones 4 devient Aelita Hopper 4 (L'elfe de Lyoko)");
+  ok(m.coll["lyoko-ninjas-de-tyron-2"] === 1 && m.foil["lyoko-champ-de-force-evt"] === 1, "Spectre de XANA → Ninjas de Tyron, Spectre polymorphe → Champ de Force (brillante gardée)");
+  const d = m.decks[0].cards;
+  ok(d["lyoko-aelita-hopper-4"] === 2 && d["lyoko-champ-de-force-evt"] === 2 && !d["lyoko-franz-hopper-7"] && d["lyoko-krabe-3"] === 2, "decks : cartes renommées suivies, cartes retirées enlevées");
+  const want = 100 + 2 * P.RECYCLE.U + 1 * P.RECYCLE.U + 1 * P.RECYCLE.L + 3 * P.RECYCLE.U;
+  ok(m.ec === want, `cartes retirées remboursées en Éclats (${m.ec} = ${want})`);
+  ok(P.normalizeTcg(m).ec === m.ec, "remboursement une seule fois (sauvegarde déjà à jour)");
+  ok(m.av === null, "photo d'une carte retirée : abandonnée");
+  ok(P.normalizeTcg({ coll: { "lyoko-aelita-hopper-4": 1, "lyoko-aelita-stones-4": 1 } }).coll["lyoko-aelita-hopper-4"] === 2, "ancien et nouvel identifiant : les exemplaires s'additionnent");
+}
+
 // profil du jeu : photo (carte 7 possédée) et cadres à débloquer
 {
   const base = P.chooseStarter(P.normalizeTcg(null), "leg-gryf").t;

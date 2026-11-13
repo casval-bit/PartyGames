@@ -18,27 +18,67 @@ const KW_LONG = { celebre: "Célèbre", discret: "Discret", intimidation: "Intim
 /**
  * Inclinaison de la carte zoomée : elle suit la souris (survol) ou le doigt (on la tient et on glisse), de quelques degrés,
  * et revient doucement en place quand on la lâche. Sans contact, elle oscille un peu toute seule (CSS : tzIdle).
+ * Sur téléphone, incliner l'appareil fait aussi pencher la carte (gyroscope, quand le navigateur le donne).
+ * Le reflet des brillantes suit le mouvement : --hi (0 à 1) monte avec l'inclinaison et quand on agite la carte, puis retombe ;
+ * --fa oriente les bandes arc-en-ciel selon la direction, --sx / --sy placent l'éclat de lumière.
  */
 function useTilt() {
   const ref = useRef(null);
   const held = useRef(false);
+  const st = useRef({ x: 0.5, y: 0.5, t: 0, hi: 0, want: 0, raf: 0, base: null, last: 0 });
+  const paint = () => {
+    const el = ref.current, s = st.current;
+    s.raf = 0;
+    if (!el) return;
+    s.hi += (s.want - s.hi) * 0.18;
+    s.want *= held.current ? 0.985 : 0.93; // l'élan retombe tout seul
+    el.style.setProperty("--hi", s.hi.toFixed(3));
+    if (s.hi > 0.004 || s.want > 0.004) s.raf = requestAnimationFrame(paint);
+  };
+  const kick = () => { if (!st.current.raf) st.current.raf = requestAnimationFrame(paint); };
+  const apply = (x, y, fromHand) => {
+    const el = ref.current, s = st.current;
+    if (!el) return;
+    const now = performance.now(), dt = Math.max(8, now - (s.t || now - 16));
+    const speed = Math.hypot(x - s.x, y - s.y) / dt * 1000; // largeur de carte par seconde
+    s.x = x; s.y = y; s.t = now;
+    const dx = x - 0.5, dy = y - 0.5, tilt = Math.min(1, Math.hypot(dx, dy) * 2.2);
+    s.want = Math.min(1, Math.max(s.want, 0.25 + 0.55 * tilt + Math.min(0.5, speed * 0.12)));
+    if (fromHand) el.classList.add("held");
+    el.style.setProperty("--ry", `${dx * 20}deg`);
+    el.style.setProperty("--rx", `${-dy * 16}deg`);
+    el.style.setProperty("--fx", `${x * 100}%`); el.style.setProperty("--fy", `${y * 100}%`);
+    el.style.setProperty("--sx", `${x * 100}%`); el.style.setProperty("--sy", `${y * 100}%`);
+    el.style.setProperty("--fa", `${Math.round(115 + dx * 70 - dy * 40)}deg`);
+    kick();
+  };
   const set = (e) => {
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
-    el.classList.add("held");
-    el.style.setProperty("--ry", `${(x - 0.5) * 20}deg`);
-    el.style.setProperty("--rx", `${(0.5 - y) * 16}deg`);
-    el.style.setProperty("--fx", `${x * 100}%`); el.style.setProperty("--fy", `${y * 100}%`);
-    el.style.setProperty("--sx", `${x * 100}%`); el.style.setProperty("--sy", `${y * 100}%`);
+    apply(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)), true);
   };
   const reset = () => {
     const el = ref.current;
     if (!el) return;
     el.classList.remove("held");
     for (const k of ["--rx", "--ry"]) el.style.setProperty(k, "0deg");
+    st.current.want = 0; kick();
   };
+  // téléphone : l'inclinaison de l'appareil (par rapport à la position de départ) penche la carte et fait jouer le reflet
+  useEffect(() => {
+    if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) return undefined;
+    const on = (e) => {
+      if (held.current || e.beta == null || e.gamma == null) return;
+      const s = st.current, now = performance.now();
+      if (!s.base || now - s.last > 1500) s.base = { b: e.beta, g: e.gamma };
+      s.last = now;
+      const x = Math.min(1, Math.max(0, 0.5 + (e.gamma - s.base.g) / 50)), y = Math.min(1, Math.max(0, 0.5 + (e.beta - s.base.b) / 50));
+      if (Math.abs(x - s.x) + Math.abs(y - s.y) > 0.004) apply(x, y, false);
+    };
+    window.addEventListener("deviceorientation", on);
+    return () => { window.removeEventListener("deviceorientation", on); if (st.current.raf) cancelAnimationFrame(st.current.raf); };
+  }, []);
   const down = (e) => { held.current = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* rien */ } set(e); };
   const move = (e) => { if (held.current || e.pointerType === "mouse") set(e); };
   const up = () => { held.current = false; reset(); };

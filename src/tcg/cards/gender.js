@@ -2,7 +2,7 @@
 // Une carte peut aussi le préciser elle-même avec l'option { fem: true } (ou { fem: false }).
 export const FEM = new Set([
   // Code Lyoko
-  "Aelita Hopper", "Aelita Stones", "Yumi Ishiyama", "Sissi Delmas", "La Méduse", "Tarentule",
+  "Aelita Hopper", "Yumi Ishiyama", "Sissi Delmas", "La Méduse", "Tarentule",
   // Umbrella Academy
   "Allison Hargreeves", "Vanya Hargreeves", "Grace", "Lila Pitts", "La Gestionnaire", "Fei Hargreeves", "Sloane Hargreeves", "Cha-Cha", "Dolores",
   // Toy Story
@@ -72,6 +72,6 @@ export const FEM = new Set([
   // Lot 4 : Marvel et DC (comics), Code Lyoko, Scooby-Doo
   "Jean Grey", "Malicia", "Kitty Pryde", "Psylocke", "Emma Frost", "La Femme invisible", "Gwen Stacy", "She-Hulk",
   "Jessica Cruz", "Talia al Ghul", "Power Girl", "Lois Lane", "Hawkgirl", "Black Canary", "Raven", "Starfire",
-  "Anthea Hopper", "Suzanne Hertz", "Rosa", "Miss Grimwood", "Sibella", "Elsa Frankenteen", "Winnie", "Phantasma", "Tanis",
+  "Suzanne Hertz", "Rosa", "Miss Grimwood", "Sibella", "Elsa Frankenteen", "Winnie", "Phantasma", "Tanis",
   "Jubilé", "Polaris", "Valeria Richards", "Alicia Masters", "Crystal", "Arisia",
 ]);

@@ -197,8 +197,36 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
   ok(t.X.str(me) === v0 + 3, "Veigar 7 : +3 force à 8 Pouvoir");
   ok(/tuée, remettez-la/.test(CARD["lol-lissandra-7"].abs.map((a) => a.text).join(" ")) && /qu'Allison/.test(CARD["umbrella-allison-hargreeves-4"].abs[0].text), "textes accordés (féminin, élision)");
 
+  // effets inédits (Code Lyoko, LoL)
+  const toZone = (tb, p, id, z) => { const c = p.chars.find((x) => x.id === id); p.chars.splice(p.chars.indexOf(c), 1); c.z = z; (z === "loc" ? p.locs : p.hand).push(c); return c; };
+  t = table(["lyoko-le-kolosse-7"], ["onepiece-coby-1", "lyoko-l-usine-loc"]);
+  me = t.of(t.A, "lyoko-le-kolosse-7");
+  const usine = toZone(t, t.B, "lyoko-l-usine-loc", "loc");
+  ok(ab("lyoko-le-kolosse-7", "winRaze").cond(t.X, me, { p: t.A, loser: t.B, ch: { type: "combat", parts: [me.u] } }), "Kolosse 7 : se déclenche quand le perdant a un lieu");
+  drive(ab("lyoko-le-kolosse-7", "winRaze").run(t.X, me, { p: t.A, loser: t.B, ch: { type: "combat", parts: [me.u] } }));
+  ok(!t.B.locs.length && t.B.disc.includes(usine), "Kolosse 7 : il écrase le lieu du perdant (défaussé)");
+  ok(!ab("lyoko-le-kolosse-7", "winRaze").cond(t.X, me, { p: t.A, loser: t.B, ch: { type: "combat", parts: [me.u] } }), "Kolosse 7 : rien à écraser, pas de réaction");
+  t = table(["lol-veigar-6", "lol-teemo-3"], ["onepiece-coby-1"]);
+  me = t.of(t.A, "lol-veigar-6");
+  const fd = ab("lol-veigar-6", "foeDiePower");
+  ok(fd.cond(t.X, me, { inst: t.of(t.B, "onepiece-coby-1"), p: t.B }) && !fd.cond(t.X, me, { inst: t.of(t.A, "lol-teemo-3"), p: t.A }), "Veigar 6 : seulement la mort d'un personnage adverse");
+  drive(fd.run(t.X, me, { inst: t.of(t.B, "onepiece-coby-1"), p: t.B }));
+  ok(me.pw === 1, "Veigar 6 : le Pouvoir va sur Veigar");
+  t = table(["lyoko-aelita-hopper-4", "lyoko-krabe-3", "lyoko-champ-de-force-evt"], ["onepiece-sanji-4", "onepiece-roronoa-zoro-6"]);
+  const zap = toZone(t, t.A, "lyoko-champ-de-force-evt", "hand");
+  const ael = t.of(t.A, "lyoko-aelita-hopper-4"), kr = t.of(t.A, "lyoko-krabe-3"), sj4 = t.of(t.B, "onepiece-sanji-4");
+  t.G.ch = { type: "combat", att: "a", def: "b", atk: [kr.u], dfd: [sj4.u], parts: [], claimMod: 0 };
+  const sjBefore = t.X.str(sj4); // 4, +1 avec Zoro (Chapeau de paille)
+  drive(CARD["lyoko-champ-de-force-evt"].abs[0].run(t.X, zap));
+  ok(t.B.chars.includes(sj4) && t.X.str(sj4) === sjBefore - 2, `Champ de Force sans Aelita : -2 force, Sanji (${sjBefore}) survit`);
+  t.G.ch = { type: "combat", att: "a", def: "b", atk: [ael.u, kr.u], dfd: [sj4.u], parts: [], claimMod: 0 }; // même défi : le premier tir compte encore
+  drive(CARD["lyoko-champ-de-force-evt"].abs[0].run(t.X, zap));
+  ok(t.B.dead.includes(sj4), `Champ de Force avec Aelita : -4 force, Sanji (${sjBefore - 2} après le premier tir) tombe à 0 et meurt`);
+  t.G.ch = null;
+  ok(ALL.filter((d) => d.name === "Aelita Hopper" && d.cost === 4).length === 1 && CARD["lyoko-aelita-hopper-4"].title === "L'elfe de Lyoko", "une seule Aelita Hopper 4 (L'elfe de Lyoko, identifiant inchangé)");
+
   // parties complètes avec les nouvelles cartes 7 dans les decks (bots)
-  const sevens = ALL.filter((d) => d.type === "char" && d.cost === 7 && d.abs.some((a) => /enterKneelAll|enterFreeze|enterRevive|enterPutPlay|winStandAll|winBounce|winPowerSteal|winFreeze|defWinPower|dieReturn|domSteal|selfGuard|actStandAll|actSilence|atkTerror|immuneAura|ifPower|oppTax/.test(a.tpl)));
+  const sevens = ALL.filter((d) => d.type === "char" && d.cost === 7 && d.abs.some((a) => /enterKneelAll|enterFreeze|enterRevive|enterPutPlay|winStandAll|winBounce|winPowerSteal|winFreeze|defWinPower|dieReturn|domSteal|selfGuard|actStandAll|actSilence|atkTerror|immuneAura|ifPower|oppTax|winRaze|claim|atkBuff/.test(a.tpl)));
   let errs = 0, done = 0;
   sevens.forEach((d, i) => {
     const base = st.find((s) => s.fam === d.fam && (!d.pt.length || d.pt.includes(s.pt)));
