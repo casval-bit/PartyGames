@@ -8,8 +8,17 @@ on:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      HAS_ART: ${{ secrets.ILLUSTRATIONS_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Illustrations (dépôt privé, si le secret ILLUSTRATIONS_TOKEN existe)
+        if: env.HAS_ART == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.ILLUSTRATIONS_REPO || format('{0}/PartyGames-illustrations', github.repository_owner) }}
+          token: ${{ secrets.ILLUSTRATIONS_TOKEN }}
+          path: illustrations
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - uses: actions/setup-java@v4
@@ -20,6 +29,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SPOTIFY_REDIRECT: ${{ secrets.VITE_SPOTIFY_REDIRECT }}
       - name: Add Android platform
         run: |
           if [ ! -d android ]; then npx cap add android; fi

@@ -8,7 +8,7 @@ import { starterById } from "../deck.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, FamilyFace, PlotFace, RichText, TYPE_ICON } from "./Card.jsx";
-import { useArt, fileToArt, prepareArt, setArt, removeArt, artFile, remote, recentFile, rememberFile } from "./artStore.js";
+import { useArtSource, fileToArt, prepareArt, setArt, removeArt, artFile, remote, recentFile, rememberFile } from "./artStore.js";
 import { ONLINE } from "../../config.js";
 import { APPAREIL } from "../../lib/device.js";
 
@@ -66,7 +66,8 @@ function Framer({ draft, onMove }) {
 }
 
 function ArtTools({ d }) {
-  const custom = useArt(d.id);
+  const src = useArtSource(d.id);
+  const custom = src === "me" || src === "remote"; // choisie sur un appareil (pas l'image intégrée à l'appli)
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [draft, setDraft] = useState(null); // image choisie, en cours de cadrage
@@ -110,12 +111,12 @@ function ArtTools({ d }) {
       ) : (
         <>
           <p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>
-            {custom ? "Cette carte utilise une illustration choisie." : `Illustration générée par l'appli. Tu peux la remplacer par une image de ${APPAREIL.ton}.`}
+            {custom ? "Cette carte utilise une illustration choisie." : src === "bundle" ? "Illustration intégrée à l'appli (dossier illustrations du projet). Tu peux la remplacer ici par une autre image." : `Illustration générée par l'appli. Tu peux la remplacer par une image de ${APPAREIL.ton}.`}
             {" "}Pour en importer beaucoup d'un coup (Collection › Illustrations), nomme le fichier « {artFile(d)} ».
           </p>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
             <label className="btn small" style={{ cursor: "pointer" }} aria-disabled={busy}>
-              <Icon name="image" size={16} />{busy ? "Préparation…" : custom ? "Changer l'image" : "Choisir une image"}
+              <Icon name="image" size={16} />{busy ? "Préparation…" : src ? "Changer l'image" : "Choisir une image"}
               <input type="file" accept="image/*" hidden onChange={pick} disabled={busy} />
             </label>
             {again && <button className="btn small" onClick={() => open(again)} disabled={busy}><Icon name="crop" size={16} />Recadrer</button>}

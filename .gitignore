@@ -7,3 +7,5 @@ android/build
 desktop/node_modules
 desktop/web
 desktop/release
+public/art
+illustrations/

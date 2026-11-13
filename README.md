@@ -419,7 +419,16 @@ quand deux cartes auraient le même nom, la famille ou le sous-titre est ajouté
 Chaque image est recadrée **au format où la carte l'affiche** (pleine carte pour les légendaires, bandeau large pour les autres) : peu importe sa taille
 ou son format, l'appli cherche où est le sujet (contours et couleurs qui tranchent) et centre le cadre dessus. Avec « Choisir une image », on fait glisser l'image
 dans le cadre avant de valider. Après un import en lot, les cartes illustrées s'affichent en dessous : touche-en une puis **« Recadrer »** si le sujet est mal placé
-(sans rechoisir le fichier, tant que l'appli reste ouverte). Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
+(sans rechoisir le fichier, tant que l'appli reste ouverte). **Images intégrées à l'appli, sans import (dépôt privé d'illustrations)** : les images vivent dans un **second dépôt GitHub, privé**
+(par défaut `<ton-pseudo>/PartyGames-illustrations`, ou la variable `ILLUSTRATIONS_REPO`), nommées comme pour l'import (sous-dossiers permis).
+Sur ton PC, ce dépôt est le dossier `illustrations/` du projet, que le dépôt public ignore. À chaque build (`npm run dev`, `npm run build`,
+APK, appli PC), `tools/build-art.mjs` reconnaît chaque image, la recadre au format de sa carte (même cadrage automatique que l'appli,
+réglable à la main dans `cadrages.json`) et la range dans `public/art/` (généré, jamais versionné). Les workflows « Build APK » et
+« Appli PC (Windows) » récupèrent le dépôt privé grâce au secret `ILLUSTRATIONS_TOKEN` (jeton GitHub en lecture seule sur ce seul dépôt) ;
+sans ce secret, ils construisent sans images. Le site GitHub Pages ne contient jamais ces images (`PARTY_ART=off`), et le dépôt public
+reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt privé : `tools/LISEZ-MOI-illustrations.txt`.
+`npm run art` refait les images et liste les noms non reconnus.
+Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
 ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
 
 **League of Legends** (`cards/lol.js`, 161 cartes) : un deck choisit une région, qui donne un bonus à la famille ; il joue les champions de cette région

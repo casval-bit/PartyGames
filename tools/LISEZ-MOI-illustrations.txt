@@ -1,0 +1,22 @@
+Dépôt PRIVÉ des illustrations du Trône des Mondes (à copier à la racine du dépôt privé sous le nom LISEZ-MOI.txt).
+Sur ton PC, ce dépôt est le dossier illustrations/ du projet PartyGames (ignoré par le dépôt public).
+Les workflows « Build APK » et « Appli PC (Windows) » du dépôt public le récupèrent grâce au secret ILLUSTRATIONS_TOKEN,
+et intègrent les images à l'APK et à l'appli PC. Le site public GitHub Pages, lui, ne les contient jamais.
+
+Nomme chaque image comme la carte, exactement comme pour l'import de l'appli (Collection > Illustrations >
+« Liste des cartes et noms de fichiers » donne le nom exact de chacune) :
+  Ulrich Stern 7.jpg                          personnage : nom + coût
+  Aelita Hopper 7 (Fille de Franz Hopper).jpg deux versions de même coût : le sous-titre entre parenthèses
+  Mendoza 5 (Cités d'or).jpg                  même nom dans deux familles : la famille entre parenthèses
+  Veigar.jpg                                  toutes les versions d'un personnage
+  Poudlard.jpg                                lieu, objet, événement, scénario : le nom seul
+Formats : JPG, PNG, WEBP, AVIF. Sous-dossiers permis (lol/Darius 7.jpg).
+Chaque image est recadrée automatiquement au format de sa carte (pleine carte pour les légendaires, bandeau pour les autres).
+
+Recadrer à la main : cadrages.json à la racine de ce dépôt, avec pour chaque image x puis y entre 0 et 1
+(0 = bord gauche / haut, 1 = bord droit / bas ; 0.5 = milieu) :
+  { "Ulrich Stern 7.jpg": [0.7, 0.3], "Yumi Ishiyama 3.jpg": [0.5, 0.9] }
+
+Ajouter des images : copie-les ici, vérifie les noms depuis le projet avec « npm run art », puis
+  git add -A ; git commit -m "Nouvelles illustrations" ; git push
+et relance dans le dépôt public : Actions > « Build APK » > Run workflow, et Actions > « Appli PC (Windows) » > Run workflow.

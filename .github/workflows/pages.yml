@@ -29,6 +29,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SPOTIFY_REDIRECT: ${{ secrets.VITE_SPOTIFY_REDIRECT }}
+          PARTY_ART: "off" # site public : jamais les images du dossier illustrations/
       - uses: actions/upload-pages-artifact@v3
         with: { path: dist }
   deploy:

@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build",
+    "dev": "node tools/build-art.mjs && vite --host",
+    "build": "node tools/build-art.mjs && vite build",
+    "art": "node tools/build-art.mjs",
     "preview": "vite preview --host",
     "check-cards": "node tools/check-cards.js",
-    "android:sync": "vite build && cap sync android",
+    "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
     "desktop:install": "npm --prefix desktop install",
     "desktop": "npm --prefix desktop start",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@capacitor/cli": "^6.1.2",
     "@vitejs/plugin-react": "^4.3.1",
+    "sharp": "0.35.5",
     "vite": "^5.4.2"
   }
 }
