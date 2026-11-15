@@ -2,7 +2,8 @@
 //
 //   - deux portails ouverts en même temps, qui changent toutes les deux semaines (le dimanche à minuit, les mêmes pour tout le monde) :
 //       * le Portail des Légendes : un thème qui traverse les univers, trois cartes 7 en vedette et quatre épiques à l'honneur ;
-//       * le Monde à l'honneur : une famille, toutes ses cartes, et chacune de ses cartes 7 peut être choisie comme cible ;
+//       * le Monde à l'honneur : une famille et toutes ses cartes ; 1 à 3 de ses cartes 7 en vedette (selon la taille de la famille),
+//         à choisir comme cible ; ses autres cartes 7 peuvent aussi sortir ;
 //   - les tirages, les prix et la garantie sont dans progress.js (pull, PULL).
 // Pour ajouter un thème : une ligne dans LEGENDS (3 cartes 7 de familles différentes de préférence, 4 épiques de coût 6 ou moins).
 import { ALL, FAMILY, PLAYABLE } from "./cards/index.js";
@@ -50,8 +51,58 @@ const NEVER = new Set(["starac"]);
 export const MONDES = [...MONDE_FIRST.filter((f) => FAMILY[f]), ...PLAYABLE.map((f) => f.id).filter((f) => !MONDE_FIRST.includes(f) && !NEVER.has(f))];
 
 const collectible = (d) => d.type !== "plot" && !d.st;
-/** Cartes 7 d'une famille (cibles possibles du Monde à l'honneur). */
+/** Cartes 7 d'une famille (elles peuvent toutes sortir du Monde à l'honneur). */
 export const famSevens = (fam) => ALL.filter((d) => d.fam === fam && collectible(d) && d.cost >= 7).map((d) => d.id);
+/** Nombre de vedettes du Monde à l'honneur selon le nombre de cartes 7 de la famille : 3 pour une grande famille (8 ou plus), 2 (4 à 7), 1 (3 ou moins). */
+export const starCount = (n) => (n >= 8 ? 3 : n >= 4 ? 2 : 1);
+/** Vedettes du Monde à l'honneur la première fois que la famille passe (ensuite, ses autres cartes 7 prennent la suite). */
+export const MONDE_STARS = {
+  jojo: ["jojo-jotaro-kujo-7-2", "jojo-dio-brando-7-2", "jojo-giorno-giovanna-7-2"],
+  onepiece: ["onepiece-monkey-d-luffy-7", "onepiece-shanks-7", "onepiece-roronoa-zoro-7"],
+  hp: ["hp-harry-potter-7-2", "hp-severus-rogue-7", "hp-lord-voldemort-7-2"],
+  sw: ["sw-yoda-7", "sw-dark-vador-7-2", "sw-rey-7"],
+  marvel: ["marvel-thor-7", "marvel-captain-america-7", "marvel-spider-man-7"],
+  pokemon: ["pokemon-pikachu-7", "pokemon-mewtwo-7-2", "pokemon-rayquaza-7"],
+  lotr: ["lotr-aragorn-7", "lotr-galadriel-7", "lotr-gandalf-7"],
+  got: ["got-jon-snow-7", "got-arya-stark-7-2", "got-cersei-lannister-7"],
+  dc: ["dc-wonder-woman-7", "dc-flash-7", "dc-batman-7-2"],
+  lyoko: ["lyoko-aelita-hopper-7-2", "lyoko-xana-7", "lyoko-ulrich-stern-7"],
+  lol: ["lol-darius-7", "lol-viktor-7", "lol-veigar-7"],
+  gundam: ["gundam-amuro-ray-7-2", "gundam-kira-yamato-7-2", "gundam-setsuna-f-seiei-7"],
+  ghibli: ["ghibli-totoro-7-2", "ghibli-nausicaa-7"],
+  stranger: ["stranger-onze-7", "stranger-vecna-7"],
+  scooby: ["scooby-scooby-doo-7-2", "scooby-sammy-rogers-7", "scooby-vera-dinkley-7"],
+  narnia: ["narnia-aslan-7-2"],
+  toystory: ["toystory-woody-7-2", "toystory-buzz-l-eclair-7-2"],
+  umbrella: ["umbrella-viktor-hargreeves-7", "umbrella-allison-hargreeves-7"],
+  hunger: ["hunger-katniss-everdeen-7-2", "hunger-president-snow-7"],
+  bebop: ["bebop-spike-spiegel-7"],
+  teenwolf: ["teenwolf-derek-hale-7"],
+  legendaires: ["legendaires-danael-7", "legendaires-darkhell-7"],
+  capes: ["capes-armand-raynal-de-maupertuis-7"],
+  citesdor: ["citesdor-esteban-7"],
+  horde: ["horde-golgoth-7"],
+  elite: ["elite-guzman-7"],
+};
+/**
+ * Vedettes du Monde à l'honneur pour le cycle n (0 : premier passage de la famille) : starCount() cartes 7 de personnages différents,
+ * d'abord celles de MONDE_STARS, puis les autres cartes 7 de la famille, à tour de rôle d'un passage à l'autre.
+ */
+export function mondeStars(fam, cycle = 0) {
+  const all = famSevens(fam);
+  if (!all.length) return [];
+  const k = Math.min(3, starCount(all.length), all.length);
+  const first = (MONDE_STARS[fam] || []).filter((id) => all.includes(id));
+  const order = [...first, ...all.filter((id) => !first.includes(id))];
+  const out = [];
+  const name = (id) => ALL.find((d) => d.id === id).name;
+  for (let i = 0; out.length < k && i < order.length; i++) {
+    const id = order[(((cycle * k) % order.length) + i) % order.length];
+    if (!out.some((x) => name(x) === name(id))) out.push(id);
+  }
+  for (let i = 0; out.length < k && i < order.length; i++) if (!out.includes(order[i])) out.push(order[i]);
+  return out;
+}
 
 /* ------------------------------ calendrier ------------------------------ */
 const dayNum = (day) => { const [y, m, d] = String(day).split("-").map(Number); return Math.floor(Date.UTC(y, m - 1, d) / 86400000); };
@@ -71,7 +122,8 @@ export function portalsAt(p) {
   return {
     p, ...periodDays(p),
     leg: { kind: "leg", id: th.id, name: "Portail des Légendes", sub: th.name, tag: th.tag, color: th.color, stars: [...th.stars], epics: [...th.epics] },
-    monde: { kind: "monde", id: fam, fam, name: "Monde à l'honneur", sub: f.name, tag: f.desc || "", color: f.color, stars: famSevens(fam), epics: [] },
+    monde: { kind: "monde", id: `${fam}:${Math.floor(p / MONDES.length)}`, fam, name: "Monde à l'honneur", sub: f.name, tag: f.desc || "", color: f.color,
+      stars: mondeStars(fam, Math.floor(p / MONDES.length)), sevens: famSevens(fam).length, epics: [] },
   };
 }
 /** Les portails ouverts ce jour-là. */

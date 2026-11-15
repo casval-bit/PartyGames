@@ -435,7 +435,7 @@ function pullCard(t, bn, target, r, wantE) {
       else {
         const others = bn.stars.filter((x) => x !== target);
         const rest = by.L.filter((x) => x !== target);
-        id = bn.kind === "leg" && others.length && r() < 0.5 ? pickOf(r, others) : pickOf(r, rest.length ? rest : [target]);
+        id = others.length && r() < 0.5 ? pickOf(r, others) : pickOf(r, rest.length ? rest : [target]); // une autre vedette, ou une autre carte 7 du portail
       }
     } else {
       const order = ["E", "R", "U", "C"];

@@ -231,11 +231,16 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   const seeded = (s) => () => { s = (s + 0x6d2b79f5) >>> 0; let x = Math.imul(s ^ (s >>> 15), s | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
   ok(Po.periodOf("2026-11-15") === 0 && Po.periodOf("2026-11-28") === 0 && Po.periodOf("2026-11-29") === 1 && Po.periodOf("2026-11-14") === -1, "portails : ils changent toutes les deux semaines (dimanche 15 novembre, puis 29 novembre…)");
   const p0 = Po.portalsOf("2026-11-20");
-  ok(p0.monde.fam === "jojo" && p0.monde.stars.length === 15 && p0.leg.id === "tenebres", "premiers portails : JoJo (ses 15 cartes 7) et les Seigneurs des ténèbres");
+  ok(p0.monde.fam === "jojo" && p0.monde.stars.join() === "jojo-jotaro-kujo-7-2,jojo-dio-brando-7-2,jojo-giorno-giovanna-7-2" && p0.monde.sevens === 15 && p0.leg.id === "tenebres",
+    "premiers portails : JoJo (3 vedettes sur ses 15 cartes 7 : Star Platinum, New Body, Golden Wind) et les Seigneurs des ténèbres");
+  ok(Object.entries(Po.MONDE_STARS).every(([f, ids]) => ids.length === Math.min(3, Po.starCount(Po.famSevens(f).length)) && ids.every((id) => CARD[id] && CARD[id].fam === f && CARD[id].cost >= 7 && !CARD[id].st)
+    && new Set(ids.map((id) => CARD[id].name)).size === ids.length), "vedettes du Monde à l'honneur : 3 au plus (2 pour une famille moyenne, 1 pour une petite), des personnages différents");
   ok(Po.LEGENDS.every((th) => th.stars.length === 3 && th.stars.every((id) => CARD[id] && CARD[id].cost >= 7 && !CARD[id].st) && new Set(th.stars.map((id) => CARD[id].fam)).size === 3
     && th.epics.every((id) => CARD[id] && CARD[id].r === "E" && CARD[id].cost < 7 && !CARD[id].st)), `${Po.LEGENDS.length} thèmes du Portail des Légendes : 3 cartes 7 de 3 univers, 4 épiques`);
   ok(new Set(Po.MONDES).size === PLAYABLE.length - 1 && !Po.MONDES.includes("starac") && PLAYABLE.every((f) => f.id === "starac" || Po.MONDES.includes(f.id)), "Monde à l'honneur : toutes les familles y passent (jamais Star Academy)");
-  ok(Array.from({ length: 60 }, (_, k) => Po.portalsAt(k)).every((x) => x.leg.stars.length === 3 && x.monde.stars.length >= 3), "chaque période a ses deux portails, avec des vedettes");
+  ok(Array.from({ length: 80 }, (_, k) => Po.portalsAt(k)).every((x) => x.leg.stars.length === 3 && x.monde.stars.length >= 1 && x.monde.stars.length <= 3
+    && new Set(x.monde.stars.map((id) => CARD[id].name)).size === x.monde.stars.length), "chaque période a ses deux portails, jamais plus de 3 vedettes (personnages différents)");
+  ok(Po.portalsAt(Po.MONDES.length).monde.stars.join() !== p0.monde.stars.join() && Po.portalsAt(Po.MONDES.length).monde.fam === "jojo", "au passage suivant de la famille, d'autres cartes 7 sont en vedette");
   ok(Po.periodDays(0).from === "2026-11-15" && Po.periodDays(0).to === "2026-11-28", "dates d'une période : du 15 au 28 novembre");
   const day = "2026-11-20";
   let pt = P.normalizeTcg({ ec: 2000, tk: 3 });
@@ -254,7 +259,8 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(P.pull(P.normalizeTcg({ ec: 1000 }), "leg", 10, day, allU).cards.filter((c) => P.tierOf(CARD[c.id]) === "E").length === 1, "par 10 : une épique au moins");
   ok(P.portalTarget(last.t, p0.leg) === "sw-dark-vador-7", "cible obtenue : la cible par défaut passe à la vedette suivante");
   const aim = P.setPortalTarget(g, "monde", "jojo-dio-brando-7-2", day);
-  ok(!aim.error && P.portalTarget(aim.t, p0.monde) === "jojo-dio-brando-7-2" && P.setPortalTarget(g, "monde", "lotr-sauron-7", day).error, "viser une carte 7 du Monde à l'honneur (pas une carte d'une autre famille)");
+  ok(!aim.error && P.portalTarget(aim.t, p0.monde) === "jojo-dio-brando-7-2" && P.setPortalTarget(g, "monde", "lotr-sauron-7", day).error && P.setPortalTarget(g, "monde", "jojo-jotaro-kujo-7", day).error,
+    "viser une vedette du Monde à l'honneur (pas une carte 7 hors vedettes ni d'une autre famille)");
   ok(P.normalizeTcg(JSON.parse(JSON.stringify({ ...aim.t, por: { ...aim.t.por, leg: { n: 999, c: "lyoko-krabe-3" } } }))).por.leg.n === P.PULL.pity - 1
     && P.normalizeTcg({ por: { leg: { c: "lyoko-krabe-3" } } }).por.leg.c === null && P.normalizeTcg(JSON.parse(JSON.stringify(aim.t))).por.monde.c === "jojo-dio-brando-7-2", "sauvegarde des portails : cible et compteur vérifiés");
   // tirages au hasard (graine fixe) : taux, famille, nouveautés

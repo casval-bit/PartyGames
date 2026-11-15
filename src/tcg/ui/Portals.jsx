@@ -41,8 +41,10 @@ function Banner({ t, own, bn, left, onTarget, onPull, onZoom }) {
         <div className="pt-title"><small>{bn.name}</small><h3>{bn.sub}</h3>{bn.tag && <p>{bn.tag}</p>}</div>
         <span className="pt-left" title="Les portails changent toutes les deux semaines"><Icon name="hourglass" size={13} />{fmtLeft(left)}</span>
       </header>
-      <div className="pt-stars-h"><b>{bn.kind === "monde" ? `Ses ${bn.stars.length} cartes 7` : "Les vedettes"}</b><small>Choisis ta cible : une légendaire sur deux, garantie à la 50e invocation au plus tard.</small></div>
-      <div className={"pt-stars" + (bn.stars.length > 3 ? " many" : "")}>
+      <div className="pt-stars-h"><b>{bn.stars.length > 1 ? "Les vedettes" : "La vedette"}</b>
+        <small>{bn.stars.length > 1 ? "Choisis ta cible : " : "Ta cible : "}une légendaire sur deux, garantie à la 50e invocation au plus tard.
+          {bn.kind === "monde" && bn.sevens > bn.stars.length ? ` Les ${bn.sevens - bn.stars.length} autres cartes 7 de la famille peuvent aussi sortir.` : ""}</small></div>
+      <div className={"pt-stars n" + bn.stars.length}>
         {bn.stars.map((id) => (
           <div key={id} className={"pt-star" + (id === target ? " on" : "")}>
             <CardFace d={CARD[id]} onClick={() => onZoom(id, bn)} own={own[id] ? "possédée" : null} />
@@ -112,13 +114,14 @@ export default function Portals({ t, setT, flash, onPull }) {
         <div className="hub-sec pt-next">
           <h3>Prochains portails <small>du {fmtDay(next.from)} au {fmtDay(next.to)}</small></h3>
           <div className="pt-next-row" style={{ "--bc": next.leg.color }}><Icon name="orbit" size={18} /><span><b>{next.leg.sub}</b><small>{next.leg.stars.map((id) => CARD[id].name).join(", ")}</small></span></div>
-          <div className="pt-next-row" style={{ "--bc": next.monde.color }}><Icon name={FAMILY[next.monde.fam].icon} size={18} /><span><b>{next.monde.sub}</b><small>Monde à l'honneur : ses {next.monde.stars.length} cartes 7</small></span></div>
+          <div className="pt-next-row" style={{ "--bc": next.monde.color }}><Icon name={FAMILY[next.monde.fam].icon} size={18} /><span><b>{next.monde.sub}</b><small>Monde à l'honneur : {next.monde.stars.map((id) => CARD[id].name).join(", ")}</small></span></div>
         </div>
         <div className="hub-sec pt-rules">
           <h3>Taux et règles</h3>
           <ul>
             <li>Chaque invocation : <b>Légendaire</b> (une carte 7) 2 %, <b>Épique</b> 10 %, <b>Rare</b> 38 %, <b>Peu commune</b> 50 %.</li>
-            <li><b>Une légendaire sur deux est ta cible.</b> Dans le Portail des Légendes, les autres sont souvent les autres vedettes, et une épique sur deux est à l'honneur.</li>
+            <li><b>Une légendaire sur deux est ta cible</b> ; les autres sont souvent les autres vedettes. Dans le Portail des Légendes, une épique sur deux est à l'honneur.</li>
+            <li><b>Vedettes :</b> trois au plus par portail. Le Monde à l'honneur en a 3 pour une grande famille, 2 pour une moyenne, 1 pour une petite ; ses autres cartes 7 peuvent aussi sortir.</li>
             <li><b>Garantie :</b> ta cible arrive au plus tard à la {P.PULL.pity}e invocation dans ce portail. Le compteur repart à zéro quand tu l'obtiens, et il est gardé quand les portails changent.</li>
             <li><b>Par 10 :</b> {P.PULL.ec10} Éclats l'invocation au lieu de {P.PULL.ec}, et une épique au moins.</li>
             <li><b>Tickets de portail</b> (quêtes du jour, coffre du jour) : un ticket paie une invocation ; ils passent avant les Éclats.</li>

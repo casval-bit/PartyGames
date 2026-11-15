@@ -480,7 +480,9 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   le **Portail des Légendes** (un thème à travers les univers, 3 cartes 7 en vedette et 4 épiques à l'honneur : Seigneurs des ténèbres, Les plus forts du monde, Magie suprême,
   L'heure des dragons, Les Élus, Le temps s'arrête, Les génies, Sous le masque, Rois et reines, Pirates et capitaines, Créatures de la nuit, Esprits de la forêt, Les rebelles,
   Dieux et cosmos : 14 thèmes) et le **Monde à l'honneur** (une famille, toutes ses cartes ; JoJo d'abord, puis toutes les familles à tour de rôle, jamais Star Academy).
-  On choisit sa **cible** parmi les cartes 7 en vedette. Une invocation : 100 Éclats ou 1 ticket ; par 10 : 900 Éclats (ou 10 tickets, les tickets passent avant les Éclats),
+  **Trois vedettes au plus par portail** : le Monde à l'honneur en a 3 pour une grande famille (8 cartes 7 ou plus), 2 pour une moyenne, 1 pour une petite
+  (`MONDE_STARS` dans `portals.js` ; JoJo : Jotaro *Star Platinum*, Dio *New Body*, Giorno *Golden Wind*) ; ses autres cartes 7 peuvent aussi sortir,
+  et au passage suivant de la famille, d'autres cartes 7 prennent la vedette. On choisit sa **cible** parmi les vedettes. Une invocation : 100 Éclats ou 1 ticket ; par 10 : 900 Éclats (ou 10 tickets, les tickets passent avant les Éclats),
   avec une épique au moins. Taux : Légendaire (une carte 7) 2 %, Épique 10 %, Rare 38 %, Peu commune 50 % ; **une légendaire sur deux est la cible**, et elle est
   **garantie au plus tard à la 50e invocation** dans ce portail (compteur gardé quand les portails changent). En moyenne une cible coûte environ 3 600 Éclats (au pire 4 500),
   contre 3 000 pour une légendaire au hasard dans la boutique : on paie un peu plus pour choisir. Révélation : un vortex qu'on touche, qui prend la couleur de la meilleure carte
