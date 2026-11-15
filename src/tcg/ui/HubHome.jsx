@@ -2,10 +2,10 @@
 //   - en haut : la photo de profil du jeu (bouton Profil), les boosters, les Éclats et les paramètres ;
 //   - au centre : le plateau de jeu en 3D isométrique (HubBoard), posé avec le deck joué ;
 //   - à gauche, « Tes cartes » : Mes decks (créer, choisir), Mes cartes (celles que tu possèdes), Album (toutes les cartes du jeu) ;
-//   - à droite, « Boosters et défis » : Boosters, Portails (invocations), Boutique du jour, Quêtes ;
+//   - à droite, « Boutique et défis » : la Boutique (cartes du jour, les deux Portails et les boosters, en onglets), Quêtes ;
 //   - en bas, au centre : Jouer, et le deck joué (Changer).
 import { useEffect, useState } from "react";
-import { ALL, CARD, FAMILY, subOf } from "../cards/index.js";
+import { ALL, FAMILY, subOf } from "../cards/index.js";
 import { validateDeck } from "../deck.js";
 import * as P from "../progress.js";
 import { portalsOf, msToPortalChange } from "../portals.js";
@@ -23,16 +23,16 @@ const fmtLeft = (ms) => { const h = Math.floor(ms / 3600000), m = Math.floor((ms
 export function HubCurrencies({ t, go, nPacks }) {
   return (
     <div className="hh-curs">
-      <button className="hh-cur packs" onClick={() => go("packs")} title="Boosters à ouvrir" aria-label={`Boosters : ${nPacks} à ouvrir`}>
+      <button className="hh-cur packs" onClick={() => go("packs")} title="Boosters à ouvrir (Boutique, onglet Boosters)" aria-label={`Boosters : ${nPacks} à ouvrir`} data-testid="hub-packs">
         <Icon name="gift" size={18} /><b>{nPacks}</b>
       </button>
-      <button className="hh-cur tk" onClick={() => go("portals")} title="Tickets de portail : une invocation chacun (Portails)" aria-label={`${t.tk} tickets de portail, ouvrir les Portails`} data-testid="hub-tk">
+      <button className="hh-cur tk" onClick={() => go("portals")} title="Tickets de portail : une invocation chacun (Boutique, Portails)" aria-label={`${t.tk} tickets de portail, ouvrir les Portails`} data-testid="hub-tk">
         <Icon name="ticket" size={18} /><b>{t.tk.toLocaleString("fr-FR")}</b>
       </button>
       <button className="hh-cur jet" onClick={() => go("coll")} title="Jetons de brillance : rendent une de tes cartes brillante (Mes cartes, touche une carte)" aria-label={`${t.jet} jetons de brillance, ouvrir Mes cartes`} data-testid="hub-jet">
         <Icon name="sparkles" size={18} /><b>{t.jet.toLocaleString("fr-FR")}</b>
       </button>
-      <button className="hh-cur ec" onClick={() => go("shop")} title="Éclats, la monnaie du jeu : boutique du jour et boosters" aria-label={`${t.ec} Éclats, ouvrir la boutique`}>
+      <button className="hh-cur ec" onClick={() => go("shop")} title="Éclats, la monnaie du jeu : cartes du jour, Portails et boosters (Boutique)" aria-label={`${t.ec} Éclats, ouvrir la boutique`}>
         <Icon name="gem" size={18} /><b>{t.ec.toLocaleString("fr-FR")}</b><span className="plus" aria-hidden="true"><Icon name="plus" size={13} stroke={2.4} /></span>
       </button>
     </div>
@@ -63,8 +63,11 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onS
   useEffect(() => { const iv = setInterval(() => { setLeft(P.msToMidnight()); setPLeft(msToPortalChange()); }, 30000); return () => clearInterval(iv); }, []);
   const distinct = Object.keys(own).length;
   const por = portalsOf(P.today());
-  const lt = P.portalTarget(t, por.leg);
   const pDays = Math.max(1, Math.ceil(pLeft / 86400000));
+  // la Boutique : ce qui attend en priorité (boosters à ouvrir, tickets offerts, nouvelles cartes du jour)
+  const shopBadge = nPacks || (!t.por.gift ? "!" : null) || (shopSeenToday() ? null : "•");
+  const shopSub = nPacks ? `${nPacks} booster${nPacks > 1 ? "s" : ""} à ouvrir ; cartes du jour, Portails (${por.monde.sub}…)`
+    : `Cartes du jour (nouvelles dans ${fmtLeft(left)}), Portails (${por.monde.sub}, encore ${pDays} j) et boosters`;
   return (
     <div className="hh" data-testid="hub-home">
       <header className="hh-top">
@@ -102,14 +105,10 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onS
           short="Tout le jeu" onClick={onAlbum} />
       </aside>
 
-      <aside className="hh-side r" aria-label="Boosters et défis">
-        <span className="hh-side-h"><Icon name="sparkles" size={14} />Boosters et défis</span>
-        <Nav id="packs" icon="gift" label="Boosters" sub={nPacks ? `${nPacks} à ouvrir ; d'autres s'achètent avec tes Éclats` : "En acheter avec tes Éclats : 5 cartes chacun"}
-          short={nPacks ? `${nPacks} à ouvrir` : "En acheter"} badge={nPacks || null} tone="vio" onClick={() => go("packs")} />
-        <Nav id="portals" icon="orbit" label="Portails" sub={`${por.leg.sub} (${CARD[lt].name}…) et ${por.monde.sub} : encore ${pDays} jour${pDays > 1 ? "s" : ""}`}
-          short={t.tk ? `${t.tk} ticket${t.tk > 1 ? "s" : ""}` : "Invocations"} badge={!t.por.gift ? "!" : t.tk || null} tone="portal" onClick={() => go("portals")} />
-        <Nav id="shop" icon="store" label="Boutique du jour" labelShort="Boutique" sub={`6 cartes à l'unité, contre des Éclats. Nouvelles dans ${fmtLeft(left)}`}
-          short="6 cartes à l'unité" badge={shopSeenToday() ? null : "•"} onClick={() => go("shop")} />
+      <aside className="hh-side r" aria-label="Boutique et défis">
+        <span className="hh-side-h"><Icon name="sparkles" size={14} />Boutique et défis</span>
+        <Nav id="shop" icon="store" label="Boutique" sub={shopSub} short={nPacks ? `${nPacks} booster${nPacks > 1 ? "s" : ""} à ouvrir` : "Cartes, Portails, boosters"}
+          badge={shopBadge} tone="shop" onClick={() => go("shop")} />
         <Nav id="quests" icon="trophy" label="Quêtes et succès" labelShort="Quêtes" sub={nQuests ? `${nQuests} récompense${nQuests > 1 ? "s" : ""} à récupérer ; quêtes du jour, niveaux, succès` : "Quêtes du jour, niveaux et succès : XP, Éclats, boosters"}
           short={nQuests ? `${nQuests} à récupérer` : "Du jour, succès"} badge={nQuests || null} onClick={() => go("quests")} />
       </aside>

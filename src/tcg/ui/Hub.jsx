@@ -1,5 +1,6 @@
-// Trône des Mondes : la collection du joueur. Deck de départ (une fois), decks, collection, boosters, Portails (invocations),
-// boutique du jour, quêtes et succès. Tout est enregistré dans le profil (profile.tcg), donc suit le compte d'un téléphone à l'autre.
+// Trône des Mondes : la collection du joueur. Deck de départ (une fois), decks, collection, boutique (cartes du jour, les deux
+// Portails et les boosters, en onglets), quêtes et succès. Tout est enregistré dans le profil (profile.tcg), donc suit le compte
+// d'un téléphone à l'autre.
 import { useEffect, useMemo, useState } from "react";
 import { ALL, CARD, FAMILY, PLAYABLE, subOf, subWords } from "../cards/index.js";
 import { RARITY, RARITY_ORDER, CARD_TYPES } from "../rules.js";
@@ -17,10 +18,12 @@ import ArtList, { loadTri, saveTri } from "./ArtList.jsx";
 import Album from "./Album.jsx";
 import { APPAREIL } from "../../lib/device.js";
 import { useTcgPrefs } from "../prefs.js";
-import HubHome, { HubCurrencies, markShopSeen } from "./HubHome.jsx";
+import HubHome, { HubCurrencies, markShopSeen, shopSeenToday } from "./HubHome.jsx";
 import TcgProfile from "./TcgProfile.jsx";
 import TcgSettings from "./TcgSettings.jsx";
 import Portals from "./Portals.jsx";
+import Portrait from "./Portrait.jsx";
+import { portalsOf } from "../portals.js";
 import { canTest } from "../../config.js";
 
 const EC =({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
@@ -348,6 +351,50 @@ function Shop({ t, setT, flash }) {
   );
 }
 
+/**
+ * La boutique : un bandeau vertical à 4 onglets (cartes du jour, Portail des Légendes, Monde à l'honneur, boosters),
+ * et le contenu de l'onglet choisi en grand à côté. Une seule bannière de portail à la fois, jamais côte à côte.
+ */
+function ShopHub({ t, setT, flash, tab, onTab, onOpen, onPull, nPacks }) {
+  const day = P.today();
+  const por = useMemo(() => portalsOf(day), [day]);
+  const [left, setLeft] = useState(P.msToMidnight());
+  useEffect(() => { const iv = setInterval(() => setLeft(P.msToMidnight()), 30000); return () => clearInterval(iv); }, []);
+  const tabs = [
+    { id: "day", icon: "store", label: "Boutique du jour", short: "Du jour", over: "Cartes à l'unité", sub: `6 cartes, nouvelles dans ${fmtTime(left)}`, color: "#ffd166",
+      badge: tab !== "day" && !shopSeenToday() ? "•" : null },
+    { id: "leg", icon: "orbit", label: por.leg.sub, short: "Légendes", over: por.leg.name, sub: `Cible : ${CARD[P.portalTarget(t, por.leg)].name}`, color: por.leg.color,
+      star: P.portalTarget(t, por.leg), badge: !t.por.gift ? "!" : null },
+    { id: "monde", icon: FAMILY[por.monde.fam].icon, label: por.monde.sub, short: "Monde", over: por.monde.name, sub: `Cible : ${CARD[P.portalTarget(t, por.monde)].name}`, color: por.monde.color,
+      star: P.portalTarget(t, por.monde) },
+    { id: "packs", icon: "gift", label: "Boosters", short: "Boosters", over: "Acheter, ouvrir", sub: nPacks ? `${nPacks} à ouvrir, d'autres à acheter` : "5 cartes chacun, contre des Éclats", color: "#b48cff",
+      badge: nPacks || null },
+  ];
+  return (
+    <div className="sh" data-tab={tab}>
+      <nav className="sh-rail" role="tablist" aria-orientation="vertical" aria-label="Boutique">
+        {tabs.map((x) => (
+          <button key={x.id} role="tab" id={"shop-tab-" + x.id} aria-selected={tab === x.id} aria-controls="shop-panel" title={`${x.over} : ${x.label}`}
+            className={"sh-tab" + (tab === x.id ? " on" : "") + (x.star ? " star" : "")} style={{ "--tc": x.color }} onClick={() => onTab(x.id)} data-testid={"shop-tab-" + x.id}>
+            <span className="sh-tab-i">
+              {x.star ? <Portrait id={x.star} frame="or" size={46} /> : <Icon name={x.icon} size={24} stroke={1.7} />}
+              {x.star && <span className="sh-tab-sub"><Icon name={x.icon} size={12} stroke={2} /></span>}
+              {x.badge ? <i className="hh-badge">{x.badge}</i> : null}
+            </span>
+            <span className="sh-tab-t"><small>{x.over}</small><b>{x.label}</b><em>{x.sub}</em></span>
+            <span className="sh-tab-s" aria-hidden="true">{x.short}</span>
+          </button>
+        ))}
+      </nav>
+      <div className="sh-main" id="shop-panel" role="tabpanel" aria-labelledby={"shop-tab-" + tab} key={tab}>
+        {tab === "day" && <Shop t={t} setT={setT} flash={flash} />}
+        {(tab === "leg" || tab === "monde") && <Portals kind={tab} t={t} setT={setT} flash={flash} onPull={onPull} />}
+        {tab === "packs" && <Packs t={t} setT={setT} flash={flash} onOpen={onOpen} />}
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------ quêtes ------------------------------ */
 function DailyQuests({ t, setT, flash }) {
   const claim = (i) => {
@@ -436,9 +483,11 @@ function Quests({ t, setT, flash }) {
 
 /* ------------------------------ en-tête d'une partie du Trône des Mondes ------------------------------ */
 const VIEWS = {
-  decks: ["Mes decks", "layers"], coll: ["Mes cartes", "library"], packs: ["Boosters", "gift"], portals: ["Portails", "orbit"], shop: ["Boutique du jour", "store"],
+  decks: ["Mes decks", "layers"], coll: ["Mes cartes", "library"], shop: ["Boutique", "store"],
   quests: ["Quêtes et succès", "trophy"], profile: ["Mon profil", "user"],
 };
+/** Onglets de la boutique, et les anciennes parties qui y mènent (« packs » depuis le lobby ou la fin de partie, pastilles d'en-tête). */
+const SHOP_TAB = { day: "day", leg: "leg", monde: "monde", packs: "packs", portals: "leg" };
 function SectionHead({ view, t, go, nPacks, onSettings }) {
   const [title, icon] = VIEWS[view];
   return (
@@ -455,14 +504,15 @@ function SectionHead({ view, t, go, nPacks, onSettings }) {
 
 /* ------------------------------ écran principal ------------------------------ */
 /**
- * Trône des Mondes : accueil (HubHome) et ses parties (decks, collection, boosters, boutique, quêtes, profil).
- * initialTab : partie ouverte d'emblée ("home" par défaut ; "decks" ou "packs" depuis le lobby).
+ * Trône des Mondes : accueil (HubHome) et ses parties (decks, collection, boutique, quêtes, profil).
+ * initialTab : partie ouverte d'emblée ("home" par défaut ; "decks", ou "packs" pour l'onglet boosters de la boutique).
  * onPlay : « Jouer » (retour au lobby, ou nouveau lobby Trône des Mondes) ; inRoom : on est déjà dans un lobby.
  */
 export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, name, onPlay, inRoom }) {
   const t = useMemo(() => P.ensureQuests(P.normalizeTcg(tcg)), [tcg]);
   const own = useMemo(() => P.owned(t), [t]);
-  const [view, setView] = useState(VIEWS[initialTab] ? initialTab : "home");
+  const [view, setView] = useState(SHOP_TAB[initialTab] ? "shop" : VIEWS[initialTab] ? initialTab : "home");
+  const [shopTab, setShopTab] = useState(SHOP_TAB[initialTab] || "day");
   const [edit, setEdit] = useState(null);
   const [opening, setOpening] = useState(null);
   const [toast, setToast] = useState("");
@@ -472,7 +522,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
   const [zoom, setZoom] = useState(null);
   const prefs = useTcgPrefs();
   useEffect(() => sfx.enter("tcg"), []); // sons du Trône des Mondes : ses propres réglages tant qu'il est ouvert
-  useEffect(() => { if (view === "shop") markShopSeen(); }, [view]);
+  useEffect(() => { if (view === "shop" && shopTab === "day") markShopSeen(); }, [view, shopTab]);
   // compte testeur (VITE_TESTEURS, sur cet ordinateur) : Éclats et jetons rechargés tout seuls (désactivable dans les paramètres)
   const tester = canTest(acc);
   useEffect(() => {
@@ -482,7 +532,19 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
   }, [tester, prefs.unlimited, t, setTcg]);
   const flash = (m) => { setToast(m); setTimeout(() => setToast((x) => (x === m ? "" : x)), 3000); };
   const setT = (nt) => setTcg(nt);
-  const go = (v) => { if (v === view) return; setView(v); sfx.slide(); };
+  /** Va dans une partie ; « packs », « portals », « leg »… ouvrent la boutique sur l'onglet correspondant. */
+  const go = (v) => {
+    const tab = SHOP_TAB[v];
+    if (tab) {
+      if (view === "shop" && shopTab === tab) return;
+      setShopTab(tab);
+      if (view === "shop") sfx.select(); else { setView("shop"); sfx.slide(); }
+      return;
+    }
+    if (v === view) return;
+    setView(v); sfx.slide();
+  };
+  const pickShopTab = (tab) => { if (tab === shopTab) return; setShopTab(tab); sfx.select(); };
   const nPacks = Object.values(t.packs).reduce((s, n) => s + n, 0);
   const nQuests = t.quests.list.filter((q) => !q.got && q.n >= P.QUEST_BY[q.id].goal).length + P.claimableMilestones(t).length + (P.questBonusReady(t) ? 1 : 0);
 
@@ -543,7 +605,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
   } else if (view === "home") {
     const deck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
     content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} onSettings={() => { setSettings(true); sfx.open(); }}
-      onZoom={(id) => setZoom({ id })} onFamily={() => deck && setZoom({ fam: deck.fam, pt: deck.pt })} onAlbum={() => { setAlbum(true); sfx.open(); }}
+      onZoom={(id) => setZoom({ id })} onFamily={(fam, pt) => (fam ? setZoom({ fam, pt }) : deck && setZoom({ fam: deck.fam, pt: deck.pt }))} onAlbum={() => { setAlbum(true); sfx.open(); }}
       nPacks={nPacks} nQuests={nQuests} calm={prefs.motion === "reduced"} />;
   } else {
     content = (
@@ -552,9 +614,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
         <div className={"hs-body v-" + view} key={view}>
           {view === "decks" && <Decks t={t} own={own} setT={setT} onEdit={setEdit} flash={flash} />}
           {view === "coll" && <Collection t={t} own={own} setT={setT} flash={flash} />}
-          {view === "packs" && <Packs t={t} setT={setT} flash={flash} onOpen={openPack} />}
-          {view === "portals" && <Portals t={t} setT={setT} flash={flash} onPull={doPull} />}
-          {view === "shop" && <Shop t={t} setT={setT} flash={flash} />}
+          {view === "shop" && <ShopHub t={t} setT={setT} flash={flash} tab={shopTab} onTab={pickShopTab} onOpen={openPack} onPull={doPull} nPacks={nPacks} />}
           {view === "quests" && <Quests t={t} setT={setT} flash={flash} />}
           {view === "profile" && <TcgProfile t={t} setT={setT} name={name} acc={acc} onAccount={onAccount} flash={flash} />}
         </div>

@@ -469,7 +469,7 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .hub-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; padding-bottom: 8px; }
 .hub-body::-webkit-scrollbar { display: none; }
 .hub-sec { display: flex; flex-direction: column; gap: 8px; }
-.hub-sec > h3 { font-size: .95rem; display: flex; align-items: center; gap: 8px; }
+.hub-sec > h3 { font-size: .95rem; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
 .hub-sec > h3 small { font: 500 .78rem var(--body); color: var(--txt-2); }
 .hub-card { border-radius: 18px; padding: 12px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--card-hi); display: flex; flex-direction: column; gap: 8px; }
 .hub-card.warn { border-color: rgba(255,106,168,.55); background: linear-gradient(180deg, rgba(138,59,82,.35), rgba(13,26,51,.95)); }
@@ -959,7 +959,7 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 /* =====================================================================
    Trône des Mondes : fond, accueil (HubHome.jsx) et parties (Hub.jsx)
    Accueil épuré façon lobby de jeu de cartes : photo de profil du jeu, niveau, boosters, Éclats et paramètres en haut ;
-   vitrine du deck joué au centre ; boutons des parties et grandes actions (Jouer, Boosters) en bas.
+   plateau de jeu 3D au centre ; « Tes cartes » et « Boutique et défis » sur les côtés ; Jouer et le deck joué en bas.
    La mise en page suit la largeur réelle de l'écran du jeu (@container hubh) : téléphone, tablette, fenêtre de PC.
    ===================================================================== */
 .app > .screen.hub { position: relative; z-index: 1; }
@@ -1057,36 +1057,67 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .hh-deck .hub-fam { width: 32px; height: 32px; border-radius: 10px; }
 .hh-deck-go { display: inline-flex; align-items: center; gap: 4px; font: 700 .74rem var(--display); color: var(--txt-2); white-space: nowrap; }
 
-/* ---------------- plateau de jeu 3D isométrique (HubBoard.jsx) ----------------
-   Le plateau est un plan incliné (rotateX puis rotateZ) dont les cartes sont posées à plat ; au survol elles se soulèvent (translateZ).
-   --k : échelle calculée pour remplir la place (sans déborder). */
-.ib { position: absolute; inset: 0; perspective: 2600px; perspective-origin: 50% 35%; }
-/* le plateau est centré dans sa zone quelle que soit sa taille (sa boîte ne pousse jamais la mise en page) */
-.ib-plane { --k: .6; position: absolute; left: 50%; top: 50%; margin: -320px 0 0 -430px; width: 860px; height: 640px; padding: 24px 30px 30px; box-sizing: border-box; border-radius: 36px; display: grid; grid-template-rows: auto 1fr auto; gap: 8px;
-  transform-style: preserve-3d; transform: scale(var(--k)) rotateX(var(--rx, 46deg)) rotateZ(var(--rz, -30deg));
-  background: linear-gradient(180deg, rgba(5,10,22,.5), rgba(5,10,22,.72)), var(--mat) center / cover, #0b1630;
-  box-shadow: inset 0 0 0 4px #0a1430, inset 0 0 0 6px #d9a93f, inset 0 0 0 8px #6b4a12, inset 0 0 0 11px rgba(10,20,48,.9), inset 0 0 80px rgba(0,0,0,.55); }
-.ib-plane::before { content: ""; position: absolute; inset: 0; border-radius: inherit; transform: translateZ(-18px); background: linear-gradient(180deg, #5a3d0e, #2a1c06); box-shadow: 0 0 0 1px #8a6418; }
-.ib-plane::after { content: ""; position: absolute; inset: -30px; border-radius: 60px; transform: translateZ(-40px); background: radial-gradient(closest-side, rgba(0,0,0,.6), transparent); }
-.ib-felt { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; transform: translateZ(.2px);
-  background: radial-gradient(55% 45% at 50% 58%, color-mix(in srgb, var(--fc) 26%, transparent), transparent 72%),
-    linear-gradient(180deg, transparent 37%, rgba(255,209,102,.22) 37.3%, transparent 37.6%); }
-.ib-far, .ib-mid, .ib-near, .ib-chars, .ib-row { position: relative; display: flex; align-items: center; justify-content: center; transform-style: preserve-3d; }
-.ib-far { gap: 54px; padding-top: 6px; }
-.ib-mid { gap: 90px; }
-.ib-near { flex-direction: column; gap: 16px; }
-.ib-chars { gap: 16px; min-height: 160px; }
-.ib-row { gap: 18px; }
-.ib-empty { font: 700 .9rem var(--display); color: rgba(255,231,166,.5); }
-.ib-hit { padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; transform-style: preserve-3d; }
-/* un pixel au-dessus de la table : sinon le clic touche le tapis (tri 3D des surfaces au même niveau).
-   La zone cliquable (la carte posée) ne bouge pas ; c'est son contenu qui se soulève au survol (propriété translate),
-   sinon la carte quitterait la souris en se soulevant et retomberait sans cesse. */
+/* ---------------- plateau de jeu 3D (HubBoard.jsx) ----------------
+   Une table en bois, un tapis aux couleurs de ta famille et une partie en cours. Le plateau est un plan incliné (rotateX puis rotateZ)
+   dont les cartes sont posées à plat ; au survol elles se soulèvent (translateZ). --k : échelle calculée pour remplir la place ;
+   --dx, --dy : recentrage du dessin. Hauteurs au-dessus du tapis : gravures .2px, cartes du dessous .5px, cartes 1px, jetons 3 à 20px
+   (jamais deux surfaces au même niveau, sinon elles se chevauchent mal). Rien ici ne doit couper (overflow) ni filtrer un conteneur 3D. */
+.ib { position: absolute; inset: 0; perspective: 2200px; perspective-origin: 50% 30%; }
+.ib-plane { --k: .6; position: absolute; left: 50%; top: 50%; margin: -410px 0 0 -470px; width: 940px; height: 820px; padding: 22px; box-sizing: border-box; border-radius: 44px;
+  transform-style: preserve-3d; translate: var(--dx, 0px) var(--dy, 0px); transform: scale(var(--k)) rotateX(var(--rx, 46deg)) rotateZ(var(--rz, -10deg));
+  background: radial-gradient(90% 70% at 50% 42%, rgba(255,196,130,.2), transparent 70%),
+    repeating-linear-gradient(89deg, rgba(0,0,0,.16) 0 2px, transparent 2px 11px, rgba(255,226,180,.05) 11px 13px, transparent 13px 23px),
+    repeating-linear-gradient(179deg, rgba(0,0,0,.1) 0 1px, transparent 1px 19px),
+    linear-gradient(160deg, #80512a, #5c3719 45%, #3b220e);
+  box-shadow: inset 0 3px 0 rgba(255,214,160,.3), inset 0 -4px 0 rgba(0,0,0,.4), inset 0 0 0 1px rgba(0,0,0,.55), inset 0 0 44px rgba(0,0,0,.35); }
+/* épaisseur de la table, et son ombre (sans clic : en 3D, Chrome les toucherait avant les cartes) */
+.ib-plane::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; transform: translateZ(-26px); background: linear-gradient(180deg, #4d2d13, #221205); box-shadow: 0 0 0 1px #2a170a; }
+.ib-plane::after { content: ""; position: absolute; inset: -46px; border-radius: 90px; pointer-events: none; transform: translateZ(-70px); background: radial-gradient(closest-side, rgba(0,0,0,.7), transparent); }
+/* le tapis : l'illustration de ta famille, assombrie, un liseré doré, et la lumière de la salle */
+.ib-mat { position: relative; height: 100%; box-sizing: border-box; border-radius: 26px; padding: 12px 22px 10px; display: grid; grid-template-rows: auto auto minmax(96px, 1fr) auto auto; align-items: center; row-gap: 9px;
+  transform-style: preserve-3d;
+  background: radial-gradient(75% 65% at 50% 50%, transparent 50%, rgba(0,0,0,.55)), linear-gradient(180deg, rgba(5,10,22,.5), rgba(5,10,22,.66)), var(--mat) center / cover, #0b1630;
+  box-shadow: 0 0 0 3px #d9a93f, 0 0 0 5px #6b4a12, 0 0 0 7px rgba(20,10,2,.8), 0 6px 14px 8px rgba(0,0,0,.35),
+    inset 0 0 0 1px rgba(255,231,166,.3), inset 0 0 0 9px rgba(5,10,22,.3), inset 0 0 0 10px rgba(255,209,102,.3); }
+.ib-felt { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; transform: translateZ(.1px);
+  background: radial-gradient(46% 30% at 50% 74%, color-mix(in srgb, var(--fc) 30%, transparent), transparent 72%),
+    radial-gradient(44% 24% at 50% 24%, color-mix(in srgb, var(--oc) 24%, transparent), transparent 72%),
+    radial-gradient(40% 24% at 50% 50%, rgba(255,214,150,.16), transparent 75%); }
+.ib-row { position: relative; display: flex; align-items: flex-end; justify-content: center; transform-style: preserve-3d; }
+.ib-row.opp { rotate: 180deg; } /* la table d'en face est tournée vers l'adversaire */
+.ib-back { gap: 24px; }
+.ib-back.opp { gap: 18px; }
+.ib-line { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
+.ib-chars { display: flex; align-items: center; justify-content: center; gap: 18px; transform-style: preserve-3d; }
+.ib-line.me .ib-chars { min-height: 186px; }
+.ib-line.opp .ib-chars { gap: 16px; min-height: 142px; }
+.ib-side { display: flex; align-items: center; gap: 16px; min-width: 0; transform-style: preserve-3d; }
+.ib-side.l { justify-content: flex-start; } .ib-side.r { justify-content: flex-end; }
+.ib-empty { font: 700 15px var(--display); color: rgba(255,231,166,.5); }
+/* emplacements gravés et leurs noms */
+.ib-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; transform-style: preserve-3d; }
+.ib-slot::before { content: ""; position: absolute; left: -7px; right: -7px; top: -7px; bottom: 19px; border-radius: 11px; pointer-events: none; transform: translateZ(.2px);
+  border: 1.5px solid rgba(255,209,102,.24); background: rgba(3,6,14,.22); box-shadow: inset 0 0 14px rgba(0,0,0,.4); }
+.ib-slot.wide::before { display: none; }
+.ib-slot.bare::before { bottom: -7px; }
+.ib-slot-c { position: relative; display: block; transform-style: preserve-3d; }
+.ib-lab { display: block; font: 800 11px/1.1 var(--display); letter-spacing: .24em; text-transform: uppercase; color: rgba(255,231,166,.58); white-space: nowrap; pointer-events: none;
+  transform: translateZ(.2px); text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+/* cartes posées : un pixel au-dessus du tapis. La zone cliquable (la carte posée) ne bouge pas ; c'est son contenu qui se soulève
+   au survol (propriété translate), sinon la carte quitterait la souris en se soulevant et retomberait sans cesse. */
+.ib-hit { padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .ib-card { display: block; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .ib-card, .ib-hit { position: relative; transform: translateZ(1px); transform-style: preserve-3d; }
 .ib-card > *, .ib-hit > * { transition: translate .28s cubic-bezier(.3,1.5,.5,1), box-shadow .28s, filter .28s; }
 .ib-card > .tc, .ib-card > .tp { box-shadow: var(--thick), 0 10px 18px rgba(0,0,0,.45); }
 .ib-card.knelt { rotate: 90deg; margin: 0 calc(var(--w) * .2); }
+/* un objet attaché : glissé sous le personnage, il dépasse en haut */
+.ib-att { position: absolute; left: 11%; top: -16%; width: 78%; transform: translateZ(-.5px); }
+.ib-att .tc { width: 100% !important; box-shadow: var(--thick), 0 6px 12px rgba(0,0,0,.4); }
+/* jetons de Pouvoir posés sur une carte */
+.ib-tok { position: absolute; left: 50%; bottom: 7%; display: flex; gap: 3px; transform: translateX(-50%) translateZ(5px); pointer-events: none; }
+.ib-tok i, .ib-power i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: radial-gradient(circle at 35% 30%, #efe4ff, #8b5cf6 50%, #3b1d7a 85%); box-shadow: inset 0 0 0 2px #5b34b5, 0 2px 0 #2a1460, 0 4px 8px rgba(0,0,0,.45); }
 /* piles face cachée, avec de l'épaisseur */
 .ib-pile { width: var(--w); aspect-ratio: 63 / 88; }
 .ib-layer { position: absolute; inset: 0; transform: translateZ(calc(var(--i) * 1.7px)); }
@@ -1097,17 +1128,34 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
   62% { transform: translate3d(-8px, 0, calc(var(--i) * 3.4px + 18px)) rotateZ(-2deg); } }
 @keyframes riffleR { 0%, 100% { transform: translateZ(calc(var(--i) * 1.7px)); } 32% { transform: translate3d(58px, -8px, calc(var(--i) * 1.7px + 8px)) rotateZ(10deg); }
   62% { transform: translate3d(8px, 0, calc(var(--i) * 3.4px + 18px)) rotateZ(2deg); } }
+/* défausse : la carte du dessus face visible, deux autres en vrac dessous */
+.ib-stack { position: relative; display: block; width: var(--w); transform-style: preserve-3d; }
+.ib-stack > i { position: absolute; inset: 0; border-radius: 8px; background: linear-gradient(180deg, #2a3a5c, #121b30); box-shadow: inset 0 0 0 1px rgba(255,209,102,.3), 0 2px 4px rgba(0,0,0,.4); }
+.ib-stack > i:nth-child(1) { transform: translate(5px, 5px) rotate(5deg) translateZ(.4px); }
+.ib-stack > i:nth-child(2) { transform: translate(-4px, 3px) rotate(-4deg) translateZ(.7px); }
+.ib-stack > .ib-card { transform: translateZ(1.1px); }
+/* scénarios : l'actif posé sur ceux déjà joués */
+.ib-plots { position: relative; display: block; width: var(--pw); aspect-ratio: 88 / 63; transform-style: preserve-3d; }
+.ib-used { position: absolute; inset: 0; transform: translate(calc(-8px - var(--i) * 8px), calc(-9px - var(--i) * 9px)) rotate(calc(-4deg + var(--i) * 7deg)) translateZ(calc(.4px + var(--i) * .2px)); }
+.ib-used .tp { width: 100% !important; filter: brightness(.62) saturate(.75); box-shadow: 0 4px 8px rgba(0,0,0,.4); }
+.ib-plots > .ib-card { position: absolute; inset: 0; }
+.ib-plots > .ib-card > .tp { width: 100% !important; }
+/* pile des morts : face visible, éteinte, une tête de mort dessus */
+.ib-card.dead { rotate: -7deg; }
+.ib-card.dead > .tc { filter: grayscale(.8) brightness(.6) sepia(.25); }
+.ib-skull { position: absolute; left: 50%; top: 42%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; display: grid; place-items: center; color: #ffe1e1; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #ff8a8a, #b3122a 60%, #4a0610); box-shadow: inset 0 0 0 2px #7a0e1c, 0 3px 0 #3a0409, 0 6px 10px rgba(0,0,0,.5); transform: translateZ(5px); }
 /* main adverse en éventail */
-.ib-hand { display: flex; align-items: flex-end; padding: 0 10px; }
-.ib-hc { position: relative; display: block; transform-origin: 50% 130%; rotate: calc((var(--i) - 2) * 7deg); transform: translateZ(calc(var(--i) * 1px)); }
-.ib-hc + .ib-hc { margin-left: -46px; }
+.ib-hand { display: flex; align-items: flex-end; padding: 0 6px; }
+.ib-hc { position: relative; display: block; transform-origin: 50% 130%; rotate: calc((var(--i) - 2) * 7deg); transform: translateZ(calc(1px + var(--i) * 1px)); }
+.ib-hc + .ib-hc { margin-left: -40px; }
 .ib-hc .tc { box-shadow: var(--thick), 0 6px 12px rgba(0,0,0,.45); }
 .ib-hand.fan .ib-hc { animation: handShuf 1.05s cubic-bezier(.45,.05,.3,1) both; animation-delay: calc(var(--i) * 45ms); }
-@keyframes handShuf { 0%, 100% { transform: translateZ(calc(var(--i) * 1px)); }
+@keyframes handShuf { 0%, 100% { transform: translateZ(calc(1px + var(--i) * 1px)); }
   30% { transform: translate3d(calc((2 - var(--i)) * 30px), 18px, 30px) rotateZ(calc((2 - var(--i)) * 7deg)); }
   62% { transform: translate3d(calc((var(--i) - 2) * 22px), -6px, 20px); } }
 /* scénario adverse face cachée : il se retourne un instant */
-.ib-plotx { width: 140px; aspect-ratio: 88 / 63; }
+.ib-plotx { width: var(--pw, 140px); aspect-ratio: 88 / 63; }
 .ib-flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,1.35,.5,1); }
 .ib-plotx.up .ib-flip { transform: translateZ(26px) rotateY(180deg); }
 .ib-pback, .ib-pface { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 9px; }
@@ -1117,31 +1165,66 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .ib-pback b { font: 800 .62rem var(--display); letter-spacing: .2em; text-transform: uppercase; color: #ffe6a8; }
 .ib-pface { transform: rotateY(180deg); }
 .ib-pface .tp { width: 100% !important; }
-/* Or et Pouvoir au milieu de la table */
-.ib-coins { width: 46px; height: 46px; }
-.ib-coin { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; color: #6b4a12; transform: translateZ(calc(var(--i) * 4px));
-  background: radial-gradient(circle at 35% 30%, #fff1b8, #ffd166 45%, #b07a12 82%); box-shadow: inset 0 0 0 2px #8a5d10, 0 1px 0 #6b4a12; }
-.ib-coins.spin .ib-coin:last-child { animation: coinSpin .9s cubic-bezier(.3,1.2,.5,1); }
-@keyframes coinSpin { 0% { transform: translateZ(12px) rotateY(0); } 45% { transform: translateZ(70px) rotateY(540deg); } 100% { transform: translateZ(12px) rotateY(720deg); } }
-.ib-seal { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; color: rgba(255,209,102,.65); border: 2px solid rgba(255,209,102,.35);
-  background: radial-gradient(circle, rgba(255,209,102,.12), transparent 70%); box-shadow: inset 0 0 18px rgba(0,0,0,.5); }
-.ib-power { display: flex; gap: 8px; transform-style: preserve-3d; }
-.ib-power i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; transform: translateZ(6px);
-  background: radial-gradient(circle at 35% 30%, #e6d6ff, #8b5cf6 50%, #3b1d7a 85%); box-shadow: inset 0 0 0 2px #5b34b5, 0 2px 0 #2a1460; }
+/* l'Or : des piles de pièces */
+.ib-cstack { position: absolute; left: 50%; top: 42%; width: 42px; height: 42px; margin: -21px 0 0 -21px; transform: translate(var(--x), var(--y)); transform-style: preserve-3d; }
+.ib-coin { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; color: #6b4a12; transform: translateZ(calc(1px + var(--i) * 3.2px));
+  background: radial-gradient(circle at 35% 30%, #fff1b8, #ffd166 45%, #b07a12 82%); box-shadow: inset 0 0 0 2px #8a5d10, 0 1px 0 #6b4a12, 0 3px 0 #4a3008; }
+.ib-coins { width: 132px; height: 104px; }
+.ib-gold { position: relative; display: block; width: 96px; height: 86px; transform-style: preserve-3d; }
+.ib-coins > .ib-lab, .ib-gold > .ib-lab, .ib-pool > .ib-lab, .ib-chal > .ib-lab { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%) translateZ(.2px); }
+.ib-coins.spin .ib-cstack:first-child .ib-coin:last-child { animation: coinSpin .9s cubic-bezier(.3,1.2,.5,1); }
+@keyframes coinSpin { 0% { transform: translateZ(17px) rotateY(0); } 45% { transform: translateZ(84px) rotateY(540deg); } 100% { transform: translateZ(17px) rotateY(720deg); } }
+/* au milieu : la ligne qui sépare les deux camps, les trois défis, la réserve de Pouvoir */
+.ib-mid { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0; transform-style: preserve-3d; }
+.ib-mid::before { content: ""; position: absolute; left: -12px; right: -12px; top: 42%; height: 2px; pointer-events: none; transform: translateZ(.15px);
+  background: linear-gradient(90deg, transparent, rgba(255,209,102,.45) 6%, rgba(255,209,102,.45) 94%, transparent); box-shadow: 0 0 10px rgba(255,209,102,.25); }
+.ib-chal { position: relative; display: flex; align-items: center; justify-content: center; gap: 34px; height: 104px; padding: 0 34px 18px; transform-style: preserve-3d; }
+.ib-medal { --mc: var(--c-combat); width: 60px; height: 60px; border-radius: 50%; }
+.ib-medal > span { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; transform: translateZ(3px);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mc) 45%, #fff), var(--mc) 52%, color-mix(in srgb, var(--mc) 45%, #000) 90%);
+  box-shadow: inset 0 0 0 3px #d9a93f, inset 0 0 0 5px rgba(0,0,0,.3), 0 3px 0 #6b4a12, 0 9px 14px rgba(0,0,0,.45); }
+.ib-medal.combat { --mc: var(--c-combat); } .ib-medal.ruse { --mc: #1fb57a; } .ib-medal.influence { --mc: #8f63f0; }
+.ib-medal.lit > span { animation: medalLit 1.25s cubic-bezier(.3,1.3,.5,1); }
+@keyframes medalLit { 0% { transform: translateZ(3px); } 40% { transform: translateZ(46px) rotateY(180deg); box-shadow: inset 0 0 0 3px #fff3c4, 0 0 34px var(--mc), 0 0 60px var(--mc); }
+  100% { transform: translateZ(3px) rotateY(360deg); } }
+.ib-pool { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; width: 132px; height: 104px; padding-bottom: 18px; box-sizing: border-box; transform-style: preserve-3d; }
+.ib-seal { position: relative; width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center; color: #ffd166; transform: translateZ(.3px);
+  border: 2px solid rgba(255,209,102,.6); background: radial-gradient(circle, rgba(255,209,102,.2), rgba(10,16,32,.65) 72%); box-shadow: inset 0 0 18px rgba(0,0,0,.6), 0 0 18px rgba(255,209,102,.2); }
+.ib-seal svg { margin-top: -18px; }
+.ib-seal b { position: absolute; bottom: 9px; font: 800 19px var(--display); color: #ffe7a6; }
+.ib-power { position: relative; width: 44px; height: 40px; transform-style: preserve-3d; }
+.ib-power i { position: absolute; left: 0; top: 6px; transform: translate(calc(var(--i) * 6px), calc(var(--i) * -4px)) translateZ(calc(2px + var(--i) * 3px)); }
+/* jeton Premier joueur */
+.ib-first { position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #3a2000;
+  background: radial-gradient(circle at 35% 30%, #fff6d0, #ffd166 50%, #c7901c 88%); box-shadow: inset 0 0 0 3px #8a5d10, inset 0 0 0 5px rgba(255,255,255,.3), 0 3px 0 #6b4a12, 0 8px 14px rgba(0,0,0,.45);
+  transform: translateZ(4px); }
+.ib-first b { font: 800 13px/1 var(--display); }
+/* blasons des deux familles en filigrane dans le tapis, sous les cartes de chaque camp */
+.ib-emblem { --cc: #ffd166; position: absolute; left: 50%; top: 66%; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none;
+  color: color-mix(in srgb, var(--cc) 55%, #ffe7a6); opacity: .17; transform: translate(-50%, -50%) translateZ(.15px); }
+.ib-emblem.opp { top: 25%; transform: translate(-50%, -50%) rotate(180deg) translateZ(.15px); opacity: .1; }
+.ib-emblem b { font: 800 30px/1 var(--display); letter-spacing: .3em; text-transform: uppercase; white-space: nowrap; }
+.ib-emblem.opp b { font-size: 24px; }
 /* survol : la carte se soulève de la table */
 @media (hover: hover) and (pointer: fine) {
   .ib-card:hover > *, .ib-hit:hover > * { translate: 0 0 28px; }
   .ib-card:hover > .tc, .ib-card:hover > .tp { box-shadow: 0 0 0 2px rgba(255,209,102,.7), 0 0 26px rgba(255,209,102,.45), var(--thick), 0 30px 34px rgba(0,0,0,.5); }
   .ib-hand:hover .ib-hc { filter: brightness(1.12); }
+  .ib-medal:hover > span { box-shadow: inset 0 0 0 3px #fff3c4, 0 0 22px var(--mc), 0 9px 14px rgba(0,0,0,.45); }
 }
 .ib.calm .ib-card > *, .ib.calm .ib-hit > * { transition: none; }
-/* à l'arrivée sur l'accueil, tes cartes sont distribuées une à une sur la table (elles tombent en tournant) */
-.ib-card.deal { animation: ibDeal .62s cubic-bezier(.2,.9,.3,1.15) backwards; animation-delay: calc(.22s + var(--d, 0) * 85ms); }
+/* à l'arrivée sur l'accueil, les cartes sont distribuées une à une sur la table (elles tombent en tournant) */
+.ib-card.deal { animation: ibDeal .62s cubic-bezier(.2,.9,.3,1.15) backwards; animation-delay: calc(.2s + var(--d, 0) * 70ms); }
 @keyframes ibDeal { from { transform: translateZ(140px) translateY(-60px) rotate(-14deg); opacity: 0; } 60% { opacity: 1; } }
 .ib.calm .ib-card.deal { animation: none; }
-/* téléphone : un angle moins diagonal, pour un plateau plus grand */
-@container hubh (max-width: 620px) { .ib-plane { --rx: 50deg; --rz: -20deg; } }
-@media (prefers-reduced-motion: reduce) { .ib-pile.shuf .ib-layer, .ib-hand.fan .ib-hc, .ib-coin, .ib-card.deal { animation: none !important; } }
+/* téléphone : un angle moins de biais (le plateau est plus large que haut), et la table déborde un peu des deux côtés */
+@container hubh (max-width: 620px) {
+  .ib-plane { --rx: 48deg; --rz: -8deg; }
+  /* les côtés de la table sont coupés : on y laisse le tapis nu, et le trésor et le Pouvoir se rapprochent du centre */
+  .ib-side { visibility: hidden; }
+  .ib-mid { padding: 0 104px; }
+}
+@media (prefers-reduced-motion: reduce) { .ib-pile.shuf .ib-layer, .ib-hand.fan .ib-hc, .ib-coin, .ib-card.deal, .ib-medal > span { animation: none !important; } }
 
 /* une partie (decks, collection…) : en-tête et contenu qui arrive en glissant */
 .hs-body { flex: 1; min-height: 0; display: flex; flex-direction: column; animation: hsIn .42s cubic-bezier(.2,.8,.2,1) both; }
@@ -1186,12 +1269,14 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
   .hh-me-txt b { max-width: 104px; }
   .hh-lv .bar2 { width: 64px; }
   .hs-title h2 { font-size: 1.08rem; }
+  .hs-title small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hubh:not([data-view="coll"]) .hs-top .hh-cur.jet { display: none; }
 }
 @media (max-height: 760px) { @container hubh (max-width: 879px) { .hh-logo { display: none; } } }
-/* grand écran (PC, tablette en paysage) : « Tes cartes » à gauche, le plateau au centre, « Boosters et défis » à droite, Jouer en bas au centre */
+/* grand écran (PC, tablette en paysage) : « Tes cartes » à gauche, le plateau au centre, « Boutique et défis » à droite, Jouer en bas au centre */
 @container hubh (min-width: 880px) {
-  .hh { grid-template-columns: clamp(205px, 20cqw, 290px) minmax(0, 1fr) clamp(205px, 20cqw, 290px); grid-template-rows: auto minmax(0, 1fr) auto;
-    grid-template-areas: "top top top" "l stage r" "l play r"; column-gap: 18px; row-gap: 10px; }
+  .hh { grid-template-columns: clamp(200px, 17cqw, 264px) minmax(0, 1fr) clamp(200px, 17cqw, 264px); grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "top top top" "l stage r" "l play r"; column-gap: 14px; row-gap: 10px; }
   .hh-logo { display: none; }
   .hh-side { align-self: center; gap: 10px; }
   .hh-side-h { display: flex; }
@@ -1219,8 +1304,8 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
   .hub-fams { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
   .v-coll .hub-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
   .v-shop .hub-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }
-  .v-packs .hp-buy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
-  .v-packs .hp-buy > h3, .v-packs .hp-buy > .btn { grid-column: 1 / -1; justify-self: start; }
+  .v-shop .hp-buy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+  .v-shop .hp-buy > h3, .v-shop .hp-buy > .btn { grid-column: 1 / -1; justify-self: start; }
   .v-quests .hub-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 22px; align-content: start; align-items: start; }
   .v-quests .hq-ms { grid-column: 2; grid-row: 1 / span 3; }
   .v-quests .hub-body > .hub-note { grid-column: 1; }
@@ -1428,54 +1513,78 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .pv-burst .glow { position: absolute; width: 70px; height: 70px; margin: -35px; border-radius: 50%; background: radial-gradient(circle, #fff 0 30%, var(--pc) 62%, transparent 72%); animation: glowOut 1.1s .55s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .pv, .pv i, .pv-core::before { animation: none !important; } }
 
-/* ------------------------------ Portails (écran) ------------------------------ */
-.pts { gap: 12px; }
+/* ------------------------------ Boutique : bandeau vertical à 4 onglets (Hub.jsx, ShopHub) ------------------------------
+   Téléphone : un bandeau étroit (icône et nom court) ; grand écran : de vrais onglets (nom, ce qu'on y trouve). Le contenu de l'onglet est à côté. */
+.hs-body > .sh { flex: 1; min-height: 0; width: 100%; max-width: 1480px; margin-inline: auto; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; }
+.sh-rail { min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 8px; padding: 6px 2px 10px; }
+.sh-rail::-webkit-scrollbar { display: none; }
+.sh-tab { --tc: #ffd166; position: relative; flex: none; display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; padding: 8px 3px 7px; border-radius: 16px;
+  text-align: center; color: var(--txt-2); background: rgba(8,15,32,.66); border: 1px solid rgba(255,209,102,.16); box-shadow: var(--card-hi); cursor: pointer; }
+.sh-tab-i { position: relative; flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; color: color-mix(in srgb, var(--tc) 65%, #fff);
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--tc) 38%, transparent), rgba(8,15,32,.4) 72%), linear-gradient(160deg, #1b2f5c, #0b1630);
+  border: 1px solid color-mix(in srgb, var(--tc) 55%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.14); }
+.sh-tab.star .sh-tab-i { background: none; border: 0; box-shadow: none; }
+.sh-tab-sub { position: absolute; z-index: 1; right: -6px; bottom: -6px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--tc) 65%, #fff), color-mix(in srgb, var(--tc) 70%, #070d1c)); box-shadow: 0 0 0 2px #0a1430, 0 0 10px color-mix(in srgb, var(--tc) 60%, transparent); }
+.sh-tab .hh-badge { top: -7px; right: -7px; }
+.sh-tab-t { display: none; }
+.sh-tab-s { max-width: 100%; font: 700 .6rem/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-tab.on { color: var(--txt); border-color: color-mix(in srgb, var(--tc) 85%, #fff);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tc) 30%, #0b1430), #0b1630 85%); box-shadow: 0 0 20px color-mix(in srgb, var(--tc) 35%, transparent), var(--card-hi); }
+.sh-tab.on::before { content: ""; position: absolute; left: -2px; top: 20%; bottom: 20%; width: 4px; border-radius: 0 4px 4px 0; background: var(--tc); box-shadow: 0 0 12px var(--tc); }
+.sh-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; animation: hsIn .36s cubic-bezier(.2,.8,.2,1) both; }
+.sh-main > .hub-body { flex: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .sh-tab { transition: transform .22s cubic-bezier(.3,1.6,.5,1), border-color .22s, box-shadow .22s, background-color .22s; }
+  .sh-tab:not(.on):hover { transform: translateX(3px); border-color: color-mix(in srgb, var(--tc) 60%, transparent); background-color: rgba(30,24,60,.6); }
+  .sh-tab:hover .sh-tab-i > svg { animation: icoHop .5s cubic-bezier(.3,1.6,.5,1); }
+}
+.hubh.calm .sh-main { animation-duration: .18s; }
+@media (prefers-reduced-motion: reduce) { .sh-main { animation: none !important; } .sh-tab:hover { transform: none !important; } }
+
+/* ------------------------------ Portails : une bannière par onglet de la boutique ------------------------------ */
+.pts { gap: 14px; }
 .pt-gift { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; border: 1px solid rgba(255,209,102,.7);
   background: radial-gradient(120% 140% at 0% 0%, rgba(255,209,102,.3), transparent 55%), linear-gradient(135deg, #3a2a08, #120d22 70%); box-shadow: 0 0 26px rgba(255,209,102,.25); animation: giftGlow 2.6s ease-in-out infinite; }
 @keyframes giftGlow { 50% { box-shadow: 0 0 40px rgba(255,209,102,.45); } }
 .pt-gift .grow { flex: 1; min-width: 0; } .pt-gift b { display: block; font: 800 1rem var(--display); } .pt-gift small { color: var(--txt-2); font-size: .8rem; }
 .pt-gift-i { flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: #2a1700; background: linear-gradient(180deg, #ffe7a6, #ffb83d); box-shadow: 0 0 18px rgba(255,209,102,.6); }
-.pt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .pt-tk, .pt-ec { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 99px; font: 600 .86rem var(--display); color: var(--txt);
   background: rgba(8,15,32,.75); border: 1px solid var(--line); }
 .pt-tk { border-color: rgba(255,209,102,.55); background: linear-gradient(180deg, rgba(255,209,102,.18), rgba(60,40,8,.5)); }
+.pt-ec { border-color: rgba(206,178,255,.5); background: linear-gradient(180deg, rgba(180,140,255,.18), rgba(40,20,90,.5)); }
 .pt-tk svg { color: #ffe7a6; } .pt-ec svg { color: #e7dbff; }
 .pt-tk b, .pt-ec b { font-weight: 800; }
-.pt-bar .grow { flex: 1; }
-.pt-when { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--txt-2); }
-.pt-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.pt-tabs button { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 12px; border-radius: 14px; text-align: left; color: var(--txt);
-  background: rgba(8,15,32,.66); border: 1px solid var(--line); }
-.pt-tabs button small { font: 700 .58rem var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--txt-3); }
-.pt-tabs button b { font: 700 .86rem var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.pt-tabs button.on { border-color: color-mix(in srgb, var(--bc) 80%, #fff); background: linear-gradient(160deg, color-mix(in srgb, var(--bc) 35%, #0b1430), #0b1630); box-shadow: 0 0 16px color-mix(in srgb, var(--bc) 35%, transparent); }
-.pt-two { display: grid; gap: 14px; align-items: start; }
-.pt-two[data-tab="leg"] > .pt-monde, .pt-two[data-tab="monde"] > .pt-leg { display: none; }
-.pt { --bc: #8b5cf6; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 22px; min-width: 0;
+.pt-when { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: .78rem; color: var(--txt-2); }
+.pt-when svg { flex: none; color: #ffe7a6; }
+.pt { --bc: #8b5cf6; flex: none; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 22px; min-width: 0;
   border: 1px solid color-mix(in srgb, var(--bc) 60%, transparent);
   background: radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--bc) 34%, transparent), transparent 60%), linear-gradient(165deg, color-mix(in srgb, var(--bc) 20%, #0b1430), #070d1c 72%);
   box-shadow: 0 0 34px color-mix(in srgb, var(--bc) 20%, transparent), var(--card-hi); }
 .pt > * { position: relative; z-index: 1; }
-.pt > .pt-swirl { position: absolute; z-index: 0; width: 420px; aspect-ratio: 1; right: -170px; top: -190px; border-radius: 50%; pointer-events: none; opacity: .55;
+.pt > .pt-swirl { position: absolute; z-index: 0; width: 520px; aspect-ratio: 1; right: -200px; top: -230px; border-radius: 50%; pointer-events: none; opacity: .55;
   background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--bc) 45%, transparent) 0 5deg, transparent 5deg 16deg);
   -webkit-mask-image: radial-gradient(circle, #000 0 20%, transparent 68%); mask-image: radial-gradient(circle, #000 0 20%, transparent 68%); animation: spin 50s linear infinite; }
 .pt-head { display: flex; align-items: flex-start; gap: 12px; }
-.pt-ico { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; color: #fff;
+.pt-ico { flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: #fff;
   background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--bc) 70%, #fff), color-mix(in srgb, var(--bc) 55%, #070d1c) 75%); box-shadow: 0 0 20px color-mix(in srgb, var(--bc) 55%, transparent), inset 0 1px 0 rgba(255,255,255,.35); }
 .pt-ico svg { animation: spin 14s linear infinite; } .pt-monde .pt-ico svg { animation: none; }
 .pt-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .pt-title small { font: 700 .62rem var(--display); letter-spacing: .2em; text-transform: uppercase; color: color-mix(in srgb, var(--bc) 55%, #fff); }
-.pt-title h3 { font: 800 1.3rem/1.1 var(--display); margin: 0; }
+.pt-title h3 { font: 800 1.3rem/1.1 var(--display); margin: 0; text-wrap: balance; }
 .pt-title p { margin: 2px 0 0; font-size: .8rem; color: var(--txt-2); }
 .pt-left { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 99px; font: 700 .72rem var(--display); color: #fff;
   background: rgba(4,8,18,.6); border: 1px solid color-mix(in srgb, var(--bc) 50%, transparent); white-space: nowrap; }
+.pt-cols { display: flex; flex-direction: column; gap: 14px; }
+.pt-show, .pt-side { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.pt-side { gap: 10px; }
+.pt-wallet { display: flex; flex-wrap: wrap; gap: 8px; }
+.pt-fine { font-size: .72rem; line-height: 1.35; color: var(--txt-3); }
 .pt-stars-h { display: flex; flex-direction: column; gap: 1px; }
 .pt-stars-h b { font: 700 .86rem var(--display); } .pt-stars-h small { font-size: .74rem; color: var(--txt-2); }
 .pt-stars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.pt-stars.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 66%; margin-inline: auto; width: 100%; }
-.pt-stars.n1 { grid-template-columns: minmax(0, 1fr); max-width: 34%; margin-inline: auto; width: 100%; }
-.pt-stars.many { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 10px; gap: 10px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--bc) 50%, transparent) transparent; }
-.pt-stars.many > .pt-star { flex: none; width: 112px; scroll-snap-align: start; }
+.pt-stars.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 70%; margin-inline: auto; width: 100%; }
+.pt-stars.n1 { grid-template-columns: minmax(0, 1fr); max-width: 40%; margin-inline: auto; width: 100%; }
 .pt-star { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 7px; }
 .pt-star > .tc { width: 100%; }
 .pt-star.on > .tc { box-shadow: var(--thick), 0 0 0 2px #ffd166, 0 0 24px rgba(255,209,102,.55); }
@@ -1485,6 +1594,10 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .pt-epics { display: flex; flex-direction: column; gap: 6px; }
 .pt-epics small { font-size: .74rem; color: var(--txt-2); }
 .pt-epics > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-width: 420px; }
+/* Monde à l'honneur : ses autres cartes 7, en bande qui défile */
+.pt-others > div { display: flex; max-width: none; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity;
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--bc) 50%, transparent) transparent; }
+.pt-others > div > .tc { flex: none; width: 76px; scroll-snap-align: start; }
 .pt-pity { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-radius: 16px; background: rgba(4,8,18,.55); border: 1px solid rgba(255,209,102,.3); }
 .pt-pity-t { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 8px; }
 .pt-pity-t > svg { grid-row: span 2; color: #ffd166; }
@@ -1503,29 +1616,68 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .pt-next-row b { display: block; font: 700 .9rem var(--display); } .pt-next-row small { display: block; font-size: .76rem; color: var(--txt-2); }
 .pt-rules ul { margin: 0; padding: 12px 14px 12px 28px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: .8rem; color: var(--txt-2); }
 .pt-rules b { color: var(--txt); }
+/* téléphone étroit : les cartes des bannières un peu plus serrées */
+@container hubh (max-width: 520px) {
+  .pt-gift { flex-wrap: wrap; } .pt-gift .grow { flex-basis: calc(100% - 62px); } .pt-gift .btn { flex: 1 0 100%; }
+  .pt { padding: 12px; border-radius: 18px; }
+  .pt-head { gap: 10px; } .pt-ico { width: 44px; height: 44px; border-radius: 14px; }
+  .pt-title h3 { font-size: 1.12rem; }
+  .pt-stars { gap: 6px; }
+  .pt-aim { padding: 3px 7px; font-size: .66rem; gap: 3px; }
+  .pt-epics > div { gap: 6px; }
+  .pt-acts { gap: 8px; } .pt-acts .btn b { font-size: .9rem; }
+}
+/* grand écran : la bannière en deux colonnes (vedettes à gauche ; tickets, garantie et invocations à droite) */
 @container hubh (min-width: 880px) {
-  .pt-tabs { display: none; }
-  .pt-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .pt-two[data-tab] > .pt-monde, .pt-two[data-tab] > .pt-leg { display: flex; }
-  .pt-low { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: start; }
-  .pt { padding: 18px; }
-  .pt-title h3 { font-size: 1.5rem; }
+  .hs-body > .sh { grid-template-columns: clamp(220px, 19cqw, 280px) minmax(0, 1fr); gap: 20px; }
+  .sh-rail { gap: 10px; padding-top: 4px; }
+  .sh-tab { flex-direction: row; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border-radius: 20px; text-align: left; }
+  .sh-tab-i { width: 54px; height: 54px; border-radius: 17px; }
+  .sh-tab .pfr { --s: 54px !important; }
+  .sh-tab-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sh-tab-t small { font: 700 .58rem var(--display); letter-spacing: .16em; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 60%, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sh-tab-t b { font: 700 .98rem/1.15 var(--display); color: var(--txt); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  .sh-tab-t em { font-style: normal; font-size: .74rem; color: var(--txt-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sh-tab-s { display: none; }
+  .sh-main > .hub-body { padding-right: 6px; scrollbar-width: thin; scrollbar-color: rgba(255,209,102,.25) transparent; }
+  .pt { padding: 20px 22px 22px; gap: 16px; }
+  .pt-ico { width: 58px; height: 58px; border-radius: 18px; }
+  .pt-title h3 { font-size: 1.75rem; }
+  .pt-title p { font-size: .86rem; }
+  .pt-cols { display: grid; grid-template-columns: minmax(0, 1fr) clamp(270px, 24cqw, 340px); gap: 24px; align-items: start; }
+  .pt-side { padding: 14px; border-radius: 18px; background: rgba(4,8,18,.42); border: 1px solid color-mix(in srgb, var(--bc) 35%, transparent); }
+  .pt-stars { grid-template-columns: repeat(3, minmax(0, 210px)); justify-content: center; gap: 20px; }
+  .pt-stars.n2 { grid-template-columns: repeat(2, minmax(0, 210px)); max-width: none; }
+  .pt-stars.n1 { grid-template-columns: minmax(0, 230px); max-width: none; }
+  .pt-stars-h, .pt-epics { align-items: center; text-align: center; }
+  .pt-epics > div { grid-template-columns: repeat(4, minmax(0, 118px)); justify-content: center; max-width: none; gap: 12px; }
+  .pt-others { align-items: stretch; } .pt-others > div { justify-content: safe center; }
+  .pt-others > div > .tc { width: 104px; }
+  .pt-acts { grid-template-columns: 1fr; }
+  .pt-acts .btn { min-height: 58px; }
+  .pt-low { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; }
 }
 
-/* accueil : bouton Portails (anneau arc-en-ciel, l'icône tourne doucement) ; tickets en haut */
-.hh-nb.portal { border-color: rgba(255,209,102,.35); background: linear-gradient(135deg, rgba(60,30,110,.55), rgba(8,15,32,.7) 60%); }
-.hh-nb.portal .hh-nb-i { color: #fff; border-color: transparent;
-  background: radial-gradient(circle, #1d1040 0 50%, transparent 52%), conic-gradient(from 0deg, #ffd166, #ff7ad9, #8b5cf6, #38bdf8, #5dff9a, #ffd166);
-  box-shadow: 0 0 18px rgba(180,140,255,.45), inset 0 1px 0 rgba(255,255,255,.2); }
-.hh-nb.portal .hh-nb-i svg { animation: spin 10s linear infinite; }
-@media (hover: hover) and (pointer: fine) { .hh-nb.portal:hover { border-color: rgba(206,178,255,.8); background-color: rgba(60,30,120,.5); } }
+/* accueil : bouton Boutique (cartes du jour, Portails, boosters) ; tickets en haut */
+.hh-nb.shop { border-color: rgba(255,209,102,.38); background: linear-gradient(135deg, rgba(70,40,120,.5), rgba(8,15,32,.7) 62%); }
+.hh-nb.shop .hh-nb-i { color: #fff; border-color: rgba(255,240,200,.6);
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.38), transparent 55%), linear-gradient(150deg, #ffcf5a, #c45cf0 58%, #5b3fd8);
+  box-shadow: 0 0 18px rgba(200,120,255,.45), inset 0 1px 0 rgba(255,255,255,.3); }
+@media (hover: hover) and (pointer: fine) { .hh-nb.shop:hover { border-color: rgba(230,190,255,.85); background-color: rgba(70,40,130,.5); } }
 .hh-cur.tk { border-color: rgba(255,209,102,.5); background: linear-gradient(180deg, rgba(255,209,102,.16), rgba(60,40,8,.55)); }
 .hh-cur.tk > svg { color: #ffe7a6; filter: drop-shadow(0 0 5px rgba(255,209,102,.8)); }
 @container hubh (max-width: 560px) { .hh-cur.tk { display: none; } }
-/* téléphone : « Tes cartes » (3 boutons) aussi haut que « Boosters et défis » (4 boutons) */
-@container hubh (max-width: 879px) { .hh-side.l .hh-nb { flex: 1; } }
+/* téléphone : les deux colonnes de boutons (3 à gauche, 2 à droite) ont la même hauteur */
+@container hubh (max-width: 879px) { .hh-side .hh-nb { flex: 1; } }
 
 /* boosters : ouvrir par groupe de 5, prix réduit, coffre du jour */
 .hp-many { gap: 4px; padding-inline: 10px; }
+/* téléphone (boutique, à côté du bandeau d'onglets) : « Mes boosters » sans la description (elle est dans « Acheter des boosters »), boutons dessous */
+@container hubh (max-width: 520px) {
+  .hp-mine .hub-pack { flex-wrap: wrap; gap: 8px 10px; padding: 8px 10px; }
+  .hp-mine .hub-pack .grow { flex: 1 1 calc(100% - 60px) !important; }
+  .hp-mine .hub-pack .grow small { display: none !important; }
+  .hp-mine .hub-pack > .btn:first-of-type { margin-left: auto; }
+}
 .hq-chest-i { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: #2a1700; background: linear-gradient(180deg, #ffe7a6, #ffb83d); }
 .hq-chest.ok { border-color: rgba(255,209,102,.75); box-shadow: 0 0 18px rgba(255,209,102,.25); }

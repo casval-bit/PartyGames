@@ -124,7 +124,7 @@ La partie du Trône des Mondes ne pivote pas sur PC, même dans une fenêtre plu
 **Mise en page PC** (`src/desktop.css`, classe `html.desktop`) : plus de colonne de téléphone, tout l'écran sert.
 - **Menu** : carte d'identité, badge du compte, pseudo et nom du lobby à gauche ; les quatre grandes tuiles (Créer, Rejoindre, Trône des Mondes, Salle d'arcade) à droite, avec la liste des jeux.
 - **Lobby** : le jeu et ses réglages à gauche, les joueurs (ou les équipes) à droite, « Lancer la partie » en bas à droite. **Profil** : la carte d'identité à gauche, les stats sur deux colonnes à droite. **Salle d'arcade** : grille de tous les mini-jeux.
-- **Trône des Mondes** : l'accueil du jeu prend tout l'écran (plateau de jeu 3D au centre, « Tes cartes » à gauche, « Boosters et défis » à droite, Jouer en bas, voir 11).
+- **Trône des Mondes** : l'accueil du jeu prend tout l'écran (plateau de jeu 3D au centre, « Tes cartes » à gauche, « Boutique et défis » à droite, Jouer en bas, voir 11).
   Le **constructeur de deck** montre les cartes à ajouter à gauche et le deck à droite, en même temps (fenêtre d'au moins 1 100 px de large après le zoom).
 - **Écrans de jeu** : centrés dans une colonne large (1 000 px), le plateau 3D est plus grand.
 
@@ -432,15 +432,24 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 
 **Accueil du jeu** (bouton « Trône des Mondes » du menu, ou depuis le lobby ; `src/tcg/ui/HubHome.jsx`) : un écran épuré, façon lobby de jeu de cartes.
 - En haut : ta **photo de profil du jeu** (pas ton personnage Party Hub) avec ton pseudo et ton niveau, tes boosters à ouvrir, tes **Éclats** (le diamant ; le « + » ouvre la boutique) et les **paramètres du jeu**.
-- Au centre : un **plateau de jeu en 3D isométrique** (`HubBoard.jsx`, tout en CSS 3D), avec ton deck joué posé comme en partie : de ton côté tes 4 personnages
-  les plus forts (l'un agenouillé), ta carte de famille, un scénario, un lieu, ta pioche et ta défausse ; au milieu l'Or et le Pouvoir ; en face, la table d'un adversaire, face cachée.
-  Les cartes face visible se soulèvent au survol et s'ouvrent en grand ; les pioches se **mélangent** quand on les touche, la main adverse se bat, son scénario se révèle un instant,
-  les pièces d'Or sautent en tournant. À l'arrivée, tes cartes sont distribuées sur la table. Le plateau se met à l'échelle de l'écran (sur téléphone, les coins du tapis débordent un peu).
+- Au centre, en grand : un **plateau de jeu en 3D** (`HubBoard.jsx`, tout en CSS 3D), une table en bois avec un tapis aux couleurs de ta famille et une partie en cours.
+  De ton côté, ton deck joué posé comme en partie : tes 4 personnages les plus forts (l'un agenouillé, un autre avec un objet **attaché** glissé dessous, des **jetons de Pouvoir**),
+  puis ta rangée, chaque emplacement gravé dans le tapis avec son nom : **Scénarios** (l'actif posé sur deux déjà joués), **Famille**, **Lieu**, **Pioche**, **Défausse**
+  et **Morts** (un personnage éteint, une tête de mort dessus) ; le jeton **1er joueur** et **ton Or**. En face, **l'adversaire du jour** (le deck de départ d'une autre famille,
+  le même toute la journée, jamais Star Academy) : ses personnages face visible tournés vers lui, sa rangée (scénario face cachée, famille, lieu, pioche, défausse), sa main en éventail
+  et son Or. Au milieu, la ligne qui sépare les camps : le **Trésor**, les trois **défis** (Combat, Ruse, Influence) et la réserve de **Pouvoir** (15 pour gagner) ;
+  les blasons des deux familles en filigrane. Toutes les cartes face visible (les siennes aussi) se soulèvent au survol et s'ouvrent en grand ; les pioches se **mélangent**,
+  la main adverse se bat, son scénario se révèle un instant, les pièces d'Or sautent en tournant, les défis s'illuminent. À l'arrivée, les cartes sont distribuées sur la table.
+  Le plateau se met à l'échelle de la place (et se recentre) ; sur grand écran ses coins passent au-dessus et au-dessous des boutons des côtés, sur téléphone les bords de la table débordent un peu.
 - À gauche, **« Tes cartes »**, chaque bouton avec une phrase qui dit à quoi il sert : **Mes decks** (créer, modifier, choisir le deck que tu joues),
   **Mes cartes** (les cartes que tu possèdes : chercher, recycler les doubles, illustrations) et **Album** (toutes les cartes du jeu, celles qui te manquent en gris).
-- À droite, **« Boosters et défis »** : **Boosters** (à ouvrir, à acheter), **Portails** (les invocations, voir plus bas), **Boutique du jour** (6 cartes à l'unité) et **Quêtes et succès** (pastilles : à récupérer, nouvelle boutique…).
-  En haut, à côté des boosters, des jetons et des Éclats : les **tickets de portail** (sur grand écran).
-- En bas : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les sept boutons.
+- À droite, **« Boutique et défis »** : la **Boutique** et **Quêtes et succès** (pastilles : boosters à ouvrir, tickets offerts, nouvelle boutique, récompenses à récupérer…).
+  **Boutique** (`ShopHub` dans `Hub.jsx`) : un bandeau vertical à **4 onglets**, et le contenu de l'onglet en grand à côté : **Boutique du jour** (6 cartes à l'unité),
+  **Portail des Légendes** et **Monde à l'honneur** (une bannière par onglet, jamais côte à côte ; l'onglet montre l'illustration de ta cible) et **Boosters** (ceux à ouvrir,
+  un par un ou par 5, et ceux à acheter). Sur téléphone, le bandeau est étroit (icône et nom court).
+  En haut, à côté des boosters, des jetons et des Éclats : les **tickets de portail** (sur grand écran). La pastille des boosters ouvre l'onglet Boosters, celle des tickets
+  le Portail des Légendes, celle des Éclats la boutique ; le bouton « Boosters » du lobby et de la fin de partie ouvre aussi l'onglet Boosters.
+- En bas : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les cinq boutons.
   Chaque bouton ouvre sa partie en plein écran, avec un retour à l'accueil ; changer de partie fait glisser une carte (son).
 - **Profil du jeu** (`TcgProfile.jsx`) : statistiques du jeu de cartes (parties, victoires, défis gagnés, éliminations, Dominations, boosters, collection, brillantes, cartes 7, succès).
   **Photo** : n'importe quelle carte 7 que tu possèdes (par défaut, celle du deck joué ; sans carte 7, le blason du jeu).
@@ -481,7 +490,9 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
   (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; pas de brillante en vente, sauf les cartes 7).
   Recycler les doubles (au-delà de 2 normales et 1 brillante) rapporte des Éclats selon la rareté, et des jetons de brillance.
-- **Portails** (`Portals.jsx`, calendrier et thèmes dans `src/tcg/portals.js`, tirages dans `progress.js` : `pull`) : des invocations façon gacha, **en plus** des boosters.
+- **Portails** (onglets de la boutique, `Portals.jsx`, calendrier et thèmes dans `src/tcg/portals.js`, tirages dans `progress.js` : `pull`) : des invocations façon gacha, **en plus** des boosters.
+  Chaque bannière en grand : à gauche les vedettes (« Viser » pour choisir sa cible), les épiques à l'honneur ou, pour le Monde à l'honneur, les autres cartes 7 de la famille
+  (une bande qui défile) ; à droite tes tickets et tes Éclats, la garantie et les boutons d'invocation ; dessous, le portail suivant du même genre et les taux.
   Deux portails ouverts en même temps, qui changent **toutes les deux semaines** (le dimanche à minuit, les mêmes pour tout le monde ; le premier : du 15 au 28 novembre 2026) :
   le **Portail des Légendes** (un thème à travers les univers, 3 cartes 7 en vedette et 4 épiques à l'honneur : Seigneurs des ténèbres, Les plus forts du monde, Magie suprême,
   L'heure des dragons, Les Élus, Le temps s'arrête, Les génies, Sous le masque, Rois et reines, Pirates et capitaines, Créatures de la nuit, Esprits de la forêt, Les rebelles,
@@ -492,7 +503,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   avec une épique au moins. Taux : Légendaire (une carte 7) 2 %, Épique 10 %, Rare 38 %, Peu commune 50 % ; **une légendaire sur deux est la cible**, et elle est
   **garantie au plus tard à la 50e invocation** dans ce portail (compteur gardé quand les portails changent). En moyenne une cible coûte environ 3 600 Éclats (au pire 4 500),
   contre 3 000 pour une légendaire au hasard dans la boutique : on paie un peu plus pour choisir. Révélation : un vortex qu'on touche, qui prend la couleur de la meilleure carte
-  (violet : épique, or : légendaire) avant de s'ouvrir. Cadeau d'ouverture : 10 tickets. On voit aussi les prochains portails.
+  (violet : épique, or : légendaire) avant de s'ouvrir. Cadeau d'ouverture : 10 tickets.
 - **Tickets de portail** et quêtes : chaque quête du jour rapporte de l'XP et une récompense : des Éclats, un **ticket de portail** (Gagne une partie, Ouvre 2 boosters),
   un **booster** (Domination : Multivers ; 10 Pouvoir : Héros) ou, pour la quête de famille, **deux tickets**.
   **Coffre du jour** : les 3 quêtes récupérées, 1 ticket et 100 Éclats de plus.

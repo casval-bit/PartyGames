@@ -1,33 +1,54 @@
-// Plateau de jeu en 3D isométrique, au centre de l'accueil du Trône des Mondes : la table du deck joué, posée comme en partie.
-//   - de ton côté : tes personnages (l'un agenouillé), ta carte de famille, ton scénario, un lieu, ta pioche et ta défausse ;
-//   - en face : la table d'un adversaire, cartes face cachée (sa main, sa pioche, son scénario pas encore révélé) ;
-//   - au milieu : l'Or et les jetons de Pouvoir.
-// Les cartes face visible s'ouvrent en grand ; la pioche se mélange, la main adverse se bat, le scénario adverse se révèle un instant,
-// les pièces d'Or tournent. Tout est en CSS 3D (aucune scène WebGL) ; le plateau se met à l'échelle de la place disponible.
+// Plateau de jeu en 3D, au centre de l'accueil du Trône des Mondes : une partie en cours, vue depuis ta place, sur une table en bois.
+//   - de ton côté (devant) : tes personnages (l'un agenouillé, un autre avec un attachement, des jetons de Pouvoir), puis ta rangée :
+//     scénarios (l'actif posé sur ceux déjà joués), carte de famille, lieu, pioche, défausse, pile des morts ; ton blason sur le tapis ;
+//   - en face : l'adversaire du jour (une autre famille, la même toute la journée) : ses personnages face visible, tournés vers lui,
+//     sa rangée (scénario face cachée, pioche, défausse…), sa main en éventail ;
+//   - au milieu : le trésor (l'Or), les trois défis (Combat, Ruse, Influence) et la réserve de Pouvoir (15 pour gagner).
+// Les cartes face visible s'ouvrent en grand ; les pioches se mélangent, la main adverse se bat, le scénario adverse se révèle un instant,
+// les pièces tournent, les défis s'illuminent. Tout est en CSS 3D (aucune scène WebGL) ; le plateau se met à l'échelle de la place.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY, PLOTS, subOf } from "../cards/index.js";
-import { RARITY_ORDER } from "../rules.js";
+import { RARITY_ORDER, TYPES, TYPE_NAME, TYPE_ICON, DEFAULT_GOAL } from "../rules.js";
+import { starters } from "../deck.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace, CardBack, PlotFace, FamilyFace } from "./Card.jsx";
 import { cardArt } from "./art.js";
 
 const byStrength = (a, b) => CARD[b].cost - CARD[a].cost || RARITY_ORDER.indexOf(CARD[b].r) - RARITY_ORDER.indexOf(CARD[a].r) || a.localeCompare(b);
+const isSeven = (id) => CARD[id] && CARD[id].cost >= 7;
 
-/** Ce que l'on pose sur la table : les 4 personnages les plus forts (une version par personnage), un lieu, la défausse, le scénario. */
-function tableOf(deck) {
+/**
+ * Ce que l'on pose sur la table : les n personnages les plus forts (une version par personnage), un lieu, un objet (attaché à un
+ * personnage), la défausse (un événement), le plus faible des autres personnages (pile des morts), le scénario actif et deux déjà joués.
+ */
+function tableOf(deck, n = 4) {
   const ids = Object.keys(deck.cards).filter((id) => CARD[id]);
+  const all = ids.filter((x) => CARD[x].type === "char").sort(byStrength);
   const chars = [], keys = new Set();
-  for (const id of ids.filter((x) => CARD[x].type === "char").sort(byStrength)) {
+  for (const id of all) {
     const k = CARD[id].key || id;
     if (keys.has(k)) continue;
     keys.add(k); chars.push(id);
-    if (chars.length === 4) break;
+    if (chars.length === n) break;
   }
-  const loc = ids.filter((x) => CARD[x].type === "loc").sort(byStrength)[0] || null;
-  const disc = ids.filter((x) => CARD[x].type === "evt" || CARD[x].type === "obj").sort(byStrength)[0] || null;
-  const plot = (deck.plots || []).find((p) => CARD[p]) || null;
-  return { chars, loc, disc, plot };
+  const dead = [...all].reverse().find((id) => !keys.has(CARD[id].key || id)) || null;
+  const of = (type) => ids.filter((x) => CARD[x].type === type).sort(byStrength);
+  const att = of("obj")[0] || null;
+  const disc = of("evt")[0] || of("obj")[1] || null;
+  const plots = (deck.plots || []).filter((p) => CARD[p]);
+  return { chars, dead, loc: of("loc")[0] || null, att, disc, plot: plots[0] || null, used: plots.slice(1, 3) };
+}
+
+/** L'adversaire du jour : un deck de départ d'une autre famille (jamais de vraies personnes), le même toute la journée. */
+const NO_RIVAL = new Set(["neutre", "starac"]);
+function rivalOf(fam) {
+  const d = new Date();
+  const key = `${fam || ""}:${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  const list = starters().filter((s) => s.fam !== fam && !NO_RIVAL.has(s.fam) && Object.keys(s.cards).some((id) => CARD[id] && CARD[id].type === "char"));
+  let h = 7;
+  for (const c of key) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return list.length ? list[h % list.length] : null;
 }
 
 /** Pile de cartes face cachée (avec de l'épaisseur) ; un clic la mélange. */
@@ -39,6 +60,26 @@ function DeckPile({ w, n = 7, shuffling, onClick, label }) {
   );
 }
 
+/** Un emplacement gravé sur le tapis, avec son nom dessous. */
+function Slot({ label, wide, children }) {
+  return (
+    <div className={"ib-slot" + (wide ? " wide" : "") + (label ? "" : " bare")}>
+      <span className="ib-slot-c">{children}</span>
+      {label && <span className="ib-lab">{label}</span>}
+    </div>
+  );
+}
+
+/** Jetons de Pouvoir posés sur une carte. */
+const Power = ({ n }) => <span className="ib-tok" aria-label={`${n} Pouvoir`}>{Array.from({ length: n }, (_, i) => <i key={i}><Icon name="crown" size={13} stroke={2.4} /></i>)}</span>;
+
+/** Une pile de pièces d'Or (épaisseur en 3D). */
+const Coins = ({ n, x = 0, y = 0 }) => (
+  <span className="ib-cstack" style={{ "--x": x + "px", "--y": y + "px" }}>
+    {Array.from({ length: n }, (_, i) => <i key={i} className="ib-coin" style={{ "--i": i }}>{i === n - 1 ? <Icon name="coins" size={14} stroke={2} /> : null}</i>)}
+  </span>
+);
+
 export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
   const wrap = useRef(null), plane = useRef(null);
   const [k, setK] = useState(0.6);
@@ -47,27 +88,40 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
   const [fan, setFan] = useState(false);
   const [plotUp, setPlotUp] = useState(null);
   const [coin, setCoin] = useState(0);
+  const [lit, setLit] = useState(null);
   const tbl = useMemo(() => (deck ? tableOf(deck) : null), [deck]);
+  const rv = useMemo(() => rivalOf(deck ? deck.fam : null), [deck]);
+  const opp = useMemo(() => (rv ? tableOf(rv, 3) : null), [rv]);
   const f = deck ? FAMILY[deck.fam] || FAMILY.neutre : FAMILY.neutre;
-  const color = deck && subOf(deck.fam, deck.pt) ? subOf(deck.fam, deck.pt).color : f.color;
-  const mat = useMemo(() => cardArt({ id: `tapis:${deck ? deck.fam : "neutre"}:${(deck && deck.pt) || ""}`, type: "fam", fam: deck ? deck.fam : "neutre", r: "U", name: "", noMedal: true, pt: deck && deck.pt ? [deck.pt] : [] }, 420, 280), [deck]);
+  const of = rv ? FAMILY[rv.fam] || FAMILY.neutre : null;
+  const sub = deck ? subOf(deck.fam, deck.pt) : null;
+  const crest = deck ? (sub ? sub.name : f.short || f.name) : "Trône des Mondes";
+  const color = sub ? sub.color : f.color;
+  const ocolor = rv ? (subOf(rv.fam, rv.pt) ? subOf(rv.fam, rv.pt).color : of.color) : "#8b5cf6";
+  const mat = useMemo(() => cardArt({ id: `tapis:${deck ? deck.fam : "neutre"}:${(deck && deck.pt) || ""}`, type: "fam", fam: deck ? deck.fam : "neutre", r: "U", name: "", noMedal: true, pt: deck && deck.pt ? [deck.pt] : [] }, 480, 300), [deck]);
 
-  // mise à l'échelle : le plateau (incliné) remplit la place disponible sans déborder
+  // mise à l'échelle : le plateau (incliné) remplit la place disponible ; puis il est recentré (son dessin n'est pas symétrique)
   useLayoutEffect(() => {
     const el = wrap.current, pl = plane.current;
     if (!el || !pl) return undefined;
     const fit = () => {
       const box = el.getBoundingClientRect();
       if (!box.width || !box.height) return;
-      const was = pl.style.getPropertyValue("--k");
-      pl.style.setProperty("--k", "1"); // taille du plateau incliné à l'échelle 1
+      const was = [pl.style.getPropertyValue("--k"), pl.style.getPropertyValue("--dx"), pl.style.getPropertyValue("--dy")];
+      pl.style.setProperty("--k", "1"); pl.style.setProperty("--dx", "0px"); pl.style.setProperty("--dy", "0px");
       const r = pl.getBoundingClientRect();
-      if (!r.width || !r.height) { pl.style.setProperty("--k", was); return; }
-      // téléphone : le plateau déborde un peu sur les côtés (les coins du tapis sont coupés) pour que les cartes restent lisibles
+      if (!r.width || !r.height) { pl.style.setProperty("--k", was[0]); pl.style.setProperty("--dx", was[1]); pl.style.setProperty("--dy", was[2]); return; }
+      // téléphone : le plateau déborde un peu sur les côtés (les coins de la table sont coupés) pour que les cartes restent lisibles ;
+      // grand écran : un peu aussi (les coins de la table, en biais, passent au-dessus et au-dessous des boutons des côtés)
       const hub = el.closest(".hubh");
-      const over = hub && hub.getBoundingClientRect().width < 620 ? 1.3 : 1; // téléphone seulement (pas de menus sur les côtés)
-      const next = Math.max(0.25, Math.min(1.35, Math.min((box.width * over) / r.width, box.height / r.height) * 0.97));
-      pl.style.setProperty("--k", String(next)); // posé tout de suite (React garde la même valeur ensuite)
+      const hw = hub ? hub.getBoundingClientRect().width : 1000;
+      const over = hw < 620 ? 1.45 : hw >= 880 ? 1.04 : 1;
+      const next = Math.max(0.25, Math.min(1.4, Math.min((box.width * over) / r.width, box.height / r.height) * 0.98));
+      pl.style.setProperty("--k", String(next));
+      // recentrer le dessin du plateau dans sa zone
+      const r2 = pl.getBoundingClientRect();
+      const dx = box.left + box.width / 2 - (r2.left + r2.width / 2), dy = box.top + box.height / 2 - (r2.top + r2.height / 2);
+      pl.style.setProperty("--dx", `${Math.round(dx)}px`); pl.style.setProperty("--dy", `${Math.round(dy)}px`);
       setK(next);
     };
     fit();
@@ -77,57 +131,116 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
   }, []);
 
   useEffect(() => { if (!plotUp) return undefined; const tm = setTimeout(() => { setPlotUp(null); sfx.flip(); }, 2600); return () => clearTimeout(tm); }, [plotUp]);
+  useEffect(() => { if (!lit) return undefined; const tm = setTimeout(() => setLit(null), calm ? 400 : 1300); return () => clearTimeout(tm); }, [lit, calm]);
 
   const doShuffle = () => { if (shuf) return; setShuf(true); sfx.shuffle(); setTimeout(() => setShuf(false), calm ? 300 : 1000); };
   const doOppShuffle = () => { if (oshuf) return; setOshuf(true); sfx.shuffle(); setTimeout(() => setOshuf(false), calm ? 300 : 1000); };
   const doFan = () => { if (fan) return; setFan(true); sfx.shuffle(); setTimeout(() => setFan(false), calm ? 300 : 1100); };
   const doReveal = () => { if (plotUp || !PLOTS.length) return; setPlotUp(PLOTS[Math.floor(Math.random() * PLOTS.length)].id); sfx.flip(); };
   const doCoin = () => { setCoin((c) => c + 1); sfx.coin(); };
+  const doChal = (ty) => { setLit(ty); sfx.select(); };
 
-  const CW = 112, SW = 90, PW = 140; // largeur des personnages, des autres cartes, des scénarios (pixels du plateau)
+  const CW = 130, OW = 100, SW = 92, OSW = 76, PW = 136, OPW = 112; // largeurs (pixels du plateau) : tes personnages, les siens, les autres cartes, les scénarios
+  const zoom = (id) => () => onZoom(id);
   return (
     <div className={"ib" + (calm ? " calm" : "")} ref={wrap}>
-      <div className="ib-plane" ref={plane} style={{ "--k": k, "--mat": `url(${mat})`, "--fc": color }} aria-label="Plateau de jeu">
-        <i className="ib-felt" aria-hidden="true" />
-        {/* en face : un adversaire, tout est face cachée */}
-        <div className="ib-far">
-          <DeckPile w={SW} n={6} shuffling={oshuf} onClick={doOppShuffle} label="Pioche adverse : la mélanger" />
-          <button className={"ib-hand ib-hit" + (fan ? " fan" : "")} onClick={doFan} aria-label="Main adverse : la battre" title="Main adverse">
-            {[0, 1, 2, 3, 4].map((i) => <span key={i} className="ib-hc" style={{ "--i": i }}><CardBack w={SW} /></span>)}
-          </button>
-          <button className={"ib-plotx ib-hit" + (plotUp ? " up" : "")} onClick={doReveal} aria-label="Scénario adverse : le révéler" title="Scénario adverse (face cachée)">
-            <span className="ib-flip">
-              <span className="ib-pback"><Icon name="scroll" size={22} stroke={1.6} /><b>Scénario</b></span>
-              <span className="ib-pface">{plotUp && CARD[plotUp] && <PlotFace d={CARD[plotUp]} w={PW} />}</span>
-            </span>
-          </button>
-        </div>
+      <div className="ib-plane" ref={plane} style={{ "--k": k, "--mat": `url(${mat})`, "--fc": color, "--oc": ocolor }} aria-label="Plateau de jeu">
+        <div className="ib-mat">
+          <i className="ib-felt" aria-hidden="true" />
+          {/* les blasons des deux familles, en grand et en filigrane sous les cartes de chaque camp */}
+          {of && <i className="ib-emblem opp" style={{ "--cc": ocolor }} aria-hidden="true"><Icon name={of.icon} size={250} stroke={0.9} /><b>{of.short || of.name}</b></i>}
+          <i className="ib-emblem me" style={{ "--cc": color }} aria-hidden="true"><Icon name={f.icon} size={300} stroke={0.9} /><b>{crest}</b></i>
 
-        {/* au milieu : l'Or et le Pouvoir */}
-        <div className="ib-mid" aria-hidden="false">
-          <button className={"ib-coins ib-hit" + (coin ? " spin" : "")} key={"c" + coin} onClick={doCoin} aria-label="Pièces d'Or : en lancer une" title="Or">
-            {[0, 1, 2, 3].map((i) => <i key={i} className="ib-coin" style={{ "--i": i }}><Icon name="coins" size={14} stroke={2} /></i>)}
-          </button>
-          <span className="ib-seal" aria-hidden="true"><Icon name="crown" size={30} stroke={1.5} /></span>
-          <span className="ib-power" aria-hidden="true">{[0, 1, 2].map((i) => <i key={i} style={{ "--i": i }}><Icon name="crown" size={12} stroke={2.4} /></i>)}</span>
-        </div>
+          {/* en face : l'adversaire du jour ; sa table est tournée vers lui */}
+          {opp && (
+            <div className="ib-row ib-back opp" aria-label={`Table de l'adversaire : ${rv.name}`}>
+              <Slot>
+                <button className={"ib-plotx ib-hit" + (plotUp ? " up" : "")} style={{ "--pw": OPW + "px" }} onClick={doReveal} aria-label="Scénario adverse : le révéler" title="Scénario adverse (face cachée)">
+                  <span className="ib-flip">
+                    <span className="ib-pback"><Icon name="scroll" size={20} stroke={1.6} /><b>Scénario</b></span>
+                    <span className="ib-pface">{plotUp && CARD[plotUp] && <PlotFace d={CARD[plotUp]} w={OPW} />}</span>
+                  </span>
+                </button>
+              </Slot>
+              <Slot>
+                <button className="ib-card" style={{ "--w": OSW + "px" }} onClick={() => onFamily(rv.fam, rv.pt)} aria-label={`Carte de famille adverse : ${of.name}`}><FamilyFace fam={rv.fam} pt={rv.pt} w={OSW} /></button>
+              </Slot>
+              {opp.loc && <Slot><button className="ib-card" style={{ "--w": OSW + "px" }} onClick={zoom(opp.loc)} aria-label={`${CARD[opp.loc].name} (adversaire) : voir en grand`}><CardFace d={CARD[opp.loc]} w={OSW} foil={isSeven(opp.loc)} /></button></Slot>}
+              <Slot><DeckPile w={OSW} n={7} shuffling={oshuf} onClick={doOppShuffle} label="Pioche adverse : la mélanger" /></Slot>
+              {opp.disc && <Slot><span className="ib-stack" style={{ "--w": OSW + "px" }}><i /><i /><button className="ib-card" onClick={zoom(opp.disc)} aria-label={`Défausse adverse : ${CARD[opp.disc].name}`}><CardFace d={CARD[opp.disc]} w={OSW} /></button></span></Slot>}
+              <Slot wide>
+                <button className={"ib-hand ib-hit" + (fan ? " fan" : "")} onClick={doFan} aria-label="Main adverse : la battre" title="Main adverse">
+                  {[0, 1, 2, 3, 4].map((i) => <span key={i} className="ib-hc" style={{ "--i": i }}><CardBack w={OSW} /></span>)}
+                </button>
+              </Slot>
+            </div>
+          )}
+          {opp && (
+            <div className="ib-row ib-line opp">
+              <span className="ib-side l"><span className="ib-gold"><Coins n={4} /><Coins n={2} x={34} y={12} /></span></span>
+              <div className="ib-chars">
+                {opp.chars.map((id, i) => (
+                  <button key={id} className={"ib-card deal" + (i === 1 ? " knelt" : "")} style={{ "--w": OW + "px", "--d": i + 2 }} onClick={zoom(id)} aria-label={`${CARD[id].name} (adversaire) : voir en grand`}>
+                    <CardFace d={CARD[id]} w={OW} foil={isSeven(id)} />
+                    {i === 0 && <Power n={3} />}
+                  </button>
+                ))}
+              </div>
+              <span className="ib-side r" />
+            </div>
+          )}
 
-        {/* ton côté : la table du deck joué */}
-        <div className="ib-near">
-          <div className="ib-chars">
-            {tbl && tbl.chars.map((id, i) => (
-              <button key={id} className={"ib-card deal" + (i === 1 ? " knelt" : "")} style={{ "--w": CW + "px", "--d": i }} onClick={() => onZoom(id)} aria-label={`${CARD[id].name} : voir en grand`}>
-                <CardFace d={CARD[id]} w={CW} foil={foil(id)} />
-              </button>
-            ))}
-            {(!tbl || !tbl.chars.length) && <span className="ib-empty">Tes personnages</span>}
+          {/* au milieu : le trésor, les trois défis, la réserve de Pouvoir */}
+          <div className="ib-mid">
+            <button className={"ib-coins ib-hit" + (coin ? " spin" : "")} key={"c" + coin} onClick={doCoin} aria-label="Trésor : lancer une pièce d'Or" title="Trésor (Or)">
+              <Coins n={6} /><Coins n={4} x={-40} y={10} /><Coins n={3} x={38} y={12} />
+              <span className="ib-lab">Trésor</span>
+            </button>
+            <div className="ib-chal" role="group" aria-label="Les trois défis">
+              {TYPES.map((ty) => (
+                <button key={ty} className={"ib-medal ib-hit " + ty + (lit === ty ? " lit" : "")} onClick={() => doChal(ty)} aria-label={`Défi de ${TYPE_NAME[ty]}`} title={`Défi de ${TYPE_NAME[ty]}`}>
+                  <span><Icon name={TYPE_ICON[ty]} size={26} stroke={2} /></span>
+                </button>
+              ))}
+              <span className="ib-lab">Combat · Ruse · Influence</span>
+            </div>
+            <div className="ib-pool" title={`${DEFAULT_GOAL} Pouvoir pour gagner`}>
+              <span className="ib-seal"><Icon name="crown" size={24} stroke={1.5} /><b>{DEFAULT_GOAL}</b></span>
+              <span className="ib-power" aria-hidden="true">{[0, 1, 2, 3].map((i) => <i key={i} style={{ "--i": i }}><Icon name="crown" size={12} stroke={2.4} /></i>)}</span>
+              <span className="ib-lab">Pouvoir</span>
+            </div>
           </div>
-          <div className="ib-row">
-            {deck && <button className="ib-card ib-fam deal" style={{ "--w": SW + "px", "--d": 4 }} onClick={onFamily} aria-label={`Carte de famille : ${f.name}`}><FamilyFace fam={deck.fam} pt={deck.pt} w={SW} /></button>}
-            {tbl && tbl.plot && <button className="ib-card plot deal" style={{ "--d": 5 }} onClick={() => onZoom(tbl.plot)} aria-label={`Scénario ${CARD[tbl.plot].name} : voir en grand`}><PlotFace d={CARD[tbl.plot]} w={PW} /></button>}
-            {tbl && tbl.loc && <button className="ib-card deal" style={{ "--w": SW + "px", "--d": 6 }} onClick={() => onZoom(tbl.loc)} aria-label={`${CARD[tbl.loc].name} : voir en grand`}><CardFace d={CARD[tbl.loc]} w={SW} foil={foil(tbl.loc)} /></button>}
-            <DeckPile w={SW} n={8} shuffling={shuf} onClick={doShuffle} label="Ta pioche : la mélanger" />
-            {tbl && tbl.disc && <button className="ib-card disc deal" style={{ "--w": SW + "px", "--d": 7 }} onClick={() => onZoom(tbl.disc)} aria-label={`Défausse : ${CARD[tbl.disc].name}, voir en grand`}><CardFace d={CARD[tbl.disc]} w={SW} foil={foil(tbl.disc)} /></button>}
+
+          {/* ton côté : la table du deck joué */}
+          <div className="ib-row ib-line me">
+            <span className="ib-side l"><span className="ib-first" title="Premier joueur : c'est toi"><Icon name="flag" size={18} stroke={2} /><b>1er</b></span></span>
+            <div className="ib-chars">
+              {tbl && tbl.chars.map((id, i) => (
+                <button key={id} className={"ib-card deal" + (i === 1 ? " knelt" : "")} style={{ "--w": CW + "px", "--d": i + 5 }} onClick={zoom(id)} aria-label={`${CARD[id].name} : voir en grand`}>
+                  {i === 0 && tbl.att && <span className="ib-att" title={CARD[tbl.att].name}><CardFace d={CARD[tbl.att]} w={CW} foil={foil(tbl.att)} /></span>}
+                  <CardFace d={CARD[id]} w={CW} foil={foil(id)} />
+                  {i === 0 && <Power n={2} />}
+                  {i === 2 && <Power n={1} />}
+                </button>
+              ))}
+              {(!tbl || !tbl.chars.length) && <span className="ib-empty">Tes personnages</span>}
+            </div>
+            <span className="ib-side r"><span className="ib-gold"><Coins n={5} /><Coins n={3} x={32} y={12} /><span className="ib-lab">Ton Or</span></span></span>
+          </div>
+          <div className="ib-row ib-back me">
+            <Slot label="Scénarios">
+              {tbl && tbl.plot ? (
+                <span className="ib-plots" style={{ "--pw": PW + "px" }}>
+                  {tbl.used.map((p, i) => <span key={p} className="ib-used" style={{ "--i": i }}><PlotFace d={CARD[p]} w={PW} /></span>)}
+                  <button className="ib-card plot deal" style={{ "--d": 9 }} onClick={zoom(tbl.plot)} aria-label={`Scénario ${CARD[tbl.plot].name} : voir en grand`}><PlotFace d={CARD[tbl.plot]} w={PW} /></button>
+                </span>
+              ) : <span className="ib-plots" style={{ "--pw": PW + "px" }} />}
+            </Slot>
+            {deck && <Slot label="Famille"><button className="ib-card ib-fam deal" style={{ "--w": SW + "px", "--d": 10 }} onClick={() => onFamily()} aria-label={`Carte de famille : ${f.name}`}><FamilyFace fam={deck.fam} pt={deck.pt} w={SW} /></button></Slot>}
+            {tbl && tbl.loc && <Slot label="Lieu"><button className="ib-card deal" style={{ "--w": SW + "px", "--d": 11 }} onClick={zoom(tbl.loc)} aria-label={`${CARD[tbl.loc].name} : voir en grand`}><CardFace d={CARD[tbl.loc]} w={SW} foil={foil(tbl.loc)} /></button></Slot>}
+            <Slot label="Pioche"><DeckPile w={SW} n={9} shuffling={shuf} onClick={doShuffle} label="Ta pioche : la mélanger" /></Slot>
+            {tbl && tbl.disc && <Slot label="Défausse"><span className="ib-stack" style={{ "--w": SW + "px" }}><i /><i /><button className="ib-card disc deal" style={{ "--d": 12 }} onClick={zoom(tbl.disc)} aria-label={`Défausse : ${CARD[tbl.disc].name}, voir en grand`}><CardFace d={CARD[tbl.disc]} w={SW} foil={foil(tbl.disc)} /></button></span></Slot>}
+            {tbl && tbl.dead && <Slot label="Morts"><button className="ib-card dead deal" style={{ "--w": SW + "px", "--d": 13 }} onClick={zoom(tbl.dead)} aria-label={`Pile des morts : ${CARD[tbl.dead].name}, voir en grand`}><CardFace d={CARD[tbl.dead]} w={SW} foil={foil(tbl.dead)} /><span className="ib-skull" aria-hidden="true"><Icon name="skull" size={16} stroke={2} /></span></button></Slot>}
           </div>
         </div>
       </div>
