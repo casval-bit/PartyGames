@@ -27,10 +27,11 @@ import * as lotr from "./lotr.js";
 import * as narnia from "./narnia.js";
 import * as ghibli from "./ghibli.js";
 import * as gundam from "./gundam.js";
+import * as jojo from "./jojo.js";
 import * as neutral from "./neutral.js";
 import * as plots from "./plots.js";
 
-const MODS = [lyoko, umbrella, toystory, onepiece, pokemon, starac, citesdor, legendaires, capes, hunger, bebop, horde, elite, teenwolf, marvel, dc, stranger, scooby, lol, hp, sw, got, lotr, narnia, ghibli, gundam];
+const MODS = [lyoko, umbrella, toystory, onepiece, pokemon, starac, citesdor, legendaires, capes, hunger, bebop, horde, elite, teenwolf, marvel, dc, stranger, scooby, lol, hp, sw, got, lotr, narnia, ghibli, gundam, jojo];
 
 export const FAMILIES = [];
 export const FAMILY = {};

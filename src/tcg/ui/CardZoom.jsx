@@ -204,7 +204,7 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
           {/* tranche de la carte (épaisseur en 3D), de la couleur de son cadre : voir .tz-3d dans tcg.css */}
           <div className={"tz-3d " + (plot ? "plot" : d ? `r-${d.r}${foil && !missing && !alwaysFoil(d) ? " lite" : ""}${missing ? " missing" : ""}` : "r-E")}
             style={{ "--fc": d && !plot ? cardColors(d).c : (f || FAMILY.neutre).color }}>
-            {[1, 2, 3, 4, 5].map((z) => <i key={z} className={"tz-slab" + (z === 5 ? " lo" : "")} style={{ "--z": z }} aria-hidden="true" />)}
+            {["hi", "", "", "mid", "mid", "lo", "end"].map((k, i) => <i key={i} className={"tz-slab " + k} style={{ "--z": i + 1 }} aria-hidden="true" />)}
             {d ? (plot ? <PlotFace d={d} big /> : <CardFace d={d} big foil={foil && !missing} missing={missing} str={inst ? inst.s : undefined} tilt />) : <FamilyFace fam={fam} pt={pt} big />}
           </div>
         </div>

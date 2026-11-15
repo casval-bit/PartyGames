@@ -225,6 +225,48 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
   t.G.ch = null;
   ok(ALL.filter((d) => d.name === "Aelita Hopper" && d.cost === 4).length === 1 && CARD["lyoko-aelita-hopper-4"].title === "L'elfe de Lyoko", "une seule Aelita Hopper 4 (L'elfe de Lyoko, identifiant inchangé)");
 
+  // JoJo : le temps s'arrête, Requiem, King Crimson, Tusk Act 4, combat singulier
+  t = table(["jojo-dio-brando-7-2", "jojo-guido-mista-2"], ["onepiece-coby-1", "onepiece-nami-3", "onepiece-roronoa-zoro-6"]);
+  me = t.of(t.A, "jojo-dio-brando-7-2");
+  const tw = ab("jojo-dio-brando-7-2", "atkKneelAll");
+  const atkEv = { ch: { type: "combat", atk: [me.u] }, defender: t.B };
+  ok(tw.cond(t.X, me, atkEv) && !tw.cond(t.X, t.of(t.A, "jojo-guido-mista-2"), atkEv), "ZA WARUDO : seulement quand Dio attaque");
+  drive(tw.run(t.X, me, atkEv));
+  ok(t.of(t.B, "onepiece-coby-1").k && t.of(t.B, "onepiece-nami-3").k && !t.of(t.B, "onepiece-roronoa-zoro-6").k, "ZA WARUDO : le temps s'arrête pour chaque défenseur possible de force 3 ou moins");
+  t = table(["jojo-giorno-giovanna-7-2", "jojo-guido-mista-2"], ["onepiece-coby-1"]);
+  me = t.of(t.A, "jojo-giorno-giovanna-7-2");
+  const req = ab("jojo-giorno-giovanna-7-2", "saveAny"), dieEv = { ev: "wouldDie", inst: t.of(t.A, "jojo-guido-mista-2"), saved: false };
+  ok(req.kind === "interrupt" && req.cond(t.X, me, dieEv) && !req.cond(t.X, me, { ev: "wouldDie", inst: t.of(t.B, "onepiece-coby-1"), saved: false }), "Requiem : sauve un de vos personnages, pas ceux de l'adversaire");
+  drive(req.run(t.X, me, dieEv));
+  ok(dieEv.saved, "Requiem : Mista est sauvé");
+  t = table(["jojo-diavolo-5"], ["onepiece-coby-1"]);
+  me = t.of(t.A, "jojo-diavolo-5");
+  const kc = ab("jojo-diavolo-5", "claimCancel"), clEv = { ev: "claim", target: t.A, cancel: false };
+  ok(kc.cond(t.X, me, clEv) && !kc.cond(t.X, me, { ev: "claim", target: t.B, cancel: false }), "King Crimson : seulement la revendication contre vous");
+  drive(kc.run(t.X, me, clEv));
+  ok(clEv.cancel && me.k && !kc.cond(t.X, me, { ev: "claim", target: t.A, cancel: false }), "King Crimson : revendication annulée, Diavolo agenouillé (plus rien à effacer ce round)");
+  t = table(["jojo-johnny-joestar-7-2"], ["onepiece-roronoa-zoro-6", "onepiece-coby-1"]);
+  me = t.of(t.A, "jojo-johnny-joestar-7-2");
+  const zoro = t.of(t.B, "onepiece-roronoa-zoro-6"), tusk = ab("jojo-johnny-joestar-7-2", "winSlay");
+  const winEv = { p: t.A, loser: t.B, ch: { type: "combat", parts: [me.u, zoro.u] } };
+  ok(tusk.cond(t.X, me, winEv) && !tusk.cond(t.X, me, { p: t.A, loser: t.B, ch: { type: "combat", parts: [me.u] } }), "Tusk Act 4 : il faut un participant du perdant");
+  drive(tusk.run(t.X, me, winEv));
+  ok(t.B.dead.includes(zoro), "Tusk Act 4 : Zoro (force 6) meurt, quelle que soit sa force");
+  t = table(["jojo-iggy-1", "jojo-guido-mista-2"], ["onepiece-coby-1"]);
+  const famJ = t.G.inst[t.A.fu], solo = FAMILIES.find((f) => f.id === "jojo").abs[0];
+  ok(solo.cond(t.X, famJ, { p: t.A, ch: { type: "ruse", parts: [t.of(t.A, "jojo-iggy-1").u, t.of(t.B, "onepiece-coby-1").u] } }), "Un contre un : défi gagné avec un seul personnage, on pioche");
+  ok(!solo.cond(t.X, famJ, { p: t.A, ch: { type: "ruse", parts: [t.of(t.A, "jojo-iggy-1").u, t.of(t.A, "jojo-guido-mista-2").u] } }), "Un contre un : pas à deux");
+  // versions alternatives (même nom = une seule par deck) et noms d'images de Brice
+  const { matchFile, artFile } = await import("../src/tcg/artNames.js");
+  ok(CARD["jojo-dio-brando-7"].key === CARD["jojo-dio-brando-7-2"].key && CARD["jojo-josuke-higashikata-7"].key !== CARD["jojo-josuke-higashikata-jojolion-7"].key, "Dio Brando et Dio Brando (New Body) : alternatives ; Josuke (JoJolion) : un autre personnage");
+  ok(!validateDeck({ fam: "jojo", cards: { "jojo-dio-brando-7": 1, "jojo-dio-brando-7-2": 1 }, plots: [] }).errors.every((e) => !e.startsWith("Une seule version")), "deck : les deux Dio ensemble sont refusés");
+  const hit = (f) => matchFile(f).cards.map((d) => d.id).join();
+  ok(hit("Dio Brando (New Body) 7.png") === "jojo-dio-brando-7-2" && hit("Dio Brando 7.png") === "jojo-dio-brando-7" && hit("Jotaro Kujo (Star Platinum) 7.jpeg") === "jojo-jotaro-kujo-7-2"
+    && hit("Jolyne Cujoh Stone Free 7.png") === "jojo-jolyne-cujoh-7-2" && hit("Ceasar 5.png") === "jojo-caesar-zeppeli-5" && hit("Avdol 3.png") === "jojo-mohammed-avdol-3"
+    && hit("Josuke Higashikata 7.jpg") === "jojo-josuke-higashikata-7" && hit("Josuke Higashikata (JoJolion) 7.jpeg") === "jojo-josuke-higashikata-jojolion-7" && hit("Jean Pierre Polnareff 3.jpg") === "jojo-jean-pierre-polnareff-3",
+  "images JoJo : chaque fichier de Brice va sur la bonne carte (versions « New Body », « Star Platinum », Ceasar, Avdol…)");
+  ok(artFile(CARD["jojo-dio-brando-7-2"]) === "Dio Brando (New Body) 7" && artFile(CARD["jojo-dio-brando-7"]) === "Dio Brando 7", "liste des cartes : le nom d'image conseillé de chaque version");
+
   // parties complètes avec les nouvelles cartes 7 dans les decks (bots)
   const sevens = ALL.filter((d) => d.type === "char" && d.cost === 7 && d.abs.some((a) => /enterKneelAll|enterFreeze|enterRevive|enterPutPlay|winStandAll|winBounce|winPowerSteal|winFreeze|defWinPower|dieReturn|domSteal|selfGuard|actStandAll|actSilence|atkTerror|immuneAura|ifPower|oppTax|winRaze|claim|atkBuff/.test(a.tpl)));
   let errs = 0, done = 0;

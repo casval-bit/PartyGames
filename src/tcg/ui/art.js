@@ -814,6 +814,32 @@ const MOTIF = {
       g.fillStyle = "#f2f2f8"; g.fillRect(cx - 8 * k, cy - 22 * k, 16 * k, 44 * k); glowDisk(g, cx, cy, 30 * k, "#ff9ad0", 0.3);
     } else { space("#02040c", "#141a3a", 80); planet(W * 0.7, H * 0.7, 30 * k, "#8fd3ff", "#1a3a7a"); beam("#ffd27a"); }
   },
+  /** JoJo : ciel violet dramatique, lignes de vitesse et les « ゴゴゴ » de la menace (dessinés, sans police japonaise). */
+  menacing(g, W, H, c, r) {
+    sky(g, W, H, "#12041f", mix(c.c2, c.c, 0.45), 0.6);
+    const cx = W * (0.35 + r() * 0.3), cy = H * (0.4 + r() * 0.2);
+    for (let i = 0; i < 46; i++) { // lignes de vitesse vers le centre
+      const a = r() * Math.PI * 2, R0 = Math.max(W, H) * (0.28 + r() * 0.2), R1 = Math.max(W, H) * 1.1;
+      g.strokeStyle = rgba(i % 3 ? "#ffffff" : c.c, 0.06 + r() * 0.12); g.lineWidth = 1 + r() * 2.5;
+      g.beginPath(); g.moveTo(cx + Math.cos(a) * R0, cy + Math.sin(a) * R0); g.lineTo(cx + Math.cos(a) * R1, cy + Math.sin(a) * R1); g.stroke();
+    }
+    glowDisk(g, cx, cy, Math.min(W, H) * 0.45, c.c, 0.3);
+    // ゴ : un « コ » (trait du haut, montant de droite, trait du bas) + deux petits traits (dakuten), penché
+    const go = (x, y, s, rot, col) => {
+      g.save(); g.translate(x, y); g.rotate(rot); g.lineCap = "round"; g.lineJoin = "round";
+      g.strokeStyle = rgba("#14001f", 0.9); g.lineWidth = s * 0.34;
+      const path = () => { g.beginPath(); g.moveTo(-s * 0.42, -s * 0.38); g.lineTo(s * 0.38, -s * 0.38); g.lineTo(s * 0.38, s * 0.42); g.lineTo(-s * 0.45, s * 0.42); };
+      const dk = () => { g.beginPath(); g.moveTo(s * 0.52, -s * 0.72); g.lineTo(s * 0.62, -s * 0.5); g.moveTo(s * 0.74, -s * 0.78); g.lineTo(s * 0.84, -s * 0.56); };
+      path(); g.stroke(); dk(); g.stroke();
+      g.strokeStyle = col; g.lineWidth = s * 0.17; path(); g.stroke(); g.lineWidth = s * 0.12; dk(); g.stroke();
+      g.restore();
+    };
+    const n = 4 + Math.floor(r() * 4);
+    for (let i = 0; i < n; i++) {
+      const s = Math.min(W, H) * (0.1 + r() * 0.1);
+      go(W * (0.08 + r() * 0.84), H * (0.1 + r() * 0.75), s, -0.25 + r() * 0.5, i % 2 ? mix(c.c, "#ffffff", 0.35) : "#ff4fb4");
+    }
+  },
   rings(g, W, H, c, r) {
     sky(g, W, H, "#0b1020", "#2a3346");
     for (let k = 0; k < 7; k++) { g.strokeStyle = rgba(k % 2 ? "#5ee1ff" : "#c084fc", 0.35 - k * 0.03); g.lineWidth = 2; g.beginPath(); g.ellipse(W / 2, H / 2, W * (0.08 + k * 0.07), H * (0.06 + k * 0.06), 0.3, 0, Math.PI * 2); g.stroke(); }

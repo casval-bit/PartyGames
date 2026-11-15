@@ -7,7 +7,7 @@ Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en te
 Tablette high-tech nuit bleue : fond marine très sombre avec deux halos (bleu, cyan) et une grille cyan très fine, panneaux arrondis en dégradé marine, pastilles, barres de progression arrondies (vertes, orange quand il reste peu), contours lumineux cyan pour la sélection. Polices embarquées : **Sora** (titres, cartes, chiffres) et **Noto Sans KR** (texte). **Aucune émoji** : toutes les icônes sont des traits fins Lucide (`src/ui/Icon.jsx`, `<Icon name="trophy" />` ; `src/ui/iconPaint.js` les dessine aussi sur les textures 3D).
 Dans un navigateur sur grand écran (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone et dans l'appli PC, plein écran, sans cadre. Variante de coque rouge et blanche dans les réglages du profil (navigateur).
 **Écran d'accueil** (`src/screens/Splash.jsx`) : un emblème holographique (anneaux qui tournent en sens contraires, rayons, étoile qui pulse en ondes), les icônes des jeux en orbite qui s'allument chacune leur tour, des poussières de lumière qui montent, et le nom PARTY HUB dont les lettres montent d'un flou puis s'éclairent l'une après l'autre. On touche l'écran (ou clic / Entrée sur PC) pour entrer.
-**Transitions** (`src/ui/ScreenFx.jsx`) : à chaque changement d'écran, un voile s'efface pendant qu'un balayage de lumière traverse l'écran ; pour le Trône des Mondes (collection, partie), une grande carte au dos doré couvre l'écran, recule puis se retourne pour révéler le jeu. **Survol à la souris** (PC) : les boutons se soulèvent, s'éclairent et leur icône sautille, avec un petit son (`ui/clickfx.js`, `sfx.hover`), réglable dans Profil > Réglages. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
+**Transitions** (`src/ui/ScreenFx.jsx`) : à chaque changement d'écran, un voile s'efface pendant qu'un balayage de lumière traverse l'écran ; le Trône des Mondes (collection, partie) s'ouvre directement, sans transition. **Survol à la souris** (PC) : les boutons se soulèvent, s'éclairent et leur icône sautille, avec un petit son (`ui/clickfx.js`, `sfx.hover`), réglable dans Profil > Réglages. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
 **Cartes** : cartes holographiques (grille, coins lumineux, nom en Sora) ; boosters en « cartouche de données ». Les mini-jeux se jouent dans des **secteurs virtuels** (sol sombre quadrillé, horizon en grille, colonnes de lumière) à la couleur de leur zone : forêt (vert), désert (orange), banquise (bleu-blanc), montagne (gris-violet), noyau (cyan) — `candyWorld(THREE, scene, { zone })` dans `src/minigames/three/kit3d.jsx`.
 Tout le thème est dans `src/tablet.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
 
@@ -377,9 +377,9 @@ Cynthia, Goyah, Iris, Pieris, Inezia, Erika, Faïza, Donna), Star Academy, Les M
 Les Légendaires, De cape et de crocs, Hunger Games, Cowboy Bebop, La Horde du Contrevent, Élite, Teen Wolf, Marvel, DC, Stranger Things, Scooby-Doo (que des gentils)
 League of Legends (un deck par **région** de Runeterra, comme les types Pokémon : voir plus bas), Harry Potter (un deck par **maison** de Poudlard),
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
-Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli
-et Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella), plus des cartes Neutres.
-2185 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 60 Scénarios (les « intrigues ») qui mélangent tous les univers.
+Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli,
+Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella) et JoJo's Bizarre Adventure, plus des cartes Neutres.
+2282 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 62 Scénarios (les « intrigues ») qui mélangent tous les univers.
 
 **Les cartes de coût 7** (les plus puissantes, souvent légendaires ; **toujours brillantes**) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
 (ex. Monkey D. Luffy en Gear Fourth et en Gear Fifth : une seule des deux par deck). Elles ont des pouvoirs à part, tirés de leur univers :
@@ -454,9 +454,10 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   En grand, la carte s'incline un peu sous le doigt ou la souris (et quand on penche le téléphone) ; le reflet arc-en-ciel des brillantes suit la direction
   et se renforce quand on penche ou agite la carte (pas de balayage lumineux en grand ; sur la table et dans la collection, un éclat passe toutes les 11 s environ,
   décalé d'une carte à l'autre), et on feuillette l'album avec les flèches (← → au clavier).
-  Chaque carte a une **tranche** (son épaisseur), de la couleur de son cadre : commune dans la couleur de la famille, argentée (peu commune
-  ou brillante faite avec des jetons), dorée (rare, légendaire, carte 7), dorée et violette (épique). À plat, elle dépasse sous la carte ;
-  en grand, c'est une vraie tranche en 3D qui se voit aussi sur le côté quand la carte penche.
+  Chaque carte a une **tranche** (son épaisseur, à l'échelle de la carte : la même en miniature et en grand), de la couleur de son cadre : commune dans la couleur
+  de la famille, argentée (peu commune ou brillante faite avec des jetons), dorée (rare, légendaire, carte 7), dorée et violette (épique).
+  À plat, elle dépasse sous la carte en couches (arête claire, couleur du cadre, ombre), et le cadre a un léger biseau (`.tc-edge`, `--bevel` dans `tcg.css`) ;
+  en grand, c'est une vraie tranche en 3D, plus épaisse, qui se voit aussi sur le côté quand la carte penche.
 - **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
   **Brillantes** : une carte 7 l'est toujours (reflet arc-en-ciel, cadre doré). Les autres ne le sont jamais en sortant d'un booster ou de la boutique :
   on les rend brillantes avec des **jetons de brillance** (Mes cartes ou Album, touche une carte : 1 jeton jusqu'au coût 2, puis 2, 3, 4 et 5 jetons
@@ -582,6 +583,17 @@ Barbatos, Aerial). Amuro, Char et Kira ont deux versions à 7.
 | Anno Domini | un défi de Combat de plus (l'intervention armée) | Setsuna F. Seiei |
 | Post Disaster | +1 force en attaque (Tekkadan) | Mikazuki Augus |
 | Ad Stella | le premier défi de Combat gagné du round rapporte 1 Pouvoir (le duel) | Suletta Mercury |
+
+**JoJo's Bizarre Adventure** (`cards/jojo.js`, 97 cartes, des neuf parties, de Phantom Blood à The JOJOLands ; motif « menaçant » ゴゴゴ sur les cartes sans image) :
+passif « Un contre un » (après un défi gagné auquel **un seul** de vos personnages participe, piochez 1 carte). Un deck de départ, « La lignée des Joestar »
+(Jotaro et Giorno, avec Lisa Lisa, Bucciarati, Caesar, Speedwagon, les Croisés, Koichi, Mista, Narancia, Trish…), réglé autour de 50 % de victoires contre les autres
+decks de départ ; on le personnalise en remplaçant Jotaro ou Giorno par une autre carte 7. Les versions d'un même personnage sont des alternatives (une seule par deck) :
+Dio (*Le vampire* / *New Body*), Jotaro (*Yare yare daze* / *Star Platinum*), Giorno (*Gold Experience* / *Golden Wind*), Jolyne (*La prisonnière* / *Stone Free*),
+Johnny (*Le jockey* / *Tusk*), Gyro 5 / 6, Rohan 2 / 6 ; Josuke Higashikata (JoJolion) est un autre personnage que Josuke Higashikata (Diamond is Unbreakable).
+Chaque carte 7 alternative a été testée à la place de celle du deck de départ (entre 48 et 54 % de victoires). Pouvoirs propres : ZA WARUDO (Dio New Body et Jotaro Star Platinum,
+en attaquant, agenouillent chaque petit défenseur possible : `atkKneelAll`), Gold Experience Requiem (sauve un de vos personnages de la mort : `saveAny`),
+King Crimson (Diavolo efface une revendication : `claimCancel`), Tusk Act 4 (tue un participant du perdant quelle que soit sa force : `winSlay`).
+Une version qui a son propre nom d'image le donne avec l'option `art` (« Dio Brando (New Body) 7 », « Jotaro Kujo (Star Platinum) 7 », « Ceasar 5 ») : voir `cards/build.js`.
 
 Code : `src/tcg/` — `rules.js` (règles, mots-clés), `abilities.js` (modèles d'effets : le texte d'une carte et son effet viennent du même modèle), `engine.js` (moteur),
 `bot.js` (adversaire), `cards/*.js` (une famille par fichier, une ligne par carte), `deck.js` (règles de deck, decks de départ), `progress.js` (collection, boosters, boutique, quêtes),

@@ -19,8 +19,9 @@ export function artBox(d) {
 }
 
 /* ------------------------------ noms de fichiers ------------------------------ */
-/** Nom de base d'une carte : « Gryfenfer 7 » (personnages : nom + coût), sinon le nom. */
-export const artFileName = (d) => (d.type === "char" ? `${d.name} ${d.cost}` : d.name);
+/** Nom de base d'une carte : « Gryfenfer 7 » (personnages : nom + coût), sinon le nom ; ou le nom d'image propre à la carte
+ *  (option art : « Dio Brando (New Body) 7 », une autre version de même nom et de même coût). */
+export const artFileName = (d) => d.art || (d.type === "char" ? `${d.name} ${d.cost}` : d.name);
 let index = null;
 function buildIndex() {
   index = new Map();
@@ -28,7 +29,7 @@ function buildIndex() {
   for (const d of ALL) {
     add(d.id, d);
     add(slug(artFileName(d)), d);
-    add(slug(d.name), d);
+    if (!d.art) add(slug(d.name), d); // « Dio Brando.jpg » : toutes les versions sans nom d'image à elles
     add(`${d.fam}-${slug(artFileName(d))}`, d);
   }
   return index;

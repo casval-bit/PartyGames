@@ -426,6 +426,30 @@ export const TPL = {
   fWinKneel: ([t]) => react("win", (X, me, ev) => ev.p === X.ctrl(me) && typeOk(t, ev.ch) && ev.loser.chars.some((c) => !c.k), function* (X, me, ev) { yield* kneelOpp(X, me, 99, "Agenouiller un personnage du perdant", ev.loser); }, { text: `Réaction : après avoir gagné ${unDefi(t)}, agenouillez un personnage du perdant (une fois par round).` }),
   fWinDiscard: ([t, n]) => react("win", (X, me, ev) => ev.p === X.ctrl(me) && typeOk(t, ev.ch) && ev.loser.hand.length > 0, function* (X, me, ev) { X.discardRandom(ev.loser, num(n), me); }, { text: `Réaction : après avoir gagné ${unDefi(t)}, le perdant défausse ${carte(num(n))} au hasard (une fois par round).` }),
   defAuraT: ([t, n]) => statik({ text: `Vos ${perso(t, true)} qui défendent gagnent +${num(n)} force.`, str: (X, me, tg) => (X.inPlay(me) && mine(X, me, tg) && X.isDefending(tg) && (anyT(t) || X.hasTrait(tg, t)) ? num(n) : 0) }),
+  /** Combat singulier (JoJo) : gagner un défi avec un seul de ses personnages. */
+  fSoloDraw: ([t, n]) => react("win", (X, me, ev) => {
+    if (ev.p !== X.ctrl(me)) return false;
+    const mineIn = ev.ch.parts.map((u) => X.inst(u)).filter((o) => o && o.z === "char" && X.ctrl(o) === ev.p);
+    return mineIn.length === 1 && (anyT(t) || X.hasTrait(mineIn[0], t));
+  }, function* (X, me) { X.draw(X.ctrl(me), num(n)); }, { text: `Réaction : après avoir gagné un défi auquel un seul de vos ${perso(t, true)} participe, piochez ${carte(num(n))} (une fois par round).` }),
+
+  /* ------------------------ JoJo : pouvoirs des Stands ------------------------ */
+  /** Le temps s'arrête (The World, Star Platinum) : avant que le défenseur ne déclare ses défenseurs. */
+  atkKneelAll: ([m], c) => react("atk", (X, me, ev) => ev.ch.atk.includes(me.u) && X.chars(ev.defender).some((x) => !x.k && X.str(x) <= num(m)), function* (X, me, ev) {
+    for (const x of X.chars(ev.defender)) if (!x.k && X.str(x) <= num(m)) X.kneel(x, me);
+  }, { text: `Réaction : après ${que(c.name)} a été déclar${ée(c)} ${gn(c).att}, le temps s'arrête : agenouillez chaque personnage du défenseur de force ${num(m)} ou moins.` }),
+  /** Gold Experience Requiem : la mort revient à zéro. */
+  saveAny: ([t]) => interrupt("wouldDie", (X, me, ev) => !ev.saved && mine(X, me, ev.inst) && (anyT(t) || X.hasTrait(ev.inst, t)), function* (X, me, ev) { ev.saved = true; }, {
+    text: `Interruption (une fois par round) : quand un de vos ${perso(t, true)} devrait être tué, sauvez-le.`,
+  }),
+  /** King Crimson : le temps est effacé, le défi n'a rien coûté. */
+  claimCancel: ([], c) => interrupt("claim", (X, me, ev) => !ev.cancel && ev.target === X.ctrl(me) && !me.k && X.inPlay(me), function* (X, me, ev) { X.kneel(me); ev.cancel = true; }, {
+    text: `Interruption : quand la revendication d'un défi s'applique contre vous, agenouillez ${c.name} pour l'annuler.`,
+  }),
+  /** Tusk Act 4 : une rotation infinie, aucune force n'y résiste. */
+  winSlay: ([t], c) => react("win", (X, me, ev) => wonWith(X, me, ev, t) && ev.ch.parts.some((u) => { const o = X.inst(u); return o && o.z === "char" && X.ctrl(o) === ev.loser; }), function* (X, me, ev) {
+    yield* killOpp(X, me, () => true, "Tuer un personnage participant du perdant", ev.ch.parts.map((u) => X.inst(u)).filter((o) => o && o.z === "char" && X.ctrl(o) === ev.loser));
+  }, { text: `Réaction : après avoir gagné ${unDefi(t)} auquel ${c.name} participe, tuez un personnage participant du perdant, quelle que soit sa force.` }),
 };
 
 /** Lit "modèle:a,b@Nom" et renvoie l'effet prêt pour le moteur (avec son texte). Lève une erreur si le modèle est inconnu. */

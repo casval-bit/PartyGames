@@ -8,7 +8,8 @@
 //
 // Options utiles : key (regroupe les versions d'un même personnage : une seule version par deck), uni:false (non unique),
 // pt (types Pokémon, régions de League of Legends), st (exclusive au deck de départ indiqué : jamais dans les boosters), flav (citation),
-// fem (accorde les textes au féminin ; par défaut d'après la liste de cards/gender.js).
+// fem (accorde les textes au féminin ; par défaut d'après la liste de cards/gender.js),
+// art (nom de son image, sans extension, quand il diffère de « Nom Coût » : « Dio Brando (New Body) 7 » pour une autre version de même nom et coût).
 import { compileAbility } from "../abilities.js";
 import { FEM } from "./gender.js";
 import { slug } from "../rules.js";
@@ -45,6 +46,7 @@ export function buildCards(fam, raw, used = new Set()) {
       req: x.req || null, st: x.st || null, flav: x.flav || "", univ: x.univ || fam,
       inc: x.inc || 0, ini: x.ini || 0, clm: x.clm ?? 1, res: x.res || 6,
       fem: x.type === "char" ? Boolean(x.fem ?? FEM.has(x.name)) : false,
+      art: x.art || null,
     };
     d.traitSet = new Set([...traits, ...pt].map((t) => t.toLowerCase()));
     d.abs = parseAb(x.ab).map((spec) => compileAbility(spec, d));

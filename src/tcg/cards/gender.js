@@ -74,4 +74,7 @@ export const FEM = new Set([
   "Jessica Cruz", "Talia al Ghul", "Power Girl", "Lois Lane", "Hawkgirl", "Black Canary", "Raven", "Starfire",
   "Suzanne Hertz", "Rosa", "Miss Grimwood", "Sibella", "Elsa Frankenteen", "Winnie", "Phantasma", "Tanis",
   "Jubilé", "Polaris", "Valeria Richards", "Alicia Masters", "Crystal", "Arisia",
+  // JoJo's Bizarre Adventure
+  "Erina Pendleton", "Lisa Lisa", "Trish Una", "Jolyne Cujoh", "Foo Fighters", "Ermes Costello", "Gwess", "Yukako Yamagishi",
+  "Lucy Steel", "Hot Pants", "Sugar Mountain", "Yasuho Hirose", "Daiya Higashikata",
 ]);

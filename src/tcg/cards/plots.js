@@ -64,4 +64,6 @@ export const cards = [
   plot("Le grand festin", "ghibli", 6, 2, 1, 6, "Repas", "plEachDraw:1"),
   plot("Une année de guerre", "gundam", 4, 5, 1, 6, "Guerre", "plExtra:combat"),
   plot("L'opération Météore", "gundam", 5, 4, 1, 6, "Opération", "plKneel"),
+  plot("La marque de l'étoile", "jojo", 5, 4, 1, 6, "Destin", "plDraw:1"),
+  plot("Le combat de Stands", "jojo", 4, 5, 1, 6, "Stand", "plExtra:ruse"),
 ];

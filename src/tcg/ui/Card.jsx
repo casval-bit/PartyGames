@@ -63,6 +63,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   return (
     <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && !alwaysFoil(d) ? " lite" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
       aria-label={onClick ? `${d.name}${d.title ? ", " + d.title : ""}` : undefined} {...rest}>
+      <span className="tc-edge" aria-hidden="true" />
       <span className="tc-fr" />
       <div className="tc-in">
         <div className="tc-head">
@@ -107,6 +108,7 @@ export const PlotFace = memo(function PlotFace({ d, w, big = false, used, sel, c
   const Tag = onClick ? "button" : "div";
   return (
     <Tag className={`tp${used ? " used" : ""}${sel ? " pick" : ""} ${className}`} style={{ "--fc": f.color, ...(w ? { width: typeof w === "number" ? w + "px" : w } : null), ...style }} onClick={onClick} aria-label={onClick ? `Scénario ${d.name}` : undefined} {...rest}>
+      <span className="tc-edge" aria-hidden="true" />
       <div className="tp-in">
         <div className="tp-art">{art && <img src={art} alt="" draggable={false} />}</div>
         <div className="tp-stats">
@@ -132,6 +134,7 @@ export const PlotFace = memo(function PlotFace({ d, w, big = false, used, sel, c
 export function CardBack({ w, glow, className = "", style }) {
   return (
     <div className={`tc tc-back${glow ? " glow-" + glow : ""} ${className}`} style={{ ...(w ? { width: typeof w === "number" ? w + "px" : w } : null), ...style }} aria-hidden="true">
+      <span className="tc-edge" aria-hidden="true" />
       <span className="tc-fr" />
       <div className="tb-ring"><Icon name="crown" size={40} stroke={1.6} /></div>
       <div className="tb-t">Trône des Mondes</div>
@@ -148,6 +151,7 @@ export function FamilyFace({ fam, pt, w, big }) {
   const abs = [...(f.abs || []), ...(tb ? tb.abs : [])].map((ab) => ({ name: ab.name, text: ab.text || "" }));
   return (
     <div className="tc r-E fam" style={styleOf(d, w)}>
+      <span className="tc-edge" aria-hidden="true" />
       <span className="tc-fr" />
       <div className="tc-in">
         <div className="tc-head" style={{ paddingLeft: "4cqw" }}>
