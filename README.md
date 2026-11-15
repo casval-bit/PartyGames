@@ -409,7 +409,7 @@ Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-l
 **Tester sur son compte en local** (`npm run dev`, `npm run desktop`) : le fichier `.env` à la racine du projet (jamais versionné) donne
 `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (les mêmes que les secrets GitHub) ; sans lui, l'appli locale reste en mode local, sans compte.
 `VITE_TESTEURS` (adresses séparées par des virgules) : sur un ordinateur où elle est remplie, Trône des Mondes > Paramètres montre des outils de test
-pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, boosters, et « Débloquer les cartes illustrées »
+pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, tickets de portail, boosters, et « Débloquer les cartes illustrées »
 (2 exemplaires de chaque carte qui a une vraie image). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
 « Éclats et jetons à volonté » (activé par défaut, réglable au même endroit) : jamais moins de 100 000 Éclats et 500 jetons sur ces profils.
 **Decks et cartes retirées** : si une carte disparaît du jeu, chaque deck qui la contenait est complété tout seul (cartes possédées d'abord,
@@ -432,8 +432,9 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   les pièces d'Or sautent en tournant. À l'arrivée, tes cartes sont distribuées sur la table. Le plateau se met à l'échelle de l'écran (sur téléphone, les coins du tapis débordent un peu).
 - À gauche, **« Tes cartes »**, chaque bouton avec une phrase qui dit à quoi il sert : **Mes decks** (créer, modifier, choisir le deck que tu joues),
   **Mes cartes** (les cartes que tu possèdes : chercher, recycler les doubles, illustrations) et **Album** (toutes les cartes du jeu, celles qui te manquent en gris).
-- À droite, **« Boosters et défis »** : **Boosters** (à ouvrir, à acheter), **Boutique du jour** (6 cartes à l'unité) et **Quêtes et succès** (pastilles : à récupérer, nouvelle boutique…).
-- En bas : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les six boutons.
+- À droite, **« Boosters et défis »** : **Boosters** (à ouvrir, à acheter), **Portails** (les invocations, voir plus bas), **Boutique du jour** (6 cartes à l'unité) et **Quêtes et succès** (pastilles : à récupérer, nouvelle boutique…).
+  En haut, à côté des boosters, des jetons et des Éclats : les **tickets de portail** (sur grand écran).
+- En bas : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les sept boutons.
   Chaque bouton ouvre sa partie en plein écran, avec un retour à l'accueil ; changer de partie fait glisser une carte (son).
 - **Profil du jeu** (`TcgProfile.jsx`) : statistiques du jeu de cartes (parties, victoires, défis gagnés, éliminations, Dominations, boosters, collection, brillantes, cartes 7, succès).
   **Photo** : n'importe quelle carte 7 que tu possèdes (par défaut, celle du deck joué ; sans carte 7, le blason du jeu).
@@ -458,7 +459,14 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   de la famille, argentée (peu commune ou brillante faite avec des jetons), dorée (rare, légendaire, carte 7), dorée et violette (épique).
   À plat, elle dépasse sous la carte en couches (arête claire, couleur du cadre, ombre), et le cadre a un léger biseau (`.tc-edge`, `--bevel` dans `tcg.css`) ;
   en grand, c'est une vraie tranche en 3D, plus épaisse, qui se voit aussi sur le côté quand la carte penche.
-- **Boosters** (5 cartes, au moins une rare) : Multivers, Héros (que des personnages), Arsenal (lieux, objets, événements), Prestige (rares ou mieux), et un booster par famille.
+- **Boosters** (5 cartes, au moins une rare) : Multivers (120 Éclats), Héros et Arsenal (140), **Découverte** (200 : que des cartes que tu n'as pas encore, tant qu'il en reste),
+  Prestige (600 : rares ou mieux), et un booster par famille (160 ; celui du Monde à l'honneur des Portails coûte 25 % de moins pendant ses deux semaines).
+  **Ouvrir par 5** : quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à 5 d'un coup (`openPacks`) : un paquet de boosters en éventail qu'on déchire une fois,
+  puis les cartes booster par booster (« Booster 2 / 5 »), et à la fin les 25 cartes de la plus rare à la moins rare.
+  **Ouverture** (`PackOpen.jsx`) : le paquet s'incline vers la souris et la lumière glisse dessus ; la carte du dessus brille à travers son dos selon sa rareté
+  (dorée : rare, violette : épique, orange qui pulse : légendaire) ; au retournement, le fond prend la couleur de la rareté, un reflet balaie la carte,
+  et une légendaire fait trembler l'écran (rayons et flash) ; des pastilles en bas comptent les cartes du booster (de la couleur de leur rareté une fois retournées) ;
+  au résumé, les nouvelles brillent et on touche une carte pour la voir en grand.
   **Brillantes** : une carte 7 l'est toujours (reflet arc-en-ciel, cadre doré). Les autres ne le sont jamais en sortant d'un booster ou de la boutique :
   on les rend brillantes avec des **jetons de brillance** (Mes cartes ou Album, touche une carte : 1 jeton jusqu'au coût 2, puis 2, 3, 4 et 5 jetons
   pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté (sans paillettes : ni les 7 ni elles n'ont de grille de points). Les jetons viennent
@@ -467,8 +475,21 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
   (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; pas de brillante en vente, sauf les cartes 7).
   Recycler les doubles (au-delà de 2 normales et 1 brillante) rapporte des Éclats selon la rareté, et des jetons de brillance.
+- **Portails** (`Portals.jsx`, calendrier et thèmes dans `src/tcg/portals.js`, tirages dans `progress.js` : `pull`) : des invocations façon gacha, **en plus** des boosters.
+  Deux portails ouverts en même temps, qui changent **toutes les deux semaines** (le dimanche à minuit, les mêmes pour tout le monde ; le premier : du 15 au 28 novembre 2026) :
+  le **Portail des Légendes** (un thème à travers les univers, 3 cartes 7 en vedette et 4 épiques à l'honneur : Seigneurs des ténèbres, Les plus forts du monde, Magie suprême,
+  L'heure des dragons, Les Élus, Le temps s'arrête, Les génies, Sous le masque, Rois et reines, Pirates et capitaines, Créatures de la nuit, Esprits de la forêt, Les rebelles,
+  Dieux et cosmos : 14 thèmes) et le **Monde à l'honneur** (une famille, toutes ses cartes ; JoJo d'abord, puis toutes les familles à tour de rôle, jamais Star Academy).
+  On choisit sa **cible** parmi les cartes 7 en vedette. Une invocation : 100 Éclats ou 1 ticket ; par 10 : 900 Éclats (ou 10 tickets, les tickets passent avant les Éclats),
+  avec une épique au moins. Taux : Légendaire (une carte 7) 2 %, Épique 10 %, Rare 38 %, Peu commune 50 % ; **une légendaire sur deux est la cible**, et elle est
+  **garantie au plus tard à la 50e invocation** dans ce portail (compteur gardé quand les portails changent). En moyenne une cible coûte environ 3 600 Éclats (au pire 4 500),
+  contre 3 000 pour une légendaire au hasard dans la boutique : on paie un peu plus pour choisir. Révélation : un vortex qu'on touche, qui prend la couleur de la meilleure carte
+  (violet : épique, or : légendaire) avant de s'ouvrir. Cadeau d'ouverture : 10 tickets. On voit aussi les prochains portails.
+- **Tickets de portail** et quêtes : chaque quête du jour rapporte de l'XP et une récompense : des Éclats, un **ticket de portail** (Gagne une partie, Ouvre 2 boosters),
+  un **booster** (Domination : Multivers ; 10 Pouvoir : Héros) ou, pour la quête de famille, **le booster de cette famille et un ticket**.
+  **Coffre du jour** : les 3 quêtes récupérées, 1 ticket et 100 Éclats de plus.
 - **Niveaux** : un booster à chaque niveau (un Prestige tous les 5). **3 quêtes par jour** (une peut être changée) et 13 succès.
-- Tout est enregistré dans le profil (`profile.tcg`, y compris la photo `av`, le cadre `fr` et les compteurs à vie de `st`), donc sauvegardé sur le compte quand on est connecté.
+- Tout est enregistré dans le profil (`profile.tcg`, y compris la photo `av`, le cadre `fr`, les tickets `tk`, les Portails `por` et les compteurs à vie de `st`), donc sauvegardé sur le compte quand on est connecté.
 
 **Illustrations** : chaque carte a une illustration originale générée par l'appli (décor de sa famille, plus riche selon la rareté : les légendaires sont en pleine carte).
 Tu peux la remplacer par tes propres images : touche une carte > « Choisir une image », ou Collection > Illustrations > « Importer des images » (plusieurs d'un coup) en nommant

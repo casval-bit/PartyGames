@@ -80,6 +80,7 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { jet: 50 })); sfx.coin(); if (flash) flash("+50 jetons de brillance"); }}><Icon name="sparkles" size={16} />+50 jetons</button>
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { packs: { multi: 10 } })); sfx.apply(); if (flash) flash("+10 boosters Multivers"); }}><Icon name="gift" size={16} />+10 Multivers</button>
               <button className="btn small" onClick={() => { setT(P.testerGift(t, { packs: { prestige: 5 } })); sfx.apply(); if (flash) flash("+5 boosters Prestige"); }}><Icon name="gift" size={16} />+5 Prestige</button>
+              <button className="btn small" onClick={() => { setT(P.testerGift(t, { tk: 10 })); sfx.coin(); if (flash) flash("+10 tickets de portail"); }}><Icon name="ticket" size={16} />+10 tickets</button>
               <button className="btn small" data-testid="tset-unlock" onClick={() => {
                 const ids = illustratedIds();
                 const r = P.unlockCards(t, ids);

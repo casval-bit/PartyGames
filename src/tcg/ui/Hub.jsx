@@ -1,5 +1,5 @@
-// Trône des Mondes : la collection du joueur. Deck de départ (une fois), decks, collection, boosters, boutique du jour,
-// quêtes et succès. Tout est enregistré dans le profil (profile.tcg), donc suit le compte d'un téléphone à l'autre.
+// Trône des Mondes : la collection du joueur. Deck de départ (une fois), decks, collection, boosters, Portails (invocations),
+// boutique du jour, quêtes et succès. Tout est enregistré dans le profil (profile.tcg), donc suit le compte d'un téléphone à l'autre.
 import { useEffect, useMemo, useState } from "react";
 import { ALL, CARD, FAMILY, PLAYABLE, subOf, subWords } from "../cards/index.js";
 import { RARITY, RARITY_ORDER, CARD_TYPES } from "../rules.js";
@@ -20,9 +20,16 @@ import { useTcgPrefs } from "../prefs.js";
 import HubHome, { HubCurrencies, markShopSeen } from "./HubHome.jsx";
 import TcgProfile from "./TcgProfile.jsx";
 import TcgSettings from "./TcgSettings.jsx";
+import Portals from "./Portals.jsx";
 import { canTest } from "../../config.js";
 
 const EC =({ n }) => <span className="hub-price"><Icon name="gem" size={14} />{n.toLocaleString("fr-FR")}</span>;
+/** Récompenses d'une quête, en toutes lettres : « +70 Éclats », « 1 ticket de portail », « Booster Multivers »… */
+const rewardText = (rw) => [
+  rw.ec ? `+${rw.ec} Éclats` : "",
+  rw.tk ? `${rw.tk} ticket${rw.tk > 1 ? "s" : ""} de portail` : "",
+  ...Object.entries(rw.packs || {}).map(([k, x]) => `${x > 1 ? x + " " : ""}${(P.packDef(k) || { name: "booster" }).name}`),
+].filter(Boolean).join(" · ");
 /** Rendre brillante une carte de la collection (CardZoom, prop shine) : jetons de brillance du joueur. */
 const shineOf = (t, setT, flash) => ({
   jet: t.jet,
@@ -263,29 +270,39 @@ function packRow(p, right) {
     </div>
   );
 }
-/** Boosters à ouvrir. */
+/** Boosters à ouvrir : un par un, ou par groupe de 5 (OPEN_MAX) d'un coup. */
 function PacksMine({ t, onOpen }) {
   const mine = Object.entries(t.packs).filter(([, n]) => n > 0).map(([id, n]) => ({ p: P.packDef(id), n })).filter((x) => x.p);
+  const total = mine.reduce((s, x) => s + x.n, 0);
   return (
     <div className="hub-sec hp-mine">
-      <h3>Mes boosters <small>{mine.reduce((s, x) => s + x.n, 0)} à ouvrir</small></h3>
-      {mine.length ? mine.map(({ p, n }) => packRow(p, <><span className="cnt">{n}</span><button className="btn small primary" onClick={() => onOpen(p.id)}>Ouvrir</button></>)) : <div className="hub-empty">Aucun booster. Monte de niveau, termine des quêtes ou achète-en ci-dessous.</div>}
+      <h3>Mes boosters <small>{total} à ouvrir{mine.some((x) => x.n > 1) ? ` · jusqu'à ${P.OPEN_MAX} d'un coup` : ""}</small></h3>
+      {mine.length ? mine.map(({ p, n }) => packRow(p, <>
+        <span className="cnt">{n}</span>
+        {n > 1 && <button className="btn small hp-many" onClick={() => onOpen(p.id, Math.min(P.OPEN_MAX, n))} title={`Ouvrir ${Math.min(P.OPEN_MAX, n)} boosters d'un coup`} data-testid={"open-many-" + p.id}><Icon name="layers" size={15} />×{Math.min(P.OPEN_MAX, n)}</button>}
+        <button className="btn small primary" onClick={() => onOpen(p.id, 1)}>Ouvrir</button>
+      </>)) : <div className="hub-empty">Aucun booster. Monte de niveau, termine des quêtes ou achète-en ci-dessous.</div>}
     </div>
   );
 }
+/** Prix d'un booster (barré quand il est réduit : famille du Monde à l'honneur). */
+const PackPrice = ({ p }) => { const v = P.packPrice(p); return v < p.price ? <><s className="hp-old">{p.price}</s><EC n={v} /></> : <EC n={v} />; };
 /** Boosters à acheter avec les Éclats. */
 function PacksBuy({ t, setT, flash, note = true }) {
   const [famOpen, setFamOpen] = useState(false);
   const buy = (p) => { const r = P.buyPack(t, p.id); if (r.error) { flash(r.error); sfx.error(); return; } setT(r.t); sfx.apply(); flash(`${p.name} acheté !`); };
+  const feat = P.PACKS.find((p) => P.packFeatured(p));
+  const row = (p) => packRow(p, <button className="btn small" disabled={t.ec < P.packPrice(p)} onClick={() => buy(p)}><PackPrice p={p} /></button>);
   return (
     <>
       <div className="hub-sec hp-buy">
         <h3>Acheter des boosters <small>tu as <EC n={t.ec} /></small></h3>
-        {P.PACKS.filter((p) => !p.fam).map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
+        {P.PACKS.filter((p) => !p.fam).map(row)}
+        {feat && <div className="hp-feat">{row(feat)}<span className="pill warn">Monde à l'honneur −{Math.round(P.FEATURED_OFF * 100)} %</span></div>}
         <button className="btn ghost small" onClick={() => setFamOpen(!famOpen)}><Icon name={famOpen ? "minus" : "plus"} size={16} />Boosters d'une seule famille</button>
-        {famOpen && P.PACKS.filter((p) => p.fam).map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
+        {famOpen && P.PACKS.filter((p) => p.fam).map(row)}
       </div>
-      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>}
+      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Le Booster Découverte ne donne que des cartes que tu n'as pas encore (tant qu'il en reste). Quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à {P.OPEN_MAX} d'un coup. Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>}
     </>
   );
 }
@@ -345,9 +362,12 @@ function DailyQuests({ t, setT, flash }) {
     const r = P.claimQuest(t, i);
     if (r.error) { flash(r.error); return; }
     setT(r.t); sfx.win();
-    flash(`+${r.xp} XP, +${r.ec} Éclats${r.lvlTo > r.lvlFrom ? ` — niveau ${r.lvlTo} !` : ""}`);
+    flash(`+${r.xp} XP · ${rewardText(r)}${r.lvlTo > r.lvlFrom ? ` — niveau ${r.lvlTo} !` : ""}`);
   };
   const reroll = (i) => { const r = P.rerollQuest(t, i); if (r.error) { flash(r.error); return; } setT(r.t); sfx.select(); };
+  const chest = () => { const r = P.claimQuestBonus(t); if (r.error) { flash(r.error); return; } setT(r.t); sfx.win(); flash(`Coffre du jour : ${rewardText(r)} !`); };
+  const nGot = t.quests.list.filter((q) => q.got).length;
+  const ready = P.questBonusReady(t);
   return (
     <div className="hub-sec hq-daily">
       <h3>Quêtes du jour <small>nouvelles dans {fmtTime(P.msToMidnight())}</small></h3>
@@ -357,7 +377,7 @@ function DailyQuests({ t, setT, flash }) {
         return (
           <div key={i} className={"hub-quest" + (q.got ? " got" : done ? " ok" : "")}>
             <div className="hub-row">
-              <div className="grow"><b>{d.text}{d.fam && q.fam ? ` : ${FAMILY[q.fam].name}` : ""}</b><small>+{d.xp} XP · +{d.ec} Éclats</small></div>
+              <div className="grow"><b>{d.text}{d.fam && q.fam ? ` : ${FAMILY[q.fam].name}` : ""}</b><small>+{d.xp} XP · {rewardText(P.questReward(d, q))}</small></div>
               {q.got ? <span className="pill ok"><Icon name="check" size={12} />Fait</span>
                 : done ? <button className="btn small good" onClick={() => claim(i)}>Récupérer</button>
                 : t.quests.rr < 1 ? <button className="iconbtn" onClick={() => reroll(i)} aria-label="Changer cette quête (une fois par jour)" title="Changer cette quête"><Icon name="reset" size={16} /></button> : null}
@@ -367,6 +387,14 @@ function DailyQuests({ t, setT, flash }) {
           </div>
         );
       })}
+      <div className={"hub-quest hq-chest" + (t.quests.bonus ? " got" : ready ? " ok" : "")} data-testid="quest-chest">
+        <div className="hub-row">
+          <span className="hq-chest-i"><Icon name="gift" size={20} /></span>
+          <div className="grow"><b>Coffre du jour</b><small>Les 3 quêtes récupérées : {rewardText(P.QUEST_BONUS)}</small></div>
+          {t.quests.bonus ? <span className="pill ok"><Icon name="check" size={12} />Ouvert</span>
+            : ready ? <button className="btn small good" onClick={chest}>Ouvrir</button> : <span className="pill dim">{nGot} / 3</span>}
+        </div>
+      </div>
     </div>
   );
 }
@@ -416,7 +444,7 @@ function Quests({ t, setT, flash }) {
 
 /* ------------------------------ en-tête d'une partie du Trône des Mondes ------------------------------ */
 const VIEWS = {
-  decks: ["Mes decks", "layers"], coll: ["Mes cartes", "library"], packs: ["Boosters", "gift"], shop: ["Boutique du jour", "store"],
+  decks: ["Mes decks", "layers"], coll: ["Mes cartes", "library"], packs: ["Boosters", "gift"], portals: ["Portails", "orbit"], shop: ["Boutique du jour", "store"],
   quests: ["Quêtes et succès", "trophy"], profile: ["Mon profil", "user"],
 };
 function SectionHead({ view, t, go, nPacks, onSettings }) {
@@ -464,14 +492,31 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
   const setT = (nt) => setTcg(nt);
   const go = (v) => { if (v === view) return; setView(v); sfx.slide(); };
   const nPacks = Object.values(t.packs).reduce((s, n) => s + n, 0);
-  const nQuests = t.quests.list.filter((q) => !q.got && q.n >= P.QUEST_BY[q.id].goal).length + P.claimableMilestones(t).length;
+  const nQuests = t.quests.list.filter((q) => !q.got && q.n >= P.QUEST_BY[q.id].goal).length + P.claimableMilestones(t).length + (P.questBonusReady(t) ? 1 : 0);
 
-  const openPack = (id) => {
-    const r = P.openPack(t, id);
+  /** Ouvre un booster, ou un groupe de n boosters du même type (5 au plus). */
+  const openPack = (id, n = 1) => {
+    const r = n > 1 ? P.openPacks(t, id, n) : P.openPack(t, id);
     if (r.error) { flash(r.error); return; }
     setT(r.t);
-    setOpening({ id, cards: r.cards, jet: r.jet, golden: r.golden, key: Date.now() });
+    setOpening({ id, n, pack: P.packDef(id), packs: r.packs || [{ cards: r.cards, jet: r.jet, golden: r.golden }], key: Date.now() });
   };
+  /** Invoque 1 ou 10 fois dans un portail. */
+  const doPull = (kind, n) => {
+    const r = P.pull(t, kind, n);
+    if (r.error) { flash(r.error); sfx.error(); return; }
+    setT(r.t);
+    const bn = r.bn;
+    setOpening({ portal: kind, n, pack: { id: "portal:" + kind, name: bn.sub, color: bn.color, icon: bn.fam ? FAMILY[bn.fam].icon : "orbit" }, kindName: bn.name, packs: [{ cards: r.cards, jet: 0 }], key: Date.now() });
+  };
+  const againOf = (o) => {
+    if (o.portal) { const c = P.pullCost(t, o.n); return t.ec >= c.ec ? { text: `Invoquer encore ×${o.n}`, go: () => doPull(o.portal, o.n) } : null; }
+    const left = t.packs[o.id] || 0;
+    if (!left) return null;
+    const k = o.n > 1 ? Math.min(P.OPEN_MAX, left) : 1;
+    return { text: k > 1 ? `Ouvrir les ${k} suivants` : `Ouvrir le suivant (${left})`, go: () => openPack(o.id, k) };
+  };
+  const again = opening ? againOf(opening) : null;
 
   if (edit) {
     return (
@@ -516,6 +561,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
           {view === "decks" && <Decks t={t} own={own} setT={setT} onEdit={setEdit} flash={flash} />}
           {view === "coll" && <Collection t={t} own={own} setT={setT} flash={flash} />}
           {view === "packs" && <Packs t={t} setT={setT} flash={flash} onOpen={openPack} />}
+          {view === "portals" && <Portals t={t} setT={setT} flash={flash} onPull={doPull} />}
           {view === "shop" && <Shop t={t} setT={setT} flash={flash} />}
           {view === "quests" && <Quests t={t} setT={setT} flash={flash} />}
           {view === "profile" && <TcgProfile t={t} setT={setT} name={name} acc={acc} onAccount={onAccount} flash={flash} />}
@@ -531,8 +577,8 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
         {content}
         {toast && <div className="toast hub-toast" role="status">{toast}</div>}
         {opening && (
-          <PackOpen key={opening.key} pack={P.packDef(opening.id)} cards={opening.cards} jet={opening.jet} golden={opening.golden} left={t.packs[opening.id] || 0}
-            onDone={() => setOpening(null)} onAgain={() => openPack(opening.id)} />
+          <PackOpen key={opening.key} pack={opening.pack} packs={opening.packs} label={opening.portal ? `Invocation ×${opening.n}` : "Booster"} intro={opening.portal ? "portal" : "tear"}
+            again={again ? again.text : ""} onAgain={again ? again.go : undefined} onDone={() => setOpening(null)} />
         )}
         {album && <Album t={t} shine={shineOf(t, setT, flash)} onClose={() => { setAlbum(false); sfx.close(); }} />}
         {zoom && (zoom.id

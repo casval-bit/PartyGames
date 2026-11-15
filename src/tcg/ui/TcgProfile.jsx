@@ -24,7 +24,7 @@ export default function TcgProfile({ t, setT, name, acc, onAccount, flash }) {
   const pickFr = (id) => { const r = P.setFrame(t, id); if (r.error) { flash(r.error); return; } setT(r.t); sfx.apply(); };
   const stats = [
     ["Parties", fmt(t.st.games)], ["Victoires", fmt(t.st.wins)], ["Réussite", rate === null ? "—" : `${rate} %`], ["Défis gagnés", fmt(t.st.chal)],
-    ["Éliminations", fmt(t.st.kills)], ["Dominations", fmt(t.st.dom)], ["Boosters ouverts", fmt(t.st.packs)], ["Familles jouées", `${t.st.fams.length} / ${PLAYABLE.length}`],
+    ["Éliminations", fmt(t.st.kills)], ["Dominations", fmt(t.st.dom)], ["Boosters ouverts", fmt(t.st.packs)], ["Invocations", fmt(t.st.pulls || 0)], ["Familles jouées", `${t.st.fams.length} / ${PLAYABLE.length}`],
     ["Collection", `${fmt(distinct)} / ${fmt(ALL.length)}`], ["Brillantes", fmt(Object.keys(t.foil).length)], ["Cartes 7", fmt(choices.length)], ["Succès", `${Object.keys(t.ms).length} / ${P.MILESTONES.length}`],
   ];
   return (

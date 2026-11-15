@@ -224,6 +224,94 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(P.normalizeTcg(JSON.parse(JSON.stringify(sf.t))).fr === "or", "photo et cadre gardés à la sauvegarde");
 }
 
+// Portails (invocations) : calendrier, prix, garantie, cible, cadeau
+{
+  const Po = await import("../src/tcg/portals.js");
+  const { PLAYABLE } = await import("../src/tcg/cards/index.js");
+  const seeded = (s) => () => { s = (s + 0x6d2b79f5) >>> 0; let x = Math.imul(s ^ (s >>> 15), s | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  ok(Po.periodOf("2026-11-15") === 0 && Po.periodOf("2026-11-28") === 0 && Po.periodOf("2026-11-29") === 1 && Po.periodOf("2026-11-14") === -1, "portails : ils changent toutes les deux semaines (dimanche 15 novembre, puis 29 novembre…)");
+  const p0 = Po.portalsOf("2026-11-20");
+  ok(p0.monde.fam === "jojo" && p0.monde.stars.length === 15 && p0.leg.id === "tenebres", "premiers portails : JoJo (ses 15 cartes 7) et les Seigneurs des ténèbres");
+  ok(Po.LEGENDS.every((th) => th.stars.length === 3 && th.stars.every((id) => CARD[id] && CARD[id].cost >= 7 && !CARD[id].st) && new Set(th.stars.map((id) => CARD[id].fam)).size === 3
+    && th.epics.every((id) => CARD[id] && CARD[id].r === "E" && CARD[id].cost < 7 && !CARD[id].st)), `${Po.LEGENDS.length} thèmes du Portail des Légendes : 3 cartes 7 de 3 univers, 4 épiques`);
+  ok(new Set(Po.MONDES).size === PLAYABLE.length - 1 && !Po.MONDES.includes("starac") && PLAYABLE.every((f) => f.id === "starac" || Po.MONDES.includes(f.id)), "Monde à l'honneur : toutes les familles y passent (jamais Star Academy)");
+  ok(Array.from({ length: 60 }, (_, k) => Po.portalsAt(k)).every((x) => x.leg.stars.length === 3 && x.monde.stars.length >= 3), "chaque période a ses deux portails, avec des vedettes");
+  ok(Po.periodDays(0).from === "2026-11-15" && Po.periodDays(0).to === "2026-11-28", "dates d'une période : du 15 au 28 novembre");
+  const day = "2026-11-20";
+  let pt = P.normalizeTcg({ ec: 2000, tk: 3 });
+  ok(P.pullCost(pt, 1).tk === 1 && P.pullCost(pt, 1).ec === 0 && P.pullCost(pt, 10).tk === 3 && P.pullCost(pt, 10).ec === 7 * P.PULL.ec10, "prix : les tickets d'abord, puis 90 Éclats l'invocation par 10 (100 à l'unité)");
+  ok(P.pullCost(P.normalizeTcg({}), 1).ec === 100 && P.pullCost(P.normalizeTcg({}), 10).ec === 900, "1 invocation = 100 Éclats, 10 = 900");
+  ok(P.pull(P.normalizeTcg({ ec: 50 }), "leg", 1, day).error, "pas assez d'Éclats : refusé");
+  const allU = () => 0.999; // jamais de légendaire : seulement la garantie
+  let g = P.normalizeTcg({ ec: 100000 });
+  const tg = P.portalTarget(g, p0.leg);
+  ok(tg === "lotr-sauron-7-2", "cible par défaut : la première vedette pas encore possédée");
+  for (let k = 0; k < 4; k++) g = P.pull(g, "leg", 10, day, allU).t;
+  ok(g.por.leg.n === 40 && P.pityLeft(g, "leg") === 10 && !g.foil[tg], "40 invocations sans légendaire : la cible est garantie dans 10");
+  const last = P.pull(g, "leg", 10, day, allU);
+  ok(last.cards.some((c) => c.id === tg && c.target) && last.t.por.leg.n === 0 && last.t.foil[tg] === 1, "garantie : la cible arrive à la 50e invocation (brillante, comme toute carte 7), puis le compteur repart à zéro");
+  ok(last.cards[last.cards.length - 1].id === tg, "révélation : la cible en dernier");
+  ok(P.pull(P.normalizeTcg({ ec: 1000 }), "leg", 10, day, allU).cards.filter((c) => P.tierOf(CARD[c.id]) === "E").length === 1, "par 10 : une épique au moins");
+  ok(P.portalTarget(last.t, p0.leg) === "sw-dark-vador-7", "cible obtenue : la cible par défaut passe à la vedette suivante");
+  const aim = P.setPortalTarget(g, "monde", "jojo-dio-brando-7-2", day);
+  ok(!aim.error && P.portalTarget(aim.t, p0.monde) === "jojo-dio-brando-7-2" && P.setPortalTarget(g, "monde", "lotr-sauron-7", day).error, "viser une carte 7 du Monde à l'honneur (pas une carte d'une autre famille)");
+  ok(P.normalizeTcg(JSON.parse(JSON.stringify({ ...aim.t, por: { ...aim.t.por, leg: { n: 999, c: "lyoko-krabe-3" } } }))).por.leg.n === P.PULL.pity - 1
+    && P.normalizeTcg({ por: { leg: { c: "lyoko-krabe-3" } } }).por.leg.c === null && P.normalizeTcg(JSON.parse(JSON.stringify(aim.t))).por.monde.c === "jojo-dio-brando-7-2", "sauvegarde des portails : cible et compteur vérifiés");
+  // tirages au hasard (graine fixe) : taux, famille, nouveautés
+  let s = P.normalizeTcg({ ec: 1e7 });
+  const rnd = seeded(42);
+  let nL = 0, nE = 0, nT = 0, nPulls = 0, fam = true;
+  for (let k = 0; k < 300; k++) {
+    const r = P.pull(s, k % 2 ? "leg" : "monde", 10, day, rnd);
+    s = r.t;
+    for (const c of r.cards) { nPulls++; const tr = P.tierOf(CARD[c.id]); if (tr === "L") nL++; if (tr === "E") nE++; if (c.target) nT++; if (k % 2 === 0 && CARD[c.id].fam !== "jojo") fam = false; }
+  }
+  ok(fam, "Monde à l'honneur : seulement des cartes de la famille");
+  ok(nL / nPulls > 0.025 && nL / nPulls < 0.06 && nE / nPulls > 0.09 && nE / nPulls < 0.16, `taux observés sur ${nPulls} invocations : légendaires ${(100 * nL / nPulls).toFixed(1)} % (avec la garantie), épiques ${(100 * nE / nPulls).toFixed(1)} %`);
+  ok(nT >= nPulls / 60, `cibles obtenues : ${nT} (au moins une toutes les 50 invocations)`);
+  ok(s.st.pulls === 3000 && Object.values(s.coll).reduce((a, b) => a + b, 0) + Object.values(s.foil).reduce((a, b) => a + b, 0) === 3000, "chaque invocation donne une carte de la collection");
+  const one = P.pull(P.normalizeTcg({ ec: 100000 }), "leg", 10, day, seeded(7));
+  ok(one.cards.every((c) => c.isNew === (one.cards.findIndex((x) => x.id === c.id) === one.cards.indexOf(c))), "une carte n'est nouvelle qu'une fois dans une invocation par 10");
+  const hungerDay = Po.periodDays(Po.MONDES.indexOf("hunger")).from;
+  const hg = P.pull(P.normalizeTcg({ ec: 100000 }), "monde", 10, hungerDay, allU);
+  ok(!hg.error && hg.cards.every((c) => CARD[c.id].fam === "hunger") && hg.cards.some((c) => CARD[c.id].r === "R"), "famille sans épique (Hunger Games) : l'épique garantie devient une rare");
+  const gift = P.claimPortalGift(P.normalizeTcg({}));
+  ok(gift.t.tk === P.PULL.gift && P.claimPortalGift(gift.t).error, "cadeau d'ouverture : 10 tickets, une seule fois");
+  const viaTk = P.pull(gift.t, "leg", 10, day, seeded(3));
+  ok(!viaTk.error && viaTk.t.tk === 0 && viaTk.t.ec === 0 && viaTk.cost.tk === 10, "10 tickets = une invocation par 10, sans Éclats");
+}
+
+// boosters : Découverte, réduction du Monde à l'honneur, ouverture par 5
+{
+  const big = P.normalizeTcg({ packs: { decouverte: 3 }, coll: Object.fromEntries(Object.keys(CARD).filter((id) => CARD[id].type !== "plot" && !CARD[id].st && CARD[id].cost < 7).slice(0, 1500).map((id) => [id, 1])) });
+  const before = P.owned(big);
+  const dc = P.openPack(big, "decouverte");
+  ok(!dc.error && dc.cards.length === 5 && dc.cards.every((c) => !before[c.id] && c.isNew), "Booster Découverte : 5 cartes que le joueur n'avait pas");
+  const jj = P.packDef("fam:jojo"), op = P.packDef("fam:onepiece");
+  ok(P.packPrice(jj, "2026-11-20") === 120 && P.packPrice(op, "2026-11-20") === 160 && P.packPrice(jj, "2026-11-30") === 160, "booster du Monde à l'honneur : −25 % pendant ses deux semaines");
+  ok(P.buyPack(P.normalizeTcg({ ec: 120 }), "fam:jojo", "2026-11-20").t.packs["fam:jojo"] === 1 && P.buyPack(P.normalizeTcg({ ec: 120 }), "fam:jojo", "2026-11-30").error, "achat au prix réduit");
+  const seven = P.normalizeTcg({ packs: { multi: 7 } });
+  const many = P.openPacks(seven, "multi", 5);
+  ok(!many.error && many.packs.length === 5 && many.t.packs.multi === 2 && many.packs.every((p) => p.cards.length === 5), "ouvrir 5 boosters d'un coup (il en reste 2)");
+  ok(many.jet === many.packs.reduce((a, p) => a + p.jet, 0) && many.t.jet === many.jet && many.t.st.packs === 5, "groupe : jetons et compteur de boosters additionnés");
+  const flat = many.packs.flatMap((p) => p.cards);
+  ok(flat.every((c, k) => c.isNew === (flat.findIndex((x) => x.id === c.id) === k)), "groupe : une carte n'est nouvelle que la première fois");
+  ok(P.openPacks(P.normalizeTcg({ packs: { multi: 2 } }), "multi", 5).packs.length === 2 && P.openPacks(P.normalizeTcg({}), "multi", 5).error, "groupe : jamais plus que les boosters possédés");
+}
+
+// quêtes : tickets, boosters, coffre du jour
+{
+  const q = P.normalizeTcg({ quests: { day: "2026-11-20", rr: 0, list: [{ id: "win1", n: 1 }, { id: "dom4", n: 4 }, { id: "famwin", n: 1, fam: "jojo" }] } });
+  ok(!P.questBonusReady(q) && P.claimQuestBonus(q).error, "coffre du jour fermé tant que les 3 quêtes ne sont pas récupérées");
+  const a = P.claimQuest(q, 0), b = P.claimQuest(a.t, 1), c = P.claimQuest(b.t, 2);
+  ok(a.tk === 1 && a.t.tk === 1 && b.packs.multi === 1 && b.t.packs.multi === 1, "quêtes : un ticket de portail (Gagne une partie), un Booster Multivers (Domination)");
+  ok(c.packs["fam:jojo"] === 1 && c.t.packs["fam:jojo"] === 1 && c.t.tk === 2, "quête de famille : le booster de cette famille et un ticket");
+  ok(P.questBonusReady(c.t), "les 3 quêtes récupérées : coffre du jour prêt");
+  const ch = P.claimQuestBonus(c.t);
+  ok(!ch.error && ch.t.tk === 3 && ch.t.ec === c.t.ec + P.QUEST_BONUS.ec && P.claimQuestBonus(ch.t).error && P.normalizeTcg(JSON.parse(JSON.stringify(ch.t))).quests.bonus, "coffre du jour : 1 ticket et 100 Éclats, une fois");
+  ok(P.QUESTS.every((d) => { const rw = P.questReward(d, { fam: "jojo" }); return rw.ec + rw.tk * 100 + Object.keys(rw.packs).length * 120 >= 50; }), "chaque quête rapporte quelque chose en plus de l'XP");
+}
+
 // vues réseau
 const g = new Game({ players: [{ id: "a", name: "A", deck: st[0] }, { id: "b", name: "B", bot: true, deck: st[3] }], seed: 3 });
 const pv = publicView(g);

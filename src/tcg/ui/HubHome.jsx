@@ -2,12 +2,13 @@
 //   - en haut : la photo de profil du jeu (bouton Profil), les boosters, les Éclats et les paramètres ;
 //   - au centre : le plateau de jeu en 3D isométrique (HubBoard), posé avec le deck joué ;
 //   - à gauche, « Tes cartes » : Mes decks (créer, choisir), Mes cartes (celles que tu possèdes), Album (toutes les cartes du jeu) ;
-//   - à droite, « Boosters et défis » : Boosters, Boutique du jour, Quêtes ;
+//   - à droite, « Boosters et défis » : Boosters, Portails (invocations), Boutique du jour, Quêtes ;
 //   - en bas, au centre : Jouer, et le deck joué (Changer).
 import { useEffect, useState } from "react";
-import { ALL, FAMILY, subOf } from "../cards/index.js";
+import { ALL, CARD, FAMILY, subOf } from "../cards/index.js";
 import { validateDeck } from "../deck.js";
 import * as P from "../progress.js";
+import { portalsOf, msToPortalChange } from "../portals.js";
 import { Icon } from "../../ui/Icon.jsx";
 import Portrait from "./Portrait.jsx";
 import HubBoard from "./HubBoard.jsx";
@@ -24,6 +25,9 @@ export function HubCurrencies({ t, go, nPacks }) {
     <div className="hh-curs">
       <button className="hh-cur packs" onClick={() => go("packs")} title="Boosters à ouvrir" aria-label={`Boosters : ${nPacks} à ouvrir`}>
         <Icon name="gift" size={18} /><b>{nPacks}</b>
+      </button>
+      <button className="hh-cur tk" onClick={() => go("portals")} title="Tickets de portail : une invocation chacun (Portails)" aria-label={`${t.tk} tickets de portail, ouvrir les Portails`} data-testid="hub-tk">
+        <Icon name="ticket" size={18} /><b>{t.tk.toLocaleString("fr-FR")}</b>
       </button>
       <button className="hh-cur jet" onClick={() => go("coll")} title="Jetons de brillance : rendent une de tes cartes brillante (Mes cartes, touche une carte)" aria-label={`${t.jet} jetons de brillance, ouvrir Mes cartes`} data-testid="hub-jet">
         <Icon name="sparkles" size={18} /><b>{t.jet.toLocaleString("fr-FR")}</b>
@@ -55,8 +59,12 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onS
   const sub = deck ? subOf(deck.fam, deck.pt) : null;
   const nFr = P.newFrames(t).length;
   const [left, setLeft] = useState(P.msToMidnight());
-  useEffect(() => { const iv = setInterval(() => setLeft(P.msToMidnight()), 30000); return () => clearInterval(iv); }, []);
+  const [pLeft, setPLeft] = useState(msToPortalChange());
+  useEffect(() => { const iv = setInterval(() => { setLeft(P.msToMidnight()); setPLeft(msToPortalChange()); }, 30000); return () => clearInterval(iv); }, []);
   const distinct = Object.keys(own).length;
+  const por = portalsOf(P.today());
+  const lt = P.portalTarget(t, por.leg);
+  const pDays = Math.max(1, Math.ceil(pLeft / 86400000));
   return (
     <div className="hh" data-testid="hub-home">
       <header className="hh-top">
@@ -98,6 +106,8 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onS
         <span className="hh-side-h"><Icon name="sparkles" size={14} />Boosters et défis</span>
         <Nav id="packs" icon="gift" label="Boosters" sub={nPacks ? `${nPacks} à ouvrir ; d'autres s'achètent avec tes Éclats` : "En acheter avec tes Éclats : 5 cartes chacun"}
           short={nPacks ? `${nPacks} à ouvrir` : "En acheter"} badge={nPacks || null} tone="vio" onClick={() => go("packs")} />
+        <Nav id="portals" icon="orbit" label="Portails" sub={`${por.leg.sub} (${CARD[lt].name}…) et ${por.monde.sub} : encore ${pDays} jour${pDays > 1 ? "s" : ""}`}
+          short={t.tk ? `${t.tk} ticket${t.tk > 1 ? "s" : ""}` : "Invocations"} badge={!t.por.gift ? "!" : t.tk || null} tone="portal" onClick={() => go("portals")} />
         <Nav id="shop" icon="store" label="Boutique du jour" labelShort="Boutique" sub={`6 cartes à l'unité, contre des Éclats. Nouvelles dans ${fmtLeft(left)}`}
           short="6 cartes à l'unité" badge={shopSeenToday() ? null : "•"} onClick={() => go("shop")} />
         <Nav id="quests" icon="trophy" label="Quêtes et succès" labelShort="Quêtes" sub={nQuests ? `${nQuests} récompense${nQuests > 1 ? "s" : ""} à récupérer ; quêtes du jour, niveaux, succès` : "Quêtes du jour, niveaux et succès : XP, Éclats, boosters"}
