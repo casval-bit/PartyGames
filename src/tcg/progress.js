@@ -4,6 +4,7 @@
 //   - boosters (gagnés en montant de niveau, en quêtes, ou achetés avec des Éclats) ; cartes brillantes (foil) :
 //     les cartes de coût 7 sont toujours brillantes ; les autres ne le sont jamais d'office : on les rend brillantes avec des
 //     jetons de brillance (gagnés en recyclant les doubles et en bonus dans chaque booster), plus il en faut que la carte coûte cher ;
+//   - cartes neutres : offertes à tout le monde (2 exemplaires de chacune), elles ne sortent donc ni des boosters, ni de la boutique, ni des Portails ;
 //   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (pas de brillante en vente, sauf les cartes 7) ;
 //   - Portails (invocations, façon gacha) : deux bannières qui changent toutes les deux semaines (voir portals.js), payées en Éclats
 //     ou en tickets de portail, avec une carte cible garantie au plus tard à la 50e invocation ;
@@ -36,10 +37,20 @@ export const emptyTcg = () => ({ v: 2, at: 0, starter: null, ec: 0, xp: 0, jet: 
   por: { gift: false, leg: { n: 0, c: null }, monde: { n: 0, c: null } },
   st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0, pulls: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"], seed: Math.random().toString(36).slice(2, 10) });
 
+/** Cartes neutres : offertes à tout le monde (jamais à débloquer). */
+const NEUTRALS = ALL.filter((d) => d.fam === "neutre" && d.type !== "plot" && !d.st);
+/** Chaque carte neutre est possédée en autant d'exemplaires qu'un deck peut en contenir (2). */
+function giveNeutrals(t) {
+  for (const d of NEUTRALS) {
+    const have = (t.coll[d.id] || 0) + (t.foil[d.id] || 0), need = copiesOf(d);
+    if (have < need) t.coll[d.id] = (t.coll[d.id] || 0) + need - have;
+  }
+  return t;
+}
 /** Remet un profil lu du stockage dans une forme valide (cartes inconnues retirées, nombres vérifiés). */
 export function normalizeTcg(raw) {
   const t = emptyTcg();
-  if (!raw || typeof raw !== "object") return t;
+  if (!raw || typeof raw !== "object") return giveNeutrals(t);
   const n = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
   // cartes renommées ou remplacées : l'ancien identifiant devient le nouveau (les exemplaires s'additionnent)
   const moved = (o, cap) => {
@@ -54,6 +65,8 @@ export function normalizeTcg(raw) {
     refund += n(raw.coll && raw.coll[id]) * RECYCLE[x.r];
     refund += n(raw.foil && raw.foil[id]) * RECYCLE[x.r] * (x.seven ? 1 : 3);
   }
+  // boosters d'une famille (retirés de la boutique) pas encore ouverts : remboursés à leur prix
+  for (const [id, v] of Object.entries(raw.packs && typeof raw.packs === "object" ? raw.packs : {})) if (id.startsWith("fam:")) refund += Math.min(999, n(v)) * FAM_PACK_REFUND;
   t.at = n(raw.at);
   t.starter = typeof raw.starter === "string" && starterById(raw.starter) ? raw.starter : null;
   t.ec = Math.min(1e7, n(raw.ec) + refund);
@@ -66,6 +79,7 @@ export function normalizeTcg(raw) {
   t.coll = cards(raw.coll);
   t.foil = cards(raw.foil);
   for (const [id, v] of Object.entries(t.coll)) if (alwaysFoil(CARD[id])) { t.foil[id] = Math.min(99, (t.foil[id] || 0) + v); delete t.coll[id]; } // cartes 7 : toujours brillantes
+  giveNeutrals(t);
   // decks : les cartes renommées suivent. S'il manque des cartes à cause d'une carte retirée du jeu, ou d'une carte 7 en double
   // (elles sont uniques : un exemplaire par deck), le deck est complété (cartes possédées d'abord, sinon cartes du deck de départ
   // offertes) : il reste jouable. Les anciens profils (v < 2) ont déjà perdu Franz Hopper 7, le Clone de William, Anthea Hopper
@@ -167,21 +181,18 @@ export function levelReward(lvl) {
 const BASE = [[["C", 85], ["U", 15]], [["C", 85], ["U", 15]], [["C", 85], ["U", 15]], [["U", 70], ["R", 30]], [["R", 70], ["E", 24], ["L", 6]]];
 const PRESTIGE = [[["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["E", 80], ["L", 20]], [["E", 60], ["L", 40]]];
 const collectible = (d) => d.type !== "plot" && !d.st;
+/** Cartes qu'on peut tirer (boosters, boutique, Portails) : pas les neutres, offertes à tout le monde. */
+const drawable = (d) => collectible(d) && d.fam !== "neutre";
+/** Remboursement d'un ancien booster de famille pas encore ouvert (ils ne sont plus vendus). */
+export const FAM_PACK_REFUND = 160;
 export const PACKS = [
   { id: "multi", name: "Booster Multivers", price: 120, desc: "5 cartes de toutes les familles. Une rare au moins.", filter: () => true, slots: BASE, jet: 1 },
   { id: "heros", name: "Booster Héros", price: 140, desc: "5 personnages, sans objet ni événement.", filter: (d) => d.type === "char", slots: BASE, jet: 1 },
   { id: "arsenal", name: "Booster Arsenal", price: 140, desc: "5 cartes : lieux, objets et événements seulement.", filter: (d) => d.type !== "char", slots: BASE, jet: 1 },
   { id: "prestige", name: "Booster Prestige", price: 600, desc: "5 cartes rares ou mieux, dont une épique au moins.", filter: () => true, slots: PRESTIGE, jet: 3 },
   { id: "decouverte", name: "Booster Découverte", price: 200, desc: "5 cartes que tu n'as pas encore (tant qu'il en reste). Une rare au moins.", filter: () => true, slots: BASE, jet: 1, fresh: true },
-  ...PLAYABLE.map((f) => ({ id: "fam:" + f.id, fam: f.id, name: `Booster ${f.short || f.name}`, price: 160, desc: `5 cartes de la famille ${f.name}.`, filter: (d) => d.fam === f.id, slots: BASE, jet: 1 })),
 ];
 export function packDef(id) { return PACKS.find((p) => p.id === id) || null; }
-/** Réduction sur le booster de la famille du Monde à l'honneur (Portails), tant qu'il est ouvert. */
-export const FEATURED_OFF = 0.25;
-/** Le booster de la famille du Monde à l'honneur ce jour-là ? */
-export const packFeatured = (p, day = today()) => Boolean(p && p.fam) && p.fam === portalsOf(day).monde.fam;
-/** Prix d'un booster ce jour-là (−25 % pour la famille du Monde à l'honneur). */
-export const packPrice = (p, day = today()) => (packFeatured(p, day) ? Math.round(p.price * (1 - FEATURED_OFF)) : p.price);
 /** Nombre de boosters d'un même type qu'on ouvre d'un coup, au plus. */
 export const OPEN_MAX = 5;
 
@@ -193,7 +204,7 @@ export const OPEN_MAX = 5;
 export function rollPack(packId, r = Math.random, info = {}, have = null) {
   const p = packDef(packId);
   if (!p) return [];
-  const pool = ALL.filter((d) => collectible(d) && p.filter(d));
+  const pool = ALL.filter((d) => drawable(d) && p.filter(d));
   const byR = Object.fromEntries(RARITY_ORDER.map((k) => [k, pool.filter((d) => d.r === k)]));
   const fresh = p.fresh && have ? Object.fromEntries(RARITY_ORDER.map((k) => [k, byR[k].filter((d) => !have[d.id])])) : null;
   const golden = r() < 0.005;
@@ -247,14 +258,13 @@ export function openPacks(t0, packId, n = OPEN_MAX, r = Math.random) {
   if (!packs.length) return { error: "Tu n'as pas ce booster." };
   return { t, packs, jet: packs.reduce((s, x) => s + x.jet, 0) };
 }
-export function buyPack(t0, packId, day = today()) {
+export function buyPack(t0, packId) {
   const p = packDef(packId);
   const t = clone(normalizeTcg(t0));
   if (!p) return { error: "Booster inconnu." };
-  const price = packPrice(p, day);
-  if (t.ec < price) return { error: `Il te manque ${price - t.ec} ${CURRENCY}.` };
-  t.ec -= price; t.packs[packId] = (t.packs[packId] || 0) + 1;
-  return { t, price };
+  if (t.ec < p.price) return { error: `Il te manque ${p.price - t.ec} ${CURRENCY}.` };
+  t.ec -= p.price; t.packs[packId] = (t.packs[packId] || 0) + 1;
+  return { t, price: p.price };
 }
 
 /* ------------------------------ collection ------------------------------ */
@@ -350,7 +360,7 @@ export const PRICE = { C: 80, U: 200, R: 500, E: 1200, L: 3000 };
 /** Les 6 cartes à vendre aujourd'hui (les mêmes toute la journée pour ce joueur). */
 export function shopOffers(t, day = today()) {
   const r = rng(hash(`${t.seed}|${day}|boutique`));
-  const pool = ALL.filter(collectible);
+  const pool = ALL.filter(drawable);
   const byR = Object.fromEntries(RARITY_ORDER.map((k) => [k, pool.filter((d) => d.r === k)]));
   const slots = [[["C", 40], ["U", 32], ["R", 18], ["E", 8], ["L", 2]], [["C", 40], ["U", 32], ["R", 18], ["E", 8], ["L", 2]], [["C", 30], ["U", 35], ["R", 25], ["E", 8], ["L", 2]], [["U", 50], ["R", 35], ["E", 12], ["L", 3]], [["R", 60], ["E", 30], ["L", 10]], [["E", 60], ["L", 40]]];
   const out = [];
@@ -394,7 +404,7 @@ function portalPool(bn) {
   const key = `${bn.kind}:${bn.id}`;
   if (!POOLS.has(key)) {
     const by = { L: [], E: [], R: [], U: [], C: [] };
-    for (const d of ALL) if (collectible(d) && (bn.kind !== "monde" || d.fam === bn.fam)) by[tierOf(d)].push(d.id);
+    for (const d of ALL) if (drawable(d) && (bn.kind !== "monde" || d.fam === bn.fam)) by[tierOf(d)].push(d.id);
     POOLS.set(key, by);
   }
   return POOLS.get(key);
@@ -484,7 +494,7 @@ export function claimPortalGift(t0) {
 }
 
 /* ------------------------------ quêtes ------------------------------ */
-// Récompenses : XP, et des Éclats (ec), des tickets de portail (tk), des boosters (packs) ou le booster de la famille indiquée (fpack).
+// Récompenses : XP, et des Éclats (ec), des tickets de portail (tk) ou des boosters (packs).
 export const QUESTS = [
   { id: "win1", text: "Gagne une partie", goal: 1, key: "win", xp: 80, tk: 1, ec: 20 },
   { id: "play2", text: "Joue 2 parties", goal: 2, key: "games", xp: 60, ec: 70 },
@@ -497,17 +507,13 @@ export const QUESTS = [
   { id: "cards12", text: "Joue 12 cartes", goal: 12, key: "played", xp: 50, ec: 60 },
   { id: "packs2", text: "Ouvre 2 boosters", goal: 2, key: "packs", xp: 40, tk: 1 },
   { id: "power10", text: "Termine une partie avec 10 Pouvoir ou plus", goal: 1, key: "power10", xp: 60, packs: { heros: 1 } },
-  { id: "famwin", text: "Gagne une partie avec un deck de la famille indiquée", goal: 1, key: "famwin", xp: 100, tk: 1, fpack: true, fam: true },
+  { id: "famwin", text: "Gagne une partie avec un deck de la famille indiquée", goal: 1, key: "famwin", xp: 100, tk: 2, fam: true },
 ];
 export const QUEST_BY = Object.fromEntries(QUESTS.map((q) => [q.id, q]));
 /** Coffre du jour : les trois quêtes du jour récupérées. */
 export const QUEST_BONUS = { tk: 1, ec: 100 };
-/** Les récompenses d'une quête (q : la quête du jour, pour la famille indiquée) : { ec, tk, packs }. */
-export function questReward(d, q = null) {
-  const packs = { ...(d.packs || {}) };
-  if (d.fpack && q && q.fam && packDef("fam:" + q.fam)) packs["fam:" + q.fam] = (packs["fam:" + q.fam] || 0) + 1;
-  return { ec: d.ec || 0, tk: d.tk || 0, packs };
-}
+/** Les récompenses d'une quête : { ec, tk, packs }. */
+export const questReward = (d) => ({ ec: d.ec || 0, tk: d.tk || 0, packs: { ...(d.packs || {}) } });
 /** Les 3 quêtes du jour (tirées au hasard, les mêmes toute la journée). */
 export function ensureQuests(t0, day = today()) {
   const t = clone(normalizeTcg(t0));
@@ -534,7 +540,7 @@ export function claimQuest(t0, idx) {
   if (q.got || q.n < d.goal) return { error: "Quête pas encore terminée." };
   q.got = true;
   const before = levelOf(t.xp).lvl;
-  const rw = questReward(d, q);
+  const rw = questReward(d);
   t.xp += d.xp; t.ec += rw.ec; t.tk = Math.min(9999, t.tk + rw.tk);
   for (const [k, v] of Object.entries(rw.packs)) t.packs[k] = Math.min(999, (t.packs[k] || 0) + v);
   const lv = applyLevelUps(t, before);

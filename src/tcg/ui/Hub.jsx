@@ -285,24 +285,16 @@ function PacksMine({ t, onOpen }) {
     </div>
   );
 }
-/** Prix d'un booster (barré quand il est réduit : famille du Monde à l'honneur). */
-const PackPrice = ({ p }) => { const v = P.packPrice(p); return v < p.price ? <><s className="hp-old">{p.price}</s><EC n={v} /></> : <EC n={v} />; };
 /** Boosters à acheter avec les Éclats. */
 function PacksBuy({ t, setT, flash, note = true }) {
-  const [famOpen, setFamOpen] = useState(false);
   const buy = (p) => { const r = P.buyPack(t, p.id); if (r.error) { flash(r.error); sfx.error(); return; } setT(r.t); sfx.apply(); flash(`${p.name} acheté !`); };
-  const feat = P.PACKS.find((p) => P.packFeatured(p));
-  const row = (p) => packRow(p, <button className="btn small" disabled={t.ec < P.packPrice(p)} onClick={() => buy(p)}><PackPrice p={p} /></button>);
   return (
     <>
       <div className="hub-sec hp-buy">
         <h3>Acheter des boosters <small>tu as <EC n={t.ec} /></small></h3>
-        {P.PACKS.filter((p) => !p.fam).map(row)}
-        {feat && <div className="hp-feat">{row(feat)}<span className="pill warn">Monde à l'honneur −{Math.round(P.FEATURED_OFF * 100)} %</span></div>}
-        <button className="btn ghost small" onClick={() => setFamOpen(!famOpen)}><Icon name={famOpen ? "minus" : "plus"} size={16} />Boosters d'une seule famille</button>
-        {famOpen && P.PACKS.filter((p) => p.fam).map(row)}
+        {P.PACKS.map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
       </div>
-      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Le Booster Découverte ne donne que des cartes que tu n'as pas encore (tant qu'il en reste). Quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à {P.OPEN_MAX} d'un coup. Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ ne sortent jamais des boosters.</p>}
+      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Le Booster Découverte ne donne que des cartes que tu n'as pas encore (tant qu'il en reste). Quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à {P.OPEN_MAX} d'un coup. Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ et les cartes neutres (offertes à tout le monde) ne sortent jamais des boosters.</p>}
     </>
   );
 }

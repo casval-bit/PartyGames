@@ -215,7 +215,8 @@ export function buildStarter(spec) {
   for (const d of support.filter((x) => x.type === "loc")) { if (counts.locs >= 8) break; add(d, two(d)); }
   for (const d of support.filter((x) => x.type !== "loc")) { if (counts.oe >= 12) break; add(d, two(d)); }
   // complément neutre
-  const neutral = ALL.filter((d) => d.fam === "neutre").sort((a, b) => (a.type === "char" ? -1 : 0) - (b.type === "char" ? -1 : 0) || a.cost - b.cost);
+  // (seulement les cartes neutres de remplissage : pas les personnages venus d'autres univers, option fill: false)
+  const neutral = ALL.filter((d) => d.fam === "neutre" && d.fill).sort((a, b) => (a.type === "char" ? -1 : 0) - (b.type === "char" ? -1 : 0) || a.cost - b.cost);
   for (const d of neutral) { if (counts.total >= R.size) break; if (d.type === "char" || counts.chars >= R.minChars) add(d, Math.min(two(d), R.size - counts.total)); }
   for (const d of chars) { if (counts.total >= R.size) break; if (!cards[d.id]) add(d, Math.min(two(d), R.size - counts.total)); else if (cards[d.id] === 1) add(d, 1); }
   for (const d of neutral) { if (counts.total >= R.size) break; add(d, 1); }

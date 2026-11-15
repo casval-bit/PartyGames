@@ -379,6 +379,12 @@ League of Legends (un deck par **région** de Runeterra, comme les types Pokémo
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
 Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli,
 Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella) et JoJo's Bizarre Adventure, plus des cartes Neutres.
+**Cartes neutres** (`cards/neutral.js`, 42 cartes) : jouables dans tous les decks et **offertes à tout le monde** (2 exemplaires de chacune, rien à débloquer :
+`giveNeutrals` dans `progress.js`), elles ne sortent donc jamais des boosters, de la boutique ni des Portails. En plus des cartes de base (Mercenaire, Espion,
+Portail interdimensionnel…), des personnages d'univers trop petits pour avoir leur famille, jamais de carte 7 : Perceval, Karadoc et la Table ronde (Kaamelott),
+Marty McFly, Doc Brown et la DeLorean (Retour vers le futur), Shrek, l'Âne, le Chat Potté et le marais (Shrek), Anya, Loid et Yor Forger (Spy x Family),
+L, Ryuk et le Death Note (Death Note), Sherlock Holmes et le Docteur Watson, l'Imposteur (Among Us), le Creeper (Minecraft), Kirikou et Rémy (Ratatouille).
+Les decks de départ ne s'en servent jamais pour se compléter (option `fill: false`).
 2282 cartes à collectionner (personnages, lieux, objets, événements) en 5 raretés, et 62 Scénarios (les « intrigues ») qui mélangent tous les univers.
 
 **Les cartes de coût 7** (les plus puissantes, souvent légendaires ; **toujours brillantes**) : chaque grande famille en a plusieurs, et un même personnage peut avoir deux versions à 7
@@ -460,7 +466,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   À plat, elle dépasse sous la carte en couches (arête claire, couleur du cadre, ombre), et le cadre a un léger biseau (`.tc-edge`, `--bevel` dans `tcg.css`) ;
   en grand, c'est une vraie tranche en 3D, plus épaisse, qui se voit aussi sur le côté quand la carte penche.
 - **Boosters** (5 cartes, au moins une rare) : Multivers (120 Éclats), Héros et Arsenal (140), **Découverte** (200 : que des cartes que tu n'as pas encore, tant qu'il en reste),
-  Prestige (600 : rares ou mieux), et un booster par famille (160 ; celui du Monde à l'honneur des Portails coûte 25 % de moins pendant ses deux semaines).
+  Prestige (600 : rares ou mieux). Il n'y a plus de booster par famille : ceux qui n'étaient pas encore ouverts sont remboursés 160 Éclats chacun.
   **Ouvrir par 5** : quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à 5 d'un coup (`openPacks`) : un paquet de boosters en éventail qu'on déchire une fois,
   puis les cartes booster par booster (« Booster 2 / 5 »), et à la fin les 25 cartes de la plus rare à la moins rare.
   **Ouverture** (`PackOpen.jsx`) : le paquet s'incline vers la souris et la lumière glisse dessus ; la carte du dessus brille à travers son dos selon sa rareté
@@ -488,7 +494,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   contre 3 000 pour une légendaire au hasard dans la boutique : on paie un peu plus pour choisir. Révélation : un vortex qu'on touche, qui prend la couleur de la meilleure carte
   (violet : épique, or : légendaire) avant de s'ouvrir. Cadeau d'ouverture : 10 tickets. On voit aussi les prochains portails.
 - **Tickets de portail** et quêtes : chaque quête du jour rapporte de l'XP et une récompense : des Éclats, un **ticket de portail** (Gagne une partie, Ouvre 2 boosters),
-  un **booster** (Domination : Multivers ; 10 Pouvoir : Héros) ou, pour la quête de famille, **le booster de cette famille et un ticket**.
+  un **booster** (Domination : Multivers ; 10 Pouvoir : Héros) ou, pour la quête de famille, **deux tickets**.
   **Coffre du jour** : les 3 quêtes récupérées, 1 ticket et 100 Éclats de plus.
 - **Niveaux** : un booster à chaque niveau (un Prestige tous les 5). **3 quêtes par jour** (une peut être changée) et 13 succès.
 - Tout est enregistré dans le profil (`profile.tcg`, y compris la photo `av`, le cadre `fr`, les tickets `tk`, les Portails `por` et les compteurs à vie de `st`), donc sauvegardé sur le compte quand on est connecté.

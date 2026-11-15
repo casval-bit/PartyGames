@@ -17,7 +17,7 @@ const STOP = new Set(["le", "la", "les", "de", "du", "des", "et", "d", "l", "y",
 /** Initiales du médaillon : « Monkey D. Luffy » → ML, « Pikachu » → P. */
 export function initials(name) {
   const w = String(name).replace(/[^\p{L}\s'-]/gu, " ").split(/[\s'-]+/).filter((x) => x && !STOP.has(x.toLowerCase()));
-  if (!w.length) return "?";
+  if (!w.length) { const c = String(name).match(/\p{L}/u); return c ? c[0].toUpperCase() : "?"; } // « L » (Death Note) : la lettre elle-même
   if (w.length === 1) return w[0][0].toUpperCase();
   return (w[0][0] + w[w.length - 1][0]).toUpperCase();
 }

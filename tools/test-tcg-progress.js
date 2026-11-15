@@ -43,8 +43,7 @@ ok(excl === 0, "les cartes exclusives aux decks de départ ne sortent jamais des
 ok(rare === 3000, "au moins une rare (ou mieux) par booster");
 ok(foils > 0 && foils < 600, `seules les cartes 7 sortent brillantes des boosters (${(100 * foils / rolls).toFixed(1)} % des cartes)`);
 ok(Array.from({ length: 300 }, () => P.rollPack("prestige")).flat().every((c) => c.foil === (CARD[c.id].cost >= 7)), "boosters : brillante si et seulement si c'est une carte 7");
-const fam = P.rollPack("fam:pokemon");
-ok(fam.every((c) => CARD[c.id].fam === "pokemon"), "booster de famille : uniquement cette famille");
+ok(!P.PACKS.some((p) => p.fam) && Array.from({ length: 400 }, () => P.rollPack("multi")).flat().every((c) => CARD[c.id].fam !== "neutre"), "plus de booster par famille ; les cartes neutres (offertes) ne sortent pas des boosters");
 ok(P.rollPack("arsenal").every((c) => CARD[c.id].type !== "char") && P.rollPack("heros").every((c) => CARD[c.id].type === "char"), "boosters Arsenal (sans personnage) et Héros (que des personnages)");
 const before = Object.values(t.coll).reduce((s, n) => s + n, 0) + Object.values(t.foil).reduce((s, n) => s + n, 0);
 const op = P.openPack(t, "multi");
@@ -142,7 +141,9 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(P.normalizeTcg(m).ec === m.ec, "remboursement une seule fois (sauvegarde déjà à jour)");
   ok(m.av === null, "photo d'une carte retirée : abandonnée");
   ok(P.normalizeTcg({ coll: { "lyoko-aelita-hopper-4": 1, "lyoko-aelita-stones-4": 1 } }).coll["lyoko-aelita-hopper-4"] === 2, "ancien et nouvel identifiant : les exemplaires s'additionnent");
-  ok(deckSize(m.decks[0]) === 7 && d["lyoko-ninjas-de-tyron-2"] === 1, "deck : la carte retirée est remplacée (autant de cartes qu'avant), d'abord par une carte possédée libre");
+  const own7 = P.owned(m), put = Object.keys(d).filter((id) => !["lyoko-aelita-hopper-4", "lyoko-champ-de-force-evt", "lyoko-krabe-3"].includes(id));
+  ok(deckSize(m.decks[0]) === 7 && put.length === 1 && (own7[put[0]] || 0) >= d[put[0]] && m.coll["lyoko-ninjas-de-tyron-2"] === 1,
+    `deck : la carte retirée est remplacée (autant de cartes qu'avant), par une carte possédée libre (${put[0]}, rien d'offert)`);
   ok(P.normalizeTcg({ coll: { "lyoko-aelita-hopper-4-2": 1 } }).coll["lyoko-aelita-hopper-4"] === 1, "Aelita Hopper 4 « Gardienne » (version de test) devient L'elfe de Lyoko");
 }
 
@@ -180,6 +181,9 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   for (const id of ids) delete deck.cards[id];
   const own = P.owned(t0);
   for (const id of ids) delete own[id];
+  const withNeutrals = fillDeck(deck, { owned: own });
+  ok(withNeutrals.missing === 0 && Object.keys(withNeutrals.added).every((id) => CARD[id].fam === "neutre") && !Object.keys(withNeutrals.granted).length, "« Compléter avec mes cartes » : les cartes neutres (offertes) bouchent les trous");
+  for (const id of Object.keys(own)) if (CARD[id].fam === "neutre") own[id] = deck.cards[id] || 0; // aucune carte neutre libre
   const r0 = fillDeck(deck, { owned: own });
   ok(deckSize({ cards: r0.cards }) === 46 && r0.missing === 4 && !Object.keys(r0.granted).length, "rien de libre dans la collection : rien d'ajouté, il manque 4 cartes");
   const own2 = { ...own };
@@ -275,7 +279,8 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(fam, "Monde à l'honneur : seulement des cartes de la famille");
   ok(nL / nPulls > 0.025 && nL / nPulls < 0.06 && nE / nPulls > 0.09 && nE / nPulls < 0.16, `taux observés sur ${nPulls} invocations : légendaires ${(100 * nL / nPulls).toFixed(1)} % (avec la garantie), épiques ${(100 * nE / nPulls).toFixed(1)} %`);
   ok(nT >= nPulls / 60, `cibles obtenues : ${nT} (au moins une toutes les 50 invocations)`);
-  ok(s.st.pulls === 3000 && Object.values(s.coll).reduce((a, b) => a + b, 0) + Object.values(s.foil).reduce((a, b) => a + b, 0) === 3000, "chaque invocation donne une carte de la collection");
+  const nNeutral = Object.keys(CARD).filter((id) => CARD[id].fam === "neutre").length * 2;
+  ok(s.st.pulls === 3000 && Object.values(s.coll).reduce((a, b) => a + b, 0) + Object.values(s.foil).reduce((a, b) => a + b, 0) === 3000 + nNeutral, "chaque invocation donne une carte de la collection");
   const one = P.pull(P.normalizeTcg({ ec: 100000 }), "leg", 10, day, seeded(7));
   ok(one.cards.every((c) => c.isNew === (one.cards.findIndex((x) => x.id === c.id) === one.cards.indexOf(c))), "une carte n'est nouvelle qu'une fois dans une invocation par 10");
   const hungerDay = Po.periodDays(Po.MONDES.indexOf("hunger")).from;
@@ -287,15 +292,21 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(!viaTk.error && viaTk.t.tk === 0 && viaTk.t.ec === 0 && viaTk.cost.tk === 10, "10 tickets = une invocation par 10, sans Éclats");
 }
 
-// boosters : Découverte, réduction du Monde à l'honneur, ouverture par 5
+// boosters : Découverte, ouverture par 5 ; cartes neutres offertes ; anciens boosters de famille remboursés
 {
   const big = P.normalizeTcg({ packs: { decouverte: 3 }, coll: Object.fromEntries(Object.keys(CARD).filter((id) => CARD[id].type !== "plot" && !CARD[id].st && CARD[id].cost < 7).slice(0, 1500).map((id) => [id, 1])) });
   const before = P.owned(big);
   const dc = P.openPack(big, "decouverte");
   ok(!dc.error && dc.cards.length === 5 && dc.cards.every((c) => !before[c.id] && c.isNew), "Booster Découverte : 5 cartes que le joueur n'avait pas");
-  const jj = P.packDef("fam:jojo"), op = P.packDef("fam:onepiece");
-  ok(P.packPrice(jj, "2026-11-20") === 120 && P.packPrice(op, "2026-11-20") === 160 && P.packPrice(jj, "2026-11-30") === 160, "booster du Monde à l'honneur : −25 % pendant ses deux semaines");
-  ok(P.buyPack(P.normalizeTcg({ ec: 120 }), "fam:jojo", "2026-11-20").t.packs["fam:jojo"] === 1 && P.buyPack(P.normalizeTcg({ ec: 120 }), "fam:jojo", "2026-11-30").error, "achat au prix réduit");
+  const old = P.normalizeTcg({ ec: 10, packs: { "fam:jojo": 2, "fam:onepiece": 1, multi: 1 } });
+  ok(old.ec === 10 + 3 * P.FAM_PACK_REFUND && old.packs.multi === 1 && !Object.keys(old.packs).some((k) => k.startsWith("fam:")), "anciens boosters de famille pas ouverts : remboursés 160 Éclats chacun");
+  ok(P.normalizeTcg(JSON.parse(JSON.stringify(old))).ec === old.ec, "le remboursement ne compte qu'une fois");
+  const neutralIds = Object.keys(CARD).filter((id) => CARD[id].fam === "neutre");
+  const fresh = P.normalizeTcg(null), own0 = P.owned(fresh);
+  ok(neutralIds.length >= 40 && neutralIds.every((id) => own0[id] === 2) && P.normalizeTcg({}).coll["neutre-shrek-5"] === 2, `les ${neutralIds.length} cartes neutres sont offertes à tout le monde (2 exemplaires)`);
+  ok(P.normalizeTcg({ foil: { "neutre-shrek-5": 1 } }).coll["neutre-shrek-5"] === 1 && P.normalizeTcg({ coll: { "neutre-shrek-5": 3 } }).coll["neutre-shrek-5"] === 3, "cartes neutres : on garde ses brillantes et ses exemplaires en plus");
+  ok(P.shopOffers(fresh, "2026-11-20").every((o) => CARD[o.id].fam !== "neutre"), "la boutique ne vend pas de cartes neutres");
+  ok(st.every((s) => Object.keys(s.cards).every((id) => CARD[id].fam !== "neutre" || CARD[id].fill)), "decks de départ : jamais complétés avec les personnages venus d'autres univers (Shrek, Sherlock…)");
   const seven = P.normalizeTcg({ packs: { multi: 7 } });
   const many = P.openPacks(seven, "multi", 5);
   ok(!many.error && many.packs.length === 5 && many.t.packs.multi === 2 && many.packs.every((p) => p.cards.length === 5), "ouvrir 5 boosters d'un coup (il en reste 2)");
@@ -311,11 +322,11 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(!P.questBonusReady(q) && P.claimQuestBonus(q).error, "coffre du jour fermé tant que les 3 quêtes ne sont pas récupérées");
   const a = P.claimQuest(q, 0), b = P.claimQuest(a.t, 1), c = P.claimQuest(b.t, 2);
   ok(a.tk === 1 && a.t.tk === 1 && b.packs.multi === 1 && b.t.packs.multi === 1, "quêtes : un ticket de portail (Gagne une partie), un Booster Multivers (Domination)");
-  ok(c.packs["fam:jojo"] === 1 && c.t.packs["fam:jojo"] === 1 && c.t.tk === 2, "quête de famille : le booster de cette famille et un ticket");
+  ok(c.tk === 2 && c.t.tk === 3, "quête de famille : deux tickets de portail");
   ok(P.questBonusReady(c.t), "les 3 quêtes récupérées : coffre du jour prêt");
   const ch = P.claimQuestBonus(c.t);
-  ok(!ch.error && ch.t.tk === 3 && ch.t.ec === c.t.ec + P.QUEST_BONUS.ec && P.claimQuestBonus(ch.t).error && P.normalizeTcg(JSON.parse(JSON.stringify(ch.t))).quests.bonus, "coffre du jour : 1 ticket et 100 Éclats, une fois");
-  ok(P.QUESTS.every((d) => { const rw = P.questReward(d, { fam: "jojo" }); return rw.ec + rw.tk * 100 + Object.keys(rw.packs).length * 120 >= 50; }), "chaque quête rapporte quelque chose en plus de l'XP");
+  ok(!ch.error && ch.t.tk === 4 && ch.t.ec === c.t.ec + P.QUEST_BONUS.ec && P.claimQuestBonus(ch.t).error && P.normalizeTcg(JSON.parse(JSON.stringify(ch.t))).quests.bonus, "coffre du jour : 1 ticket et 100 Éclats, une fois");
+  ok(P.QUESTS.every((d) => { const rw = P.questReward(d); return rw.ec + rw.tk * 100 + Object.keys(rw.packs).length * 120 >= 50; }), "chaque quête rapporte quelque chose en plus de l'XP");
 }
 
 // vues réseau

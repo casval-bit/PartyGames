@@ -77,4 +77,6 @@ export const FEM = new Set([
   // JoJo's Bizarre Adventure
   "Erina Pendleton", "Lisa Lisa", "Trish Una", "Jolyne Cujoh", "Foo Fighters", "Ermes Costello", "Gwess", "Yukako Yamagishi",
   "Lucy Steel", "Hot Pants", "Sugar Mountain", "Yasuho Hirose", "Daiya Higashikata",
+  // Neutres
+  "Anya Forger", "Yor Forger",
 ]);
