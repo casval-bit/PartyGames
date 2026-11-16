@@ -6,7 +6,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // (Champions, Conseil 4, Maîtres, chefs d'équipe…) seulement dans les decks de ce type et de leur région.
 //
 // Échelle des coûts : 7 = Pokémon et Dresseurs les plus puissants (légendaires majeurs, Méga-Évolutions, Maîtres, chefs) ;
-// 6 = grandes stars (Amphinobi, Ectoplasma, Noctali, Tokorico, Ghetis, Goyah…) ; 4-5 = solides (Ronflex, Raichu,
+// 6 = grandes stars (Amphinobi, Ectoplasma, Noctali, Tokorico, Ghetis, Goyah, Tcheren…) ; 4-5 = solides (Ronflex, Raichu,
 // Lugulabre, Spiritomb, Miaouss, évolutions finales) ; 3 = entre les deux (évolutions intermédiaires) ; 1-2 = Pokémon de base.
 export const meta = {
   id: "pokemon", name: "Pokémon", short: "Pokémon", color: "#ffcb05", color2: "#24427d", icon: "bolt", motif: "energy",
@@ -470,7 +470,7 @@ export const cards = [
   tr("N Harmonia", "Le roi de la Team Plasma", 7, 4, "CRI", "Team Plasma", "celebre", "ifWith:Pokémon,2@Il entend la voix des Pokémon ; enterStand:Pokémon@Idéaux", "L", { ty: "Électrik", rg: "Unys" }),
   tr("Ghetis", "Le vrai maître de la Team Plasma", 6, 3, "RI", "Team Plasma", "intimidation", "winSteal:ruse,2@Manipulation ; actSilence:5@L'ordre du sage", "E", { ty: "Ténèbres", rg: "Unys" }),
   tr("Goyah", "Maître de la Ligue d'Unys", 6, 4, "CI", "Maître", "celebre", "atkBuff:Pokémon,1@Le vieux sage ; enterDraw:1", "E", { ty: "Insecte", rg: "Unys" }),
-  tr("Tcheren", "Le champion d'Ogoesse", 7, 4, "RI", "Champion|Rival", "genie", "aura:Normal,1@La leçon de l'école ; enterDraw:2@Toujours un plan", "L", { ty: "Normal", rg: "Unys" }),
+  tr("Tcheren", "Le champion d'Ogoesse", 6, 3, "RI", "Champion|Rival", "genie", "aura:Normal,1@La leçon de l'école ; enterDraw:1@Toujours un plan", "E", { ty: "Normal", rg: "Unys" }),
   tr("Nikolaï", "Le savant de la Team Plasma", 5, 2, "RI", "Team Plasma|Savant", "genie", "enterSearch:Pokémon@Recherche ; actStand:Acier@Machine", "R", { ty: "Acier", rg: "Unys" }),
   tr("Iris", "La dresseuse de Dragons", 5, 3, "CI", "Maître", "intimidation", "aura:Dragon,1@Le cœur des Dragons", "R", { ty: "Dragon", rg: "Unys" }),
   tr("Pieris", "Conseil 4 d'Unys", 5, 3, "RI", "Conseil 4", "discret", "winDiscard:ruse,1@Le flambeur", "R", { ty: "Ténèbres", rg: "Unys" }),
@@ -513,7 +513,7 @@ export const cards = [
 const deck = (pt, leader, excl, desc) => ({ id: `poke-${pt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}`, name: `Pokémon ${pt}`, pt, leader, excl,
   like: [pt, pt, pt], avoid: pt === "Unys" || pt === "Électrik" ? [] : ["Team Plasma"], desc });
 export const starters = [
-  deck("Normal", "pokemon-arceus-7", ["pokemon-tcheren-7", "pokemon-ronflex-5"], "Arceus, Ronflex et Tcheren : chaque victoire rapporte de l'or."),
+  deck("Normal", "pokemon-arceus-7", ["pokemon-tcheren-6", "pokemon-ronflex-5"], "Arceus, Ronflex et Tcheren : chaque victoire rapporte de l'or."),
   deck("Feu", "pokemon-dracaufeu-7", ["pokemon-tarak-7", "pokemon-arcanin-5"], "Dracaufeu et Tarak, le champion invaincu : vos Pokémon Feu frappent plus fort en attaque."),
   deck("Eau", "pokemon-kyogre-7", ["pokemon-marc-7", "pokemon-milobellus-5"], "Kyogre, Marc et Milobellus : chaque round, le premier défi gagné fait piocher."),
   deck("Plante", "pokemon-florizarre-7", ["pokemon-kassis-7", "pokemon-majaspic-5"], "Florizarre, Majaspic et Kassis : +1 revenu à chaque round."),
@@ -535,7 +535,7 @@ export const starters = [
   deck("Johto", "pokemon-ho-oh-7", ["pokemon-lugia-7", "pokemon-noctali-6"], "Ho-Oh, Lugia et Noctali : vos Pokémon qui défendent gagnent +1 force."),
   deck("Hoenn", "pokemon-rayquaza-7", ["pokemon-marc-7", "pokemon-latios-6"], "Rayquaza, Latios et Marc : remporter la Domination fait piocher."),
   deck("Sinnoh", "pokemon-cynthia-7", ["pokemon-dialga-7", "pokemon-spiritomb-5"], "Cynthia, Dialga et Spiritomb : chaque round, perdre un défi fait piocher."),
-  deck("Unys", "pokemon-n-harmonia-7-2", ["pokemon-zekrom-7", "pokemon-ghetis-6", "pokemon-tcheren-7"], "N, Zekrom, Ghetis et Tcheren : chaque round, le premier défi gagné fait piocher."),
+  deck("Unys", "pokemon-n-harmonia-7-2", ["pokemon-zekrom-7", "pokemon-ghetis-6", "pokemon-tcheren-6"], "N, Zekrom, Ghetis et Tcheren : chaque round, le premier défi gagné fait piocher."),
   deck("Kalos", "pokemon-amphinobi-7", ["pokemon-dianthea-7", "pokemon-goupelin-5"], "Méga-Amphinobi, Goupelin et Dianthéa : vos Pokémon qui attaquent gagnent +1 force."),
   deck("Alola", "pokemon-solgaleo-7", ["pokemon-tokorico-6", "pokemon-guzma-6"], "Solgaleo, Tokorico et Guzma : chaque round, la mort d'un de vos personnages fait piocher."),
   deck("Galar", "pokemon-zacian-7", ["pokemon-tarak-7", "pokemon-corvaillus-5"], "Zacian, Corvaillus et Tarak : un défi de Combat gagné agenouille un adversaire."),

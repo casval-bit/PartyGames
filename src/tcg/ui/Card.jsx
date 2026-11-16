@@ -1,6 +1,6 @@
 // Rendu des cartes du Trône des Mondes : carte complète (toutes tailles), scénario (paysage), dos, pion du plateau.
 import { memo, useMemo } from "react";
-import { CARD, FAMILY, subOf, subKind, traitNames } from "../cards/index.js";
+import { CARD, FAMILY, TYPE_BONUS, subOf, subKind } from "../cards/index.js";
 import { RARITY, KEYWORDS, TYPE_NAME, CARD_TYPES } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { cardArt, cardColors } from "./art.js";
@@ -60,8 +60,6 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   const n = d.name.length;
   const Tag = onClick ? "button" : "div";
   const s = str !== undefined && d.type === "char" ? str : d.str;
-  // traits, puis type / région / maison… (jamais sur le dessin) ; au-delà de 38 caractères, la police rétrécit pour que la ligne tienne
-  const tl = traitNames(d), tls = tl.length ? tl.join(". ") + "." : " ";
   return (
     <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && !alwaysFoil(d) ? " lite" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
       aria-label={onClick ? `${d.name}${d.title ? ", " + d.title : ""}` : undefined} {...rest}>
@@ -76,7 +74,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
           {art && <img src={art} alt="" draggable={false} />}
           {d.type === "char" && <div className="tc-icons">{ICONS.filter((t) => d.icons[t]).map((t) => <i key={t} className={"tc-ic " + t} title={TYPE_NAME[t]}><Icon name={TYPE_ICON[t]} size={12} stroke={2.2} /></i>)}</div>}
         </div>
-        <div className="tc-traits" style={tls.length > 38 ? { fontSize: `${((4.1 * 38) / tls.length).toFixed(2)}cqw` } : undefined}>{tls}</div>
+        <div className="tc-traits">{d.traits.length ? d.traits.join(". ") + "." : " "}</div>
         <div className={"tc-text" + (len > 215 ? " t3" : len > 150 ? " t2" : "")}>
           {kws.length > 0 && <div className="tc-kw">{kws.join(". ")}.</div>}
           {d.req && <div className="tc-req">Personnage <RichText text={`*${d.req}*`} /> uniquement.</div>}
@@ -85,6 +83,8 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
         </div>
         <div className="tc-foot">
           <span className="tc-kind">{CARD_TYPES[d.type]}</span>
+          {/* région de Runeterra, type Pokémon… : dans le bandeau du bas, jamais sur le dessin */}
+          {d.pt && d.pt.length > 0 && <span className="tc-pts">{d.pt.map((t) => <span key={t} className="tc-pt" style={{ "--ptc": (TYPE_BONUS[t] || {}).color || "#888" }}>{(TYPE_BONUS[t] || {}).short || (TYPE_BONUS[t] || {}).name || t}</span>)}</span>}
           <Icon name={f.icon} size={14} className="tc-fam" />
           <i className="tc-gem" title={(RARITY[d.r] || {}).name} />
         </div>

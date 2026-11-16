@@ -81,7 +81,7 @@ export const RENAMED = {
   "pokemon-cizayox-6": "pokemon-cizayox-5", "pokemon-grolem-6": "pokemon-grolem-5", "pokemon-onix-5": "pokemon-onix-4",
   "pokemon-draco-4": "pokemon-draco-3", "pokemon-noctali-4": "pokemon-noctali-3", "pokemon-steelix-6": "pokemon-steelix-5",
   "pokemon-ronflex-6": "pokemon-ronflex-5", "pokemon-miaouss-2": "pokemon-miaouss-4", "pokemon-giovanni-5": "pokemon-giovanni-7",
-  "pokemon-n-5": "pokemon-n-harmonia-7-2", "pokemon-tcheren-3": "pokemon-tcheren-7", "pokemon-tcheren-6": "pokemon-tcheren-7", "pokemon-cynthia-6": "pokemon-cynthia-7",
+  "pokemon-n-5": "pokemon-n-harmonia-7-2", "pokemon-tcheren-3": "pokemon-tcheren-6", "pokemon-cynthia-6": "pokemon-cynthia-7",
 };
 /** Carte remplacée par une autre à la même place : les exemplaires possédés deviennent la nouvelle carte. */
 export const REPLACED = {
@@ -123,16 +123,6 @@ export function subGroups(fam) {
     let g = out.find((x) => x.kind === kind);
     if (!g) { g = { kind, label: kind === "type" ? subWords(fam).One + "s" : (t.One || kind) + "s", list: [] }; out.push(g); }
     g.list.push(t);
-  }
-  return out;
-}
-const plainName = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-/** Les traits tels que la carte les écrit sous l'image : ses traits, puis ses sous-groupes (type, région, maison…) qui n'y sont pas déjà. */
-export function traitNames(d) {
-  const out = [...((d && d.traits) || [])], seen = new Set(out.map(plainName));
-  for (const id of (d && d.pt) || []) {
-    const t = TYPE_BONUS[id], name = (t && (t.short || t.name)) || id;
-    if (!seen.has(plainName(name))) { seen.add(plainName(name)); out.push(name); }
   }
   return out;
 }

@@ -2,7 +2,7 @@
 // Celles qu'on n'a pas encore sont grisées mais s'ouvrent quand même en grand (toujours grisées) ; les brillantes qu'on possède
 // scintillent. En grand, on feuillette l'album avec les flèches (ou ← → au clavier).
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ALL, FAMILY, PLAYABLE, traitNames } from "../cards/index.js";
+import { ALL, FAMILY, PLAYABLE } from "../cards/index.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace } from "./Card.jsx";
@@ -13,7 +13,7 @@ const FAM_ORDER = [...PLAYABLE.map((f) => f.id), "neutre"];
 const TYPE_ORDER = ["char", "loc", "obj", "evt"];
 const STEP = 72; // cartes ajoutées à l'affichage à chaque fois qu'on approche du bas
 const norm = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-const KEY = new Map(ALL.map((d) => [d.id, norm(`${d.name} ${d.title} ${traitNames(d).join(" ")}`)])); // « Kanto », « Gryffondor »… trouvent aussi leurs cartes
+const KEY = new Map(ALL.map((d) => [d.id, norm(`${d.name} ${d.title} ${d.traits.join(" ")}`)]));
 // dans une famille : personnages par coût, puis lieux, objets, événements (comme un classeur)
 const byFamily = (a, b) => FAM_ORDER.indexOf(a.fam) - FAM_ORDER.indexOf(b.fam) || TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type)
   || a.cost - b.cost || a.name.localeCompare(b.name, "fr") || a.id.localeCompare(b.id);

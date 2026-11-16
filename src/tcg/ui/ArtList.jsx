@@ -2,7 +2,7 @@
 // (Collection › Illustrations › « Liste des cartes »). On copie un nom d'un toucher, ou tous les noms affichés d'un coup,
 // et on ouvre une carte pour lui choisir directement son image.
 import { useMemo, useState } from "react";
-import { ALL, FAMILY, PLAYABLE, subLabel, traitNames } from "../cards/index.js";
+import { ALL, FAMILY, PLAYABLE, subLabel } from "../cards/index.js";
 import { RARITY, CARD_TYPES } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -34,7 +34,7 @@ export function saveTri(v) { try { localStorage.setItem(TRI_KEY, v); } catch { /
 const byCost = (a, b) => a.d.cost - b.d.cost || a.d.name.localeCompare(b.d.name, "fr") || FAM_ORDER.indexOf(a.d.fam) - FAM_ORDER.indexOf(b.d.fam) || TYPE_ORDER.indexOf(a.d.type) - TYPE_ORDER.indexOf(b.d.type);
 
 let ROWS = null;
-const rows = () => ROWS || (ROWS = ALL.map((d) => ({ d, file: artFile(d), k: norm(`${d.name} ${d.title} ${artFile(d)} ${traitNames(d).join(" ")}`) }))
+const rows = () => ROWS || (ROWS = ALL.map((d) => ({ d, file: artFile(d), k: norm(`${d.name} ${d.title} ${artFile(d)} ${d.traits.join(" ")}`) }))
   .sort((a, b) => FAM_ORDER.indexOf(a.d.fam) - FAM_ORDER.indexOf(b.d.fam) || TYPE_ORDER.indexOf(a.d.type) - TYPE_ORDER.indexOf(b.d.type)
     || a.d.name.localeCompare(b.d.name, "fr") || a.d.cost - b.d.cost));
 
