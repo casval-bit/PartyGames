@@ -18,7 +18,7 @@ export const FEM = new Set([
   // Les Cités d'or
   "Zia", "Isabella Laguerra", "Marinche", "La Reine des Amazones",
   // Les Légendaires
-  "Jadina", "Shimy", "Ténébris", "Adeyrid", "Shamira", "Solaris", "Toopie Maker", "Chasseresse jaguarianne", "Kalandre", "Galatée", "Invidia", "Sorcière des ténèbres",
+  "Jadina", "Jadilyna", "Shimy", "Ténébris", "Adeyrid", "Shamira", "Solaris", "Toopie Maker", "Chasseresse jaguarianne", "Kalandre", "Galatée", "Invidia", "Sorcière des ténèbres",
   // De cape et de crocs
   "Hermine", "Séléné", "Mademoiselle",
   // Hunger Games

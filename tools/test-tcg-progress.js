@@ -2,7 +2,7 @@
 // Lancer : node tools/test-tcg-progress.js
 import * as P from "../src/tcg/progress.js";
 import { CARD } from "../src/tcg/cards/index.js";
-import { starters, validateDeck, deckSize, fillDeck } from "../src/tcg/deck.js";
+import { starters, themeStarters, validateDeck, deckSize, fillDeck } from "../src/tcg/deck.js";
 import { Game } from "../src/tcg/engine.js";
 import { publicView, privateView } from "../src/tcg/view.js";
 
@@ -12,23 +12,26 @@ const st = starters();
 
 let t = P.normalizeTcg(null);
 ok(t.ec === 0 && !t.starter && t.decks.length === 0, "profil de cartes vide");
-const r1 = P.chooseStarter(t, "leg-gryf");
-ok(!r1.error && r1.t.starter === "leg-gryf", "choix du deck de départ Gryfenfer");
+const th = themeStarters();
+ok(th.length === 8 && th.every((s) => validateDeck(s).ok && Object.keys(s.cards).filter((id) => CARD[id].cost >= 7).length === 2), "8 decks à thème au choix, valides, avec deux cartes 7 chacun");
+ok(th.map((s) => s.name).join(", ") === "Team Rocket, Orchidia, Hawkins, Gryffondor, Demacia, Sith, DC Comics, La Meute", "les 8 decks à thème, dans l'ordre");
+const r1 = P.chooseStarter(t, "theme-orchidia");
+ok(!r1.error && r1.t.starter === "theme-orchidia", "choix du deck de départ Orchidia");
 t = r1.t;
-ok(t.foil["legendaires-gryfenfer-7"] === 1 && !t.coll["legendaires-gryfenfer-7"] && t.coll["legendaires-shimy-4"] === 2, "Gryfenfer 7 (brillante et unique, comme toutes les cartes 7 : 1 exemplaire) et Shimy 4 (exclusive) débloqués");
+ok(t.foil["legendaires-jadina-7"] === 1 && !t.coll["legendaires-jadina-7"] && t.foil["legendaires-jadilyna-7"] === 1 && t.coll["legendaires-shimy-4"] === 2, "Jadina 7 et Jadilyna 7 (brillantes et uniques, comme toutes les cartes 7 : 1 exemplaire) et Shimy 4 (exclusive) débloqués");
 ok(P.normalizeTcg({ coll: { "legendaires-gryfenfer-7": 1 }, foil: { "legendaires-gryfenfer-7": 1 } }).foil["legendaires-gryfenfer-7"] === 2, "anciens exemplaires normaux d'une carte 7 : devenus brillants");
 ok(Array.from({ length: 40 }, () => P.rollPack("prestige")).flat().filter((c) => CARD[c.id].cost >= 7).every((c) => c.foil), "boosters : une carte 7 est toujours brillante");
 ok(P.recyclable({ coll: {}, foil: { "legendaires-gryfenfer-7": 1 } }).n === 0 && P.recyclable({ coll: {}, foil: { "legendaires-gryfenfer-7": 2 } }).gained === P.RECYCLE.L, "recyclage : une carte 7 se garde en 1 exemplaire (unique dans un deck), la deuxième se recycle au prix normal");
 ok(st.every((s) => Object.entries(s.cards).every(([id, k]) => CARD[id].cost < 7 || k === 1)), "decks de départ : chaque carte 7 en un seul exemplaire");
 {
-  const d7 = { ...t.decks[0], cards: { ...t.decks[0].cards, "legendaires-gryfenfer-7": 2 } };
+  const d7 = { ...t.decks[0], cards: { ...t.decks[0].cards, "legendaires-jadina-7": 2 } };
   ok(validateDeck(d7).errors.some((e) => e.includes("unique")), "deck : une carte 7 en 2 exemplaires est refusée (unique)");
   const raw = JSON.parse(JSON.stringify(t));
-  raw.foil["legendaires-gryfenfer-7"] = 2;
+  raw.foil["legendaires-jadina-7"] = 2;
   const k = Object.keys(raw.decks[0].cards).find((id) => CARD[id].cost < 7 && raw.decks[0].cards[id] === 2);
-  raw.decks[0].cards[k] = 1; raw.decks[0].cards["legendaires-gryfenfer-7"] = 2; // ancien deck : 50 cartes dont la 7 en double
+  raw.decks[0].cards[k] = 1; raw.decks[0].cards["legendaires-jadina-7"] = 2; // ancien deck : 50 cartes dont la 7 en double
   const fixed = P.normalizeTcg(raw);
-  ok(fixed.decks[0].cards["legendaires-gryfenfer-7"] === 1 && deckSize(fixed.decks[0]) === 50 && validateDeck(fixed.decks[0], P.owned(fixed)).ok, "ancien deck avec une carte 7 en double : ramenée à 1, deck complété à 50 et valide");
+  ok(fixed.decks[0].cards["legendaires-jadina-7"] === 1 && deckSize(fixed.decks[0]) === 50 && validateDeck(fixed.decks[0], P.owned(fixed)).ok, "ancien deck avec une carte 7 en double : ramenée à 1, deck complété à 50 et valide");
 }
 ok(validateDeck(t.decks[0], P.owned(t)).ok, "le deck de départ est jouable avec la collection");
 ok(P.playableDeck(t) && P.playableDeck(t).id === t.decks[0].id, "il est sélectionné pour jouer");

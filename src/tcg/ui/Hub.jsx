@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ALL, CARD, FAMILY, PLAYABLE, subOf, subWords, subGroups } from "../cards/index.js";
 import { RARITY, RARITY_ORDER, CARD_TYPES } from "../rules.js";
-import { starters, validateDeck, defaultPlots } from "../deck.js";
+import { themeStarters, validateDeck, defaultPlots } from "../deck.js";
 import * as P from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -47,48 +47,33 @@ const fmtTime = (ms) => { const h = Math.floor(ms / 3600000), m = Math.floor((ms
 
 /* ------------------------------ deck de départ ------------------------------ */
 function StarterPick({ onPick }) {
-  const all = useMemo(() => starters(), []);
-  const [fam, setFam] = useState(null);
+  const all = useMemo(() => themeStarters(), []); // les 8 decks à thème (cards/themes.js), faits à la main
   const [sel, setSel] = useState(null);
   const [look, setLook] = useState(null);
   const [zoom, setZoom] = useState(null);
-  const list = fam ? all.filter((s) => s.fam === fam) : [];
   const s = sel ? all.find((x) => x.id === sel) : null;
   return (
     <div className="hub-body">
       <div className="hub-card">
         <h3 style={{ fontSize: "1.05rem" }}>Choisis ton deck de départ</h3>
-        <p className="muted" style={{ margin: 0, fontSize: ".86rem" }}>Il débloque ses 50 cartes (dont parfois une version exclusive d'un héros). Ce choix est définitif : toutes les autres cartes s'obtiennent ensuite dans les boosters. Tu reçois aussi 300 Éclats et 3 boosters.</p>
+        <p className="muted" style={{ margin: 0, fontSize: ".86rem" }}>Huit decks à thème, prêts à jouer. Celui que tu choisis débloque ses 50 cartes (dont parfois une version exclusive d'un héros). Ce choix est définitif : toutes les autres cartes s'obtiennent ensuite dans les boosters. Tu reçois aussi 300 Éclats et 3 boosters.</p>
       </div>
-      {!fam && (
-        <div className="hub-fams">
-          {PLAYABLE.map((f) => (
-            <button key={f.id} className="hub-fambtn" style={famStyle(f)} onClick={() => { setFam(f.id); setSel(null); sfx.select(); }}>
-              <span className="hub-fam" style={famStyle(f)}><Icon name={f.icon} size={20} /></span>
-              <span><b>{f.name}</b><small>{all.filter((x) => x.fam === f.id).length} deck{all.filter((x) => x.fam === f.id).length > 1 ? "s" : ""}</small></span>
-            </button>
-          ))}
-        </div>
-      )}
-      {fam && (
-        <>
-          <div className="row spread">
-            <button className="btn small ghost" onClick={() => { setFam(null); setSel(null); }}><Icon name="back" size={16} />Familles</button>
-            <span className="pill" style={{ borderColor: FAMILY[fam].color }}><Icon name={FAMILY[fam].icon} size={13} />{FAMILY[fam].name}</span>
-          </div>
-          <p className="muted" style={{ margin: 0, fontSize: ".84rem" }}>{FAMILY[fam].desc}</p>
-          {list.map((st) => (
-            <button key={st.id} className="hub-starter" style={famStyle(FAMILY[st.fam], st.pt)} aria-pressed={sel === st.id} onClick={() => { setSel(st.id); sfx.select(); }}>
-              <CardFace d={CARD[st.leader]} w={74} />
+      <div className="hub-themes">
+        {all.map((st) => {
+          const f = FAMILY[st.fam], sub = subOf(st.fam, st.pt);
+          const sevens = Object.keys(st.cards).filter((id) => CARD[id].cost >= 7).sort((a, b) => (a === st.leader ? -1 : b === st.leader ? 1 : 0));
+          return (
+            <button key={st.id} className="hub-starter hub-theme" data-testid={`starter-${st.id}`} style={famStyle(f, st.pt)} aria-pressed={sel === st.id} onClick={() => { setSel(st.id); sfx.select(); }}>
+              <span className="hub-theme-cards">{sevens.map((id) => <CardFace key={id} d={CARD[id]} w={64} />)}</span>
               <div style={{ minWidth: 0 }}>
                 <b>{st.name}</b>
+                <small className="hub-theme-fam"><Icon name={f.icon} size={12} />{f.short || f.name}{sub ? ` · ${sub.name}` : ""}</small>
                 <p>{st.desc}</p>
-                <small className="muted" style={{ fontSize: ".72rem" }}>Héros : {CARD[st.leader].name} ({CARD[st.leader].cost})</small>
               </div>
             </button>
-          ))}
-        </>
-      )}
+          );
+        })}
+      </div>
       {s && (
         <div className="hub-card" style={{ position: "sticky", bottom: 0, zIndex: 3 }}>
           <div className="row" style={{ gap: 8 }}>

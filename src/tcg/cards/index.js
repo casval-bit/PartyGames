@@ -30,6 +30,7 @@ import * as gundam from "./gundam.js";
 import * as jojo from "./jojo.js";
 import * as neutral from "./neutral.js";
 import * as plots from "./plots.js";
+import { THEMES } from "./themes.js";
 
 const MODS = [lyoko, umbrella, toystory, onepiece, pokemon, starac, citesdor, legendaires, capes, hunger, bebop, horde, elite, teenwolf, marvel, dc, stranger, scooby, lol, hp, sw, got, lotr, narnia, ghibli, gundam, jojo];
 
@@ -64,6 +65,8 @@ function addFamily(m) {
 }
 for (const m of MODS) addFamily(m);
 addFamily(neutral);
+// les 8 decks à thème, faits à la main : les seuls proposés à un nouveau joueur (voir themes.js)
+for (const t of THEMES) STARTER_SPECS.push({ ...t, theme: true });
 for (const d of buildCards("plot", plots.cards, used)) { CARD[d.id] = d; PLOTS.push(d); }
 
 /** Familles jouables (sans « Neutre »). */

@@ -281,6 +281,12 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
                   <Icon name="sparkles" size={16} />Rendre brillante · {shineCost(d)} jeton{shineCost(d) > 1 ? "s" : ""}
                 </button>
               </>}
+            {/* épiques : pleine carte (même image sur toute la carte, après la brillance) — prévue, pas encore disponible */}
+            {d.r === "E" && (
+              <button className="btn small tz-soon" disabled data-testid="tz-fullart" title="Bientôt : une épique brillante pourra passer en pleine carte, avec la même image">
+                <Icon name="image" size={16} />Pleine carte<span className="tz-soon-tag">Bientôt</span>
+              </button>
+            )}
           </div>
         )}
         {plot && <div className="tz-box"><h4>Scénario</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Revenu : l'or de la phase de Recrutement. Initiative : la plus haute choisit le premier joueur. Revendication : ce que coûte un défi perdu contre vous. Réserve : cartes gardées en main à la fin du round.</p></div>}

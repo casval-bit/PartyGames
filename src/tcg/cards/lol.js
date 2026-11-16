@@ -123,6 +123,7 @@ export const cards = [
   c("Garen", "La Force de Demacia", 6, 6, "CI", DE, "Avant-garde|Crownguard", "", "ifDef:1@Courage ; winKill:combat,3@Justice de Demacia", "E"),
   c("Lux", "La Dame de lumière", 5, 4, "RI", DE, "Crownguard|Mage", "discret", "enterKneel:4@Lien de lumière", "E"),
   c("Jarvan IV", "Le Modèle de Demacia", 6, 5, "CI", DE, "Lightshield", "", "aura:Demacia,1@Étendard de Demacia", "E"),
+  c("Jarvan IV", "Le Roi de Demacia", 7, 6, "CRI", DE, "Lightshield|Roi", "celebre", "kwAura:Demacia,intimidation@Pour le roi ! ; winStandAll:combat@Cataclysme", "L"),
   c("Galio", "Le Colosse", 7, 7, "CI", DE, "Pétricite|Gardien", "", "guard:Demacia@Entrée héroïque ; immune@Statue de pétricite", "L"),
   c("Fiora", "La Grande Duelliste", 5, 5, "C", DE, "Laurent", "duel", "ifAlone:2@Grand défi", "R"),
   c("Quinn", "Les Ailes de Demacia", 3, 2, "CR", DE, "Avant-garde|Éclaireuse", "", "winDraw:ruse,1@Valor en éclaireur", "R"),

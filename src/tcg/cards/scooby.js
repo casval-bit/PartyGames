@@ -15,7 +15,7 @@ export const cards = [
   ch("Scooby-Doo", "Où es-tu ?", 7, 6, "CRI", "Mystère et Cie|Chien|Famille Doo|Froussard", "celebre", "escape@Cours, Scooby ! ; aura:Mystère et Cie,1@Scooby-Dooby-Doo !", "L"),
   ch("Scooby-Doo", "Le dogue froussard", 4, 3, "RI", "Mystère et Cie|Chien|Famille Doo|Froussard", "discret", "escape@Cours, Scooby !", "R"),
   ch("Scooby-Doo", "Le chiot détective", 2, 2, "R", "Chien|Famille Doo", "", "ifWith:Mystère et Cie,1@Les petits détectives", "U"),
-  ch("Sammy Rogers", "Le meilleur ami de Scooby", 4, 3, "CRI", "Mystère et Cie|Froussard|Coolsville", "", "ifWith:Chien,2@Inséparables ; enterDraw:1@Le frigo est plein", "E", { st: "sc-mystere" }),
+  ch("Sammy Rogers", "Le meilleur ami de Scooby", 4, 3, "CRI", "Mystère et Cie|Froussard|Coolsville", "", "ifWith:Chien,2@Inséparables ; enterDraw:1@Le frigo est plein", "E"), // exclusive d'un ancien deck de départ : maintenant dans les boosters
   ch("Sammy Rogers", "Le froussard héroïque", 5, 4, "CR", "Mystère et Cie|Froussard", "", "escape@Sauve qui peut ! ; winStand:*@Le courage d'un Scooby Snack", "R"),
   ch("Sammy Rogers", "Le ventre sur pattes", 3, 2, "RI", "Mystère et Cie|Froussard", "", "actDraw:1@Le sandwich géant", "U"),
   ch("Fred Jones", "Le chef de la bande", 6, 6, "CI", "Mystère et Cie|Coolsville", "celebre", "winKneel:ruse@Piège à monstre ; ifDef:1", "E"),
@@ -104,7 +104,7 @@ export const cards = [
 ];
 
 export const starters = [
-  { id: "sc-mystere", name: "Mystère et Cie", leader: "scooby-scooby-doo-7", maxChars: 30, like: ["Mystère et Cie", "Coolsville", "Héros"], avoid: ["Police", "Hex Girls"], excl: ["scooby-sammy-rogers-4"], desc: "Scooby, Sammy, Fred, Daphné et Véra au grand complet, avec une version de Sammy qu'on ne trouve que dans ce deck : on se sépare, on fouille, on démasque." },
+  { id: "sc-mystere", name: "Mystère et Cie", leader: "scooby-scooby-doo-7", maxChars: 30, like: ["Mystère et Cie", "Coolsville", "Héros"], avoid: ["Police", "Hex Girls"], desc: "Scooby, Sammy, Fred, Daphné et Véra au grand complet : on se sépare, on fouille, on démasque." },
   { id: "sc-doo", name: "La famille Doo", leader: "scooby-scrappy-doo-5", like: ["Chien", "Famille Doo", "Héros"], avoid: ["Hex Girls", "Treize fantômes"], desc: "Scrappy, Scooby-Dum, Yabba-Doo, Nova, Dynomutt et le Faucon bleu : tous les chiens de l'histoire, et quelques héros, pour une meute très attachante." },
   { id: "sc-goules", name: "L'École des Goules", leader: "scooby-sammy-rogers-7", like: ["École des Goules", "Mystère et Cie", "Magie"], avoid: ["Police", "Famille Doo"], desc: "Sammy à 1 % de sa puissance, Scooby et les élèves de Miss Grimwood : Sibella, Elsa, Winnie, Phantasma et Tanis." },
   { id: "sc-cove", name: "Crystal Cove", leader: "scooby-bronson-stone-6", maxChars: 30, like: ["Crystal Cove", "Police", "Hex Girls", "Magie"], avoid: ["Famille Doo"], desc: "Le shérif Stone, Angel Dynamite, la maire Nettles, les Hex Girls et Vincent Van Ghoul : toute la ville la plus hantée du monde vient en aide à la bande." },

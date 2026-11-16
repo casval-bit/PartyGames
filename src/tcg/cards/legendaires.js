@@ -23,12 +23,14 @@ export const cards = [
   ch("Jadina", "Princesse exilée", 3, 2, "RI", `${L}|Orchidia|Magicienne`, "", "winDraw:ruse,1@Intelligence", "U", { key: "leg-jadina" }),
   ch("Jadina", "Le bâton-aigle", 5, 4, "RI", `${L}|Orchidia|Magicienne`, "genie", "actMinus:2@Éclair magique", "R", { key: "leg-jadina" }),
   ch("Jadina", "Héritière de Jadilyna", 7, 6, "CRI", `${L}|Orchidia|Magicienne|Noble`, "celebre|genie", "enterKneel:5@Puissance du bâton-aigle ; winDraw:*,1@Sagesse royale", "L", { key: "leg-jadina" }),
+  // l'ancêtre de Jadina, reine guerrière qui fonda Orchidia : son âme vit dans le bâton-aigle
+  ch("Jadilyna", "La reine fondatrice d'Orchidia", 7, 6, "CRI", "Orchidia|Reine|Noble", "celebre", "aura:Orchidia,1@La mère d'Orchidia ; enterSearch:Artefact@L'âme du bâton-aigle", "L"),
   // --- Razzia
   ch("Razzia", "Le gros mangeur", 3, 4, "C", `${L}|Rymar`, "", "", "U", { key: "leg-razzia" }),
   ch("Razzia", "Le colosse de Rymar", 5, 6, "C", `${L}|Rymar`, "intimidation", "ifDef:1@Montagne de muscles", "R", { key: "leg-razzia" }),
   ch("Razzia", "Porteur de Léviathan", 6, 7, "CI", `${L}|Rymar`, "intimidation|celebre", "winKill:combat,3@Léviathan", "E", { key: "leg-razzia" }),
   // --- Shimy
-  ch("Shimy", "Elfe élémentaire", 4, 3, "CR", `${L}|Elfe|Elfe élémentaire`, "discret", "ifName:Gryfenfer,2@L'amour de Gryf", "R", { key: "leg-shimy", st: "leg-gryf" }),
+  ch("Shimy", "Elfe élémentaire", 4, 3, "CR", `${L}|Elfe|Elfe élémentaire`, "discret", "ifName:Gryfenfer,2@L'amour de Gryf", "R", { key: "leg-shimy", st: "theme-orchidia" }),
   ch("Shimy", "Fusion avec la terre", 5, 4, "CR", `${L}|Elfe|Elfe élémentaire`, "discret", "loseStand@Se fondre dans la pierre", "R", { key: "leg-shimy" }),
   ch("Shimy", "Maîtresse des éléments", 7, 6, "CRI", `${L}|Elfe|Elfe élémentaire`, "celebre|discret", "aura:Elfe,1@Pureté ; atkKneel:5@Fusion élémentaire", "L", { key: "leg-shimy" }),
   // --- Ténébris
@@ -102,7 +104,7 @@ export const cards = [
 ];
 
 export const starters = [
-  { id: "leg-gryf", name: "Gryfenfer et les Jaguarians", leader: "legendaires-gryfenfer-7", like: ["Jaguarian", "Monslave"], avoid: ["Ténèbres", "Dynaméis", "Elfe"], excl: ["legendaires-shimy-4"], desc: "Gryfenfer à 7, le clan des Jaguarians et une version de Shimy qu'on ne trouve que dans ce deck." },
+  { id: "leg-gryf", name: "Gryfenfer et les Jaguarians", leader: "legendaires-gryfenfer-7", like: ["Jaguarian", "Monslave"], avoid: ["Ténèbres", "Dynaméis", "Elfe"], desc: "Gryfenfer à 7 et le clan des Jaguarians." },
   { id: "leg-danael", name: "Les Légendaires", leader: "legendaires-danael-7", like: ["Légendaire", "Faucon d'Argent", "Larbos", "Orchidia"], avoid: ["Ténèbres", "Dynaméis"], desc: "Danaël, Jadina, Razzia et les Faucons d'Argent : ensemble, on est Légendaires." },
   { id: "leg-shimy", name: "Shimy et les elfes", leader: "legendaires-shimy-7", like: ["Elfe", "Elfe élémentaire"], avoid: ["Ténèbres", "Jaguarian"], desc: "Shimy à 7 et les elfes élémentaires : se fondre dans les éléments." },
   { id: "leg-darkhell", name: "Darkhell et les ténèbres", leader: "legendaires-darkhell-7", like: ["Ténèbres", "Sorcier", "Dynaméis", "Galinas"], avoid: ["Légendaire"], desc: "Darkhell, Anathos, Kalandre et les Dynaméis : malédictions et monstres." },

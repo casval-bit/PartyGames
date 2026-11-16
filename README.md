@@ -458,7 +458,14 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Trône des Mondes (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
 
 **Collection** :
-- **Deck de départ** : choisi une seule fois parmi 116 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
+- **Deck de départ** : choisi une seule fois parmi **8 decks à thème** faits à la main (`cards/themes.js`) : Team Rocket (Giovanni et Mewtwo à 7), Orchidia (Jadina et Jadilyna),
+  Hawkins (Onze et Hopper), Gryffondor (Harry et Dumbledore), Demacia (Galio et le roi Jarvan IV), Sith (Dark Vador et Dark Sidious), DC Comics (Superman et Batman)
+  et La Meute de Teen Wolf (Scott et Derek). Deux cartes 7 par deck, et personne d'incohérent dedans (pas de Sacha ni de Pikachu chez la Team Rocket, pas de Queudver
+  chez les Gryffondor, pas de Sylas chez Demacia, pas de méchant dans la Ligue des Justiciers). Il débloque ses 50 cartes (dont une version exclusive : Shimy 4 dans Orchidia,
+  Dustin 4 dans Hawkins) + 300 Éclats et 3 boosters. Les autres decks de départ (`starters` de chaque famille) ne sont plus proposés : ce sont ceux des bots,
+  et les modèles de « Compléter avec mes cartes ». Un ancien joueur garde le sien.
+  Équilibrage (`node tools/test-tcg.js --sim 2000 --themes` : les 8 decks entre eux) : entre 38 % et 63 % de victoires. Pour y arriver, la meute de Teen Wolf
+  (passif : +1 force en attaque et en défense pour la Meute) et les héros de Hawkins (passif : +1 force en défense pour Hawkins) ont été renforcés.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, mais **une carte 7 est unique (1 exemplaire)** ; **une seule version par personnage**
   (Aelita 5 ou Aelita 7, pas les deux : dans « Ajouter », les autres versions sont grisées) ; au plus 3 cartes de coût 7+ (différentes), 6 de coût 6, 8 de coût 5 ;
@@ -482,7 +489,8 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   au résumé, les nouvelles brillent et on touche une carte pour la voir en grand.
   **Brillantes** : une carte 7 l'est toujours (reflet arc-en-ciel, cadre doré). Les autres ne le sont jamais en sortant d'un booster ou de la boutique :
   on les rend brillantes avec des **jetons de brillance** (Mes cartes ou Album, touche une carte : 1 jeton jusqu'au coût 2, puis 2, 3, 4 et 5 jetons
-  pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté (sans paillettes : ni les 7 ni elles n'ont de grille de points). Les jetons viennent
+  pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté (sans paillettes : ni les 7 ni elles n'ont de grille de points).
+  Sur une épique, un bouton grisé « Pleine carte · Bientôt » annonce la suite : une épique brillante pourra passer en pleine carte (même image), pas encore disponible. Les jetons viennent
   du recyclage des doubles (1 par commune ou peu commune, 2 par rare, 3 par épique, 5 par légendaire) et de chaque booster (1, ou 3 pour un Prestige ;
   un de plus une fois sur 4). 1 booster sur 200 est **doré** : que des rares ou mieux, et 10 jetons en plus. Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**

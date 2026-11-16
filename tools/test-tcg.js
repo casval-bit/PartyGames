@@ -284,12 +284,13 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
 
 /* ---------------- tournoi d'équilibrage ---------------- */
 if (simN) {
-  const res = Object.fromEntries(st.map((s) => [s.id, { w: 0, n: 0, name: s.name }]));
+  const pool = process.argv.includes("--themes") ? st.filter((s) => s.theme) : st; // --themes : seulement les 8 decks à thème
+  const res = Object.fromEntries(pool.map((s) => [s.id, { w: 0, n: 0, name: s.name }]));
   const famRes = {};
   for (let i = 0; i < simN; i++) {
-    const a = st[Math.floor(Math.random() * st.length)];
-    let b = st[Math.floor(Math.random() * st.length)];
-    if (b === a) b = st[(st.indexOf(a) + 1) % st.length];
+    const a = pool[Math.floor(Math.random() * pool.length)];
+    let b = pool[Math.floor(Math.random() * pool.length)];
+    if (b === a) b = pool[(pool.indexOf(a) + 1) % pool.length];
     const g = play([a, b], 90000 + i);
     const w = g.G.winner === "b0" ? a : b;
     for (const s of [a, b]) { res[s.id].n++; (famRes[s.fam] = famRes[s.fam] || { w: 0, n: 0 }).n++; }

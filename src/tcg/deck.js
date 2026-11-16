@@ -159,6 +159,10 @@ function scoreFor(spec, d) {
  * { id, name, fam, pt?, leader: idCarte, like: [traits], avoid: [traits], excl: [idCartes], maxChars? }.
  */
 export function buildStarter(spec) {
+  if (spec.cards) { // deck à thème : liste faite à la main (cards/themes.js), prise telle quelle
+    for (const id of Object.keys(spec.cards)) if (!CARD[id] || CARD[id].type === "plot") throw new Error(`Deck de départ ${spec.id} : carte inconnue ${id}`);
+    return { id: spec.id, name: spec.name, fam: spec.fam, pt: spec.pt || null, desc: spec.desc || "", leader: spec.leader, cards: { ...spec.cards }, plots: spec.plots || defaultPlots(spec.fam), theme: Boolean(spec.theme) };
+  }
   const fam = spec.fam;
   const pool = legalPool(fam, spec.pt).filter((d) => d.fam === fam && (!d.st || d.st === spec.id));
   const cards = {};
@@ -241,3 +245,5 @@ export function starters() {
   return _starters;
 }
 export const starterById = (id) => starters().find((s) => s.id === id) || null;
+/** Les decks de départ qu'un nouveau joueur peut choisir : les 8 decks à thème (cards/themes.js). */
+export const themeStarters = () => starters().filter((s) => s.theme);
