@@ -56,7 +56,7 @@ function StarterPick({ onPick }) {
     <div className="hub-body">
       <div className="hub-card">
         <h3 style={{ fontSize: "1.05rem" }}>Choisis ton deck de départ</h3>
-        <p className="muted" style={{ margin: 0, fontSize: ".86rem" }}>Huit decks à thème, prêts à jouer. Celui que tu choisis débloque ses 50 cartes (dont parfois une version exclusive d'un héros). Ce choix est définitif : toutes les autres cartes s'obtiennent ensuite dans les boosters. Tu reçois aussi 300 Éclats et 3 boosters.</p>
+        <p className="muted" style={{ margin: 0, fontSize: ".86rem" }}>Huit decks à thème, prêts à jouer. Celui que tu choisis débloque ses 50 cartes (dont parfois une version exclusive d'un héros). Ce choix est définitif : toutes les autres cartes s'obtiennent ensuite dans les boosters. Tu reçois aussi les cartes neutres (sauf les épiques et les légendaires, à gagner), 300 Éclats et 3 boosters.</p>
       </div>
       <div className="hub-themes">
         {all.map((st) => {
@@ -287,7 +287,7 @@ function PacksBuy({ t, setT, flash, note = true }) {
         <h3>Acheter des boosters <small>tu as <EC n={t.ec} /></small></h3>
         {P.PACKS.map((p) => packRow(p, <button className="btn small" disabled={t.ec < p.price} onClick={() => buy(p)}><EC n={p.price} /></button>))}
       </div>
-      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Le Booster Découverte ne donne que des cartes que tu n'as pas encore (tant qu'il en reste). Quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à {P.OPEN_MAX} d'un coup. Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ et les cartes neutres (offertes à tout le monde) ne sortent jamais des boosters.</p>}
+      {note && <p className="muted hub-note">Chaque booster : 5 cartes, au moins une rare, et des jetons de brillance en bonus (1, ou 3 pour un Prestige ; parfois un de plus). Le Booster Découverte ne donne que des cartes que tu n'as pas encore (tant qu'il en reste). Quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à {P.OPEN_MAX} d'un coup. Les cartes 7 sont toujours brillantes ; les autres ne le sont jamais en sortant d'un booster : on les rend brillantes avec les jetons (Mes cartes, touche une carte). 1 booster sur 200 est doré : que des rares ou mieux, et 10 jetons en plus. Les versions exclusives des decks de départ et les cartes neutres offertes à tout le monde (communes, peu communes et rares) ne sortent jamais des boosters : les neutres épiques et légendaires, si.</p>}
     </>
   );
 }

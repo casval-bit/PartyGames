@@ -4,7 +4,8 @@
 //   - boosters (gagnés en montant de niveau, en quêtes, ou achetés avec des Éclats) ; cartes brillantes (foil) :
 //     les cartes de coût 7 sont toujours brillantes ; les autres ne le sont jamais d'office : on les rend brillantes avec des
 //     jetons de brillance (gagnés en recyclant les doubles et en bonus dans chaque booster), plus il en faut que la carte coûte cher ;
-//   - cartes neutres : offertes à tout le monde (2 exemplaires de chacune), elles ne sortent donc ni des boosters, ni de la boutique, ni des Portails ;
+//   - cartes neutres communes, peu communes et rares : offertes à tout le monde (2 exemplaires de chacune), elles ne sortent donc ni des boosters,
+//     ni de la boutique, ni des Portails ; les neutres épiques et légendaires (Sherlock, Shrek, les cartes 7 neutres…) se gagnent comme les autres cartes ;
 //   - boutique du jour : 6 cartes au hasard parmi toutes les cartes existantes, chères (pas de brillante en vente, sauf les cartes 7) ;
 //   - Portails (invocations, façon gacha) : deux bannières qui changent toutes les deux semaines (voir portals.js), payées en Éclats
 //     ou en tickets de portail, avec une carte cible garantie au plus tard à la 50e invocation ;
@@ -37,8 +38,10 @@ export const emptyTcg = () => ({ v: 2, at: 0, starter: null, ec: 0, xp: 0, jet: 
   por: { gift: false, leg: { n: 0, c: null }, monde: { n: 0, c: null } },
   st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0, pulls: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"], seed: Math.random().toString(36).slice(2, 10) });
 
-/** Cartes neutres : offertes à tout le monde (jamais à débloquer). */
-const NEUTRALS = ALL.filter((d) => d.fam === "neutre" && d.type !== "plot" && !d.st);
+/** Neutre offerte à tout le monde : commune, peu commune ou rare (les épiques et légendaires se gagnent : boosters, boutique, Portails). */
+export const giftNeutral = (d) => Boolean(d) && d.fam === "neutre" && d.type !== "plot" && !d.st && d.r !== "E" && d.r !== "L";
+/** Cartes neutres offertes (jamais à débloquer). */
+const NEUTRALS = ALL.filter(giftNeutral);
 /** Chaque carte neutre est possédée en autant d'exemplaires qu'un deck peut en contenir (2). */
 function giveNeutrals(t) {
   for (const d of NEUTRALS) {
@@ -181,8 +184,8 @@ export function levelReward(lvl) {
 const BASE = [[["C", 85], ["U", 15]], [["C", 85], ["U", 15]], [["C", 85], ["U", 15]], [["U", 70], ["R", 30]], [["R", 70], ["E", 24], ["L", 6]]];
 const PRESTIGE = [[["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["R", 70], ["E", 25], ["L", 5]], [["E", 80], ["L", 20]], [["E", 60], ["L", 40]]];
 const collectible = (d) => d.type !== "plot" && !d.st;
-/** Cartes qu'on peut tirer (boosters, boutique, Portails) : pas les neutres, offertes à tout le monde. */
-const drawable = (d) => collectible(d) && d.fam !== "neutre";
+/** Cartes qu'on peut tirer (boosters, boutique, Portails) : toutes, sauf les neutres offertes à tout le monde. */
+const drawable = (d) => collectible(d) && !giftNeutral(d);
 /** Remboursement d'un ancien booster de famille pas encore ouvert (ils ne sont plus vendus). */
 export const FAM_PACK_REFUND = 160;
 export const PACKS = [

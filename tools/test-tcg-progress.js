@@ -46,7 +46,11 @@ ok(excl === 0, "les cartes exclusives aux decks de départ ne sortent jamais des
 ok(rare === 3000, "au moins une rare (ou mieux) par booster");
 ok(foils > 0 && foils < 600, `seules les cartes 7 sortent brillantes des boosters (${(100 * foils / rolls).toFixed(1)} % des cartes)`);
 ok(Array.from({ length: 300 }, () => P.rollPack("prestige")).flat().every((c) => c.foil === (CARD[c.id].cost >= 7)), "boosters : brillante si et seulement si c'est une carte 7");
-ok(!P.PACKS.some((p) => p.fam) && Array.from({ length: 400 }, () => P.rollPack("multi")).flat().every((c) => CARD[c.id].fam !== "neutre"), "plus de booster par famille ; les cartes neutres (offertes) ne sortent pas des boosters");
+{
+  const drawn = Array.from({ length: 600 }, () => P.rollPack("prestige")).flat();
+  ok(!P.PACKS.some((p) => p.fam) && Array.from({ length: 400 }, () => P.rollPack("multi")).flat().every((c) => !P.giftNeutral(CARD[c.id])), "plus de booster par famille ; les cartes neutres offertes (communes à rares) ne sortent pas des boosters");
+  ok(drawn.some((c) => CARD[c.id].fam === "neutre" && CARD[c.id].r === "E"), "les neutres épiques (Sherlock, Shrek…) se gagnent dans les boosters");
+}
 ok(P.rollPack("arsenal").every((c) => CARD[c.id].type !== "char") && P.rollPack("heros").every((c) => CARD[c.id].type === "char"), "boosters Arsenal (sans personnage) et Héros (que des personnages)");
 const before = Object.values(t.coll).reduce((s, n) => s + n, 0) + Object.values(t.foil).reduce((s, n) => s + n, 0);
 const op = P.openPack(t, "multi");
@@ -282,7 +286,7 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(fam, "Monde à l'honneur : seulement des cartes de la famille");
   ok(nL / nPulls > 0.025 && nL / nPulls < 0.06 && nE / nPulls > 0.09 && nE / nPulls < 0.16, `taux observés sur ${nPulls} invocations : légendaires ${(100 * nL / nPulls).toFixed(1)} % (avec la garantie), épiques ${(100 * nE / nPulls).toFixed(1)} %`);
   ok(nT >= nPulls / 60, `cibles obtenues : ${nT} (au moins une toutes les 50 invocations)`);
-  const nNeutral = Object.keys(CARD).filter((id) => CARD[id].fam === "neutre").length * 2;
+  const nNeutral = Object.keys(CARD).filter((id) => P.giftNeutral(CARD[id])).length * 2;
   ok(s.st.pulls === 3000 && Object.values(s.coll).reduce((a, b) => a + b, 0) + Object.values(s.foil).reduce((a, b) => a + b, 0) === 3000 + nNeutral, "chaque invocation donne une carte de la collection");
   const one = P.pull(P.normalizeTcg({ ec: 100000 }), "leg", 10, day, seeded(7));
   ok(one.cards.every((c) => c.isNew === (one.cards.findIndex((x) => x.id === c.id) === one.cards.indexOf(c))), "une carte n'est nouvelle qu'une fois dans une invocation par 10");
@@ -304,11 +308,14 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   const old = P.normalizeTcg({ ec: 10, packs: { "fam:jojo": 2, "fam:onepiece": 1, multi: 1 } });
   ok(old.ec === 10 + 3 * P.FAM_PACK_REFUND && old.packs.multi === 1 && !Object.keys(old.packs).some((k) => k.startsWith("fam:")), "anciens boosters de famille pas ouverts : remboursés 160 Éclats chacun");
   ok(P.normalizeTcg(JSON.parse(JSON.stringify(old))).ec === old.ec, "le remboursement ne compte qu'une fois");
-  const neutralIds = Object.keys(CARD).filter((id) => CARD[id].fam === "neutre");
+  const neutralIds = Object.keys(CARD).filter((id) => P.giftNeutral(CARD[id]));
+  const rareIds = Object.keys(CARD).filter((id) => CARD[id].fam === "neutre" && !P.giftNeutral(CARD[id]));
   const fresh = P.normalizeTcg(null), own0 = P.owned(fresh);
-  ok(neutralIds.length >= 40 && neutralIds.every((id) => own0[id] === 2) && P.normalizeTcg({}).coll["neutre-shrek-5"] === 2, `les ${neutralIds.length} cartes neutres sont offertes à tout le monde (2 exemplaires)`);
-  ok(P.normalizeTcg({ foil: { "neutre-shrek-5": 1 } }).coll["neutre-shrek-5"] === 1 && P.normalizeTcg({ coll: { "neutre-shrek-5": 3 } }).coll["neutre-shrek-5"] === 3, "cartes neutres : on garde ses brillantes et ses exemplaires en plus");
-  ok(P.shopOffers(fresh, "2026-11-20").every((o) => CARD[o.id].fam !== "neutre"), "la boutique ne vend pas de cartes neutres");
+  ok(neutralIds.length >= 30 && neutralIds.every((id) => own0[id] === 2) && P.normalizeTcg({}).coll["neutre-mercenaire-2"] === 2, `les ${neutralIds.length} cartes neutres communes à rares sont offertes à tout le monde (2 exemplaires)`);
+  ok(rareIds.length > 0 && rareIds.every((id) => !own0[id]) && rareIds.every((id) => ["E", "L"].includes(CARD[id].r)), `les ${rareIds.length} neutres épiques et légendaires ne sont pas offertes (Shrek, Sherlock…)`);
+  ok(P.normalizeTcg({ coll: { "neutre-shrek-5": 2 } }).coll["neutre-shrek-5"] === 2, "un joueur qui avait déjà une neutre devenue épique la garde");
+  ok(P.normalizeTcg({ foil: { "neutre-mercenaire-2": 1 } }).coll["neutre-mercenaire-2"] === 1 && P.normalizeTcg({ coll: { "neutre-mercenaire-2": 3 } }).coll["neutre-mercenaire-2"] === 3, "cartes neutres : on garde ses brillantes et ses exemplaires en plus");
+  ok(P.shopOffers(fresh, "2026-11-20").every((o) => !P.giftNeutral(CARD[o.id])), "la boutique ne vend pas les neutres offertes");
   ok(st.every((s) => Object.keys(s.cards).every((id) => CARD[id].fam !== "neutre" || CARD[id].fill)), "decks de départ : jamais complétés avec les personnages venus d'autres univers (Shrek, Sherlock…)");
   const seven = P.normalizeTcg({ packs: { multi: 7 } });
   const many = P.openPacks(seven, "multi", 5);

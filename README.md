@@ -377,9 +377,11 @@ League of Legends (un deck par **région** de Runeterra, comme les types Pokémo
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
 Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli,
 Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella) et JoJo's Bizarre Adventure, plus des cartes Neutres.
-**Cartes neutres** (`cards/neutral.js`, 42 cartes) : jouables dans tous les decks et **offertes à tout le monde** (2 exemplaires de chacune, rien à débloquer :
-`giveNeutrals` dans `progress.js`), elles ne sortent donc jamais des boosters, de la boutique ni des Portails. En plus des cartes de base (Mercenaire, Espion,
-Portail interdimensionnel…), des personnages d'univers trop petits pour avoir leur famille, jamais de carte 7 : Perceval, Karadoc et la Table ronde (Kaamelott),
+**Cartes neutres** (`cards/neutral.js`, 42 cartes) : jouables dans tous les decks. Les **communes, peu communes et rares sont offertes à tout le monde**
+(2 exemplaires de chacune, rien à débloquer : `giftNeutral` dans `progress.js`) et ne sortent jamais des boosters, de la boutique ni des Portails ;
+les **épiques et légendaires** se gagnent comme les autres cartes (boosters, boutique, Portails) : Sherlock Holmes, L, Ryuk et le Death Note, Loid et Yor Forger,
+Shrek, Doc Brown et la DeLorean, le Vote de confiance, et les futures cartes 7 neutres. En plus des cartes de base (Mercenaire, Espion,
+Portail interdimensionnel…), des personnages d'univers trop petits pour avoir leur famille : Perceval, Karadoc et la Table ronde (Kaamelott),
 Marty McFly, Doc Brown et la DeLorean (Retour vers le futur), Shrek, l'Âne, le Chat Potté et le marais (Shrek), Anya, Loid et Yor Forger (Spy x Family),
 L, Ryuk et le Death Note (Death Note), Sherlock Holmes et le Docteur Watson, l'Imposteur (Among Us), le Creeper (Minecraft), Kirikou et Rémy (Ratatouille).
 Les decks de départ ne s'en servent jamais pour se compléter (option `fill: false`).
