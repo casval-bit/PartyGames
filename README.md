@@ -459,12 +459,12 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 
 **Collection** :
 - **Deck de départ** : choisi une seule fois parmi **8 decks à thème** faits à la main (`cards/themes.js`) : Team Rocket (Giovanni et Mewtwo à 7), Orchidia (Jadina et Jadilyna),
-  Hawkins (Onze et Hopper), Gryffondor (Harry et Dumbledore), Demacia (Galio et le roi Jarvan IV), Sith (Dark Vador et Dark Sidious), DC Comics (Superman et Batman)
+  Hawkins (Onze et Hopper), Gryffondor (Harry et Dumbledore), Demacia (Galio et le roi Jarvan IV, avec Poppy), Sith (Dark Vador et Dark Sidious), DC Comics (Superman et Supergirl)
   et La Meute de Teen Wolf (Scott et Derek). Deux cartes 7 par deck, et personne d'incohérent dedans (pas de Sacha ni de Pikachu chez la Team Rocket, pas de Queudver
-  chez les Gryffondor, pas de Sylas chez Demacia, pas de méchant dans la Ligue des Justiciers). Il débloque ses 50 cartes (dont une version exclusive : Shimy 4 dans Orchidia,
+  chez les Gryffondor, pas de Sylas chez Demacia, pas de méchant avec Superman et Supergirl). Il débloque ses 50 cartes (dont une version exclusive : Shimy 4 dans Orchidia,
   Dustin 4 dans Hawkins) + 300 Éclats et 3 boosters. Les autres decks de départ (`starters` de chaque famille) ne sont plus proposés : ce sont ceux des bots,
   et les modèles de « Compléter avec mes cartes ». Un ancien joueur garde le sien.
-  Équilibrage (`node tools/test-tcg.js --sim 2000 --themes` : les 8 decks entre eux) : entre 38 % et 63 % de victoires. Pour y arriver, la meute de Teen Wolf
+  Équilibrage (`node tools/test-tcg.js --sim 2000 --themes` : les 8 decks entre eux) : entre 35 % et 62 % de victoires. Pour y arriver, la meute de Teen Wolf
   (passif : +1 force en attaque et en défense pour la Meute) et les héros de Hawkins (passif : +1 force en défense pour Hawkins) ont été renforcés.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, mais **une carte 7 est unique (1 exemplaire)** ; **une seule version par personnage**

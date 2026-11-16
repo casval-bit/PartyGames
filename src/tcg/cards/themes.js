@@ -1,6 +1,6 @@
 // Les 8 decks de départ à thème : les seuls qu'un nouveau joueur peut choisir (il n'en choisit qu'un).
 // Chaque liste est faite à la main, pour que tout le monde y soit à sa place : pas de Sacha ni de Pikachu chez la Team Rocket,
-// pas de Queudver chez les Gryffondor, pas de Sylas chez Demacia, pas de méchant dans la Ligue des Justiciers…
+// pas de Queudver chez les Gryffondor, pas de Sylas chez Demacia, pas de méchant avec Superman et Supergirl…
 // (ça n'empêche pas d'autres cartes Team Rocket, Gryffondor… d'exister en dehors de ces decks).
 // Deux cartes 7 par deck. Une carte sans « *n » est en 2 exemplaires.
 // Les autres decks de départ (cards/*.js) restent ceux des adversaires bots et servent de modèle pour compléter un deck.
@@ -49,9 +49,9 @@ export const THEMES = [
   },
   {
     id: "theme-demacia", name: "Demacia", fam: "lol", pt: "Demacia", leader: "lol-galio-7",
-    desc: "Galio et le roi Jarvan IV à 7, Garen, Lux, Fiora, Quinn et l'Avant-garde : pour Demacia !",
-    cards: D(`lol-galio-7*1, lol-jarvan-iv-7*1, lol-garen-6, lol-shyvana-6, lol-lux-5, lol-fiora-5, lol-xin-zhao-4, lol-vayne-4, lol-lucian-4,
-      lol-quinn-3, lol-sona-3, lol-poppy-2, lol-soldat-de-l-avant-garde-2, lol-chasseur-de-mages-2, lol-valor-1,
+    desc: "Galio et le roi Jarvan IV à 7, Poppy l'héroïne malgré elle avec son marteau, Garen, Lux, Fiora et Quinn : pour Demacia !",
+    cards: D(`lol-galio-7*1, lol-jarvan-iv-7*1, lol-poppy-6, lol-garen-6, lol-shyvana-6, lol-lux-5, lol-fiora-5, lol-xin-zhao-4, lol-vayne-4, lol-lucian-4,
+      lol-quinn-3, lol-sona-3, lol-soldat-de-l-avant-garde-2, lol-chasseur-de-mages-2, lol-valor-1,
       lol-la-grande-cite-de-demacia-loc, neutre-forteresse-loc,
       lol-le-marteau-d-orlon-obj, lol-bottes-de-mobilite-obj, neutre-armure-obj, lol-ange-gardien-obj*1, lol-balise-de-controle-obj*1,
       lol-pour-demacia-evt, lol-barriere-evt, lol-saut-eclair-evt, lol-teleportation-evt, neutre-parade-evt`),
@@ -67,12 +67,13 @@ export const THEMES = [
   },
   {
     id: "theme-dc", name: "DC Comics", fam: "dc", leader: "dc-superman-7",
-    desc: "Superman et Batman à 7, Wonder Woman, Flash, Green Lantern, Shazam et toute la Ligue des Justiciers.",
-    cards: D(`dc-superman-7*1, dc-batman-7*1, dc-wonder-woman-5, dc-green-lantern-5, dc-shazam-4, dc-martian-manhunter-5*1, dc-flash-4, dc-cyborg-4, dc-hawkgirl-4,
-      dc-black-canary-3, dc-green-arrow-3, dc-zatanna-3, dc-robin-2, dc-batgirl-2, dc-krypto-2, dc-lois-lane-2, dc-alfred-pennyworth-2*1,
-      dc-la-tour-de-guet-loc, dc-metropolis-loc*1, dc-la-batcave-loc*1, dc-themyscira-loc*1,
-      dc-le-lasso-de-verite-obj, dc-anneau-de-green-lantern-obj*1, dc-ceinture-utilitaire-obj, dc-la-batmobile-obj*1,
-      dc-justice-evt, dc-un-signal-dans-le-ciel-evt, dc-plan-d-urgence-evt, dc-le-serment-des-green-lantern-evt*1, neutre-renfort-evt`),
+    desc: "Superman et Supergirl à 7, Power Girl, Krypto et Lois Lane, avec la Ligue des Justiciers : les derniers enfants de Krypton.",
+    cards: D(`dc-superman-7*1, dc-supergirl-7*1, dc-power-girl-5*1, dc-krypto-2, dc-lois-lane-2,
+      dc-wonder-woman-5, dc-martian-manhunter-5*1, dc-green-lantern-5*1, dc-flash-4, dc-cyborg-4, dc-hawkgirl-4, dc-shazam-4, dc-batman-4,
+      dc-black-canary-3, dc-green-arrow-3, dc-zatanna-3,
+      dc-metropolis-loc, dc-la-tour-de-guet-loc, neutre-forteresse-loc, dc-themyscira-loc,
+      dc-le-lasso-de-verite-obj, dc-anneau-de-green-lantern-obj,
+      dc-justice-evt, dc-le-serment-des-green-lantern-evt*1, neutre-heritage-evt, neutre-renfort-evt, neutre-parade-evt, neutre-coup-du-destin-evt`),
   },
   {
     id: "theme-meute", name: "La Meute", fam: "teenwolf", leader: "teenwolf-scott-mccall-7",

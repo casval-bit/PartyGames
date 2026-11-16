@@ -87,6 +87,7 @@ export const cards = [
   ch("Brainiac", "Le collectionneur de mondes", 6, 4, "RI", "Vilain|Génie|Cosmique", "", "enterSearch:*@La collection de Brainiac ; actSilence:6@Il met une ville en bouteille", "E"),
   ch("Bizarro", "Moi pas aimer toi", 5, 6, "C", "Vilain|Kryptonien", "", "ifAtk:1@Le monde de Bizarro", "U"),
   ch("Général Zod", "Le tyran de Krypton", 6, 6, "C", "Vilain|Kryptonien", "", "winKill:combat,3@Agenouille-toi devant Zod !", "R"),
+  ch("Supergirl", "La Fille d'Acier", 7, 6, "CRI", `${J}|Kryptonien`, "celebre", "aura:Kryptonien,1@La Maison d'El ; winStand:combat@Vol supersonique", "L"),
   ch("Power Girl", "Kara de Terre-2", 5, 6, "C", `${J}|Kryptonien`, "", "ifAtk:1@La force de Terre-2", "U"),
   ch("Lois Lane", "La reporter du Daily Planet", 2, 1, "RI", "Daily Planet", "", "enterDraw:1@Le scoop", "U"),
   ch("Krypto", "Le super-chien", 2, 2, "C", `${J}|Kryptonien`, "", "ifName:Superman,1@Le chien de Superman", "C"),
