@@ -371,9 +371,7 @@ stockage peut s'équiper d'éléments verrouillés chez lui, ce qui est sans con
 ## 11. Trône des Mondes (jeu de cartes à collectionner)
 
 Le jeu de cartes **Le Trône de Fer JCE 2e édition**, entièrement recodé, avec 26 familles (dont, clin d'œil, Westeros lui-même) :
-Code Lyoko, Umbrella Academy, Toy Story, One Piece, Pokémon (un deck par **type**, chaque type donne un bonus à la famille ; avec leurs Dresseurs :
-Sacha, Ondine, Pierre, Régis, Jessie et James, Giovanni, N, Red, Silver, Tcheren, Aurore, Roseille, Lithia, et les Champions et Maîtres, réservés au deck de leur type :
-Cynthia, Goyah, Iris, Pieris, Inezia, Erika, Faïza, Donna), Star Academy, Les Mystérieuses Cités d'or,
+Code Lyoko, Umbrella Academy, Toy Story, One Piece, Pokémon (un deck par **type** ou par **région**, avec leurs Dresseurs : voir plus bas), Star Academy, Les Mystérieuses Cités d'or,
 Les Légendaires, De cape et de crocs, Hunger Games, Cowboy Bebop, La Horde du Contrevent, Élite, Teen Wolf, Marvel, DC, Stranger Things, Scooby-Doo (que des gentils)
 League of Legends (un deck par **région** de Runeterra, comme les types Pokémon : voir plus bas), Harry Potter (un deck par **maison** de Poudlard),
 Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
@@ -395,7 +393,7 @@ Barbe Noire et Sylas qui volent du Pouvoir, la rumeur d'Allison (« J'ai entendu
 Doctor Strange, Jérémie et Viktor qui ramènent un allié de la pile des morts, Captain America qui fait entrer un Avenger, Lex Luthor et Lotso
 qui font payer plus cher les personnages adverses, Scarlet Witch, Fred et Veigar qui gèlent une cible (elle ne se redresse pas au round suivant),
 Peter Hale qui revient en main après sa mort, Jet Black qui marque en défense… Sur la table, une carte gelée ou neutralisée porte une étiquette.
-Les plus connus ont deux versions à 7 aux pouvoirs différents : Pikachu (et Pikachu Gigamax), Dracaufeu (et Méga-Dracaufeu X), Mewtwo (et Méga-Mewtwo Y),
+Les plus connus ont deux versions à 7 aux pouvoirs différents : Dracaufeu (et Méga-Dracaufeu X), Mewtwo (*Génétique* / *L'évadé du laboratoire*), N Harmonia,
 Katniss (*Le Geai moqueur* / *La fille du feu*), Onze (*Pouvoirs déchaînés* / *Elle ferme le portail*), Woody, Buzz l'Éclair (et son mode espagnol),
 Wolverine (*Arme X* / *Old Man Logan*), Jean Grey (*Le Phénix* / *Le Phénix noir*), Batman, Superman, Scooby-Doo, Aelita…
 Marvel et DC suivent maintenant les comics : X-Men, Quatre Fantastiques, Fatalis, Galactus, Spider-verse et Défenseurs ; Corps des Green Lantern, Bat-famille,
@@ -460,7 +458,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Trône des Mondes (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
 
 **Collection** :
-- **Deck de départ** : choisi une seule fois parmi 106 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
+- **Deck de départ** : choisi une seule fois parmi 116 decks ; il débloque ses 50 cartes (dont parfois une version exclusive, ex. Shimy 4 dans le deck Gryfenfer) + 300 Éclats et 3 boosters.
 - **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, mais **une carte 7 est unique (1 exemplaire)** ; **une seule version par personnage**
   (Aelita 5 ou Aelita 7, pas les deux : dans « Ajouter », les autres versions sont grisées) ; au plus 3 cartes de coût 7+ (différentes), 6 de coût 6, 8 de coût 5 ;
@@ -523,13 +521,61 @@ dans le cadre avant de valider. Après un import en lot, les cartes illustrées 
 (par défaut `<ton-pseudo>/PartyGames-illustrations`, ou la variable `ILLUSTRATIONS_REPO`), nommées comme pour l'import (sous-dossiers permis).
 Sur ton PC, ce dépôt est le dossier `illustrations/` du projet, que le dépôt public ignore. À chaque build (`npm run dev`, `npm run build`,
 APK, appli PC), `tools/build-art.mjs` reconnaît chaque image, la recadre au format de sa carte (même cadrage automatique que l'appli,
-réglable à la main dans `cadrages.json` : position, et zoom pour dézoomer une image trop serrée, le vide étant rempli par la même image floutée) et la range dans `public/art/` (généré, jamais versionné). Les workflows « Build APK » et
+réglable à la main dans `cadrages.json` : position, et zoom pour dézoomer une image trop serrée, le vide étant rempli par la même image floutée ;
+ou `"rogne"` pour ne garder qu'un rectangle de l'image, par exemple sans le cadre d'une vraie carte Pokémon : voir l'en-tête de `tools/build-art.mjs`) et la range dans `public/art/` (généré, jamais versionné).
+Une image dont toutes les cartes ont déjà une image plus précise est signalée « en double ». Les workflows « Build APK » et
 « Appli PC (Windows) » récupèrent le dépôt privé grâce au secret `ILLUSTRATIONS_TOKEN` (jeton GitHub en lecture seule sur ce seul dépôt) ;
 sans ce secret, ils construisent sans images. Le site GitHub Pages ne contient jamais ces images (`PARTY_ART=off`), et le dépôt public
 reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt privé : `tools/LISEZ-MOI-illustrations.txt`.
 `npm run art` refait les images et liste les noms non reconnus.
 Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
 ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
+
+**Pokémon** (`cards/pokemon.js`, 368 cartes) : un deck choisit **un type ou une région** (« Quel type ou quelle région ? »), qui donne un bonus à la famille ;
+il joue les Pokémon et les Dresseurs de ce type ou de cette région (un Pokémon à deux types compte pour les deux, chaque Pokémon a une région ; les formes
+« de Galar », « d'Alola », « de Hisui » (= Sinnoh) et « de Paldea » suivent la leur), plus ce qui va partout : **Pikachu, Mew, Mewtwo et Arceus** (dans tous les decks Pokémon),
+les Dresseurs sans type (Sacha, N Harmonia « Le garçon qui parle aux Pokémon », Red, Ondine, Pierre, Professeur Chen, Jessie et James, Lilie, Pania…), les lieux, objets et événements.
+Échelle des coûts : **7** les plus forts (légendaires, Méga-Évolutions, Maîtres, Conseil 4, boss : chaque type a au moins un Pokémon 7, et presque tous un Dresseur 7) ;
+**6** Amphinobi, Ectoplasma, Noctali, Tokorico, Ghetis, Goyah… ; **4-5** Ronflex, Raichu, Lugulabre, Spiritomb, le Miaouss de la Team Rocket… ;
+**3** les formes intermédiaires ; **1-2** les bébés et premières formes (Vipélierre, Salamèche…). Les Évolitions ont le trait Évolition (Évoli en cherche une en entrant).
+Les Dresseurs à un type ne vont que dans le deck de ce type et dans celui de leur région : Giovanni 7 (Sol), Morgane 7 (Psy), Olga 7 (Glace), Aldo 7 (Combat),
+Agatha 7 (Spectre), Koga 7 (Poison), Major Bob 5 (Électrik), Erika 4 (Plante) pour Kanto ; Peter 7 (Vol) pour Johto ; Marc 7 (Eau), Pierre Rochard 7 (Acier) pour Hoenn ;
+Cynthia 7 (Dragon), Hélio 7 (Ténèbres), Penséa 5 (Fée) pour Sinnoh ; N Harmonia 7 « Le roi de la Team Plasma » (Électrik), Ghetis 6 (Ténèbres), Goyah 6 (Insecte),
+Tcheren 7 (Normal), Nikolaï 5 (Acier), Iris 5 (Dragon), Pieris 5 (Ténèbres), Inezia 4 (Électrik) pour Unys ; Dianthéa 7 (Fée) pour Kalos ; Guzma 6 (Insecte) pour Alola ;
+Tarak 7 (Feu), Roy 5 (Dragon), Faïza 4 (Combat), Donna 4 (Eau) pour Galar ; Kassis 7 (Plante), Dendra 4 (Combat) pour Paldea.
+Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Giovanni 5 et Tcheren 6 devenus 7…) gardent les exemplaires, les decks et les images importées (`RENAMED` dans `cards/index.js`).
+Sur la carte, le type et la région s'écrivent dans la ligne des traits, sous l'image (« Pokémon. Feu. Kanto. », « Dresseur. Humain. Fée. Sinnoh. ») ; c'est pareil pour
+les sous-groupes des autres familles (régions de Runeterra, maisons de Poudlard…), et la recherche de l'album les trouve (« Kanto », « Gryffondor »).
+
+| Type ou région | Bonus | Deck de départ (en tête) |
+|---|---|---|
+| Normal | chaque victoire rapporte de l'or | Arceus 7, Tcheren 7, Ronflex 5 |
+| Feu | vos Pokémon Feu frappent plus fort en attaque | Dracaufeu 7, Tarak 7, Arcanin 5 |
+| Eau | chaque round, le premier défi gagné fait piocher | Kyogre 7, Marc 7, Milobellus 5 |
+| Plante | +1 revenu à chaque round | Florizarre 7, Kassis 7, Majaspic 5 |
+| Électrik | après un défi de Combat gagné, un participant se redresse | Pikachu 7, Major Bob 5, Raichu 5 |
+| Glace | un défi de Combat gagné agenouille un personnage adverse | Artikodin 7, Olga 7, Lokhlass 5 |
+| Combat | vos Pokémon Combat frappent plus fort en attaque | Shifours 7, Aldo 7, Mackogneur 6 |
+| Poison | un défi de Combat gagné fait défausser l'adversaire | Éthernatos 7, Koga 7, Ectoplasma 6 |
+| Sol | +1 revenu à chaque round | Groudon 7, Giovanni 7, Carchacrok 6 |
+| Vol | vos Pokémon Vol frappent plus fort en attaque | Lugia 7, Peter 7, Roucarnage 5 |
+| Psy | un défi de Ruse gagné agenouille un personnage adverse | Mewtwo 7, Morgane 7, Alakazam 5 |
+| Insecte | chaque round, l'arrivée d'un Pokémon rapporte de l'or | Genesect 7, Guzma 6, Cizayox 5 |
+| Roche | vos Pokémon Roche gagnent l'icône Influence | Tyranocif 7, Lougaroc 5, Ptéra 5 |
+| Spectre | un Spectre qui devrait mourir peut revenir en main | Giratina 7, Agatha 7, Ectoplasma 6 |
+| Dragon | vos Pokémon Dragon ont tous Intimidation | Méga-Dracolosse 7, Cynthia 7, Carchacrok 6 |
+| Ténèbres | vos Pokémon Ténèbres ont tous Discret | Darkrai 7, Hélio 7, Noctali 6 |
+| Acier | +1 revenu à chaque round | Dialga 7, Pierre Rochard 7, Métalosse 6 |
+| Fée | remporter la Domination fait piocher | Xerneas 7, Dianthéa 7, Gardevoir 5 |
+| Kanto | chaque round, une victoire rapporte de l'or | Dracaufeu 7, Giovanni 7, Pikachu 7, Jessie et James, Miaouss 4 |
+| Johto | vos Pokémon qui défendent gagnent +1 force | Ho-Oh 7, Lugia 7, Noctali 6 |
+| Hoenn | remporter la Domination fait piocher | Rayquaza 7, Marc 7, Latios 6 |
+| Sinnoh | chaque round, perdre un défi fait piocher | Cynthia 7, Dialga 7, Spiritomb 5 |
+| Unys | chaque round, le premier défi gagné fait piocher | N Harmonia 7, Zekrom 7, Ghetis 6, Tcheren 7 |
+| Kalos | vos Pokémon qui attaquent gagnent +1 force | Méga-Amphinobi 7, Dianthéa 7, Goupelin 5 |
+| Alola | chaque round, la mort d'un de vos personnages fait piocher | Solgaleo 7, Tokorico 6, Guzma 6 |
+| Galar | un défi de Combat gagné agenouille un personnage du perdant | Zacian 7, Tarak 7, Corvaillus 5 |
+| Paldea | chaque round, l'arrivée d'un Pokémon rapporte de l'or | Koraidon 7, Kassis 7, Forgelina 5 |
 
 **League of Legends** (`cards/lol.js`, 170 cartes) : un deck choisit une région, qui donne un bonus à la famille ; il joue les champions de cette région
 (un champion de deux régions compte pour les deux : Mel est de Noxus et de Piltover, les yordles Poppy, Gnar, Kennen, Heimerdinger, Ziggs et Kled sont aussi de Bandle City),
@@ -639,7 +685,7 @@ Code : `src/tcg/` — `rules.js` (règles, mots-clés), `abilities.js` (modèles
 `bot.js` (adversaire), `cards/*.js` (une famille par fichier, une ligne par carte), `deck.js` (règles de deck, decks de départ), `progress.js` (collection, boosters, boutique, quêtes),
 `view.js` (ce qui part sur le réseau), `ui/` (cartes, partie, collection, boosters) ; côté créateur du lobby : `src/net/hostTrone.js`.
 Pour ajouter une carte : une ligne dans le fichier de sa famille (voir l'en-tête de `cards/build.js`). Une famille peut avoir des sous-groupes que chaque deck choisit
-(`types` et `sub` dans son fichier : les types Pokémon, les régions de League of Legends, les maisons de Poudlard, les camps de Star Wars, les factions de Westeros, les camps de la Terre du Milieu, les univers de Gundam ; voir `subOf` et `subWords` dans `cards/index.js`). Tests : `node tools/test-tcg.js` (cartes, règles, parties entre bots ;
+(`types` et `sub` dans son fichier : les types et les régions Pokémon (`kind: "region"`, voir `subGroups`), les régions de League of Legends, les maisons de Poudlard, les camps de Star Wars, les factions de Westeros, les camps de la Terre du Milieu, les univers de Gundam ; voir `subOf` et `subWords` dans `cards/index.js`). Tests : `node tools/test-tcg.js` (cartes, règles, parties entre bots ;
 `--sim 400` pour l'équilibrage), `node tools/test-tcg-progress.js` (collection) et `node tools/test-tcg-host.js` (partie en réseau).
 
 ## 12. Loup-garou, version Stranger Things

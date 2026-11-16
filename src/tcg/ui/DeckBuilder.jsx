@@ -1,7 +1,7 @@
 // Constructeur de deck : compteurs des règles en direct, erreurs en clair (un deck invalide ne peut pas être joué),
 // ajout des cartes possédées (famille, neutres, une famille alliée), choix des 7 scénarios.
 import { useMemo, useState } from "react";
-import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, subOf, subWords } from "../cards/index.js";
+import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, subOf, subWords, subGroups, traitNames } from "../cards/index.js";
 import { DECK_RULES as R, RARITY, CARD_TYPES, copiesOf } from "../rules.js";
 import { validateDeck, defaultPlots, fillDeck } from "../deck.js";
 import { Icon } from "../../ui/Icon.jsx";
@@ -110,7 +110,7 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
                     {l.map(({ d, n }) => (
                       <div key={d.id} className={"db-item" + (conflicted.has(d.id) || wrongType(d) || (owned[d.id] || 0) < n ? " err" : "")} style={{ "--fc": (FAMILY[d.fam] || FAMILY.neutre).color }}>
                         <span className="cost">{d.cost}</span>
-                        <button className="nm" onClick={() => setZoom(d.id)}><b>{d.name}{d.title ? ` · ${d.title}` : ""}</b><small>{d.fam !== deck.fam ? `${FAMILY[d.fam].short || FAMILY[d.fam].name} · ` : ""}{d.type === "char" ? `Force ${d.str} · ` : ""}{d.traits.join(", ")}</small></button>
+                        <button className="nm" onClick={() => setZoom(d.id)}><b>{d.name}{d.title ? ` · ${d.title}` : ""}</b><small>{d.fam !== deck.fam ? `${FAMILY[d.fam].short || FAMILY[d.fam].name} · ` : ""}{d.type === "char" ? `Force ${d.str} · ` : ""}{traitNames(d).join(", ")}</small></button>
                         <i className="gem" style={{ background: RARITY[d.r].gem }} />
                         <span className="q"><button onClick={() => setN(d.id, n - 1)} aria-label={`Retirer ${d.name}`}><Icon name="minus" size={14} /></button><span>{n}</span><button onClick={() => setN(d.id, n + 1)} aria-label={`Ajouter ${d.name}`}><Icon name="plus" size={14} /></button></span>
                       </div>
@@ -154,8 +154,11 @@ export default function DeckBuilder({ deck: initial, owned, onSave, onCancel }) 
       <div className={wide ? "db-wide" : "db-one"}>
       <div className="hub-body">
         {subs.length > 0 && (
-          <div className="hub-filters" aria-label={`${subWords(deck.fam).One} du deck`}>
-            {subs.map((t) => <button key={t.id} aria-pressed={deck.pt === t.id} onClick={() => setDeck({ ...deck, pt: t.id })} style={deck.pt === t.id ? { borderColor: t.color, background: `color-mix(in srgb, ${t.color} 25%, transparent)` } : undefined}>{t.name}</button>)}
+          <div className="hub-filters db-subs" aria-label={`${subWords(deck.fam).One} du deck`}>
+            {subGroups(deck.fam).map((g, gi) => [
+              gi > 0 ? <span key={"h" + g.kind} className="db-subs-h">{g.label}</span> : null,
+              ...g.list.map((t) => <button key={t.id} aria-pressed={deck.pt === t.id} onClick={() => setDeck({ ...deck, pt: t.id })} style={deck.pt === t.id ? { borderColor: t.color, background: `color-mix(in srgb, ${t.color} 25%, transparent)` } : undefined}>{t.name}</button>),
+            ])}
           </div>
         )}
         {cur === "list" && listView}

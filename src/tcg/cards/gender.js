@@ -11,6 +11,7 @@ export const FEM = new Set([
   "Nami", "Nico Robin", "Boa Hancock",
   // Pokémon (Dresseuses)
   "Ondine", "Infirmière Joëlle", "Aurore", "Roseille", "Lithia", "Cynthia", "Iris", "Inezia", "Erika", "Faïza", "Donna",
+  "Morgane", "Olga", "Agatha", "Dianthéa", "Penséa", "Lilie", "Perrin", "Pania", "Dendra",
   // Star Academy
   "Marine", "Ebony", "Marguerite", "Maureen", "Maylis", "Julie", "Emma", "Maïa", "Ambre", "Léa", "Jeanne", "Anouk", "Ema", "Lili", "Sarah",
   "Amel", "Isabella", "Leeloo", "Maud", "Mélina", "Noémie", "Tracy", "Zoé",

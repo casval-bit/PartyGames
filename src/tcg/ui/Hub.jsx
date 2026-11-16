@@ -2,7 +2,7 @@
 // Portails et les boosters, en onglets), quêtes et succès. Tout est enregistré dans le profil (profile.tcg), donc suit le compte
 // d'un téléphone à l'autre.
 import { useEffect, useMemo, useState } from "react";
-import { ALL, CARD, FAMILY, PLAYABLE, subOf, subWords } from "../cards/index.js";
+import { ALL, CARD, FAMILY, PLAYABLE, subOf, subWords, subGroups } from "../cards/index.js";
 import { RARITY, RARITY_ORDER, CARD_TYPES } from "../rules.js";
 import { starters, validateDeck, defaultPlots } from "../deck.js";
 import * as P from "../progress.js";
@@ -156,7 +156,12 @@ function Decks({ t, own, setT, onEdit, flash }) {
           <div className="hub-card">
             <b style={{ fontFamily: "var(--display)" }}>{subWords(newFam).ask}</b>
             <small className="muted">{subWords(newFam).help}</small>
-            <div className="hub-filters" style={{ flexWrap: "wrap" }}>{FAMILY[newFam].types.map((tp) => <button key={tp.id} style={{ borderColor: tp.color }} onClick={() => onEdit({ id: null, name: `${FAMILY[newFam].short || FAMILY[newFam].name} ${tp.name}`.slice(0, 32), fam: newFam, pt: tp.id, cards: {}, plots: defaultPlots(newFam) })}>{tp.name}</button>)}</div>
+            {subGroups(newFam).map((g, gi, all) => (
+              <div key={g.kind} className="hub-subgrp">
+                {all.length > 1 && <small className="hub-subgrp-h">{g.label}</small>}
+                <div className="hub-filters" style={{ flexWrap: "wrap" }}>{g.list.map((tp) => <button key={tp.id} style={{ borderColor: tp.color }} onClick={() => onEdit({ id: null, name: `${FAMILY[newFam].short || FAMILY[newFam].name} ${tp.name}`.slice(0, 32), fam: newFam, pt: tp.id, cards: {}, plots: defaultPlots(newFam) })}>{tp.name}</button>)}</div>
+              </div>
+            ))}
           </div>
         )}
       </div>

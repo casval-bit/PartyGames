@@ -11,6 +11,9 @@
 //                                 (x puis y, de 0 à 1 : 0 = bord gauche / haut, 1 = bord droit / bas, comme le glisser de l'appli ;
 //                                  puis le zoom, facultatif : 1 = l'image remplit la carte, 0.75 = dézoomée (on voit plus de l'image),
 //                                  le reste de la carte est alors rempli par la même image floutée, avec un fondu)
+//                                 ou { "Noctali 6.jpg": { "rogne": [0.19, 0.13, 0.81, 0.84] } } : on ne garde que ce rectangle de l'image
+//                                 (gauche, haut, droite, bas, de 0 à 1 : pour retirer le cadre d'une vraie carte), puis le cadrage
+//                                 automatique, ou x, y et zoom s'ils sont donnés aussi : { "rogne": [...], "x": 0.5, "y": 0.3 }
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -71,14 +74,30 @@ try { sharp = (await import("sharp")).default; } catch {
 function readJson(p, fallback) { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return fallback; } }
 const overrides = new Map();
 const rawOv = readJson(path.join(SRC, "cadrages.json"), {});
+/** Rognage { rogne: [gauche, haut, droite, bas] } (de 0 à 1), ou null s'il est absent ou invalide. */
+const cropOf = (c) => {
+  if (!Array.isArray(c) || c.length < 4) return null;
+  const [l, t, r, b] = c.map(clamp);
+  return r - l >= 0.05 && b - t >= 0.05 ? [l, t, r, b] : null;
+};
 for (const [k, v] of Object.entries(rawOv || {})) {
-  const a = Array.isArray(v) ? v : v && typeof v === "object" ? [v.x, v.y, v.zoom ?? v.z] : null;
-  if (a && a.length >= 2) overrides.set(norm(path.basename(k)), [clamp(a[0]), clamp(a[1]), zoomOf(a[2])]);
+  const isObj = v && typeof v === "object" && !Array.isArray(v);
+  const a = Array.isArray(v) ? v : isObj ? [v.x, v.y, v.zoom ?? v.z] : null;
+  const crop = isObj ? cropOf(v.rogne || v.crop) : null;
+  const pos = a && a.length >= 2 && Number.isFinite(Number(a[0])) && Number.isFinite(Number(a[1])) ? [clamp(a[0]), clamp(a[1])] : null;
+  if (pos || crop) overrides.set(norm(path.basename(k)), { pos, zoom: zoomOf(a && a[2]), crop });
 }
 const cache = readJson(CACHE, {});
 
-/** Décode l'image une seule fois (orientation de l'appareil photo appliquée), en pixels RGB bruts. */
-const decode = (buf) => sharp(buf, { failOn: "none" }).rotate().removeAlpha().raw().toBuffer({ resolveWithObject: true });
+/** Décode l'image une seule fois (orientation de l'appareil photo appliquée), en pixels RGB bruts ; rognée si crop est donné. */
+async function decode(buf, crop) {
+  const img = await sharp(buf, { failOn: "none" }).rotate().removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  if (!crop) return img;
+  const { width: iw, height: ih } = img.info;
+  const left = Math.round(crop[0] * iw), top = Math.round(crop[1] * ih);
+  const width = Math.max(8, Math.min(iw - left, Math.round((crop[2] - crop[0]) * iw))), height = Math.max(8, Math.min(ih - top, Math.round((crop[3] - crop[1]) * ih)));
+  return sharp(img.data, { raw: img.info }).extract({ left, top, width, height }).raw().toBuffer({ resolveWithObject: true });
+}
 /** Profils d'intérêt sur une miniature, comme dans l'appli. */
 async function profile(img) {
   if (img.prof) return img.prof;
@@ -125,27 +144,27 @@ async function frame(img, bw, bh, f, zoom = 1) {
 
 const list = files.map((f) => ({ f, name: path.basename(f), m: matchFile(path.basename(f)) }));
 list.sort((a, b) => a.m.cards.length - b.m.cards.length || a.f.localeCompare(b.f)); // noms précis (avec le coût) d'abord
-const cards = {}, keep = new Set(["index.json"]), bad = [];
+const cards = {}, keep = new Set(["index.json"]), bad = [], dup = [];
 let made = 0, reused = 0, used = 0;
 for (const it of list) {
   const rel = path.relative(SRC, it.f).split(path.sep).join("/");
   if (!it.m.cards.length) { bad.push(`${rel} (${it.m.why === "ambigu" ? "nom présent dans plusieurs familles" : "aucune carte de ce nom"})`); continue; }
   const todo = it.m.cards.filter((d) => !cards[d.id]);
-  if (!todo.length) continue;
+  if (!todo.length) { dup.push(rel); continue; }
   const buf = fs.readFileSync(it.f);
   const hash = crypto.createHash("sha1").update(buf).digest("hex").slice(0, 10);
   const ov = overrides.get(norm(it.name)) || null;
   let img = null, any = false;
   for (const d of todo) {
     const box = artBox(d), bw = Math.round(box.w * SCALE), bh = Math.round(box.h * SCALE);
-    const out = `${d.id}.jpg`, key = `${VERSION}|${hash}|${bw}x${bh}|${ov ? ov.join(",") : "auto"}`;
+    const out = `${d.id}.jpg`, key = `${VERSION}|${hash}|${bw}x${bh}|${ov ? JSON.stringify(ov) : "auto"}`;
     if (cache[out] === key && fs.existsSync(path.join(OUT, out))) { cards[d.id] = `art/${out}?v=${hash}`; keep.add(out); reused++; any = true; continue; }
     try {
-      if (!img) img = await decode(buf);
+      if (!img) img = await decode(buf, ov && ov.crop);
       const { width: iw, height: ih } = img.info;
-      const f = ov ? { fx: ov[0], fy: ov[1] } : focusFor(iw, ih, box, await profile(img));
+      const f = ov && ov.pos ? { fx: ov.pos[0], fy: ov.pos[1] } : focusFor(iw, ih, box, await profile(img));
       fs.mkdirSync(OUT, { recursive: true });
-      await (await frame(img, bw, bh, f, ov ? ov[2] : 1)).jpeg({ quality: 82, mozjpeg: true }).toFile(path.join(OUT, out));
+      await (await frame(img, bw, bh, f, ov ? ov.zoom : 1)).jpeg({ quality: 82, mozjpeg: true }).toFile(path.join(OUT, out));
       cache[out] = key; cards[d.id] = `art/${out}?v=${hash}`; keep.add(out); made++; any = true;
     } catch (e) { bad.push(`${rel} (image illisible : ${e.message})`); break; }
   }
@@ -157,3 +176,4 @@ try { fs.mkdirSync(path.dirname(CACHE), { recursive: true }); fs.writeFileSync(C
 const n = Object.keys(cards).length;
 console.log(`Illustrations intégrées : ${n} carte${n > 1 ? "s" : ""} (${used} image${used > 1 ? "s" : ""}), ${made} recadrée${made > 1 ? "s" : ""}, ${reused} déjà prête${reused > 1 ? "s" : ""}.`);
 if (bad.length) console.log(`Non reconnues (renomme-les comme dans la liste des cartes de l'appli) :\n  ${bad.join("\n  ")}`);
+if (dup.length) console.log(`En double, pas utilisées (une autre image couvre déjà ces cartes) :\n  ${dup.join("\n  ")}`);

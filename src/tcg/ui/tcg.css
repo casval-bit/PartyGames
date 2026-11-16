@@ -58,12 +58,6 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
 .tc-ic svg { width: 6cqw; height: 6cqw; }
 .tc-ic.combat { --ic: var(--c-combat); } .tc-ic.ruse { --ic: #1fb57a; } .tc-ic.influence { --ic: #8f63f0; }
 .tc-ic.off { background: rgba(10,18,38,.7); box-shadow: 0 0 0 .4cqw rgba(255,255,255,.25); opacity: .55; }
-/* région / type : petites pastilles dans le bandeau du bas (à droite de la force), jamais sur l'illustration */
-.tc-pts { display: flex; align-items: center; gap: 1.1cqw; margin-right: auto; min-width: 0; overflow: hidden; }
-.tc-pt { flex: 0 1 auto; min-width: 0; padding: .45cqw 1.7cqw; border-radius: 99px; font: 700 3.2cqw/1.15 var(--display); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  background: color-mix(in srgb, var(--ptc) 82%, #0b1426); box-shadow: inset 0 0 0 .3cqw rgba(255,255,255,.3); text-shadow: 0 .3cqw .6cqw rgba(0,0,0,.45); }
-.tc:not(.char) .tc-foot .tc-pts { margin-left: 16cqw; } /* après « LIEU », « OBJET », « ÉVÉNEMENT » */
-@container (max-width: 120px) { .tc-pts { display: none; } } /* vignettes : illisible, on laisse la place */
 .tc-traits { flex: none; padding: 1.3cqw 3cqw .5cqw; font: italic 600 4.1cqw/1.15 var(--body); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: color-mix(in srgb, var(--fc) 50%, #fff); }
 .tc-text { flex: 1; min-height: 0; padding: .6cqw 3.4cqw 1cqw; font: 500 4.25cqw/1.2 var(--body); color: #e3ebfb; overflow: hidden; display: flex; flex-direction: column; gap: 1.1cqw; }
@@ -482,6 +476,10 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .hub-grid.sm { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .hub-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: none; padding-bottom: 2px; }
 .hub-filters::-webkit-scrollbar { display: none; }
+/* sous-groupes rangés par genre (Pokémon : les types, puis les régions) */
+.hub-subgrp { display: flex; flex-direction: column; gap: 5px; }
+.hub-subgrp-h, .db-subs-h { font: 700 .62rem var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--txt-3); }
+.db-subs-h { flex: none; align-self: center; padding: 0 2px 0 8px; margin-left: 4px; border-left: 1px solid var(--line); }
 .hub-filters button, .hub-filters select { flex: none; padding: 7px 11px; border-radius: 99px; font: 600 .78rem var(--display); color: var(--txt-2); background: var(--track); border: 1px solid var(--line); }
 .hub-filters button[aria-pressed="true"] { color: #fff; border-color: var(--cyan); background: rgba(94,225,255,.14); }
 .hub-filters select { color: var(--txt); appearance: none; padding-right: 22px; background-image: linear-gradient(45deg, transparent 50%, var(--txt-2) 50%), linear-gradient(135deg, var(--txt-2) 50%, transparent 50%); background-position: calc(100% - 13px) 52%, calc(100% - 8px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }

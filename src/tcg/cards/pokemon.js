@@ -1,16 +1,23 @@
 import { ch, loc, obj, ev } from "./build.js";
 
-// Pokémon : un deck Pokémon choisit UN type. Il peut jouer les Pokémon de ce type (un Pokémon à double type compte
-// pour les deux), les Dresseurs et le matériel. Le type choisi donne en plus un bonus permanent (voir `types`).
+// Pokémon : un deck Pokémon choisit UN type ou UNE région. Il joue les Pokémon de ce type (un Pokémon à double type compte
+// pour les deux) ou de cette région, les Dresseurs et le matériel. Le choix donne en plus un bonus permanent (voir `types`).
+// Pikachu, Mew, Mewtwo et Arceus vont dans tous les decks Pokémon. Les Dresseurs sans type vont partout ; ceux qui ont un type
+// (Champions, Conseil 4, Maîtres, chefs d'équipe…) seulement dans les decks de ce type et de leur région.
+//
+// Échelle des coûts : 7 = Pokémon et Dresseurs les plus puissants (légendaires majeurs, Méga-Évolutions, Maîtres, chefs) ;
+// 6 = grandes stars (Amphinobi, Ectoplasma, Noctali, Tokorico, Ghetis, Goyah…) ; 4-5 = solides (Ronflex, Raichu,
+// Lugulabre, Spiritomb, Miaouss, évolutions finales) ; 3 = entre les deux (évolutions intermédiaires) ; 1-2 = Pokémon de base.
 export const meta = {
   id: "pokemon", name: "Pokémon", short: "Pokémon", color: "#ffcb05", color2: "#24427d", icon: "bolt", motif: "energy",
-  desc: "Choisis un type : chacun a son propre bonus et ses propres Pokémon. Les Dresseurs vont dans tous les decks Pokémon.",
+  desc: "Choisis un type ou une région : chacun a son propre bonus et ses propres Pokémon. Les Dresseurs vont dans tous les decks Pokémon.",
   passive: "",
-  // le sous-groupe que choisit chaque deck (voir cards/index.js : subOf, subWords)
-  sub: { one: "type", One: "Type", ask: "Quel type Pokémon ?", help: "Un deck Pokémon ne prend que les Pokémon de ce type (et les Dresseurs) ; chaque type donne un bonus à la famille.",
-    pick: "Choisis un type Pokémon pour ce deck.", not: "n'est pas de type", starter: "poke", like: ["Dresseur"] },
+  // le sous-groupe que choisit chaque deck (voir cards/index.js : subOf, subWords) ; les régions ont leurs propres mots (one, One, not)
+  sub: { one: "type", One: "Type", ask: "Quel type ou quelle région ?", help: "Un deck Pokémon choisit un type ou une région : il ne prend que les Pokémon de ce type (ou de cette région), et les Dresseurs. Pikachu, Mew, Mewtwo et Arceus vont dans tous les decks Pokémon ; chaque choix donne un bonus à la famille.",
+    pick: "Choisis un type ou une région pour ce deck.", not: "n'est pas de type", starter: "poke", like: ["Dresseur"] },
 };
 
+const RG = { kind: "region", one: "région", One: "Région", not: "n'est pas de la région" };
 export const types = [
   { id: "Normal", name: "Normal", color: "#a8a77a", bonus: "fWinGold:*,1@Ramassage", desc: "Polyvalents et économes : chaque victoire rapporte de l'or." },
   { id: "Feu", name: "Feu", color: "#ee8130", bonus: "atkAura:Feu,1@Brasier", desc: "Vos Pokémon Feu frappent plus fort en attaque." },
@@ -30,66 +37,200 @@ export const types = [
   { id: "Ténèbres", name: "Ténèbres", color: "#705746", bonus: "kwAura:Ténèbres,discret@Embuscade nocturne", desc: "Vos Pokémon Ténèbres ont tous le mot-clé Discret." },
   { id: "Acier", name: "Acier", color: "#b7b7ce", bonus: "income:1@Industrie", desc: "Robustes et riches : +1 revenu à chaque round." },
   { id: "Fée", name: "Fée", color: "#d685ad", bonus: "fDomDraw:1@Charme", desc: "Charmeurs : remporter la Domination fait piocher." },
+  // régions : un deck d'une région prend tous ses Pokémon, quel que soit leur type, et ses Dresseurs
+  { id: "Kanto", name: "Kanto", ...RG, color: "#e5484d", bonus: "fWinGold:*,1@Ligue Indigo", desc: "La première région (Salamèche, Ronflex, la Team Rocket…) : chaque round, une victoire rapporte de l'or." },
+  { id: "Johto", name: "Johto", ...RG, color: "#c9a23f", bonus: "defAuraT:Pokémon,1@Tour Carillon", desc: "Les gardiens de la tradition (Ho-Oh, Lugia, Noctali…) : vos Pokémon qui défendent gagnent +1 force." },
+  { id: "Hoenn", name: "Hoenn", ...RG, color: "#2ea86b", bonus: "fDomDraw:1@Concours Pokémon", desc: "Terre des Concours (Milobellus, Latias, Rayquaza…) : remporter la Domination fait piocher." },
+  { id: "Sinnoh", name: "Sinnoh", ...RG, color: "#5874d8", bonus: "fLoseDraw:*,1@Mont Couronné", desc: "Les mythes du mont Couronné (Cynthia, Dialga, Giratina…) : chaque round, perdre un défi fait piocher." },
+  { id: "Unys", name: "Unys", ...RG, color: "#6b6b78", bonus: "fWinDraw:*,1@Idéaux et vérité", desc: "Idéaux et vérité (N, Zekrom, Reshiram…) : chaque round, le premier défi gagné fait piocher." },
+  { id: "Kalos", name: "Kalos", ...RG, color: "#3d8cf0", bonus: "atkAura:Pokémon,1@Méga-Évolution", desc: "Le berceau de la Méga-Évolution (Amphinobi, Xerneas, Yveltal…) : vos Pokémon qui attaquent gagnent +1 force." },
+  { id: "Alola", name: "Alola", ...RG, color: "#f0943a", bonus: "fKillDraw:1@Esprits gardiens", desc: "Sous la protection des Tokos (Solgaleo, Lunala, Tokorico…) : chaque round, la mort d'un de vos personnages fait piocher." },
+  { id: "Galar", name: "Galar", ...RG, color: "#c23a76", bonus: "fWinKneel:combat@Stades de Galar", desc: "Les grands stades (Tarak, Zacian, Corvaillus…) : un défi de Combat gagné agenouille un personnage du perdant." },
+  { id: "Paldea", name: "Paldea", ...RG, color: "#d8a21c", bonus: "fEnterGold:Pokémon@Téracristal", desc: "La région de la Téracristallisation (Forgelina, Baojian, Palmaval…) : chaque round, l'arrivée d'un Pokémon rapporte de l'or." },
 ];
 
-/** Un Pokémon : traits « Pokémon » + ses types, et ses types servent au choix de deck. */
-const pk = (name, title, cost, str, icons, ty, kw, ab, r, o = {}) => ch(name, title, cost, str, icons, `Pokémon|${ty}`, kw, ab, r, { pt: ty, ...o });
+// Région de chaque Pokémon (la génération où il est apparu) ; les formes régionales suivent leur nom (« de Galar », « d'Alola »,
+// « de Hisui » = Sinnoh d'autrefois). Pikachu, Mew, Mewtwo et Arceus n'en ont pas : ils vont dans tous les decks Pokémon.
+const REG = {
+  Kanto: "Salamèche, Reptincel, Dracaufeu, Goupix, Feunard, Caninos, Arcanin, Pyroli, Galopa, Sulfura, Carapuce, Carabaffe, Tortank, Psykokwak, Magicarpe, Léviator, Lokhlass, Aquali, Amonita, Kabutops, Lamantine, Crustabri, Ptitard, Tartard, Ramoloss, Bulbizarre, Herbizarre, Florizarre, Mystherbe, Saquedeneu, Noadkoko, Empiflor, Raichu, Voltali, Magnéti, Magnéton, Électhor, Élektek, Voltorbe, Lippoutou, Artikodin, Machoc, Machopeur, Mackogneur, Tygnon, Kicklee, Férosinge, Colossinge, Abo, Arbok, Smogo, Smogogo, Nidoking, Nidoqueen, Grotadmorv, Aspicot, Dardargnan, Sabelette, Sablaireau, Taupiqueur, Triopikeur, Rhinocorne, Rhinoféros, Roucool, Roucoups, Roucarnage, Piafabec, Rapasdepic, Ptéra, Abra, Kadabra, Alakazam, Hypnomade, M. Mime, Chenipan, Chrysacier, Papilusion, Insécateur, Scarabrute, Paras, Parasect, Mimitoss, Aéromite, Racaillou, Gravalanch, Grolem, Onix, Fantominus, Spectrum, Ectoplasma, Minidraco, Draco, Dracolosse, Mélofée, Mélodelfe, Rondoudou, Grodoudou, Évoli, Ronflex, Miaouss, Rattata, Tauros, Leveinard, Porygon, Métamorph, Kangourex",
+  Johto: "Malosse, Démolosse, Typhlosion, Ho-Oh, Kaiminus, Suicune, Hyporoi, Germignon, Pichu, Farfuret, Lugia, Airmure, Cornèbre, Nostenfer, Scorplane, Mentali, Noctali, Tyranocif, Feuforêve, Steelix, Cizayox, Togepi, Écrémeuh, Queulorior, Phanpy",
+  Hoenn: "Kyogre, Groudon, Rayquaza, Braségali, Milobellus, Relicanth, Tengalice, Lilia, Posipi, Négapi, Stalgamin, Makuhita, Hariyama, Séviper, Libégon, Deoxys, Latios, Latias, Gardevoir, Polichombr, Branette, Ténéfix, Métalosse, Galekid, Galegon, Mysdibule",
+  Sinnoh: "Simiabraz, Phyllali, Lixy, Pachirisu, Givrali, Mammochon, Dimoret, Riolu, Lucario, Lockpin, Cradopaud, Hippopotas, Griknot, Carmache, Carchacrok, Apireine, Yanmega, Tarinorme, Giratina, Spiritomb, Magirêve, Darkrai, Dialga, Togekiss, Chaglam, Castorno, Archéomire",
+  Unys: "Gruikui, Victini, Reshiram, Zekrom, Moustillon, Clamiral, Lakmécygne, Vipélierre, Majaspic, Vivaldaim, Haydaim, Noacier, Sorbébé, Ouvrifier, Golemastoc, Aéroptéryx, Symbios, Genesect, Lugulabre, Tutankafer, Trioxhydre, Zorua, Zoroark",
+  Kalos: "Grenousse, Croâporal, Feunnec, Roussil, Goupelin, Braisillon, Amphinobi, Dedenne, Pandespiègle, Kravarech, Bruyverne, Sonistrelle, Yveltal, Prismillon, Mistigrix, Diancie, Exagide, Xerneas, Nymphali",
+  Alola: "Brindibou, Archéduc, Flamiaou, Félinferno, Otaquin, Oratoria, Tokorico, Quartermac, Bourrinos, Bacabouh, Solgaleo, Lunala, Cosmovum, Lougaroc, Magearna, Mimiqui",
+  Galar: "Ouistempo, Gorythmic, Flambino, Pyrobut, Larméléon, Lézargus, Zamazenta, Shifours, Wushours, Bekaglaçon, Voltoutou, Éthernatos, Corvaillus, Zacian",
+  Paldea: "Chochodile, Flâmigator, Coiffeton, Pohmarmotte, Koraidon, Miraidon, Poussacha, Palmaval, Virevorreur, Zapétrel, Baojian, Rampe-Ailes, Tag-Tag, Terraiste, Famignol, Gourmelet, Briochien, Forgelina",
+};
+const REGION = {};
+for (const [rg, names] of Object.entries(REG)) for (const n of names.split(",")) REGION[n.trim()] = rg;
+/** Les icônes : toutes leurs versions vont dans tous les decks Pokémon, quel que soit le type ou la région choisi. */
+export const POKE_ICONS = ["Pikachu", "Mew", "Mewtwo", "Arceus"];
+const regionOf = (name) => REGION[name] || (/ de Galar$/.test(name) ? "Galar" : / d'Alola$/.test(name) ? "Alola" : / de Hisui$/.test(name) ? "Sinnoh" : / de Paldea$/.test(name) ? "Paldea" : null);
+
+/** Un Pokémon : traits « Pokémon » + ses types (+ tr : « Évolition », « Team Rocket »…) ; ses types et sa région servent au choix de deck. */
+const pk = (name, title, cost, str, icons, ty, kw, ab, r, o = {}) => {
+  const { tr: extra, ...rest } = o;
+  const icon = POKE_ICONS.includes(name), rg = regionOf(name);
+  if (!icon && !rg) throw new Error(`Pokémon sans région : ${name}`);
+  return ch(name, title, cost, str, icons, `Pokémon|${ty}${extra ? "|" + extra : ""}`, kw, ab, r, { pt: icon ? "" : `${ty}|${rg}`, ...rest });
+};
+/** Un Dresseur : sans type (ty), il va dans tous les decks Pokémon ; avec un type, seulement dans les decks de ce type et de sa région (rg). */
+const tr = (name, title, cost, str, icons, traits, kw, ab, r, o = {}) => {
+  const { ty, rg, ...rest } = o;
+  return ch(name, title, cost, str, icons, `Dresseur|Humain${traits ? "|" + traits : ""}`, kw, ab, r, ty ? { pt: `${ty}|${rg}`, ...rest } : rest);
+};
+const EV = "Évolition";
 
 export const cards = [
-  // --- Feu
+  // ================= les icônes (tous les decks Pokémon) =================
+  pk("Pikachu", "Souris", 3, 3, "CR", "Électrik", "celebre", "winStand:combat@Vive-Attaque", "R", { key: "pokemon-pikachu" }),
+  pk("Pikachu", "Le compagnon de Sacha", 5, 4, "CRI", "Électrik", "celebre", "actMinus:2@Tonnerre ; ifName:Sacha,1@Toujours ensemble", "E", { key: "pokemon-pikachu" }),
+  pk("Pikachu", "Le partenaire légendaire", 7, 6, "CRI", "Électrik", "celebre", "enterKneelAll:3@Tonnerre ; winStand:combat@Vive-Attaque", "L", { key: "pokemon-pikachu" }),
+  pk("Mew", "Nouvelle espèce", 5, 4, "CRI", "Psy", "discret", "enterSearch:*@Métronome", "E"),
+  pk("Mew", "Le mythe originel", 7, 6, "CRI", "Psy", "discret|celebre", "aura:Pokémon,1@L'ancêtre de tous les Pokémon ; escape@Téléport", "L"),
+  pk("Mewtwo", "Génétique", 7, 7, "CRI", "Psy", "celebre|intimidation", "enterKneel:5@Psyko ; winKill:*,3@Frappe Psy", "L"),
+  pk("Mewtwo", "L'évadé du laboratoire", 7, 6, "RI", "Psy", "celebre", "actSilence:7@Psyko ; immune@Barrière", "L"),
+  pk("Arceus", "Alpha", 7, 7, "CRI", "Normal", "celebre|intimidation", "aura:Pokémon,1@Jugement ; enterDraw:1@Création", "L"),
+
+  // ================= Feu =================
   pk("Salamèche", "Lézard", 2, 2, "C", "Feu", "", "", "C"),
-  pk("Reptincel", "Flamme", 4, 4, "C", "Feu", "", "ifAtk:1@Flammèche", "U"),
+  pk("Reptincel", "Flamme", 3, 3, "C", "Feu", "", "ifAtk:1@Flammèche", "U"),
   pk("Dracaufeu", "Le dragon de feu", 7, 7, "CI", "Feu|Vol", "celebre|intimidation", "winKill:combat,3@Lance-Flammes ; noKneel:combat@Envol", "L"),
+  pk("Dracaufeu", "Méga-Dracaufeu X", 7, 8, "C", "Feu|Dragon", "intimidation", "atkTerror:4@La flamme bleue ; winKill:combat,4@Boutefeu", "L"),
   pk("Goupix", "Renard", 2, 1, "R", "Feu", "discret", "", "C"),
   pk("Feunard", "Neuf queues", 4, 3, "RI", "Feu", "", "winDiscard:ruse,1@Feu follet", "R"),
   pk("Caninos", "Chiot", 2, 2, "C", "Feu", "", "", "C"),
   pk("Arcanin", "Légendaire", 5, 5, "CI", "Feu", "", "winStand:combat@Vitesse Extrême", "R"),
-  pk("Pyroli", "Flamme", 4, 4, "C", "Feu", "", "ifAtk:1@Rebondifeu", "U"),
+  pk("Pyroli", "Flamme", 5, 5, "C", "Feu", "", "ifAtk:2@Rebondifeu ; winRaze:combat@Feu d'Enfer", "R", { tr: EV }),
+  pk("Galopa", "Cheval feu", 4, 3, "CI", "Feu", "", "ifAtk:2@Nitrocharge", "U"),
   pk("Malosse", "Chien noir", 2, 2, "C", "Feu|Ténèbres", "", "", "C"),
   pk("Démolosse", "Chien de l'enfer", 5, 5, "C", "Feu|Ténèbres", "intimidation", "winDiscard:combat,1@Crocs Feu", "R"),
-  // --- Eau
+  pk("Typhlosion", "Volcan", 5, 5, "CI", "Feu", "", "winKill:combat,2@Éruption", "R"),
+  pk("Braségali", "Ardent", 5, 5, "C", "Feu|Combat", "", "ifAtk:2@Pied Brûleur", "R"),
+  pk("Simiabraz", "Le singe de feu", 5, 5, "CR", "Feu|Combat", "", "winStand:combat@Close Combat", "R"),
+  pk("Goupelin", "Renard", 5, 4, "RI", "Feu|Psy", "", "actMinus:2@Feu Mystique", "R"),
+  pk("Gruikui", "Pourceau", 1, 1, "C", "Feu", "", "", "C"),
+  pk("Gruikui", "Feu de joie", 2, 2, "C", "Feu", "", "ifAtk:1@Charge", "C"),
+  pk("Braisillon", "Braise", 3, 3, "CR", "Feu|Vol", "", "", "U"),
+  pk("Feunnec", "Renard", 1, 1, "R", "Feu", "", "", "C"),
+  pk("Roussil", "Renard", 3, 3, "RI", "Feu", "", "", "U"),
+  pk("Flamiaou", "Chat feu", 1, 1, "C", "Feu", "", "", "C"),
+  pk("Félinferno", "Catcheur", 5, 5, "C", "Feu|Ténèbres", "intimidation", "winKill:combat,2@Dark Lariat", "R"),
+  pk("Flambino", "Lapin", 1, 1, "C", "Feu", "", "", "C"),
+  pk("Pyrobut", "Buteur", 5, 5, "CR", "Feu", "", "ifAtk:1@Ballon Brûlant", "R"),
+  pk("Chochodile", "Croco feu", 1, 1, "C", "Feu", "", "", "C"),
+  pk("Flâmigator", "Chanteur", 5, 5, "CI", "Feu|Spectre", "", "winKill:combat,2@Chant Flamboyant", "R"),
+  pk("Victini", "Victoire", 5, 3, "CRI", "Psy|Feu", "celebre", "atkBuff:Pokémon,1@Étoile de la victoire", "E"),
+  pk("Sulfura", "Flamme", 6, 6, "CI", "Feu|Vol", "intimidation", "atkKneel:4@Vent Brûlant", "E"),
+  pk("Ho-Oh", "Arc-en-ciel", 7, 6, "CRI", "Feu|Vol", "celebre", "enterRevive:5@Feu Sacré ; winStand:*@Arc-en-ciel", "L"),
+  pk("Reshiram", "Blanc vérité", 7, 7, "CRI", "Dragon|Feu", "celebre|intimidation", "enterKill:4@Flamme Bleue ; ifName:N Harmonia,1@La vérité", "L"),
+
+  // ================= Eau =================
   pk("Carapuce", "Minitortue", 2, 2, "CR", "Eau", "", "", "C"),
-  pk("Carabaffe", "Tortue", 4, 4, "CR", "Eau", "", "ifDef:1@Repli", "U"),
+  pk("Carabaffe", "Tortue", 3, 3, "CR", "Eau", "", "ifDef:1@Repli", "U"),
   pk("Tortank", "Carapace", 6, 6, "CRI", "Eau", "", "ifDef:2@Hydrocanon", "E"),
   pk("Psykokwak", "Canard", 2, 1, "RI", "Eau", "", "loseDraw:1@Mal de tête", "C"),
   pk("Magicarpe", "Poisson", 1, 1, "C", "Eau", "", "", "C"),
   pk("Léviator", "Atrocité", 6, 7, "CI", "Eau|Vol", "intimidation", "winKill:combat,3@Ultralaser", "E"),
   pk("Lokhlass", "Transport", 5, 4, "CRI", "Eau|Glace", "", "enterDraw:1@Chant", "R"),
-  pk("Aquali", "Bulleur", 4, 4, "CRI", "Eau", "", "", "U"),
+  pk("Aquali", "Bulleur", 5, 5, "CRI", "Eau", "", "ifDef:2@Acidarmure", "R", { tr: EV }),
   pk("Kyogre", "Bassin marin", 7, 7, "CRI", "Eau", "intimidation", "enterKneel:5@Onde Originelle ; winDraw:*,1@Primo-Résurgence", "L"),
   pk("Amonita", "Spirale", 2, 2, "R", "Roche|Eau", "", "", "C"),
   pk("Kabutops", "Carapace", 5, 4, "C", "Roche|Eau", "", "winKill:combat,2@Tranche", "R"),
   pk("Lamantine", "Otarie", 4, 4, "CR", "Eau|Glace", "", "", "U"),
   pk("Crustabri", "Bivalve", 4, 5, "C", "Eau|Glace", "", "ifDef:2@Coquilles", "U"),
-  // --- Plante
+  pk("Ptitard", "Têtard", 1, 1, "C", "Eau", "", "", "C"),
+  pk("Tartard", "Têtard", 5, 5, "CR", "Eau|Combat", "", "winKneel:combat@Hypnose", "R"),
+  pk("Ramoloss", "Crétin", 1, 1, "I", "Eau|Psy", "", "loseStand@Flemmard", "C"),
+  pk("Kaiminus", "Grande gueule", 2, 2, "C", "Eau", "", "ifAtk:1@Morsure", "C"),
+  pk("Moustillon", "Loutre", 1, 1, "C", "Eau", "", "", "C"),
+  pk("Moustillon", "Sieste au soleil", 2, 2, "CR", "Eau", "", "ifDef:1@Coquilame", "C"),
+  pk("Clamiral", "Majesté", 5, 5, "CI", "Eau", "", "winKill:combat,2@Aqua-Brèche", "R"),
+  pk("Clamiral de Hisui", "Formidable", 5, 5, "CR", "Eau|Ténèbres", "discret", "winDiscard:ruse,1@Mille Lames", "R"),
+  pk("Relicanth", "Longévité", 3, 3, "C", "Eau|Roche", "", "ifDef:2@Fossile vivant", "U"),
+  pk("Lakmécygne", "Cygne blanc", 4, 4, "CI", "Eau|Vol", "", "winStand:influence@Danse Plumes", "R"),
+  pk("Hyporoi", "Dragon", 5, 5, "CR", "Eau|Dragon", "", "winDraw:combat,1@Hydrocanon", "R"),
+  pk("Milobellus", "Tendresse", 5, 4, "RI", "Eau", "celebre", "domi:2@Écaille Spéciale ; ifName:Marc,1@L'élégance de Marc", "R"),
+  pk("Palmaval", "Danseur", 5, 5, "CR", "Eau|Combat", "", "winStand:combat@Danse Aquatique", "R"),
+  pk("Coiffeton", "Caneton", 1, 1, "C", "Eau", "", "", "C"),
+  pk("Grenousse", "Bulgrenouille", 1, 1, "R", "Eau", "", "", "C"),
+  pk("Croâporal", "Bulgrenouille", 3, 3, "CR", "Eau", "discret", "", "U"),
+  pk("Otaquin", "Otarie", 1, 1, "I", "Eau", "", "", "C"),
+  pk("Oratoria", "Soliste", 5, 4, "RI", "Eau|Fée", "celebre", "domi:2@Chanson Aquatique", "R"),
+  pk("Larméléon", "Lézard", 1, 1, "R", "Eau", "", "", "C"),
+  pk("Lézargus", "Agent secret", 5, 4, "RI", "Eau", "discret", "winKill:ruse,2@Tir de Précision", "R"),
+  pk("Suicune", "Aurore", 6, 6, "CRI", "Eau", "", "enterStand:Pokémon@Vent du Nord ; ifDef:1@Purification", "E"),
+  pk("Amphinobi", "Ninja", 6, 6, "CR", "Eau|Ténèbres", "discret", "winKill:ruse,3@Sheauriken ; escape@Clonage", "E"),
+  pk("Amphinobi", "Méga-Amphinobi", 7, 7, "CRI", "Eau|Ténèbres", "discret|celebre", "enterKneelAll:3@Sheauriken géant ; winKill:ruse,4@Assaut ninja", "L"),
+
+  // ================= Plante =================
   pk("Bulbizarre", "Graine", 2, 2, "CR", "Plante|Poison", "", "", "C"),
-  pk("Herbizarre", "Graine", 4, 4, "CR", "Plante|Poison", "", "loseStand@Synthèse", "U"),
+  pk("Herbizarre", "Graine", 3, 3, "CR", "Plante|Poison", "", "loseStand@Synthèse", "U"),
   pk("Florizarre", "Graine", 7, 6, "CRI", "Plante|Poison", "celebre", "aura:Plante,1@Lance-Soleil ; domPower:1@Photosynthèse", "L"),
   pk("Mystherbe", "Racine", 1, 1, "R", "Plante|Poison", "", "", "C"),
   pk("Saquedeneu", "Vigne", 2, 1, "R", "Plante", "", "atkKneel:1@Ligotage", "C"),
   pk("Noadkoko", "Noix de coco", 5, 5, "RI", "Plante|Psy", "", "enterDraw:1@Bombe-Œuf", "R"),
   pk("Germignon", "Feuille", 2, 2, "I", "Plante", "", "", "C"),
   pk("Empiflor", "Carnivore", 4, 4, "C", "Plante|Poison", "", "winKill:combat,1@Fouet Lianes", "U"),
-  // --- Électrik
-  pk("Pikachu", "Souris", 3, 3, "CR", "Électrik", "celebre", "winStand:combat@Vive-Attaque", "R", { key: "pokemon-pikachu" }),
-  pk("Pikachu", "Le compagnon de Sacha", 5, 4, "CRI", "Électrik", "celebre", "actMinus:2@Tonnerre ; ifName:Sacha,1@Toujours ensemble", "E", { key: "pokemon-pikachu" }),
+  pk("Vipélierre", "Serpent herbe", 1, 1, "R", "Plante", "", "", "C"),
+  pk("Vipélierre", "Petit prince", 2, 2, "RI", "Plante", "", "ifDef:1@Fierté", "C"),
+  pk("Majaspic", "Le roi serpent", 5, 5, "RI", "Plante", "", "atkKneel:4@Regard Médusant", "R"),
+  pk("Poussacha", "Chat herbe", 1, 1, "R", "Plante", "", "", "C"),
+  pk("Phyllali", "Verdoyant", 3, 3, "CR", "Plante", "", "", "U", { tr: EV }),
+  pk("Phyllali", "Lame-Feuille", 5, 5, "CR", "Plante", "", "winKill:combat,2@Lame-Feuille", "R", { tr: EV }),
+  pk("Tengalice", "Le maître de la forêt", 4, 4, "CR", "Plante|Ténèbres", "", "atkKneel:3@Vent Mauvais", "U"),
+  pk("Vivaldaim", "Saison", 1, 1, "I", "Normal|Plante", "", "", "C"),
+  pk("Haydaim", "Saison", 4, 4, "CI", "Normal|Plante", "", "ifAtk:1@Encornebois", "U"),
+  pk("Noacier", "Boule épine", 4, 4, "C", "Plante|Acier", "", "ifDef:2@Picots", "U"),
+  pk("Lilia", "Lys de mer", 2, 1, "I", "Roche|Plante", "", "dieDraw:1@Fossile", "C"),
+  pk("Virevorreur", "Virevoltant", 3, 3, "R", "Plante|Spectre", "", "ifAtk:1@Rafale", "U"),
+  pk("Brindibou", "Plumage", 1, 1, "R", "Plante|Vol", "", "", "C"),
+  pk("Archéduc", "Archer", 5, 5, "CR", "Plante|Spectre", "", "winKill:ruse,2@Tisse Ombre", "R"),
+  pk("Ouistempo", "Singe", 1, 1, "C", "Plante", "", "", "C"),
+  pk("Gorythmic", "Batteur", 5, 5, "CI", "Plante", "", "atkBuff:Pokémon,1@Tambour-Battant", "R"),
+
+  // ================= Électrik =================
   pk("Raichu", "Souris", 5, 5, "C", "Électrik", "", "actMinus:2@Fatal-Foudre", "R"),
-  pk("Voltali", "Éclair", 4, 4, "CR", "Électrik", "", "ifAtk:1@Cage-Éclair", "U"),
+  pk("Pichu", "Minisouris", 1, 1, "R", "Électrik", "", "", "C"),
+  pk("Voltali", "Éclair", 3, 3, "CR", "Électrik", "", "ifAtk:1@Cage-Éclair", "U", { tr: EV }),
+  pk("Voltali", "Fatal-Foudre", 5, 5, "CR", "Électrik", "", "ifAtk:2@Fatal-Foudre", "R", { tr: EV }),
   pk("Magnéti", "Aimant", 1, 1, "R", "Électrik|Acier", "", "", "C"),
   pk("Magnéton", "Aimant", 3, 3, "CR", "Électrik|Acier", "", "ifWith:Électrik,1@Triplé", "U"),
   pk("Électhor", "Électrique", 7, 6, "CRI", "Électrik|Vol", "celebre|discret", "atkKneel:4@Fatal-Foudre ; winStand:*@Statik", "L"),
   pk("Élektek", "Électrique", 4, 4, "C", "Électrik", "", "", "U"),
   pk("Voltorbe", "Balle", 1, 1, "C", "Électrik", "", "actSacKill:2@Explosion", "C"),
-  // --- Glace
+  pk("Lixy", "Flash", 1, 1, "C", "Électrik", "", "", "C"),
+  pk("Pachirisu", "Écureuil élec", 3, 2, "RI", "Électrik", "", "actStand:Électrik@Coup d'Main", "U"),
+  pk("Posipi", "Encouragement", 2, 1, "RI", "Électrik", "", "ifName:Négapi,2@Plus", "C"),
+  pk("Négapi", "Encouragement", 2, 1, "RI", "Électrik", "", "ifName:Posipi,2@Moins", "C"),
+  pk("Dedenne", "Antenne", 2, 1, "R", "Électrik|Fée", "", "enterGold:1@Bajoues", "C"),
+  pk("Dedenne", "Gourmand", 4, 3, "RI", "Électrik|Fée", "", "winGold:*,1@Gourmandise", "U"),
+  pk("Voltoutou", "Chiot", 1, 1, "C", "Électrik", "", "", "C"),
+  pk("Zapétrel", "Oiseau de mer", 1, 1, "R", "Électrik|Vol", "", "", "C"),
+  pk("Raichu d'Alola", "Souris", 4, 4, "CR", "Électrik|Psy", "", "actMinus:1@Choc Psy", "U"),
+  pk("Pohmarmotte", "Main tendue", 4, 4, "C", "Électrik|Combat", "", "ifAtk:1@Poing Dévoué", "U"),
+  pk("Miraidon", "Paradoxe", 7, 7, "CRI", "Électrik|Dragon", "celebre|intimidation", "atkKneel:5@Électrodérive ; winStand:combat@Moteur Hadron", "L"),
+  pk("Tokorico", "Tutélaire", 6, 6, "CRI", "Électrik|Fée", "celebre", "atkKneel:4@Ire de la Nature ; winStand:combat@Électrikinésie", "E"),
+  pk("Zekrom", "Noir idéal", 7, 7, "CRI", "Dragon|Électrik", "celebre|intimidation", "enterKneelAll:3@Éclair Croix ; ifName:N Harmonia,1@L'idéal", "L"),
+
+  // ================= Glace =================
   pk("Lippoutou", "Forme humaine", 3, 2, "RI", "Glace|Psy", "", "enterKneel:2@Doux Baiser", "U"),
   pk("Artikodin", "Glaciaire", 7, 6, "CRI", "Glace|Vol", "celebre", "atkKneel:5@Blizzard ; winKneel:*@Laser Glace", "L"),
-  pk("Givrali", "Neige fraîche", 4, 4, "CR", "Glace", "", "winKneel:combat@Laser Glace", "U"),
+  pk("Artikodin", "De la Team Rocket", 6, 6, "CRI", "Glace|Vol", "intimidation", "atkKneel:4@Blizzard noir ; ifName:Giovanni,1@Au service du boss", "E", { tr: "Team Rocket" }),
+  pk("Givrali", "Neige fraîche", 3, 3, "CR", "Glace", "", "winKneel:combat@Laser Glace", "U", { tr: EV }),
+  pk("Givrali", "Poudreuse", 5, 5, "CR", "Glace", "", "winKneel:combat@Laser Glace ; ifDef:1@Grêle", "R", { tr: EV }),
   pk("Sorbébé", "Neige fraîche", 1, 1, "R", "Glace", "", "", "C"),
-  pk("Mammochon", "Deux défenses", 6, 6, "C", "Glace|Sol", "intimidation", "", "E"),
+  pk("Mammochon", "Deux défenses", 5, 5, "C", "Glace|Sol", "intimidation", "", "R"),
   pk("Farfuret", "Griffe", 3, 3, "CR", "Ténèbres|Glace", "discret", "", "U"),
-  // --- Combat
+  pk("Dimoret", "Griffe pointue", 5, 5, "CR", "Ténèbres|Glace", "discret", "winKill:ruse,2@Tranche-Nuit", "R"),
+  pk("Stalgamin", "Bonnet neige", 1, 1, "R", "Glace", "", "", "C"),
+  pk("Bekaglaçon", "Pingouin", 2, 2, "C", "Glace", "", "selfGuard@Tête de Gel", "C"),
+  pk("Baojian", "L'épée du Fléau", 6, 6, "CR", "Ténèbres|Glace", "intimidation", "actMinus:2@Épée du Fléau ; winKill:combat,3@Lames de glace", "E"),
+
+  // ================= Combat =================
   pk("Machoc", "Superpuissance", 2, 2, "C", "Combat", "", "", "C"),
-  pk("Machopeur", "Superpuissance", 4, 4, "C", "Combat", "", "ifAtk:1@Poing Karaté", "U"),
+  pk("Machopeur", "Superpuissance", 3, 3, "C", "Combat", "", "ifAtk:1@Poing Karaté", "U"),
   pk("Mackogneur", "Superpuissance", 6, 7, "C", "Combat", "intimidation", "winKill:combat,3@Dynamopoing", "E"),
   pk("Tygnon", "Puncheur", 4, 4, "C", "Combat", "", "actMinus:1@Poing-Éclair", "U"),
   pk("Kicklee", "Latteur", 4, 4, "C", "Combat", "", "ifAlone:2@Pied Voltige", "U"),
@@ -99,30 +240,55 @@ export const cards = [
   pk("Colossinge", "Porsinge", 4, 4, "C", "Combat", "", "winStand:combat@Colère", "U"),
   pk("Makuhita", "Cran", 2, 2, "C", "Combat", "", "", "C"),
   pk("Hariyama", "Cogneur", 5, 6, "C", "Combat", "", "ifDef:1@Cogne", "R"),
-  pk("Tartard", "Têtard", 5, 5, "CR", "Eau|Combat", "", "winKneel:combat@Hypnose", "R"),
+  pk("Wushours", "Kung-fu", 2, 2, "C", "Combat", "", "ifAlone:1@Entraînement", "C"),
   pk("Shifours", "Maître du kung-fu", 7, 7, "CI", "Combat|Ténèbres", "celebre|intimidation", "noKneel:combat@Poing Obscur ; winKill:combat,3@Mille Poings", "L"),
-  // --- Poison
+  pk("Pandespiègle", "Espiègle", 1, 1, "C", "Combat", "", "", "C"),
+  pk("Ouvrifier", "Musclé", 3, 3, "C", "Combat", "", "ifAtk:1@Poutre", "U"),
+  pk("Quartermac", "Coopération", 4, 3, "CI", "Combat", "", "pack:Combat,1@Esprit d'équipe", "U"),
+  pk("Cradopaud", "Toxique", 2, 2, "C", "Poison|Combat", "", "winDiscard:combat,1@Coup Bas", "C"),
+  pk("Rampe-Ailes", "Paradoxe", 5, 5, "CR", "Insecte|Combat", "", "ifAtk:1@Énergie Antique ; winKill:combat,2@Ailes Ardentes", "R"),
+  pk("Lockpin", "Méga-Lockpin", 7, 7, "CRI", "Normal|Combat", "celebre", "winKill:combat,3@Pied Voltige ; noKneel:combat@Méga-Évolution", "L"),
+  pk("Zamazenta", "Le bouclier de Galar", 7, 7, "CRI", "Combat|Acier", "celebre|intimidation", "ifDef:2@Bouclier Royal ; guard:Pokémon@Le bouclier de Galar", "L"),
+  pk("Koraidon", "Paradoxe", 7, 7, "CI", "Combat|Dragon", "celebre|intimidation", "noKneel:combat@Forme Sprint ; winKill:combat,3@Hypercollision", "L"),
+
+  // ================= Poison =================
   pk("Abo", "Serpent", 2, 2, "C", "Poison", "", "", "C"),
   pk("Arbok", "Cobra", 4, 4, "CR", "Poison", "", "atkKneel:3@Regard Médusant", "U"),
   pk("Smogo", "Gaz toxique", 2, 1, "R", "Poison", "", "", "C"),
   pk("Smogogo", "Gaz toxique", 4, 3, "R", "Poison", "", "actSacKill:3@Destruction", "U"),
-  pk("Nidoking", "Perceur", 6, 6, "CI", "Poison|Sol", "intimidation", "winDiscard:combat,1@Toxik", "E"),
+  pk("Nidoking", "Perceur", 5, 5, "CI", "Poison|Sol", "intimidation", "winDiscard:combat,1@Toxik", "R"),
   pk("Nidoqueen", "Perceur", 5, 5, "CI", "Poison|Sol", "", "guard:Pokémon@Protection", "R"),
   pk("Grotadmorv", "Dégueu", 4, 5, "C", "Poison", "", "", "U"),
+  pk("Grotadmorv d'Alola", "Dégueu", 5, 5, "CR", "Poison|Ténèbres", "", "winRaze:combat@Glouton", "R"),
   pk("Aspicot", "Insecte poilu", 1, 1, "C", "Insecte|Poison", "", "", "C"),
   pk("Dardargnan", "Guêpoison", 4, 4, "C", "Insecte|Poison", "", "ifAtk:1@Double-Dard", "U"),
-  // --- Sol
+  pk("Nostenfer", "Chauve-souris", 5, 5, "R", "Poison|Vol", "discret", "winDiscard:ruse,1@Poison-Croix", "R"),
+  pk("Séviper", "Croc venin", 3, 3, "C", "Poison", "", "winDiscard:combat,1@Crochet Venin", "U"),
+  pk("Kravarech", "Algue toxique", 5, 5, "CR", "Poison|Dragon", "", "atkKneel:3@Bombe Acide ; winDiscard:combat,1@Toxik", "R"),
+  pk("Tag-Tag", "Tagueur", 3, 3, "R", "Poison|Normal", "discret", "", "U"),
+  pk("Terraiste", "Épines venin", 4, 4, "C", "Poison|Sol", "", "ifDef:2@Carapace toxique", "U"),
+  pk("Éthernatos", "Infini", 7, 7, "CRI", "Poison|Dragon", "intimidation", "enterKneelAll:3@Nuit Noire ; aura:Poison,1@Énergie infinie", "L"),
+
+  // ================= Sol =================
   pk("Sabelette", "Souris", 2, 2, "C", "Sol", "", "", "C"),
   pk("Sablaireau", "Souris", 4, 4, "C", "Sol", "", "ifDef:1@Boul'Armure", "U"),
   pk("Taupiqueur", "Taupe", 1, 1, "R", "Sol", "discret", "", "C"),
   pk("Triopikeur", "Taupe", 3, 3, "CR", "Sol", "", "winDraw:combat,1@Tunnel", "U"),
   pk("Rhinocorne", "Piquant", 3, 3, "C", "Sol|Roche", "", "", "C"),
-  pk("Rhinoféros", "Perceur", 6, 6, "C", "Sol|Roche", "intimidation", "", "E"),
+  pk("Rhinoféros", "Perceur", 5, 6, "C", "Sol|Roche", "intimidation", "", "R"),
   pk("Groudon", "Continent", 7, 6, "CI", "Sol", "intimidation|celebre", "enterKill:3@Lame Pangéenne", "L"),
   pk("Griknot", "Requin terrestre", 2, 2, "C", "Dragon|Sol", "", "", "C"),
   pk("Carmache", "Grotte", 4, 4, "C", "Dragon|Sol", "", "", "U"),
   pk("Carchacrok", "Supersonique", 6, 6, "C", "Dragon|Sol", "intimidation", "winKill:combat,3@Séisme", "E"),
-  // --- Vol (et Normal)
+  pk("Phanpy", "Longnez", 1, 1, "C", "Sol", "", "", "C"),
+  pk("Hippopotas", "Hippo", 2, 2, "C", "Sol", "", "", "C"),
+  pk("Scorplane", "Scorpivol", 2, 2, "C", "Sol|Vol", "", "", "C"),
+  pk("Bourrinos", "Cheval de trait", 4, 5, "C", "Sol", "", "", "U"),
+  pk("Bacabouh", "Château de sable", 2, 1, "R", "Spectre|Sol", "", "dieKill:2@Sable hanté", "C"),
+  pk("Libégon", "Mystique", 5, 5, "CR", "Sol|Dragon", "", "atkKneel:3@Tempête de Sable", "R"),
+  pk("Golemastoc", "Automate", 5, 5, "C", "Sol|Spectre", "", "ifAtk:2@Poing Ombre", "R"),
+
+  // ================= Vol =================
   pk("Roucool", "Minoiseau", 1, 1, "R", "Normal|Vol", "", "", "C"),
   pk("Roucoups", "Oiseau", 3, 3, "CR", "Normal|Vol", "", "", "C"),
   pk("Roucarnage", "Oiseau", 5, 5, "CR", "Normal|Vol", "", "noKneel:ruse@Cyclone", "R"),
@@ -132,16 +298,34 @@ export const cards = [
   pk("Airmure", "Armoiseau", 4, 4, "C", "Acier|Vol", "", "ifDef:1@Armure", "U"),
   pk("Ptéra", "Fossile", 5, 5, "C", "Roche|Vol", "", "noKneel:combat@Cru-Ailes", "R"),
   pk("Cornèbre", "Obscurité", 2, 2, "R", "Ténèbres|Vol", "", "winSteal:ruse,1@Larcin", "C"),
-  // --- Psy
+  pk("Sonistrelle", "Son", 1, 1, "R", "Vol|Dragon", "", "", "C"),
+  pk("Bruyverne", "Son", 4, 4, "CR", "Vol|Dragon", "", "atkKneel:3@Bang Sonique", "U"),
+  pk("Corvaillus", "Corbeau", 4, 4, "C", "Vol|Acier", "", "ifDef:1@Armure", "U"),
+  pk("Corvaillus", "Le taxi volant de Galar", 5, 5, "CR", "Vol|Acier", "", "winStand:combat@Bec-Acier ; ifDef:1@Armure de fer", "R"),
+  pk("Aéroptéryx", "Premier oiseau", 5, 5, "CR", "Roche|Vol", "", "ifAtk:1@Acrobatie", "R"),
+  pk("Yveltal", "Destruction", 7, 7, "CR", "Ténèbres|Vol", "intimidation|celebre", "winKill:combat,4@Mort'Ailes ; foeDiePower:1@Le Pokémon de la destruction", "L"),
+
+  // ================= Psy =================
   pk("Abra", "Psy", 1, 1, "R", "Psy", "", "escape@Téléport", "C"),
   pk("Kadabra", "Psy", 3, 3, "CR", "Psy", "", "actMinus:1@Choc Mental", "U"),
   pk("Alakazam", "Psy", 5, 4, "RI", "Psy", "genie", "actKneel:4@Psyko", "R"),
-  pk("Mewtwo", "Génétique", 7, 7, "CRI", "Psy", "celebre|intimidation", "enterKneel:5@Psyko ; winKill:*,3@Frappe Psy", "L"),
-  pk("Mew", "Nouvelle espèce", 5, 4, "CRI", "Psy", "discret", "enterSearch:*@Métronome", "E"),
   pk("Hypnomade", "Hypnose", 4, 3, "CRI", "Psy", "", "enterKneel:3@Hypnose", "U"),
-  pk("Mentali", "Soleil", 4, 4, "CRI", "Psy", "", "", "U"),
+  pk("Mentali", "Soleil", 3, 3, "RI", "Psy", "", "", "U", { tr: EV }),
+  pk("Mentali", "Prescience", 5, 4, "RI", "Psy", "", "actKneel:4@Psyko ; enterDraw:1@Prémonition", "R", { tr: EV }),
   pk("Gardevoir", "Étreinte", 5, 4, "CRI", "Psy|Fée", "", "guard:Pokémon@Vœu Soin", "R"),
-  // --- Insecte
+  pk("Gardevoir", "Méga-Gardevoir", 7, 6, "CRI", "Psy|Fée", "celebre", "aura:Fée,1@Méga-Évolution ; enterKneel:5@Pouvoir Lunaire", "L"),
+  pk("M. Mime", "Barrière", 3, 2, "RI", "Psy|Fée", "", "claimCancel@Mur Invisible", "U"),
+  pk("Ponyta de Galar", "Licorne", 2, 2, "RI", "Psy", "", "", "C"),
+  pk("Mistigrix", "Contrôle", 3, 2, "RI", "Psy", "", "enterKneel:2@Psyko", "U"),
+  pk("Symbios", "Amplification", 4, 4, "RI", "Psy", "", "immune@Garde Magik", "U"),
+  pk("Cosmovum", "Protostellaire", 2, 1, "R", "Psy", "", "selfGuard@Armure cosmique", "C"),
+  pk("Deoxys", "ADN", 6, 6, "CRI", "Psy", "", "enterSearch:Psy@Mutation ; ifAtk:1@Forme Attaque", "E"),
+  pk("Latios", "Éon", 6, 6, "CRI", "Dragon|Psy", "", "atkKneel:4@Lumi-Éclat ; ifName:Latias,1@Le lien des Éon", "E"),
+  pk("Latias", "Éon", 6, 5, "CRI", "Dragon|Psy", "", "guard:Pokémon@Brume ; ifName:Latios,1@Le lien des Éon", "E", { fem: true }),
+  pk("Solgaleo", "Le lion du soleil", 7, 7, "CRI", "Psy|Acier", "celebre|intimidation", "noKneel:combat@Éclat solaire ; winKill:combat,3@Choc Météore", "L"),
+  pk("Lunala", "La chauve-souris de la lune", 7, 6, "CRI", "Psy|Spectre", "discret|celebre", "winKill:ruse,3@Rayon Spectral ; escape@Ombre lunaire", "L"),
+
+  // ================= Insecte =================
   pk("Chenipan", "Ver", 1, 1, "C", "Insecte", "", "", "C"),
   pk("Chrysacier", "Cocon", 2, 2, "C", "Insecte", "", "ifDef:1@Armure", "C"),
   pk("Papilusion", "Papillon", 4, 3, "RI", "Insecte|Vol", "", "atkKneel:3@Poudre Dodo", "U"),
@@ -151,87 +335,160 @@ export const cards = [
   pk("Parasect", "Champignon", 3, 3, "CR", "Insecte|Plante", "", "atkKneel:2@Spore", "U"),
   pk("Mimitoss", "Insecte", 2, 2, "R", "Insecte|Poison", "", "", "C"),
   pk("Aéromite", "Papipoison", 4, 4, "CR", "Insecte|Poison", "discret", "", "U"),
+  pk("Cizayox", "Pince", 5, 5, "C", "Insecte|Acier", "duel", "noKneel:combat@Pisto-Poing", "R"),
+  pk("Apireine", "Ruche", 4, 3, "RI", "Insecte|Vol", "", "pack:Insecte,1@Ordre de la ruche", "U"),
+  pk("Yanmega", "Libellule", 5, 4, "CR", "Insecte|Vol", "", "ifFirst:2@Turbo", "R"),
+  pk("Prismillon", "Lépidoptère", 3, 2, "RI", "Insecte|Vol", "", "domi:1@Ailes colorées", "U"),
   pk("Genesect", "Paléozoïque", 7, 7, "CRI", "Insecte|Acier", "intimidation", "enterKneel:4@Techno-Buster ; winStand:combat@Module", "L"),
-  pk("Cizayox", "Pince", 6, 6, "C", "Insecte|Acier", "duel", "noKneel:combat@Pisto-Poing", "E"),
-  // --- Roche
+
+  // ================= Roche =================
   pk("Racaillou", "Roche", 1, 1, "C", "Roche|Sol", "", "", "C"),
   pk("Gravalanch", "Roche", 3, 3, "C", "Roche|Sol", "", "", "C"),
-  pk("Grolem", "Titanesque", 6, 6, "C", "Roche|Sol", "", "dieKill:4@Explosion", "E"),
-  pk("Onix", "Serpent de roc", 5, 6, "C", "Roche|Sol", "", "ifDef:1", "R"),
+  pk("Grolem", "Titanesque", 5, 5, "C", "Roche|Sol", "", "dieKill:4@Explosion", "R"),
+  pk("Onix", "Serpent de roc", 4, 5, "C", "Roche|Sol", "", "ifDef:1", "U"),
+  pk("Lougaroc", "Loup", 5, 5, "CR", "Roche", "", "winStand:combat@Accélérock", "R"),
+  pk("Tarinorme", "Boussole", 4, 4, "C", "Roche|Acier", "", "ifDef:2@Aimantation", "U"),
+  pk("Diancie", "Joyau", 5, 4, "RI", "Roche|Fée", "celebre", "enterGold:3@Diamants ; ifDef:1@Tempête de Diamants", "E"),
   pk("Tyranocif", "Armure", 7, 6, "CI", "Roche|Ténèbres", "intimidation|celebre", "aura:Roche,1@Tempête de sable ; winKill:combat,3@Mâchouille", "L"),
-  // --- Spectre
+
+  // ================= Spectre =================
   pk("Fantominus", "Gaz", 1, 1, "R", "Spectre|Poison", "discret", "", "C"),
   pk("Spectrum", "Gaz", 3, 3, "CR", "Spectre|Poison", "discret", "", "U"),
   pk("Ectoplasma", "Ombre", 6, 5, "RI", "Spectre|Poison", "discret", "winKill:ruse,3@Ball'Ombre", "E"),
   pk("Feuforêve", "Cri perçant", 3, 2, "RI", "Spectre", "", "enterDiscard:1@Ombre portée", "U"),
   pk("Polichombr", "Poupée", 2, 2, "CR", "Spectre", "", "", "C"),
   pk("Branette", "Marionnette", 4, 4, "CRI", "Spectre", "", "winDiscard:ruse,1@Malédiction", "U"),
+  pk("Zorua de Hisui", "Renard spectral", 2, 2, "R", "Normal|Spectre", "discret", "", "C"),
+  pk("Magirêve", "Magique", 4, 4, "RI", "Spectre", "", "enterDiscard:1@Incantation", "U"),
+  pk("Tutankafer", "Cercueil", 4, 4, "CR", "Spectre", "", "dieKill:3@Momie", "U"),
+  pk("Lugulabre", "Le lustre des âmes", 5, 5, "RI", "Spectre|Feu", "", "winKill:ruse,2@Danse des âmes", "R"),
+  pk("Spiritomb", "Interdit", 5, 5, "RI", "Spectre|Ténèbres", "discret", "escape@Les 108 âmes ; winDiscard:ruse,1@Malédiction", "R"),
+  pk("Exagide", "Royal", 5, 5, "CR", "Acier|Spectre", "", "defStand@Forme Parade ; ifAtk:1@Forme Assaut", "R"),
   pk("Giratina", "Rebelle", 7, 7, "CRI", "Spectre|Dragon", "intimidation|discret", "enterKill:3@Revenant", "L"),
-  // --- Dragon
+  pk("Ténéfix", "Méga-Ténéfix", 7, 6, "CRI", "Ténèbres|Spectre", "discret", "enterDiscard:1@Prestidigitation ; winPowerSteal:ruse,1@Le joyau géant", "L"),
+
+  // ================= Dragon =================
   pk("Minidraco", "Dragon", 2, 2, "R", "Dragon", "", "", "C"),
-  pk("Draco", "Dragon", 4, 4, "RI", "Dragon", "", "winDraw:ruse,1@Danse Draco", "U"),
-  pk("Dracolosse", "Dragon", 7, 7, "CI", "Dragon|Vol", "celebre|intimidation", "winStand:combat@Draco-Charge ; guard:Dragon@Gardien des mers", "L"),
+  pk("Draco", "Dragon", 3, 3, "RI", "Dragon", "", "winDraw:ruse,1@Danse Draco", "U"),
+  pk("Dracolosse", "Méga-Dracolosse", 7, 7, "CRI", "Dragon|Vol", "celebre|intimidation", "winStand:combat@Draco-Charge ; guard:Dragon@Gardien des mers", "L"),
   pk("Rayquaza", "Céleste", 7, 7, "CRI", "Dragon|Vol", "celebre", "noKneel:*@Draco-Ascension", "L"),
-  // --- Ténèbres
-  pk("Noctali", "Lune", 4, 4, "R", "Ténèbres", "", "ifDef:1@Clair de Lune", "U"),
+  pk("Trioxhydre", "Brutal", 6, 7, "CR", "Ténèbres|Dragon", "intimidation", "winKill:combat,3@Draco-Charge ; ifName:Ghetis,1@Le dragon du sage", "E"),
+
+  // ================= Ténèbres =================
+  pk("Noctali", "Lune", 3, 3, "R", "Ténèbres", "", "ifDef:1@Clair de Lune", "U", { tr: EV }),
+  pk("Noctali", "Clair de lune", 6, 6, "CR", "Ténèbres", "discret", "defStand@Garde lunaire ; winKneel:ruse@Regard Noir", "E", { tr: EV }),
+  pk("Zorua", "Renardeau", 2, 1, "R", "Ténèbres", "discret", "", "C"),
   pk("Zoroark", "Renard illusion", 5, 4, "RI", "Ténèbres", "discret", "atkKneel:4@Illusion", "R"),
   pk("Darkrai", "Nuit noire", 7, 6, "RI", "Ténèbres", "discret|intimidation", "enterDiscard:1@Trou Noir ; atkKneel:5@Cauchemar", "L"),
-  // --- Acier
-  pk("Steelix", "Serpent de fer", 6, 7, "C", "Acier|Sol", "", "ifDef:2@Queue de Fer", "E"),
+
+  // ================= Acier =================
+  pk("Steelix", "Serpent de fer", 5, 6, "C", "Acier|Sol", "", "ifDef:2@Queue de Fer", "R"),
   pk("Métalosse", "Patte en fer", 6, 6, "CRI", "Acier|Psy", "genie", "actKneel:4@Poing Météore", "E"),
+  pk("Magearna", "Artificiel", 5, 4, "CRI", "Acier|Fée", "", "enterStand:Pokémon@Cœur d'Âme", "E"),
+  pk("Forgelina", "Marteau", 5, 5, "C", "Fée|Acier", "", "winRaze:combat@Marteau Géant ; ifAtk:1@Forge", "R"),
   pk("Dialga", "Temporel", 7, 7, "CRI", "Acier|Dragon", "intimidation", "enterStand:Pokémon@Hurle-Temps ; xtraCh:combat", "L"),
-  // --- Fée
+
+  // ================= Fée =================
   pk("Mélofée", "Fée", 1, 1, "I", "Fée", "", "", "C"),
   pk("Mélodelfe", "Fée", 3, 3, "RI", "Fée", "", "domDraw:1@Rayon Lune", "U"),
   pk("Rondoudou", "Ballon", 2, 1, "I", "Normal|Fée", "", "enterKneel:2@Berceuse", "C"),
   pk("Grodoudou", "Ballon", 4, 4, "I", "Normal|Fée", "", "enterKneel:3@Berceuse", "U"),
   pk("Togepi", "Balle pique", 1, 1, "I", "Fée", "", "enterDraw:1@Coup d'Bol", "C"),
   pk("Togekiss", "Festivité", 5, 5, "CI", "Fée|Vol", "", "guard:Fée@Vœu", "R"),
+  pk("Nymphali", "Ruban", 3, 2, "RI", "Fée", "", "domi:1@Ruban", "U", { tr: EV }),
+  pk("Nymphali", "Charme", 5, 4, "RI", "Fée", "celebre", "enterKneel:4@Charme ; domi:1@Rubans", "R", { tr: EV }),
+  pk("Briochien", "Chien brioche", 3, 3, "CR", "Fée", "", "ifDef:1@Croûte dorée", "U"),
   pk("Xerneas", "Vie", 7, 6, "CRI", "Fée", "celebre", "enterRecall:Pokémon@Géo-Contrôle ; aura:Fée,1@Aura Féérique", "L"),
-  // --- Normal
-  pk("Évoli", "Évolutif", 2, 2, "CR", "Normal", "", "enterSearch:Pokémon@Évolution", "U"),
-  pk("Ronflex", "Pionceur", 6, 7, "C", "Normal", "intimidation", "ifDef:2@Repos", "E"),
-  pk("Miaouss", "Chadégout", 2, 1, "R", "Normal", "", "winGold:*,1@Jackpot", "C"),
+  pk("Zacian", "L'épée de Galar", 7, 7, "CR", "Fée", "celebre|intimidation", "winKill:combat,4@Épée Royale ; noKneel:combat@Lame héroïque", "L"),
+
+  // ================= Normal =================
+  pk("Évoli", "Évolutif", 2, 2, "CR", "Normal", "", "enterSearch:Évolition@Évolution", "U", { tr: EV }),
+  pk("Ronflex", "Pionceur", 5, 6, "C", "Normal", "intimidation", "ifDef:2@Repos", "R"),
+  pk("Ronflex", "La sieste", 4, 5, "C", "Normal", "", "loseStand@Ronflement", "U"),
+  pk("Miaouss", "Le Miaouss de la Team Rocket", 4, 3, "RI", "Normal", "", "winGold:*,1@Jackpot ; ifName:Jessie et James,1@Nous sommes de retour !", "U", { tr: "Team Rocket" }),
   pk("Rattata", "Souris", 1, 1, "C", "Normal", "", "", "C", { uni: false }),
   pk("Tauros", "Buffle", 4, 4, "C", "Normal", "", "ifAtk:1@Bélier", "U"),
   pk("Leveinard", "Œuf", 3, 2, "CI", "Normal", "", "actStand:Pokémon@Œuf", "U"),
   pk("Porygon", "Virtuel", 3, 2, "RI", "Normal", "genie", "", "U"),
   pk("Métamorph", "Morphing", 2, 2, "CR", "Normal", "", "ifWith:Pokémon,1@Morphing", "U"),
   pk("Kangourex", "Maternel", 5, 5, "CI", "Normal", "", "guard:Pokémon@Protéger le petit", "R"),
-  pk("Arceus", "Alpha", 7, 7, "CRI", "Normal", "celebre|intimidation", "aura:Pokémon,1@Jugement ; enterDraw:1@Création", "L"),
+  pk("Écrémeuh", "Vache à lait", 3, 3, "CI", "Normal", "", "actStand:Pokémon@Lait Meumeu", "U"),
+  pk("Queulorior", "Peintre", 2, 1, "RI", "Normal", "", "enterSearch:Pokémon@Gribouille", "C"),
+  pk("Queulorior", "Artiste", 3, 2, "RI", "Normal", "", "actIcon:influence@Gribouille", "U"),
+  pk("Chaglam", "Chat câlin", 2, 2, "R", "Normal", "", "", "C"),
+  pk("Castorno", "Castor", 3, 3, "CI", "Normal|Eau", "", "actGold:1@Le barrage", "U"),
+  pk("Gourmelet", "Cochon", 1, 1, "C", "Normal", "", "", "C"),
+  pk("Famignol", "Famille", 3, 2, "CR", "Normal", "", "pack:Normal,1@Famille nombreuse", "U"),
   pk("Galekid", "Armure de fer", 2, 2, "C", "Acier|Roche", "", "ifDef:1", "C"),
-  pk("Galegon", "Armure de fer", 4, 4, "C", "Acier|Roche", "", "ifDef:1", "U"),
+  pk("Galegon", "Armure de fer", 4, 4, "C", "Acier|Roche", "", "ifDef:1", "C"),
   pk("Mysdibule", "Trompeur", 3, 3, "CR", "Acier|Fée", "", "winDraw:combat,1@Grande mâchoire", "U"),
   pk("Archéomire", "Bronze", 2, 1, "RI", "Acier|Psy", "", "", "C"),
   pk("Mimiqui", "Déguisement", 4, 4, "CR", "Spectre|Fée", "", "escape@Déguisement", "R"),
-  // --- Dresseurs (dans tous les decks Pokémon)
-  ch("Sacha", "Dresseur de Bourg Palette", 5, 3, "CI", "Dresseur|Humain", "celebre", "actBuff:Pokémon,2@Je te choisis !", "R", { key: "pokemon-sacha" }),
-  ch("Sacha", "Champion du monde", 7, 5, "CRI", "Dresseur|Humain", "celebre", "aura:Pokémon,1@Maître Pokémon ; enterSearch:Pokémon@Attrapez-les tous", "L", { key: "pokemon-sacha" }),
-  ch("Ondine", "Championne d'Azuria", 3, 2, "RI", "Dresseur|Humain|Champion", "", "actStand:Pokémon@Soins", "U"),
-  ch("Pierre", "Champion d'Argenta", 3, 3, "CR", "Dresseur|Humain|Champion", "", "reserve:1 ; enterDraw:1@Le cuisinier", "U"),
-  ch("Professeur Chen", "Le Pokédex", 2, 1, "RI", "Dresseur|Humain|Savant", "genie", "enterSearch:Pokémon@Le Pokédex", "R"),
-  ch("Régis", "Le rival", 4, 3, "CI", "Dresseur|Humain", "", "ifBehind:2@Toujours un coup d'avance", "U"),
-  ch("Jessie et James", "Team Rocket", 3, 2, "R", "Dresseur|Humain|Team Rocket", "", "winSteal:ruse,1@Nous sommes de retour !", "U"),
-  ch("Giovanni", "Chef de la Team Rocket", 5, 3, "RI", "Dresseur|Humain|Team Rocket", "intimidation", "actKneel:4@Le boss", "R"),
+
+  // ================= Dresseurs sans type (tous les decks Pokémon) =================
+  tr("Sacha", "Dresseur de Bourg Palette", 5, 3, "CI", "", "celebre", "actBuff:Pokémon,2@Je te choisis !", "R", { key: "pokemon-sacha" }),
+  tr("Sacha", "Champion du monde", 7, 5, "CRI", "", "celebre", "aura:Pokémon,1@Maître Pokémon ; enterSearch:Pokémon@Attrapez-les tous", "L", { key: "pokemon-sacha" }),
+  tr("N Harmonia", "Le garçon qui parle aux Pokémon", 7, 4, "RI", "Team Plasma", "celebre", "aura:Pokémon,1@Il entend la voix des Pokémon ; enterRecall:Pokémon@Libérer les Pokémon", "L"),
+  tr("Ondine", "Championne d'Azuria", 3, 2, "RI", "Champion", "", "actStand:Pokémon@Soins", "U"),
+  tr("Pierre", "Champion d'Argenta", 3, 3, "CR", "Champion", "", "reserve:1 ; enterDraw:1@Le cuisinier", "U"),
+  tr("Professeur Chen", "Le Pokédex", 2, 1, "RI", "Savant", "genie", "enterSearch:Pokémon@Le Pokédex", "R"),
+  tr("Régis", "Le rival", 4, 3, "CI", "", "", "ifBehind:2@Toujours un coup d'avance", "U"),
+  tr("Jessie et James", "Team Rocket", 3, 2, "R", "Team Rocket", "", "winSteal:ruse,1@Nous sommes de retour !", "U"),
   ch("Infirmière Joëlle", "Centre Pokémon", 2, 1, "I", "Humain", "", "actStand:Pokémon@Vos Pokémon sont en pleine forme", "U"),
-  // Dresseurs des autres régions : les généraux vont dans tous les decks Pokémon,
-  // les Champions, le Conseil 4 et les Maîtres seulement dans le deck de leur type (option pt).
-  ch("N", "Le roi de la Team Plasma", 5, 3, "RI", "Dresseur|Humain|Team Plasma", "", "ifWith:Pokémon,2@Il entend la voix des Pokémon", "E"),
-  ch("Red", "La légende du mont Argenté", 6, 4, "CRI", "Dresseur|Humain", "celebre", "immune@Le silence de Red ; ifAlone:2@Au sommet du mont Argenté", "E"),
-  ch("Silver", "Le rival de Johto", 4, 3, "CR", "Dresseur|Humain|Rival", "", "winKneel:combat@Il ne recule devant rien", "R"),
-  ch("Tcheren", "Le rival studieux", 3, 2, "RI", "Dresseur|Humain|Rival", "genie", "enterDraw:1@Toujours un plan", "U"),
-  ch("Aurore", "La coordinatrice de Sinnoh", 3, 2, "I", "Dresseur|Humain|Coordinatrice", "", "domi:2@Concours Pokémon", "U"),
-  ch("Roseille", "La grande sœur de Kassis", 3, 3, "CR", "Dresseur|Humain", "", "guard:Humain@Protéger son petit frère", "U"),
-  ch("Lithia", "La photographe", 2, 1, "R", "Dresseur|Humain", "", "enterDraw:1@Le cliché parfait", "C"),
-  ch("Cynthia", "Maître de la Ligue de Sinnoh", 6, 4, "CRI", "Dresseur|Humain|Maître", "celebre", "atkBuff:Pokémon,1@Leçon de maître ; reserve:1", "E", { pt: "Dragon|Sol" }),
-  ch("Goyah", "Maître de la Ligue d'Unys", 6, 4, "CI", "Dresseur|Humain|Maître", "celebre", "atkBuff:Pokémon,1@Le vieux sage ; enterDraw:1", "E", { pt: "Insecte|Feu" }),
-  ch("Iris", "La dresseuse de Dragons", 5, 3, "CI", "Dresseur|Humain|Maître", "intimidation", "aura:Dragon,1@Le cœur des Dragons", "R", { pt: "Dragon" }),
-  ch("Pieris", "Conseil 4 d'Unys", 5, 3, "RI", "Dresseur|Humain|Conseil 4", "discret", "winDiscard:ruse,1@Le flambeur", "R", { pt: "Ténèbres" }),
-  ch("Inezia", "Championne de Méanville", 4, 2, "I", "Dresseur|Humain|Champion", "celebre", "domi:1@Sous les projecteurs", "R", { pt: "Électrik" }),
-  ch("Erika", "Championne de Céladopole", 4, 2, "RI", "Dresseur|Humain|Champion", "", "income:1@La parfumerie", "U", { pt: "Plante" }),
-  ch("Faïza", "Championne de Galar", 4, 3, "C", "Dresseur|Humain|Champion", "", "ifAlone:2@Entraînement au karaté ; winKneel:combat", "R", { pt: "Combat" }),
-  ch("Donna", "Championne de Galar", 4, 2, "RI", "Dresseur|Humain|Champion", "celebre", "actStand:Eau@La vague de Galar", "R", { pt: "Eau" }),
-  // --- lieux
+  tr("Red", "La légende du mont Argenté", 6, 4, "CRI", "", "celebre", "immune@Le silence de Red ; ifAlone:2@Au sommet du mont Argenté", "E"),
+  tr("Silver", "Le rival de Johto", 4, 3, "CR", "Rival", "", "winKneel:combat@Il ne recule devant rien", "R"),
+  tr("Aurore", "La coordinatrice de Sinnoh", 3, 2, "I", "Coordinatrice", "", "domi:2@Concours Pokémon", "U"),
+  tr("Roseille", "La grande sœur de Kassis", 3, 3, "CR", "", "", "guard:Humain@Protéger son petit frère", "U"),
+  tr("Lithia", "La photographe", 2, 1, "R", "", "", "enterDraw:1@Le cliché parfait", "C"),
+  tr("Nabil", "Le petit frère du champion", 3, 2, "CI", "Rival", "", "ifName:Tarak,1@Mon frère ! ; loseDraw:1@Jamais abattu", "U"),
+  tr("Nabil", "Le futur professeur", 4, 3, "RI", "Savant", "genie", "enterDraw:1@Recherches", "U"),
+  tr("Lilie", "La protectrice de Nebby", 3, 1, "RI", "", "", "enterSearch:Pokémon@Le sac de Nebby ; guard:Pokémon@Courage, Nebby !", "U"),
+  tr("Perrin", "La photographe de Kitakami", 3, 2, "R", "", "", "winDraw:ruse,1@Pris sur le vif", "U"),
+  tr("Pania", "La reine des Évolitions", 4, 2, "RI", "Team Star", "genie", "aura:Évolition,1@Opération Étoile", "R"),
+  tr("Pepper", "Le chef cuisinier", 4, 2, "RI", "", "", "actStand:Pokémon@Sandwich ; enterSearch:Pokémon@Herbes Mystiques", "R"),
+
+  // ================= Dresseurs à un type (decks de ce type et de leur région) =================
+  // --- Kanto
+  tr("Giovanni", "Le boss de la Team Rocket", 7, 4, "RI", "Team Rocket|Champion", "intimidation", "aura:Team Rocket,1@Team Rocket ; actKneel:6@Le charisme du boss", "L", { ty: "Sol", rg: "Kanto" }),
+  tr("Morgane", "Championne de Safrania", 7, 3, "RI", "Champion", "", "actKneel:6@Télékinésie ; aura:Psy,1@L'arène de Safrania", "L", { ty: "Psy", rg: "Kanto" }),
+  tr("Olga", "Conseil 4 de Kanto", 7, 4, "RI", "Conseil 4", "", "atkKneel:5@Laser Glace ; aura:Glace,1@Blizzard", "L", { ty: "Glace", rg: "Kanto" }),
+  tr("Aldo", "Conseil 4 de Kanto", 7, 5, "C", "Conseil 4", "intimidation", "atkBuff:Combat,2@Entraînement extrême ; ifAlone:2@Le poing d'acier", "L", { ty: "Combat", rg: "Kanto" }),
+  tr("Agatha", "Conseil 4 de Kanto", 7, 3, "RI", "Conseil 4", "", "aura:Spectre,1@Les spectres de Lavanville ; winKill:ruse,3@Malédiction", "L", { ty: "Spectre", rg: "Kanto" }),
+  tr("Koga", "Le maître ninja", 7, 4, "R", "Conseil 4|Champion", "discret", "winDiscard:ruse,2@Ninjutsu ; atkKneel:4@Brouillard", "L", { ty: "Poison", rg: "Kanto" }),
+  tr("Major Bob", "Champion de Carmin sur Mer", 5, 3, "C", "Champion", "", "atkBuff:Électrik,1@Le lieutenant éclair ; reserve:1", "R", { ty: "Électrik", rg: "Kanto" }),
+  tr("Erika", "Championne de Céladopole", 4, 2, "RI", "Champion", "", "income:1@La parfumerie", "U", { ty: "Plante", rg: "Kanto" }),
+  // --- Johto
+  tr("Peter", "Le maître des dragons", 7, 5, "CI", "Maître|Conseil 4", "celebre", "kwAura:Vol,intimidation@Ultralaser ; ifName:Dracolosse,2@Dracolosse", "L", { ty: "Vol", rg: "Johto" }),
+  // --- Hoenn
+  tr("Marc", "Maître de la Ligue d'Hoenn", 7, 4, "RI", "Maître", "celebre", "aura:Eau,1@Le maître de l'eau ; domi:1@L'artiste", "L", { ty: "Eau", rg: "Hoenn" }),
+  tr("Pierre Rochard", "Maître de la Ligue d'Hoenn", 7, 5, "CRI", "Maître", "celebre", "aura:Acier,1@Méga-Métalosse ; income:1@Le fils du président de Devon", "L", { ty: "Acier", rg: "Hoenn" }),
+  // --- Sinnoh
+  tr("Cynthia", "Maître de la Ligue de Sinnoh", 7, 5, "CRI", "Maître", "celebre", "atkBuff:Pokémon,2@Leçon de maître ; reserve:1", "L", { ty: "Dragon", rg: "Sinnoh" }),
+  tr("Hélio", "Le chef de la Team Galaxie", 7, 4, "RI", "Team Galaxie", "intimidation", "enterKneelAll:3@Un nouvel univers ; aura:Ténèbres,1@Sans émotion", "L", { ty: "Ténèbres", rg: "Sinnoh" }),
+  tr("Penséa", "L'amie d'Amovénus", 5, 3, "RI", "", "discret", "enterSearch:Fée@Miroir Sacré ; escape@Je pense, donc je suis", "R", { ty: "Fée", rg: "Sinnoh" }),
+  // --- Unys
+  tr("N Harmonia", "Le roi de la Team Plasma", 7, 4, "CRI", "Team Plasma", "celebre", "ifWith:Pokémon,2@Il entend la voix des Pokémon ; enterStand:Pokémon@Idéaux", "L", { ty: "Électrik", rg: "Unys" }),
+  tr("Ghetis", "Le vrai maître de la Team Plasma", 6, 3, "RI", "Team Plasma", "intimidation", "winSteal:ruse,2@Manipulation ; actSilence:5@L'ordre du sage", "E", { ty: "Ténèbres", rg: "Unys" }),
+  tr("Goyah", "Maître de la Ligue d'Unys", 6, 4, "CI", "Maître", "celebre", "atkBuff:Pokémon,1@Le vieux sage ; enterDraw:1", "E", { ty: "Insecte", rg: "Unys" }),
+  tr("Tcheren", "Le champion d'Ogoesse", 7, 4, "RI", "Champion|Rival", "genie", "aura:Normal,1@La leçon de l'école ; enterDraw:2@Toujours un plan", "L", { ty: "Normal", rg: "Unys" }),
+  tr("Nikolaï", "Le savant de la Team Plasma", 5, 2, "RI", "Team Plasma|Savant", "genie", "enterSearch:Pokémon@Recherche ; actStand:Acier@Machine", "R", { ty: "Acier", rg: "Unys" }),
+  tr("Iris", "La dresseuse de Dragons", 5, 3, "CI", "Maître", "intimidation", "aura:Dragon,1@Le cœur des Dragons", "R", { ty: "Dragon", rg: "Unys" }),
+  tr("Pieris", "Conseil 4 d'Unys", 5, 3, "RI", "Conseil 4", "discret", "winDiscard:ruse,1@Le flambeur", "R", { ty: "Ténèbres", rg: "Unys" }),
+  tr("Inezia", "Championne de Méanville", 4, 2, "I", "Champion", "celebre", "domi:1@Sous les projecteurs", "R", { ty: "Électrik", rg: "Unys" }),
+  // --- Kalos
+  tr("Dianthéa", "Maître de la Ligue de Kalos", 7, 4, "RI", "Maître", "celebre", "aura:Fée,1@La star de Kalos ; domi:2@Le grand écran", "L", { ty: "Fée", rg: "Kalos" }),
+  // --- Alola
+  tr("Guzma", "Le boss de la Team Skull", 6, 4, "C", "Team Skull", "intimidation", "aura:Insecte,1@Le Destructeur ; winRaze:combat@On casse tout", "E", { ty: "Insecte", rg: "Alola" }),
+  // --- Galar
+  tr("Tarak", "Le champion invaincu", 7, 5, "CI", "Maître", "celebre", "ifName:Dracaufeu,2@Dracaufeu ; atkBuff:Feu,1@La pose du champion", "L", { ty: "Feu", rg: "Galar" }),
+  tr("Roy", "Le rival de Tarak", 5, 4, "CI", "Champion", "", "ifName:Tarak,2@L'éternel rival ; atkBuff:Dragon,1@Tempête de sable", "R", { ty: "Dragon", rg: "Galar" }),
+  tr("Faïza", "Championne de Galar", 4, 3, "C", "Champion", "", "ifAlone:2@Entraînement au karaté ; winKneel:combat", "R", { ty: "Combat", rg: "Galar" }),
+  tr("Donna", "Championne de Galar", 4, 2, "RI", "Champion", "celebre", "actStand:Eau@La vague de Galar", "R", { ty: "Eau", rg: "Galar" }),
+  // --- Paldea
+  tr("Kassis", "Champion de la Ligue Myrtille", 7, 4, "CR", "Rival", "", "aura:Plante,1@Le masque d'Ogerpon ; ifBehind:2@La rancune", "L", { ty: "Plante", rg: "Paldea" }),
+  tr("Dendra", "La professeure de combat", 4, 3, "C", "Savant", "", "atkBuff:Combat,1@Cours de combat", "U", { ty: "Combat", rg: "Paldea" }),
+
+  // ================= lieux =================
   loc("Le Centre Pokémon", "Soins gratuits", 2, "Ville", "", "reduce:Pokémon,1@Repos", "U"),
   loc("Bourg Palette", "Là où tout commence", 1, "Ville", "limite", "income:1", "C"),
   loc("L'Arène", "Badge en jeu", 3, "Arène", "", "xtraCh:combat", "R"),
@@ -248,10 +505,39 @@ export const cards = [
   ev("Capture !", "Attrapé !", 3, "Ball", "evBounce:4", "R"),
   ev("Abri", "Protection", 2, "Attaque", "evCancel", "R"),
   ev("Échange", "Contre un autre", 1, "Dresseur", "evRecall:Pokémon", "U"),
-  // --- deuxièmes versions à 7 des plus célèbres
-  pk("Pikachu", "Pikachu Gigamax", 7, 6, "CRI", "Électrik", "celebre", "enterKneelAll:3@Gigamax Foudre ; winStand:combat@Vive-Attaque", "L", { key: "pokemon-pikachu" }),
-  pk("Dracaufeu", "Méga-Dracaufeu X", 7, 8, "C", "Feu|Dragon", "intimidation", "atkTerror:4@La flamme bleue ; winKill:combat,4@Boutefeu", "L"),
-  pk("Mewtwo", "Méga-Mewtwo Y", 7, 6, "RI", "Psy", "celebre", "actSilence:7@Psyko ; immune@Barrière", "L"),
 ];
 
-export const starters = [];
+/** Decks de départ : un par type et par région, chacun mené par son Pokémon ou son Dresseur emblématique (excl : cartes ajoutées d'office). */
+// like : les Pokémon du type ou de la région passent avant les Dresseurs sans type (qui complètent) ; N, qui parle à tous les Pokémon,
+// reste dans les decks Unys et Électrik
+const deck = (pt, leader, excl, desc) => ({ id: `poke-${pt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}`, name: `Pokémon ${pt}`, pt, leader, excl,
+  like: [pt, pt, pt], avoid: pt === "Unys" || pt === "Électrik" ? [] : ["Team Plasma"], desc });
+export const starters = [
+  deck("Normal", "pokemon-arceus-7", ["pokemon-tcheren-7", "pokemon-ronflex-5"], "Arceus, Ronflex et Tcheren : chaque victoire rapporte de l'or."),
+  deck("Feu", "pokemon-dracaufeu-7", ["pokemon-tarak-7", "pokemon-arcanin-5"], "Dracaufeu et Tarak, le champion invaincu : vos Pokémon Feu frappent plus fort en attaque."),
+  deck("Eau", "pokemon-kyogre-7", ["pokemon-marc-7", "pokemon-milobellus-5"], "Kyogre, Marc et Milobellus : chaque round, le premier défi gagné fait piocher."),
+  deck("Plante", "pokemon-florizarre-7", ["pokemon-kassis-7", "pokemon-majaspic-5"], "Florizarre, Majaspic et Kassis : +1 revenu à chaque round."),
+  deck("Électrik", "pokemon-pikachu-7", ["pokemon-major-bob-5", "pokemon-raichu-5"], "Pikachu, Raichu et le Major Bob : après un défi de Combat gagné, un participant se redresse."),
+  deck("Glace", "pokemon-artikodin-7", ["pokemon-olga-7", "pokemon-lokhlass-5"], "Artikodin, Lokhlass et Olga : un défi de Combat gagné agenouille un adversaire."),
+  deck("Combat", "pokemon-shifours-7", ["pokemon-aldo-7", "pokemon-mackogneur-6"], "Shifours, Mackogneur et Aldo : vos Pokémon Combat frappent plus fort en attaque."),
+  deck("Poison", "pokemon-ethernatos-7", ["pokemon-koga-7", "pokemon-ectoplasma-6"], "Éthernatos, Ectoplasma et Koga : un défi de Combat gagné fait défausser l'adversaire."),
+  deck("Sol", "pokemon-groudon-7", ["pokemon-giovanni-7", "pokemon-carchacrok-6"], "Groudon, Carchacrok et Giovanni : +1 revenu à chaque round."),
+  deck("Vol", "pokemon-lugia-7", ["pokemon-peter-7", "pokemon-roucarnage-5"], "Lugia, Roucarnage et Peter, le maître des dragons : vos Pokémon Vol frappent plus fort en attaque."),
+  deck("Psy", "pokemon-mewtwo-7", ["pokemon-morgane-7", "pokemon-alakazam-5"], "Mewtwo, Alakazam et Morgane : un défi de Ruse gagné agenouille un adversaire."),
+  deck("Insecte", "pokemon-genesect-7", ["pokemon-guzma-6", "pokemon-cizayox-5"], "Genesect, Cizayox et Guzma : chaque round, l'arrivée d'un Pokémon rapporte de l'or."),
+  deck("Roche", "pokemon-tyranocif-7", ["pokemon-lougaroc-5", "pokemon-ptera-5"], "Tyranocif, Lougaroc et Ptéra : vos Pokémon Roche gagnent l'icône Influence."),
+  deck("Spectre", "pokemon-giratina-7", ["pokemon-agatha-7", "pokemon-ectoplasma-6"], "Giratina, Ectoplasma et Agatha : un Spectre qui devrait mourir peut revenir en main."),
+  deck("Dragon", "pokemon-dracolosse-7", ["pokemon-cynthia-7", "pokemon-carchacrok-6"], "Méga-Dracolosse, Carchacrok et Cynthia : vos Pokémon Dragon ont tous Intimidation."),
+  deck("Ténèbres", "pokemon-darkrai-7", ["pokemon-helio-7", "pokemon-noctali-6"], "Darkrai, Noctali et Hélio : vos Pokémon Ténèbres ont tous Discret."),
+  deck("Acier", "pokemon-dialga-7", ["pokemon-pierre-rochard-7", "pokemon-metalosse-6"], "Dialga, Métalosse et Pierre Rochard : +1 revenu à chaque round."),
+  deck("Fée", "pokemon-xerneas-7", ["pokemon-dianthea-7", "pokemon-gardevoir-5"], "Xerneas, Gardevoir et Dianthéa : remporter la Domination fait piocher."),
+  deck("Kanto", "pokemon-dracaufeu-7", ["pokemon-giovanni-7", "pokemon-pikachu-7", "pokemon-jessie-et-james-3", "pokemon-miaouss-4"], "Pikachu, Dracaufeu, Giovanni et la Team Rocket : chaque round, une victoire rapporte de l'or."),
+  deck("Johto", "pokemon-ho-oh-7", ["pokemon-lugia-7", "pokemon-noctali-6"], "Ho-Oh, Lugia et Noctali : vos Pokémon qui défendent gagnent +1 force."),
+  deck("Hoenn", "pokemon-rayquaza-7", ["pokemon-marc-7", "pokemon-latios-6"], "Rayquaza, Latios et Marc : remporter la Domination fait piocher."),
+  deck("Sinnoh", "pokemon-cynthia-7", ["pokemon-dialga-7", "pokemon-spiritomb-5"], "Cynthia, Dialga et Spiritomb : chaque round, perdre un défi fait piocher."),
+  deck("Unys", "pokemon-n-harmonia-7-2", ["pokemon-zekrom-7", "pokemon-ghetis-6", "pokemon-tcheren-7"], "N, Zekrom, Ghetis et Tcheren : chaque round, le premier défi gagné fait piocher."),
+  deck("Kalos", "pokemon-amphinobi-7", ["pokemon-dianthea-7", "pokemon-goupelin-5"], "Méga-Amphinobi, Goupelin et Dianthéa : vos Pokémon qui attaquent gagnent +1 force."),
+  deck("Alola", "pokemon-solgaleo-7", ["pokemon-tokorico-6", "pokemon-guzma-6"], "Solgaleo, Tokorico et Guzma : chaque round, la mort d'un de vos personnages fait piocher."),
+  deck("Galar", "pokemon-zacian-7", ["pokemon-tarak-7", "pokemon-corvaillus-5"], "Zacian, Corvaillus et Tarak : un défi de Combat gagné agenouille un adversaire."),
+  deck("Paldea", "pokemon-koraidon-7", ["pokemon-kassis-7", "pokemon-forgelina-5"], "Koraidon, Forgelina et Kassis : chaque round, l'arrivée d'un Pokémon rapporte de l'or."),
+];

@@ -2,7 +2,7 @@
 // (Collection › Illustrations › « Liste des cartes »). On copie un nom d'un toucher, ou tous les noms affichés d'un coup,
 // et on ouvre une carte pour lui choisir directement son image.
 import { useMemo, useState } from "react";
-import { ALL, FAMILY, PLAYABLE, TYPE_BONUS, subWords } from "../cards/index.js";
+import { ALL, FAMILY, PLAYABLE, subLabel, traitNames } from "../cards/index.js";
 import { RARITY, CARD_TYPES } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -34,7 +34,7 @@ export function saveTri(v) { try { localStorage.setItem(TRI_KEY, v); } catch { /
 const byCost = (a, b) => a.d.cost - b.d.cost || a.d.name.localeCompare(b.d.name, "fr") || FAM_ORDER.indexOf(a.d.fam) - FAM_ORDER.indexOf(b.d.fam) || TYPE_ORDER.indexOf(a.d.type) - TYPE_ORDER.indexOf(b.d.type);
 
 let ROWS = null;
-const rows = () => ROWS || (ROWS = ALL.map((d) => ({ d, file: artFile(d), k: norm(`${d.name} ${d.title} ${artFile(d)} ${d.traits.join(" ")}`) }))
+const rows = () => ROWS || (ROWS = ALL.map((d) => ({ d, file: artFile(d), k: norm(`${d.name} ${d.title} ${artFile(d)} ${traitNames(d).join(" ")}`) }))
   .sort((a, b) => FAM_ORDER.indexOf(a.d.fam) - FAM_ORDER.indexOf(b.d.fam) || TYPE_ORDER.indexOf(a.d.type) - TYPE_ORDER.indexOf(b.d.type)
     || a.d.name.localeCompare(b.d.name, "fr") || a.d.cost - b.d.cost));
 
@@ -65,7 +65,7 @@ export default function ArtList({ onZoom, flash, onClose }) {
   const shown = list.slice(0, lim);
   const copy = async (text, msg) => { const ok = await copyText(text); flash(ok ? msg : "Copie impossible ici : appuie longuement sur le nom pour le sélectionner."); if (ok) sfx.select(); };
   const meta = (d) => [byFam ? null : FAMILY[d.fam].short || FAMILY[d.fam].name, CARD_TYPES[d.type], `coût ${d.cost}`, d.type === "char" ? `force ${d.str}` : null, RARITY[d.r].name,
-    d.pt && d.pt.length ? `${subWords(d.fam).one} ${d.pt.map((t) => (TYPE_BONUS[t] ? TYPE_BONUS[t].name : t)).join("/")}` : null, d.st ? "exclusive (deck de départ)" : null].filter(Boolean).join(" · ");
+    d.pt && d.pt.length ? subLabel(d.fam, d.pt) : null, d.st ? "exclusive (deck de départ)" : null].filter(Boolean).join(" · ");
   let prev = null;
   return (
     <div className="ag-sheet al-sheet" onClick={onClose}>

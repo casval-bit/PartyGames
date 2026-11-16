@@ -36,7 +36,7 @@ export function validateDeck(deck, owned = null) {
       counts.alli += n;
       if (d.loyal) errors.push(`${d.name} est Fidèle : il ne peut pas rejoindre une autre famille.`);
     }
-    if (sub && d.fam === fam.id && d.pt.length && !d.pt.includes(sub.id)) errors.push(`${d.name} ${words.not} ${sub.name}.`);
+    if (sub && d.fam === fam.id && d.pt.length && !d.pt.includes(sub.id)) errors.push(`${d.name} ${sub.not || words.not} ${sub.name}.`);
   }
   for (const set of Object.values(byKey)) {
     if (set.size > 1) {

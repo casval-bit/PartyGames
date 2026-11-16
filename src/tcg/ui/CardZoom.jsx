@@ -2,7 +2,7 @@
 // mots-clés expliqués, actions possibles, et illustration personnalisée (choisir une image depuis l'appareil).
 // Depuis l'album, on feuillette les cartes (flèches, ou ← → au clavier) et les cartes pas encore obtenues restent grisées.
 import { useEffect, useRef, useState } from "react";
-import { CARD, FAMILY, TYPE_BONUS, subOf, subWords } from "../cards/index.js";
+import { CARD, FAMILY, TYPE_BONUS, subOf, subWords, subKind } from "../cards/index.js";
 import { KEYWORDS, RARITY, CARD_TYPES, TYPE_NAME } from "../rules.js";
 import { starterById } from "../deck.js";
 import { alwaysFoil, shineCost } from "../progress.js";
@@ -257,7 +257,7 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
               <span className="pill" style={{ color: RARITY[d.r].gem, borderColor: RARITY[d.r].gem }}>{RARITY[d.r].name}</span>
               {d.uni && <span className="pill dim">Unique</span>}
               {(foil || alwaysFoil(d)) && !missing && <span className="pill tz-foil">{alwaysFoil(d) ? "Brillante (toutes les cartes 7)" : "Brillante"}</span>}
-              {d.pt && d.pt.map((t) => <span key={t} className="pill" style={{ borderColor: (TYPE_BONUS[t] || {}).color }}>{subWords(d.fam).One} {(TYPE_BONUS[t] || {}).name || t}</span>)}
+              {d.pt && d.pt.map((t) => <span key={t} className="pill" style={{ borderColor: (TYPE_BONUS[t] || {}).color }}>{subKind(d.fam, t, true)} {(TYPE_BONUS[t] || {}).name || t}</span>)}
             </div>
             {d.type !== "plot" && d.cost >= 7
               ? <p style={{ margin: 0, fontSize: ".78rem", color: "var(--txt-2)" }}>Carte 7 unique : un seul exemplaire par deck.{d.uni ? ` Une seule version de ${d.name} par deck.` : ""}</p>
@@ -284,7 +284,7 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
           </div>
         )}
         {plot && <div className="tz-box"><h4>Scénario</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Revenu : l'or de la phase de Recrutement. Initiative : la plus haute choisit le premier joueur. Revendication : ce que coûte un défi perdu contre vous. Réserve : cartes gardées en main à la fin du round.</p></div>}
-        {!d && <div className="tz-box"><h4>Famille</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Cet effet est toujours actif pour le joueur de cette famille.</p>{subOf(fam, pt) && <p style={{ margin: 0, fontSize: ".82rem" }}>{subWords(fam).One} choisi{subWords(fam).fem ? "e" : ""} : <b>{subOf(fam, pt).name}</b> — <RichText text={subOf(fam, pt).abs.map((a) => a.text).join(" ")} /></p>}</div>}
+        {!d && <div className="tz-box"><h4>Famille</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Cet effet est toujours actif pour le joueur de cette famille.</p>{subOf(fam, pt) && <p style={{ margin: 0, fontSize: ".82rem" }}>{subKind(fam, pt, true)} choisi{subWords(fam).fem || subOf(fam, pt).kind === "region" ? "e" : ""} : <b>{subOf(fam, pt).name}</b> — <RichText text={subOf(fam, pt).abs.map((a) => a.text).join(" ")} /></p>}</div>}
         {art && d && !plot && <ArtTools key={d.id} d={d} />}
       </div>
     </div>
