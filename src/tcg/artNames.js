@@ -10,12 +10,11 @@ export const ART_W = 450, ART_H = 630; // pleine carte (5 × 7) : les légendair
 
 /**
  * Format de l'illustration d'une carte, tel qu'elle s'affiche : pleine carte (5 × 7) pour les légendaires, bandeau large (16 × 9)
- * pour les autres, plus haut pour les cartes sans texte. L'image est recadrée une seule fois, directement à ce format.
+ * pour toutes les autres (avec ou sans pouvoir : même taille d'image). L'image est recadrée une seule fois, directement à ce format.
  */
 export function artBox(d) {
   if (!d || d.r === "L") return { w: ART_W, h: ART_H };
-  const plain = d.type !== "plot" && !(d.abs && d.abs.length) && !Object.keys(d.kw || {}).length && !d.req;
-  return plain ? { w: 460, h: 388 } : { w: 560, h: 318 };
+  return { w: 560, h: 318 };
 }
 
 /* ------------------------------ noms de fichiers ------------------------------ */

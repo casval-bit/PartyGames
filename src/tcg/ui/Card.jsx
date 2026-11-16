@@ -63,7 +63,7 @@ export const CardFace = memo(function CardFace({ d, w, big = false, foil = false
   // traits, puis type / région / maison… (jamais sur le dessin) ; au-delà de 38 caractères, la police rétrécit pour que la ligne tienne
   const tl = traitNames(d), tls = tl.length ? tl.join(". ") + "." : " ";
   return (
-    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && !alwaysFoil(d) ? " lite" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""}${!abs.length && !kws.length && !d.req && d.r !== "L" ? " plain" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
+    <Tag className={`tc ${d.type} r-${d.r}${shiny ? " foil" : ""}${shiny && !alwaysFoil(d) ? " lite" : ""}${shiny && photo ? " photo" : ""}${missing ? " missing" : ""}${dim ? " dim" : ""}${tilt ? " tilt" : ""} ${className}`} style={styleOf(d, w, shiny ? { "--sd": sweepDelay(d.id), ...style } : style)} onClick={onClick}
       aria-label={onClick ? `${d.name}${d.title ? ", " + d.title : ""}` : undefined} {...rest}>
       <span className="tc-edge" aria-hidden="true" />
       <span className="tc-fr" />

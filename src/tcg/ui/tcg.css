@@ -61,7 +61,6 @@ button.tc { padding: 0; border: 0; cursor: pointer; }
 .tc-traits { flex: none; padding: 1.3cqw 3cqw .5cqw; font: italic 600 4.1cqw/1.15 var(--body); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: color-mix(in srgb, var(--fc) 50%, #fff); }
 .tc-text { flex: 1; min-height: 0; padding: .6cqw 3.4cqw 1cqw; font: 500 4.25cqw/1.2 var(--body); color: #e3ebfb; overflow: hidden; display: flex; flex-direction: column; gap: 1.1cqw; }
-.tc.plain .tc-art { height: 80cqw; }
 .tc-text.t2 { font-size: 3.8cqw; gap: .9cqw; } .tc-text.t3 { font-size: 3.4cqw; gap: .7cqw; line-height: 1.16; }
 .tc-kw { font-weight: 800; color: #fff; }
 .tc-ab b { font-weight: 800; color: #fff; }
