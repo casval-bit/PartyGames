@@ -536,18 +536,20 @@ il joue les Pokémon et les Dresseurs de ce type ou de cette région (un Pokémo
 « de Galar », « d'Alola », « de Hisui » (= Sinnoh) et « de Paldea » suivent la leur), plus ce qui va partout : **Pikachu, Mew, Mewtwo et Arceus** (dans tous les decks Pokémon),
 les Dresseurs sans type (Sacha, N Harmonia « Le garçon qui parle aux Pokémon », Red, Ondine, Pierre, Professeur Chen, Jessie et James, Lilie, Pania…), les lieux, objets et événements.
 Échelle des coûts : **7** les plus forts (légendaires, Méga-Évolutions, Maîtres, Conseil 4, boss : chaque type a au moins un Pokémon 7, et presque tous un Dresseur 7) ;
-**6** Amphinobi, Ectoplasma, Noctali, Tokorico, Ghetis, Goyah, Tcheren… ; **4-5** Ronflex, Raichu, Lugulabre, Spiritomb, le Miaouss de la Team Rocket… ;
+**6** Amphinobi, Ectoplasma, Noctali, Tokorico, Ghetis, Goyah… ; **4-5** Ronflex, Raichu, Lugulabre, Spiritomb, le Miaouss de la Team Rocket… ;
 **3** les formes intermédiaires ; **1-2** les bébés et premières formes (Vipélierre, Salamèche…). Les Évolitions ont le trait Évolition (Évoli en cherche une en entrant).
 Les Dresseurs à un type ne vont que dans le deck de ce type et dans celui de leur région : Giovanni 7 (Sol), Morgane 7 (Psy), Olga 7 (Glace), Aldo 7 (Combat),
 Agatha 7 (Spectre), Koga 7 (Poison), Major Bob 5 (Électrik), Erika 4 (Plante) pour Kanto ; Peter 7 (Vol) pour Johto ; Marc 7 (Eau), Pierre Rochard 7 (Acier) pour Hoenn ;
 Cynthia 7 (Dragon), Hélio 7 (Ténèbres), Penséa 5 (Fée) pour Sinnoh ; N Harmonia 7 « Le roi de la Team Plasma » (Électrik), Ghetis 6 (Ténèbres), Goyah 6 (Insecte),
-Tcheren 6 (Normal), Nikolaï 5 (Acier), Iris 5 (Dragon), Pieris 5 (Ténèbres), Inezia 4 (Électrik) pour Unys ; Dianthéa 7 (Fée) pour Kalos ; Guzma 6 (Insecte) pour Alola ;
+Tcheren 7 (Normal), Nikolaï 5 (Acier), Iris 5 (Dragon), Pieris 5 (Ténèbres), Inezia 4 (Électrik) pour Unys ; Dianthéa 7 (Fée) pour Kalos ; Guzma 6 (Insecte) pour Alola ;
 Tarak 7 (Feu), Roy 5 (Dragon), Faïza 4 (Combat), Donna 4 (Eau) pour Galar ; Kassis 7 (Plante), Dendra 4 (Combat) pour Paldea.
-Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Giovanni 5 devenu 7…) gardent les exemplaires, les decks et les images importées (`RENAMED` dans `cards/index.js`).
+Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Giovanni 5 et Tcheren 6 devenus 7…) gardent les exemplaires, les decks et les images importées (`RENAMED` dans `cards/index.js`).
+Sur la carte, le type et la région s'écrivent dans la ligne des traits, sous l'image (« Pokémon. Feu. Kanto. », « Dresseur. Humain. Fée. Sinnoh. ») ; c'est pareil pour
+les sous-groupes des autres familles (régions de Runeterra, maisons de Poudlard…), et la recherche de l'album les trouve (« Kanto », « Gryffondor »).
 
 | Type ou région | Bonus | Deck de départ (en tête) |
 |---|---|---|
-| Normal | chaque victoire rapporte de l'or | Arceus 7, Tcheren 6, Ronflex 5 |
+| Normal | chaque victoire rapporte de l'or | Arceus 7, Tcheren 7, Ronflex 5 |
 | Feu | vos Pokémon Feu frappent plus fort en attaque | Dracaufeu 7, Tarak 7, Arcanin 5 |
 | Eau | chaque round, le premier défi gagné fait piocher | Kyogre 7, Marc 7, Milobellus 5 |
 | Plante | +1 revenu à chaque round | Florizarre 7, Kassis 7, Majaspic 5 |
@@ -569,7 +571,7 @@ Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Gio
 | Johto | vos Pokémon qui défendent gagnent +1 force | Ho-Oh 7, Lugia 7, Noctali 6 |
 | Hoenn | remporter la Domination fait piocher | Rayquaza 7, Marc 7, Latios 6 |
 | Sinnoh | chaque round, perdre un défi fait piocher | Cynthia 7, Dialga 7, Spiritomb 5 |
-| Unys | chaque round, le premier défi gagné fait piocher | N Harmonia 7, Zekrom 7, Ghetis 6, Tcheren 6 |
+| Unys | chaque round, le premier défi gagné fait piocher | N Harmonia 7, Zekrom 7, Ghetis 6, Tcheren 7 |
 | Kalos | vos Pokémon qui attaquent gagnent +1 force | Méga-Amphinobi 7, Dianthéa 7, Goupelin 5 |
 | Alola | chaque round, la mort d'un de vos personnages fait piocher | Solgaleo 7, Tokorico 6, Guzma 6 |
 | Galar | un défi de Combat gagné agenouille un personnage du perdant | Zacian 7, Tarak 7, Corvaillus 5 |
