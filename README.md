@@ -604,7 +604,7 @@ reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt
 Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
 ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
 
-**Pokémon** (`cards/pokemon.js`, 453 cartes) : un deck choisit **un type ou une région** (« Quel type ou quelle région ? »), qui donne un bonus à la famille ;
+**Pokémon** (`cards/pokemon.js`, 464 cartes) : un deck choisit **un type ou une région** (« Quel type ou quelle région ? »), qui donne un bonus à la famille ;
 il joue les Pokémon et les Dresseurs de ce type ou de cette région (un Pokémon à deux types compte pour les deux, chaque Pokémon a une région ; les formes
 « de Galar », « d'Alola », « de Hisui » (= Sinnoh) et « de Paldea » suivent la leur), plus ce qui va partout : **Pikachu, Mew, Mewtwo et Arceus** (dans tous les decks Pokémon),
 les Dresseurs sans type (Sacha, N Harmonia « Le garçon qui parle aux Pokémon », Red, Ondine, Pierre, Professeur Chen, Jessie et James, Lilie, Pania…), les lieux, objets et événements.

@@ -21,7 +21,9 @@ export const cards = [
   ch("Gryfenfer", "Le jaguar déchaîné", 6, 6, "CI", `${L}|Jaguarian`, "intimidation", "ifAtk:1@Il brise ses chaînes ; winKill:combat,2@Rage du jaguar", "E", { key: "leg-gryf" }),
   ch("Gryfenfer", "Prince des Jaguarians", 7, 7, "CI", `${L}|Jaguarian|Noble`, "celebre|intimidation", "aura:Jaguarian,1@Courage ; winStand:combat@Rage du jaguar", "L", { key: "leg-gryf" }),
   // --- Jadina
+  ch("Jadina", "Princesse d'Orchidia", 2, 1, "I", `${L}|Orchidia|Magicienne|Noble`, "", "domi:1@Son Altesse", "U", { key: "leg-jadina" }),
   ch("Jadina", "Princesse exilée", 3, 2, "RI", `${L}|Orchidia|Magicienne`, "", "winDraw:ruse,1@Intelligence", "U", { key: "leg-jadina" }),
+  ch("Jadina", "La magie déchaînée", 4, 3, "RI", `${L}|Orchidia|Magicienne`, "", "actMinus:2@Sphères d'énergie", "R", { key: "leg-jadina" }),
   ch("Jadina", "Le bâton-aigle", 5, 4, "RI", `${L}|Orchidia|Magicienne`, "genie", "actMinus:2@Éclair magique", "R", { key: "leg-jadina" }),
   ch("Jadina", "La grande magicienne", 6, 5, "RI", `${L}|Orchidia|Magicienne`, "genie", "actMinus:3@Raz-de-marée magique ; immune@Bouclier magique", "E", { key: "leg-jadina" }),
   ch("Jadina", "Héritière de Jadilyna", 7, 6, "CRI", `${L}|Orchidia|Magicienne|Noble`, "celebre|genie", "enterKneel:5@Puissance du bâton-aigle ; winDraw:*,1@Sagesse royale", "L", { key: "leg-jadina" }),
@@ -39,6 +41,7 @@ export const cards = [
   ch("Shimy", "Maîtresse des éléments", 7, 6, "CRI", `${L}|Elfe|Elfe élémentaire`, "celebre|discret", "aura:Elfe,1@Pureté ; atkKneel:5@Fusion élémentaire", "L", { key: "leg-shimy" }),
   // --- Ténébris
   ch("Ténébris", "Capitaine de l'Hydarkos", 4, 4, "CR", "Orchidia|Pirate|Sorcière", "", "winSteal:combat,1@Pillage", "R", { key: "leg-tenebris" }),
+  ch("Ténébris", "La sorcière masquée", 5, 4, "RI", "Orchidia|Sorcière|Ténèbres", "discret", "winDiscard:ruse,1@Le grimoire de Darkhell", "R", { key: "leg-tenebris" }),
   ch("Ténébris", "La Légendaire repentie", 6, 5, "CRI", `${L}|Orchidia|Sorcière`, "discret", "actMinus:2@Magie noire ; ifName:Razzia,1@Liée à Razzia", "E", { key: "leg-tenebris" }),
   ch("Ténébris", "La fille du Sorcier noir", 7, 6, "CRI", "Orchidia|Sorcière|Ténèbres", "discret|celebre", "atkKneel:5@Magie noire ; aura:Ténèbres,1@L'héritage de Darkhell", "L", { key: "leg-tenebris" }),
   // --- autres héros
