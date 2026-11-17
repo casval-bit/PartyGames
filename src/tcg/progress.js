@@ -12,7 +12,7 @@
 //   - quêtes du jour (XP + Éclats, tickets ou boosters, et un coffre quand les trois sont faites), succès permanents,
 //     XP de fin de partie (jamais 0, même en perdant).
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId, subOf } from "./cards/index.js";
-import { starterById, validateDeck, deckSize, fillDeck, mainFamily } from "./deck.js";
+import { starterById, themeStarters, validateDeck, deckSize, fillDeck, mainFamily } from "./deck.js";
 import { RARITY_ORDER, DECK_RULES, copiesOf } from "./rules.js";
 import { portalsOf } from "./portals.js";
 
@@ -186,9 +186,22 @@ export function grantTheme(t0, themeId) {
     const have = (t.coll[id] || 0) + (t.foil[id] || 0);
     if (have < n) { addCard(t, id, false, n - have); added += n - have; }
   }
-  const deck = { id: "d" + Math.random().toString(36).slice(2, 8), name: s.name, fam: s.fam, pt: s.pt || null, cards: { ...s.cards }, plots: [...s.plots] };
-  t.decks.unshift(deck);
-  return { t: normalizeTcg(t), deck, added };
+  // déjà reçu (même nom, mêmes cartes) : pas de deuxième exemplaire du deck, seulement les cartes qui manqueraient
+  const same = (d) => d.name === s.name && Object.keys(s.cards).length === Object.keys(d.cards).length && Object.entries(s.cards).every(([id, n]) => d.cards[id] === n);
+  const had = t.decks.find(same);
+  const deck = had || { id: "d" + Math.random().toString(36).slice(2, 8), name: s.name, fam: s.fam, pt: s.pt || null, cards: { ...s.cards }, plots: [...s.plots] };
+  if (!had) t.decks.unshift(deck);
+  return { t: normalizeTcg(t), deck, added, isNew: !had };
+}
+/** Outil de test : les 8 decks à thème d'un coup (cartes et decks). Renvoie { t, added, decks } (decks : nouveaux decks ajoutés). */
+export function grantAllThemes(t0) {
+  let t = normalizeTcg(t0), added = 0, decks = 0;
+  for (const s of [...themeStarters()].reverse()) { // à l'envers : chaque deck reçu passe en tête, la liste finit dans l'ordre (Team Rocket d'abord)
+    const r = grantTheme(t, s.id);
+    if (r.error) continue;
+    t = r.t; added += r.added; if (r.isNew) decks++;
+  }
+  return { t, added, decks };
 }
 
 /* ------------------------------ niveaux ------------------------------ */

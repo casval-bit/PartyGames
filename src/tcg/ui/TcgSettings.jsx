@@ -103,6 +103,11 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
                   setT(r.t); sfx.win();
                   if (flash) flash(`Deck ${r.deck.name} reçu : ${r.added} carte${r.added > 1 ? "s" : ""} ajoutée${r.added > 1 ? "s" : ""}, il est dans Mes decks.`);
                 }}><Icon name="gift" size={16} />Recevoir</button>
+                <button className="btn small primary" data-testid="tset-themes-all" onClick={() => {
+                  const r = P.grantAllThemes(t);
+                  setT(r.t); sfx.win();
+                  if (flash) flash(r.decks ? `${r.decks} deck${r.decks > 1 ? "s" : ""} à thème reçu${r.decks > 1 ? "s" : ""} (${r.added} cartes) : ils sont dans Mes decks.` : `Tu as déjà les 8 decks à thème${r.added ? ` (${r.added} cartes rajoutées)` : ""}.`);
+                }}><Icon name="layers" size={16} />Les 8 d'un coup</button>
               </span>
             </Row>
           </div>

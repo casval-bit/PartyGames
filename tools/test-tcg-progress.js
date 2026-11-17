@@ -359,6 +359,13 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(!g.error && g.added > 0 && g.t.decks[0].name === "Sith" && g.t.starter === "theme-dc" && g.t.ec === t.ec, "outil testeur : un deck à thème en plus (cartes et deck), sans changer le deck de départ ni les Éclats");
   ok(validateDeck(g.t.decks[0], P.owned(g.t)).ok && g.t.foil["sw-dark-vador-7"] >= 1, "le deck à thème reçu est jouable, ses cartes 7 brillantes");
   ok(P.grantTheme(t, "pokemon-kanto").error, "seulement les decks à thème");
+  const old = P.chooseStarter(P.normalizeTcg({}), "tw-meute").t; // compte d'avant les decks à thème
+  const all = P.grantAllThemes(old);
+  ok(all.decks === 8 && all.t.decks.length === old.decks.length + 8 && all.t.decks[0].name === "Team Rocket" && all.t.starter === "tw-meute" && all.t.ec === old.ec,
+    "outil testeur : les 8 decks à thème d'un coup, dans l'ordre, sans toucher au deck de départ");
+  ok(all.t.decks.slice(0, 8).every((d) => validateDeck(d, P.owned(all.t)).ok), "les 8 decks reçus sont jouables");
+  const again = P.grantAllThemes(all.t);
+  ok(again.decks === 0 && again.added === 0 && again.t.decks.length === all.t.decks.length, "les recevoir une deuxième fois ne les double pas");
 }
 
 // vues réseau
