@@ -178,7 +178,7 @@ function scoreFor(spec, d) {
 export function buildStarter(spec) {
   if (spec.cards) { // deck à thème : liste faite à la main (cards/themes.js), prise telle quelle
     for (const id of Object.keys(spec.cards)) if (!CARD[id] || CARD[id].type === "plot") throw new Error(`Deck de départ ${spec.id} : carte inconnue ${id}`);
-    return { id: spec.id, name: spec.name, fam: spec.fam, pt: spec.pt || null, desc: spec.desc || "", leader: spec.leader, cards: { ...spec.cards }, plots: spec.plots || defaultPlots(spec.fam), theme: Boolean(spec.theme) };
+    return { id: spec.id, name: spec.name, fam: spec.fam, pt: spec.pt || null, desc: spec.desc || "", leader: spec.leader, cards: { ...spec.cards }, plots: spec.plots || defaultPlots(spec.fam), theme: Boolean(spec.theme), extra: Boolean(spec.extra) };
   }
   const fam = spec.fam;
   const pool = legalPool(fam, spec.pt).filter((d) => d.fam === fam && (!d.st || d.st === spec.id));
@@ -262,5 +262,9 @@ export function starters() {
   return _starters;
 }
 export const starterById = (id) => starters().find((s) => s.id === id) || null;
-/** Les decks de départ qu'un nouveau joueur peut choisir : les 8 decks à thème (cards/themes.js). */
+/** Tous les decks à thème, faits à la main (cards/themes.js) : les 8 decks de départ, puis les autres (extra). */
 export const themeStarters = () => starters().filter((s) => s.theme);
+/** Les decks de départ qu'un nouveau joueur peut choisir : les 8 premiers decks à thème. */
+export const baseThemes = () => themeStarters().filter((s) => !s.extra);
+/** Les autres decks à thème (régions, maîtres de type, amis…) : modèles et bots, jamais au premier lancement. */
+export const moreThemes = () => themeStarters().filter((s) => s.extra);

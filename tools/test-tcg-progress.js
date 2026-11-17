@@ -2,7 +2,7 @@
 // Lancer : node tools/test-tcg-progress.js
 import * as P from "../src/tcg/progress.js";
 import { CARD } from "../src/tcg/cards/index.js";
-import { starters, themeStarters, validateDeck, deckSize, fillDeck } from "../src/tcg/deck.js";
+import { starters, themeStarters, baseThemes, moreThemes, validateDeck, deckSize, fillDeck } from "../src/tcg/deck.js";
 import { Game } from "../src/tcg/engine.js";
 import { publicView, privateView } from "../src/tcg/view.js";
 
@@ -12,8 +12,8 @@ const st = starters();
 
 let t = P.normalizeTcg(null);
 ok(t.ec === 0 && !t.starter && t.decks.length === 0, "profil de cartes vide");
-const th = themeStarters();
-ok(th.length === 8 && th.every((s) => validateDeck(s).ok && Object.keys(s.cards).filter((id) => CARD[id].cost >= 7).length === 2), "8 decks à thème au choix, valides, avec deux cartes 7 chacun");
+const th = baseThemes();
+ok(themeStarters().length === th.length + moreThemes().length && th.length === 8 && th.every((s) => validateDeck(s).ok && Object.keys(s.cards).filter((id) => CARD[id].cost >= 7).length === 2), "8 decks à thème au choix, valides, avec deux cartes 7 chacun");
 ok(th.map((s) => s.name).join(", ") === "Team Rocket, Orchidia, Hawkins, Gryffondor, Demacia, Sith, DC Comics, La Meute", "les 8 decks à thème, dans l'ordre");
 const r1 = P.chooseStarter(t, "theme-orchidia");
 ok(!r1.error && r1.t.starter === "theme-orchidia", "choix du deck de départ Orchidia");
@@ -366,6 +366,13 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(all.t.decks.slice(0, 8).every((d) => validateDeck(d, P.owned(all.t)).ok), "les 8 decks reçus sont jouables");
   const again = P.grantAllThemes(all.t);
   ok(again.decks === 0 && again.added === 0 && again.t.decks.length === all.t.decks.length, "les recevoir une deuxième fois ne les double pas");
+  // les autres decks à thème (régions, maîtres de type, amis…) : modèles et bots, jamais un deck de départ
+  const more = moreThemes();
+  ok(more.length >= 12 && more.every((s) => s.extra && validateDeck(s).ok && Object.keys(s.cards).filter((id) => CARD[id].cost >= 7).length <= 2), `${more.length} autres decks à thème, valides, deux cartes 7 au plus`);
+  ok(P.chooseStarter(P.normalizeTcg({}), more[0].id).error && !P.chooseStarter(P.normalizeTcg({}), th[0].id).error, "les autres decks à thème ne se choisissent pas comme deck de départ");
+  const plus = P.grantAllThemes(all.t, { extra: true });
+  ok(plus.decks === more.length && plus.t.decks[0].name === more[0].name && plus.t.decks.slice(0, more.length).every((d) => validateDeck(d, P.owned(plus.t)).ok),
+    "outil testeur : les autres decks à thème d'un coup, jouables, dans l'ordre");
 }
 
 // vues réseau

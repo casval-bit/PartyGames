@@ -18,17 +18,21 @@ export const cards = [
   // --- Gryfenfer
   ch("Gryfenfer", "Jaguarian impulsif", 3, 3, "C", `${L}|Jaguarian`, "", "ifAtk:1@Coup de griffe", "U", { key: "leg-gryf" }),
   ch("Gryfenfer", "Griffes d'acier", 5, 5, "C", `${L}|Jaguarian`, "intimidation", "winKill:combat,2@Entaille la pierre", "R", { key: "leg-gryf" }),
+  ch("Gryfenfer", "Le jaguar déchaîné", 6, 6, "CI", `${L}|Jaguarian`, "intimidation", "ifAtk:1@Il brise ses chaînes ; winKill:combat,2@Rage du jaguar", "E", { key: "leg-gryf" }),
   ch("Gryfenfer", "Prince des Jaguarians", 7, 7, "CI", `${L}|Jaguarian|Noble`, "celebre|intimidation", "aura:Jaguarian,1@Courage ; winStand:combat@Rage du jaguar", "L", { key: "leg-gryf" }),
   // --- Jadina
   ch("Jadina", "Princesse exilée", 3, 2, "RI", `${L}|Orchidia|Magicienne`, "", "winDraw:ruse,1@Intelligence", "U", { key: "leg-jadina" }),
   ch("Jadina", "Le bâton-aigle", 5, 4, "RI", `${L}|Orchidia|Magicienne`, "genie", "actMinus:2@Éclair magique", "R", { key: "leg-jadina" }),
+  ch("Jadina", "La grande magicienne", 6, 5, "RI", `${L}|Orchidia|Magicienne`, "genie", "actMinus:3@Raz-de-marée magique ; immune@Bouclier magique", "E", { key: "leg-jadina" }),
   ch("Jadina", "Héritière de Jadilyna", 7, 6, "CRI", `${L}|Orchidia|Magicienne|Noble`, "celebre|genie", "enterKneel:5@Puissance du bâton-aigle ; winDraw:*,1@Sagesse royale", "L", { key: "leg-jadina" }),
   // l'ancêtre de Jadina, reine guerrière qui fonda Orchidia : son âme vit dans le bâton-aigle
   ch("Jadilyna", "La reine fondatrice d'Orchidia", 7, 6, "CRI", "Orchidia|Reine|Noble", "celebre", "aura:Orchidia,1@La mère d'Orchidia ; enterSearch:Artefact@L'âme du bâton-aigle", "L"),
+  ch("Jadilyna", "La reine guerrière", 6, 6, "CI", "Orchidia|Reine|Noble", "celebre|intimidation", "winStand:combat@L'armure d'Orchidia ; ifWith:Orchidia,1@Pour mon peuple", "E"),
   // --- Razzia
   ch("Razzia", "Le gros mangeur", 3, 4, "C", `${L}|Rymar`, "", "", "U", { key: "leg-razzia" }),
   ch("Razzia", "Le colosse de Rymar", 5, 6, "C", `${L}|Rymar`, "intimidation", "ifDef:1@Montagne de muscles", "R", { key: "leg-razzia" }),
   ch("Razzia", "Porteur de Léviathan", 6, 7, "CI", `${L}|Rymar`, "intimidation|celebre", "winKill:combat,3@Léviathan", "E", { key: "leg-razzia" }),
+  ch("Razzia", "Le cœur des Légendaires", 7, 8, "CI", `${L}|Rymar`, "intimidation|celebre", "guard:Légendaire@Le rempart des Légendaires ; winKill:combat,4@Le coup de Léviathan", "L", { key: "leg-razzia" }),
   // --- Shimy
   ch("Shimy", "Elfe élémentaire", 4, 3, "CR", `${L}|Elfe|Elfe élémentaire`, "discret", "ifName:Gryfenfer,2@L'amour de Gryf", "R", { key: "leg-shimy", st: "theme-orchidia" }),
   ch("Shimy", "Fusion avec la terre", 5, 4, "CR", `${L}|Elfe|Elfe élémentaire`, "discret", "loseStand@Se fondre dans la pierre", "R", { key: "leg-shimy" }),
@@ -36,6 +40,7 @@ export const cards = [
   // --- Ténébris
   ch("Ténébris", "Capitaine de l'Hydarkos", 4, 4, "CR", "Orchidia|Pirate|Sorcière", "", "winSteal:combat,1@Pillage", "R", { key: "leg-tenebris" }),
   ch("Ténébris", "La Légendaire repentie", 6, 5, "CRI", `${L}|Orchidia|Sorcière`, "discret", "actMinus:2@Magie noire ; ifName:Razzia,1@Liée à Razzia", "E", { key: "leg-tenebris" }),
+  ch("Ténébris", "La fille du Sorcier noir", 7, 6, "CRI", "Orchidia|Sorcière|Ténèbres", "discret|celebre", "atkKneel:5@Magie noire ; aura:Ténèbres,1@L'héritage de Darkhell", "L", { key: "leg-tenebris" }),
   // --- autres héros
   ch("Amylada", "Le bras démon", 3, 3, "C", `${L}|Chiridirelle|Démon`, "", "ifName:Razzia,2@Le bras de Razzia", "U"),
   ch("Artémus", "L'écrivain", 3, 1, "RI", "Humain|Écrivain", "genie", "enterSearch:Légendaire@Voir l'avenir", "R", { key: "leg-artemus" }),
@@ -44,6 +49,7 @@ export const cards = [
   ch("Adeyrid", "Reine d'Orchidia", 4, 2, "I", "Orchidia|Reine|Noble", "", "income:1 ; reserve:1", "R"),
   ch("Kinder", "Roi d'Orchidia", 2, 1, "I", "Orchidia|Roi|Noble", "", "domi:2@Titre honorifique", "C"),
   ch("Vangelis", "Le tuteur", 3, 1, "RI", "Orchidia|Magicien", "genie", "actStand:Orchidia@Leçons de magie", "U"),
+  ch("Vangelis", "L'archimage d'Orchidia", 7, 5, "RI", "Orchidia|Magicien", "genie|celebre", "aura:Orchidia,1@Le mentor de Jadina ; enterDraw:2@La bibliothèque royale", "L"),
   ch("Halan", "Roi de Sabledoray", 3, 3, "CI", "Sabledoray|Roi|Noble", "", "ifName:Jadina,1@L'ancien fiancé", "U"),
   ch("Ikaël", "Commandant des Faucons d'Argent", 4, 4, "CI", "Faucon d'Argent|Larbos", "", "aura:Faucon d'Argent,1@Commandement", "R"),
   ch("Saryn", "Faucon d'Argent", 3, 3, "C", "Faucon d'Argent|Larbos", "", "ifName:Danaël,1@Amie d'enfance", "U"),

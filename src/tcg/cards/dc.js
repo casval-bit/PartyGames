@@ -11,7 +11,9 @@ export const cards = [
   ch("Batman", "Le détective", 4, 4, "CR", `${J}|Bat-famille|Milliardaire`, "discret|genie", "", "R"),
   ch("Batman", "Le Chevalier noir", 7, 6, "CRI", `${J}|Bat-famille|Milliardaire|Ligue`, "celebre|discret|genie", "enterSearch:Bat-famille@Plan d'urgence ; winKneel:*@La peur", "L"),
   ch("Superman", "L'homme d'acier", 7, 6, "CI", `${J}|Ligue|Kryptonien`, "celebre", "noKneel:combat@Plus rapide qu'une balle ; defStand@Bouclier humain", "L"),
+  ch("Superman", "Clark Kent", 5, 5, "CI", `${J}|Ligue|Kryptonien|Daily Planet`, "", "ifName:Lois Lane,1@Lois et Clark ; enterDraw:1@Le scoop du Daily Planet", "R"),
   ch("Wonder Woman", "Diana de Themyscira", 5, 5, "CI", `${J}|Ligue|Amazone`, "celebre", "winStand:combat@Bracelets", "E"),
+  ch("Wonder Woman", "L'ambassadrice des Amazones", 6, 6, "CI", `${J}|Ligue|Amazone`, "celebre", "winStand:combat@Les bracelets de la victoire ; ifDef:1@Le bouclier", "E"),
   ch("Flash", "Barry Allen", 4, 3, "C", `${J}|Ligue|Speedster`, "", "noKneel:combat@La vitesse de la lumière", "R"),
   ch("Aquaman", "Roi d'Atlantis", 5, 5, "CI", `${J}|Ligue|Atlante|Roi`, "", "income:1", "R"),
   ch("Green Lantern", "Hal Jordan", 5, 4, "CI", `${J}|Ligue|Lantern`, "", "actPay:2@Volonté", "R"),
@@ -111,6 +113,8 @@ export const cards = [
   loc("Oa", "La planète des Gardiens", 2, "Lantern|Oa", "", "reserve:1@La batterie centrale", "U"),
   obj("La Lanterne de pouvoir", "On recharge l'anneau", 1, "Lantern", "", "attStand", "U"),
   ev("Le serment des Green Lantern", "Dans le jour le plus clair, dans la nuit la plus noire", 2, "Lantern", "evBuffTrait:Lantern,2", "U"),
+  // --- (17/11/2026) nouvelles versions
+  ch("Supergirl", "Woman of Tomorrow", 7, 6, "CRI", `${J}|Kryptonien`, "celebre|intimidation", "winKill:combat,3@La quête de Ruthye ; noKneel:combat@Vol supersonique", "L"),
 ];
 
 export const starters = [

@@ -439,7 +439,7 @@ Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-l
 `VITE_TESTEURS` (adresses séparées par des virgules) : sur un ordinateur où elle est remplie, Heavy is the Crown > Paramètres montre des outils de test
 pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, tickets de portail, boosters, « Débloquer les cartes illustrées »
 (2 exemplaires de chaque carte qui a une vraie image) et **« Recevoir un deck à thème »** (ses cartes et le deck prêt à jouer, sans toucher au deck de départ :
-pour les comptes créés avant les decks à thème ; `grantTheme` dans `progress.js`), un par un ou **« Les 8 d'un coup »** (`grantAllThemes` ; un deck déjà reçu n'est pas doublé). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
+pour les comptes créés avant les decks à thème ; `grantTheme` dans `progress.js`), un par un ou d'un coup : **« Les 8 de départ »** ou **« Les 16 autres »** (`grantAllThemes`, `{ extra: true }` pour les autres ; un deck déjà reçu n'est pas doublé). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
 « Éclats et jetons à volonté » (activé par défaut, réglable au même endroit) : jamais moins de 100 000 Éclats et 500 jetons sur ces profils.
 **Decks et cartes retirées** : si une carte disparaît du jeu, chaque deck qui la contenait est complété tout seul (cartes possédées d'abord,
 sinon cartes du deck de départ de la famille offertes) ; les decks Code Lyoko abîmés par le retrait de Franz Hopper 7, du Clone de William
@@ -512,12 +512,23 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   (+1 en attaque pour Gryffondor), uniques ; la clinique de Deaton fait recruter moins cher. Forteresse et Themyscira sont uniques (plus d'empilement),
   Power Girl passe à 5 de force. Decks : un seul Artikodin et le Magicarpe de James chez la Team Rocket, Albion (le père de Shimy) à la place du Diplomate
   à Orchidia, le manoir Hale en double dans la Meute et la ville de Hawkins en double.
+- **Les autres decks à thème** (`MORE_THEMES` dans `cards/themes.js`, `extra: true`) : 16 decks faits à la main en plus des 8 de départ, **jamais proposés
+  au premier lancement** (`baseThemes()` ne garde que les 8 ; `chooseStarter` refuse les autres). Ils servent de modèles (« Partir d'un deck à thème »,
+  en deux groupes) et les bots les jouent. Par région : **Les Champions de Hoenn** (Rayquaza et Marc à 7), **La Ligue de Sinnoh** (Cynthia et Giratina),
+  **Les Clans de Hisui** (Arceus et Dialga, Adamantin et Nacchara), **Illumis** (Xerneas et Dianthéa, A.Z. et les héros de Légendes Z-A),
+  **Les épreuves d'Alola** (Solgaleo et Lunala, Doyens et Capitaines), **Le défi des Arènes de Galar** (Zacian et Tarak, tous les Champions),
+  **La Ligue de Paldea** (Kassis et Miraidon, Conseil 4 et Team Star). Par bande d'amis : **Les amis de l'Académie** (Koraidon, Menzi, Pepper, Pania, Turum),
+  **Sacha et ses compagnons** (Sacha et Pikachu, Pierre, Ondine, Aurore, Iris, Serena, Lilie), **Tcheren et Bella** (Tcheren et N, Unys).
+  Par maître de type : **Les maîtres de l'Eau** (Kyogre et Marc), **Les maîtres Spectre** (Giratina et Agatha), **Les maîtres Dragon** (Méga-Dracolosse et Peter).
+  Les méchants : **Team Arc-en-Ciel Rocket** (Giovanni et Lysandre, avec Ghetis, Guzma, Elsa-Mina, Ariane, Lance, Mars, Apocyne, Liv, Corvault).
+  Et **Les Légendaires** (Danaël et Razzia à 7) et **La Trinité** DC (Superman et Batman à 7, Wonder Woman 6). Deux cartes 7 au plus (une pour l'Académie).
+  Équilibrage contre les 8 decks de départ (`--sim … --themes`) : entre 41 % et 61 % ; les 24 decks ensemble : entre 40 % et 63 %.
 - **Decks** : **toutes les familles se mélangent** ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, mais **une carte 7 est unique (1 exemplaire)** ; **une seule version par personnage**
   (Aelita 5 ou Aelita 7, pas les deux : les autres versions sont grisées) ; au plus 3 cartes de coût 7+ (différentes), 6 de coût 6, 8 de coût 5 ;
   au moins 24 personnages ; au plus 18 objets + événements et 10 lieux. C'est tout : plus de famille principale imposée ni de famille alliée.
-  **Mes decks** : chaque deck montre ses familles ; « Créer un deck » part d'un deck vide, « Partir d'un deck à thème » d'une copie d'un des 8 decks à thème
-  (les cartes qui manquent sont signalées).
+  **Mes decks** : chaque deck montre ses familles ; « Créer un deck » part d'un deck vide, « Partir d'un deck à thème » d'une copie d'un des 24 decks à thème
+  (les 8 de départ, puis les autres ; les cartes qui manquent sont signalées).
   **Créateur de deck** (`DeckBuilder.jsx`, `deckbuilder.css`) : à gauche les cartes (recherche, type, coût, rareté, tri, une rangée de familles : toutes ou une seule,
   celles dont tu as des cartes d'abord ; « Seulement mes cartes », ou toutes avec celles qui manquent grisées), + et − sur chaque carte ;
   à droite le deck : **les règles cochées en direct** (vert : respectée, jaune : pas encore atteinte, rouge : dépassée), la **répartition par famille**
@@ -584,7 +595,8 @@ Sur ton PC, ce dépôt est le dossier `illustrations/` du projet, que le dépôt
 APK, appli PC), `tools/build-art.mjs` reconnaît chaque image, la recadre au format de sa carte (même cadrage automatique que l'appli,
 réglable à la main dans `cadrages.json` : position, et zoom pour dézoomer une image trop serrée, le vide étant rempli par la même image floutée ;
 ou `"rogne"` pour ne garder qu'un rectangle de l'image, par exemple sans le cadre d'une vraie carte Pokémon : voir l'en-tête de `tools/build-art.mjs`) et la range dans `public/art/` (généré, jamais versionné).
-Une image dont toutes les cartes ont déjà une image plus précise est signalée « en double ». Les workflows « Build APK » et
+Une image dont toutes les cartes ont déjà une image plus précise est signalée « en double ». Un nom porté par deux familles se départage
+par le nom exact (« Mars.jpg » : le lieu de Cowboy Bebop ; « Mars 4.jpg » : la commandante de la Team Galaxie), sinon par le dossier de la famille (`illustrations/ghibli/Lin 2.jpg`). Les workflows « Build APK » et
 « Appli PC (Windows) » récupèrent le dépôt privé grâce au secret `ILLUSTRATIONS_TOKEN` (jeton GitHub en lecture seule sur ce seul dépôt) ;
 sans ce secret, ils construisent sans images. Le site GitHub Pages ne contient jamais ces images (`PARTY_ART=off`), et le dépôt public
 reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt privé : `tools/LISEZ-MOI-illustrations.txt`.
@@ -592,7 +604,7 @@ reste public (site de test et page Spotify inchangés). Mode d'emploi du dépôt
 Les images sont gardées sur le téléphone. **Pour qu'elles apparaissent chez tous tes amis** : Supabase > SQL Editor > colle `supabase/tcg_art.sql` > Run (une fois) ;
 ensuite, chaque image ajoutée par un joueur connecté à son compte est partagée (tout le monde la voit, seuls les joueurs connectés peuvent en ajouter).
 
-**Pokémon** (`cards/pokemon.js`, 368 cartes) : un deck choisit **un type ou une région** (« Quel type ou quelle région ? »), qui donne un bonus à la famille ;
+**Pokémon** (`cards/pokemon.js`, 453 cartes) : un deck choisit **un type ou une région** (« Quel type ou quelle région ? »), qui donne un bonus à la famille ;
 il joue les Pokémon et les Dresseurs de ce type ou de cette région (un Pokémon à deux types compte pour les deux, chaque Pokémon a une région ; les formes
 « de Galar », « d'Alola », « de Hisui » (= Sinnoh) et « de Paldea » suivent la leur), plus ce qui va partout : **Pikachu, Mew, Mewtwo et Arceus** (dans tous les decks Pokémon),
 les Dresseurs sans type (Sacha, N Harmonia « Le garçon qui parle aux Pokémon », Red, Ondine, Pierre, Professeur Chen, Jessie et James, Lilie, Pania…), les lieux, objets et événements.
@@ -601,10 +613,21 @@ les Dresseurs sans type (Sacha, N Harmonia « Le garçon qui parle aux Pokémon 
 **3** les formes intermédiaires ; **1-2** les bébés et premières formes (Vipélierre, Salamèche…). Les Évolitions ont le trait Évolition (Évoli en cherche une en entrant).
 Les Dresseurs à un type ne vont que dans le deck de ce type et dans celui de leur région : Giovanni 7 (Sol), Morgane 7 (Psy), Olga 7 (Glace), Aldo 7 (Combat),
 Agatha 7 (Spectre), Koga 7 (Poison), Major Bob 5 (Électrik), Erika 4 (Plante) pour Kanto ; Peter 7 (Vol) pour Johto ; Marc 7 (Eau), Pierre Rochard 7 (Acier) pour Hoenn ;
-Cynthia 7 (Dragon), Hélio 7 (Ténèbres), Penséa 5 (Fée) pour Sinnoh ; N Harmonia 7 « Le roi de la Team Plasma » (Électrik), Ghetis 6 (Ténèbres), Goyah 6 (Insecte),
+Cynthia 7 (Dragon), Hélio 7 (Ténèbres), Penséa 5 (Fée) pour Sinnoh ; N Harmonia 7 « Le roi de la Team Plasma » (Électrik), Ghetis 6 (Ténèbres), Goyah 7 (Insecte),
 Tcheren 7 (Normal), Nikolaï 5 (Acier), Iris 5 (Dragon), Pieris 5 (Ténèbres), Inezia 4 (Électrik) pour Unys ; Dianthéa 7 (Fée) pour Kalos ; Guzma 6 (Insecte) pour Alola ;
 Tarak 7 (Feu), Roy 5 (Dragon), Faïza 4 (Combat), Donna 4 (Eau) pour Galar ; Kassis 7 (Plante), Dendra 4 (Combat) pour Paldea.
-Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Giovanni 5 et Tcheren 6 devenus 7…) gardent les exemplaires, les decks et les images importées (`RENAMED` dans `cards/index.js`).
+Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Giovanni 5 et Tcheren 6 devenus 7, Goyah 6 devenu 7 comme les autres Maîtres…) gardent les exemplaires, les decks et les images importées (`RENAMED` dans `cards/index.js`).
+**Ajoutés le 17/11/2026** (avec les images de Brice) : des Dresseurs de toutes les régions, à un type (Champions, Conseil 4, Doyens, Capitaines, chefs et cadres des Teams)
+ou sans type (Serena, Bella, Juliette, Beladonis, Cardus, le Professeur Turum, Apia, Elsa-Mina, Bélila, Selena, et trois Dresseurs non uniques : Journaliste Télé,
+Montagnard, Ouvrière) : Jeannine (Kanto), Ariane et Lance de la Team Rocket (Johto), Roxanne, Adriane, Norman, Alizée, Amaryllis 6 et Timmy (Hoenn),
+Flo, Kiméra, Gladys, Tanguy, Mars, et pour Hisui Adamantin, Nacchara, Marcia et Graham (Sinnoh), Strykna (Unys), Lysandre 7, A.Z. (6 et 3), Cornélia, Lino, Albia, Corvault, Inno, Violine (Kalos),
+Gladio, Saubohne, Apocyne, Danh, Alyxia, Margie, Kahili, Chrys, Oléa (Alola), Kabu, Percy, Sally, Travis, Peterson, Rosemary, Mustar 6, Saturnin, Liv (Galar),
+Menzi, Cayenn, Popi, Tully, Kombu, Meloco, Ortiga, Rubépin, Taro (Paldea) ; les Pokémon Zeraora 6, Favianos 5, Pashmilla 4 et Filentrappe 3 ;
+les cartes Dresseur du jeu de cartes : Stades (Illumis, Plage de Surf, Forêt de Vitalité, Usine de la Team Rocket), Outils (Bracelet Vaillant, Rattrape-Riposte :
++2 force quand on est derrière au Pouvoir, Bombe Géniale : le porteur adverse ne peut plus attaquer) et Objets (Carton Rouge Spécial, Méga Signal, PP Plus de N,
+Poffin Copain-Copain, Puissance Premium Pro, Émetteur-Récepteur de la Team Rocket). Flo redresse n'importe quel Pokémon. Plage de Surf : +1 force aux Pokémon Eau qui défendent.
+Nouvelles versions ailleurs : Gryfenfer 6, Jadina 6, Jadilyna 6, Razzia 7, Ténébris 7 et Vangelis 7 (Légendaires) ; Superman 5 « Clark Kent », Wonder Woman 6
+et une deuxième Supergirl 7 « Woman of Tomorrow » (DC).
 Sur la carte, le type et la région s'écrivent dans la ligne des traits, sous l'image (« Pokémon. Feu. Kanto. », « Dresseur. Humain. Fée. Sinnoh. ») ; c'est pareil pour
 les sous-groupes des autres familles (régions de Runeterra, maisons de Poudlard…), et la recherche de l'album les trouve (« Kanto », « Gryffondor »).
 

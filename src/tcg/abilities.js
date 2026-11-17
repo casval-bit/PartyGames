@@ -295,6 +295,7 @@ export const TPL = {
   attIcon: ([ty]) => statik({ text: `Le personnage attaché gagne l'icône {${ty}}.`, icon: (X, me, tg, q) => (me.host === tg.u && q === ty ? 1 : 0) }),
   attKw: ([k]) => statik({ text: `Le personnage attaché gagne ${KEYWORDS[k] ? KEYWORDS[k].name : k}.`, kw: (X, me, tg, q) => me.host === tg.u && q === k }),
   attNeg: ([n]) => statik({ hostile: true, text: `Le personnage attaché perd ${num(n)} force.`, str: (X, me, tg) => (me.host === tg.u ? -num(n) : 0) }),
+  attBehind: ([n]) => statik({ text: `Tant que vous avez moins de Pouvoir qu'un adversaire, le personnage attaché gagne +${num(n)} force.`, str: (X, me, tg) => (me.host === tg.u && X.isBehind(X.ctrl(me)) ? num(n) : 0) }),
   attNoIcon: ([ty]) => statik({ hostile: true, text: `Le personnage attaché perd l'icône {${ty}}.`, icon: (X, me, tg, q) => (me.host === tg.u && q === ty ? -1 : 0) }),
   attNoStand: () => statik({ hostile: true, text: `Le personnage attaché ne se redresse pas pendant la phase de Redressement.`, noStand: (X, me, inst) => me.host === inst.u }),
   attNoAttack: () => statik({ hostile: true, text: `Le personnage attaché ne peut pas attaquer.`, noAttack: (X, me, inst) => me.host === inst.u }),

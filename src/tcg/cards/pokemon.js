@@ -56,11 +56,11 @@ const REG = {
   Johto: "Malosse, Démolosse, Typhlosion, Ho-Oh, Kaiminus, Suicune, Hyporoi, Germignon, Pichu, Farfuret, Lugia, Airmure, Cornèbre, Nostenfer, Scorplane, Mentali, Noctali, Tyranocif, Feuforêve, Steelix, Cizayox, Togepi, Écrémeuh, Queulorior, Phanpy",
   Hoenn: "Kyogre, Groudon, Rayquaza, Braségali, Milobellus, Relicanth, Tengalice, Lilia, Posipi, Négapi, Stalgamin, Makuhita, Hariyama, Séviper, Libégon, Deoxys, Latios, Latias, Gardevoir, Polichombr, Branette, Ténéfix, Métalosse, Galekid, Galegon, Mysdibule",
   Sinnoh: "Simiabraz, Phyllali, Lixy, Pachirisu, Givrali, Mammochon, Dimoret, Riolu, Lucario, Lockpin, Cradopaud, Hippopotas, Griknot, Carmache, Carchacrok, Apireine, Yanmega, Tarinorme, Giratina, Spiritomb, Magirêve, Darkrai, Dialga, Togekiss, Chaglam, Castorno, Archéomire",
-  Unys: "Gruikui, Victini, Reshiram, Zekrom, Moustillon, Clamiral, Lakmécygne, Vipélierre, Majaspic, Vivaldaim, Haydaim, Noacier, Sorbébé, Ouvrifier, Golemastoc, Aéroptéryx, Symbios, Genesect, Lugulabre, Tutankafer, Trioxhydre, Zorua, Zoroark",
+  Unys: "Pashmilla, Gruikui, Victini, Reshiram, Zekrom, Moustillon, Clamiral, Lakmécygne, Vipélierre, Majaspic, Vivaldaim, Haydaim, Noacier, Sorbébé, Ouvrifier, Golemastoc, Aéroptéryx, Symbios, Genesect, Lugulabre, Tutankafer, Trioxhydre, Zorua, Zoroark",
   Kalos: "Grenousse, Croâporal, Feunnec, Roussil, Goupelin, Braisillon, Amphinobi, Dedenne, Pandespiègle, Kravarech, Bruyverne, Sonistrelle, Yveltal, Prismillon, Mistigrix, Diancie, Exagide, Xerneas, Nymphali",
-  Alola: "Brindibou, Archéduc, Flamiaou, Félinferno, Otaquin, Oratoria, Tokorico, Quartermac, Bourrinos, Bacabouh, Solgaleo, Lunala, Cosmovum, Lougaroc, Magearna, Mimiqui",
+  Alola: "Zeraora, Brindibou, Archéduc, Flamiaou, Félinferno, Otaquin, Oratoria, Tokorico, Quartermac, Bourrinos, Bacabouh, Solgaleo, Lunala, Cosmovum, Lougaroc, Magearna, Mimiqui",
   Galar: "Ouistempo, Gorythmic, Flambino, Pyrobut, Larméléon, Lézargus, Zamazenta, Shifours, Wushours, Bekaglaçon, Voltoutou, Éthernatos, Corvaillus, Zacian",
-  Paldea: "Chochodile, Flâmigator, Coiffeton, Pohmarmotte, Koraidon, Miraidon, Poussacha, Palmaval, Virevorreur, Zapétrel, Baojian, Rampe-Ailes, Tag-Tag, Terraiste, Famignol, Gourmelet, Briochien, Forgelina",
+  Paldea: "Favianos, Filentrappe, Chochodile, Flâmigator, Coiffeton, Pohmarmotte, Koraidon, Miraidon, Poussacha, Palmaval, Virevorreur, Zapétrel, Baojian, Rampe-Ailes, Tag-Tag, Terraiste, Famignol, Gourmelet, Briochien, Forgelina",
 };
 const REGION = {};
 for (const [rg, names] of Object.entries(REG)) for (const n of names.split(",")) REGION[n.trim()] = rg;
@@ -191,6 +191,7 @@ export const cards = [
   pk("Gorythmic", "Batteur", 5, 5, "CI", "Plante", "", "atkBuff:Pokémon,1@Tambour-Battant", "R"),
 
   // ================= Électrik =================
+  pk("Zeraora", "Foudre fulgurante", 6, 5, "CR", "Électrik", "discret", "winStand:combat@Poing Éclair ; noKneel:combat@Vitesse fulgurante", "E"),
   pk("Raichu", "Souris", 5, 5, "C", "Électrik", "", "actMinus:2@Fatal-Foudre", "R"),
   pk("Pichu", "Minisouris", 1, 1, "R", "Électrik", "", "", "C"),
   pk("Voltali", "Éclair", 3, 3, "CR", "Électrik", "", "ifAtk:1@Cage-Éclair", "U", { tr: EV }),
@@ -252,6 +253,7 @@ export const cards = [
   pk("Koraidon", "Paradoxe", 7, 7, "CI", "Combat|Dragon", "celebre|intimidation", "noKneel:combat@Forme Sprint ; winKill:combat,3@Hypercollision", "L"),
 
   // ================= Poison =================
+  pk("Favianos", "Charme toxique", 5, 4, "RI", "Poison|Fée", "", "winDiscard:ruse,1@Chaîne Toxique ; domi:1@Il se pavane", "R"),
   pk("Abo", "Serpent", 2, 2, "C", "Poison", "", "", "C"),
   pk("Arbok", "Cobra", 4, 4, "CR", "Poison", "", "atkKneel:3@Regard Médusant", "U"),
   pk("Smogo", "Gaz toxique", 2, 1, "R", "Poison", "", "", "C"),
@@ -326,6 +328,7 @@ export const cards = [
   pk("Lunala", "La chauve-souris de la lune", 7, 6, "CRI", "Psy|Spectre", "discret|celebre", "winKill:ruse,3@Rayon Spectral ; escape@Ombre lunaire", "L"),
 
   // ================= Insecte =================
+  pk("Filentrappe", "Piégeur", 3, 3, "C", "Insecte", "", "ifDef:1@Piège-Fil", "U"),
   pk("Chenipan", "Ver", 1, 1, "C", "Insecte", "", "", "C"),
   pk("Chrysacier", "Cocon", 2, 2, "C", "Insecte", "", "ifDef:1@Armure", "C"),
   pk("Papilusion", "Papillon", 4, 3, "RI", "Insecte|Vol", "", "atkKneel:3@Poudre Dodo", "U"),
@@ -402,6 +405,7 @@ export const cards = [
   pk("Zacian", "L'épée de Galar", 7, 7, "CR", "Fée", "celebre|intimidation", "winKill:combat,4@Épée Royale ; noKneel:combat@Lame héroïque", "L"),
 
   // ================= Normal =================
+  pk("Pashmilla", "Écharpe", 4, 3, "CR", "Normal", "", "ifAtk:2@Multi-Coups", "U"),
   pk("Évoli", "Évolutif", 2, 2, "CR", "Normal", "", "enterSearch:Évolition@Évolution", "U", { tr: EV }),
   pk("Ronflex", "Pionceur", 5, 6, "C", "Normal", "intimidation", "ifDef:2@Repos", "R"),
   pk("Ronflex", "La sieste", 4, 5, "C", "Normal", "", "loseStand@Ronflement", "U"),
@@ -446,6 +450,20 @@ export const cards = [
   tr("Perrin", "La photographe de Kitakami", 3, 2, "R", "", "", "winDraw:ruse,1@Pris sur le vif", "U"),
   tr("Pania", "La reine des Évolitions", 4, 2, "RI", "Team Star", "genie", "aura:Évolition,1@Opération Étoile", "R"),
   tr("Pepper", "Le chef cuisinier", 4, 2, "RI", "", "", "actStand:Pokémon@Sandwich ; enterSearch:Pokémon@Herbes Mystiques", "R"),
+  // (17/11/2026) amis, rivaux, savants, Hisui, Fondation Æther et Dresseurs de tous les jours
+  tr("Serena", "La performeuse de Kalos", 4, 3, "RI", "Performeuse|Rival", "celebre", "domi:2@Le Spectacle Pokémon ; ifName:Sacha,1@Pour Sacha", "R"),
+  tr("Bella", "L'amie d'enfance de Tcheren", 3, 2, "RI", "Rival", "", "loseDraw:1@Attends-moi ! ; ifName:Tcheren,1@Amis d'enfance", "U"),
+  tr("Juliette", "La créatrice du Système de Stockage", 2, 1, "RI", "Savant", "genie", "actDraw:1@Recherche sur le Web", "U"),
+  tr("Beladonis", "L'agent de la Police Internationale", 3, 2, "RI", "Police|Détective", "discret", "actKneel:3@Une enquête discrète", "U"),
+  tr("Cardus", "Le Meneur de l'Usine de Combat", 4, 2, "RI", "Meneur|Savant", "genie", "enterRecall:Pokémon@La location de Pokémon", "U"),
+  tr("Professeur Turum", "Le professeur du futur", 4, 2, "RI", "Savant", "genie", "enterSearch:Pokémon@La Zone Zéro ; ifName:Miraidon,1@Miraidon", "R"),
+  tr("Apia", "La gérante du Dojo de la Maîtrise", 2, 1, "I", "", "", "actStand:Pokémon@Le repas du Dojo", "U"),
+  tr("Elsa-Mina", "La présidente de la Fondation Æther", 6, 4, "RI", "Fondation Æther", "celebre|intimidation", "actKneel:5@Les Ultra-Chimères ; enterRecall:Pokémon@Mes précieux Pokémon", "E"),
+  tr("Bélila", "Cheffe du Corps de la Défense", 4, 4, "C", "Groupe Galaxie", "", "ifAtk:1@Le dojo de Rusti-Cité", "U"),
+  tr("Selena", "Cheffe du Corps des Chercheurs", 3, 1, "RI", "Groupe Galaxie|Savant", "genie", "enterDraw:1@Le rapport de recherche ; reserve:1", "U"),
+  tr("Journaliste Télé", "En direct !", 2, 1, "I", "Journaliste", "", "domi:1@À l'antenne", "C", { uni: false }),
+  tr("Montagnard", "Sur les sentiers", 2, 2, "C", "Randonneur", "", "ifDef:1@Solide comme un roc", "C", { uni: false }),
+  tr("Ouvrière", "Le chantier", 2, 2, "C", "Ouvrier", "", "reserve:1@Les heures sup", "C", { uni: false }),
 
   // ================= Dresseurs à un type (decks de ce type et de leur région) =================
   // --- Kanto
@@ -457,54 +475,124 @@ export const cards = [
   tr("Koga", "Le maître ninja", 7, 4, "R", "Conseil 4|Champion", "discret", "winDiscard:ruse,2@Ninjutsu ; atkKneel:4@Brouillard", "L", { ty: "Poison", rg: "Kanto" }),
   tr("Major Bob", "Champion de Carmin sur Mer", 5, 3, "C", "Champion", "", "atkBuff:Électrik,1@Le lieutenant éclair ; reserve:1", "R", { ty: "Électrik", rg: "Kanto" }),
   tr("Erika", "Championne de Céladopole", 4, 2, "RI", "Champion", "", "income:1@La parfumerie", "U", { ty: "Plante", rg: "Kanto" }),
+  tr("Jeannine", "Championne de Parmanie", 4, 3, "R", "Champion|Ninja", "discret", "ifName:Koga,1@La fille du maître ninja ; winDiscard:ruse,1@Toxik", "U", { ty: "Poison", rg: "Kanto" }),
   // --- Johto
   tr("Peter", "Le maître des dragons", 7, 5, "CI", "Maître|Conseil 4", "celebre", "kwAura:Vol,intimidation@Ultralaser ; ifName:Dracolosse,2@Dracolosse", "L", { ty: "Vol", rg: "Johto" }),
+  tr("Ariane", "Cadre de la Team Rocket", 4, 3, "RI", "Team Rocket", "", "atkBuff:Team Rocket,1@Les ordres du QG ; winSteal:ruse,1@Le coffre de la Team Rocket", "R", { ty: "Poison", rg: "Johto" }),
+  tr("Lance", "Le cadre le plus cruel de la Team Rocket", 3, 3, "CR", "Team Rocket", "intimidation", "winKill:combat,1@Sans pitié", "U", { ty: "Poison", rg: "Johto" }),
   // --- Hoenn
   tr("Marc", "Maître de la Ligue d'Hoenn", 7, 4, "RI", "Maître", "celebre", "aura:Eau,1@Le maître de l'eau ; domi:1@L'artiste", "L", { ty: "Eau", rg: "Hoenn" }),
   tr("Pierre Rochard", "Maître de la Ligue d'Hoenn", 7, 5, "CRI", "Maître", "celebre", "aura:Acier,1@Méga-Métalosse ; income:1@Le fils du président de Devon", "L", { ty: "Acier", rg: "Hoenn" }),
+  tr("Roxanne", "Championne de Mérouville", 3, 2, "RI", "Champion|Savant", "genie", "enterDraw:1@L'École des Dresseurs ; ifWith:Roche,1@Tête de Roc", "U", { ty: "Roche", rg: "Hoenn" }),
+  tr("Adriane", "Championne de Vermilava", 4, 3, "CI", "Champion", "", "atkBuff:Feu,1@Canicule", "U", { ty: "Feu", rg: "Hoenn" }),
+  tr("Norman", "Champion de Clémenti-Ville", 5, 4, "CI", "Champion", "", "aura:Normal,1@Le père du héros", "R", { ty: "Normal", rg: "Hoenn" }),
+  tr("Alizée", "Championne de Cimetronelle", 4, 3, "CI", "Champion", "", "winStand:combat@Aéropiqué ; ifWith:Vol,1@Escadrille", "U", { ty: "Vol", rg: "Hoenn" }),
+  tr("Amaryllis", "La gardienne du Peuple du Météore", 6, 4, "CRI", "Peuple du Météore", "celebre", "ifName:Rayquaza,2@L'appel de Rayquaza ; atkKneel:4@Draco-Ascension", "E", { ty: "Dragon", rg: "Hoenn" }),
+  tr("Timmy", "Le rival au grand cœur", 3, 2, "RI", "Rival", "", "ifName:Gardevoir,2@Mon Gardevoir ; loseDraw:1@Toujours plus fort", "U", { ty: "Psy", rg: "Hoenn" }),
   // --- Sinnoh
   tr("Cynthia", "Maître de la Ligue de Sinnoh", 7, 5, "CRI", "Maître", "celebre", "atkBuff:Pokémon,2@Leçon de maître ; reserve:1", "L", { ty: "Dragon", rg: "Sinnoh" }),
   tr("Hélio", "Le chef de la Team Galaxie", 7, 4, "RI", "Team Galaxie", "intimidation", "enterKneelAll:3@Un nouvel univers ; aura:Ténèbres,1@Sans émotion", "L", { ty: "Ténèbres", rg: "Sinnoh" }),
   tr("Penséa", "L'amie d'Amovénus", 5, 3, "RI", "", "discret", "enterSearch:Fée@Miroir Sacré ; escape@Je pense, donc je suis", "R", { ty: "Fée", rg: "Sinnoh" }),
+  tr("Flo", "Championne de Vestigion", 4, 3, "CR", "Champion", "", "actStand:Pokémon@La vigueur de Flo", "U", { ty: "Plante", rg: "Sinnoh" }),
+  tr("Kiméra", "Championne d'Unionpolis", 4, 3, "RI", "Champion|Coordinatrice", "", "atkKneel:3@Hypnose ; domi:1@La danseuse étoile", "R", { ty: "Spectre", rg: "Sinnoh" }),
+  tr("Gladys", "Championne de Frimapic", 4, 3, "CR", "Champion", "", "winKneel:combat@Concentration !", "U", { ty: "Glace", rg: "Sinnoh" }),
+  tr("Tanguy", "Champion de Rivamar", 5, 4, "CI", "Champion", "", "atkBuff:Électrik,1@Le phare de Rivamar ; winStand:combat@Électrocution", "R", { ty: "Électrik", rg: "Sinnoh" }),
+  tr("Mars", "Commandant de la Team Galaxie", 4, 3, "CR", "Team Galaxie", "", "ifName:Hélio,1@Pour Hélio ! ; winSteal:ruse,1@Le vol de Pokémon", "U", { ty: "Normal", rg: "Sinnoh" }),
+  // --- Hisui (le Sinnoh d'autrefois)
+  tr("Adamantin", "Chef du Clan Diamant", 5, 4, "CI", "Clan Diamant", "", "ifName:Nacchara,1@La rivale du Clan Perle ; atkBuff:Plante,1@Phyllali", "R", { ty: "Plante", rg: "Sinnoh" }),
+  tr("Nacchara", "Cheffe du Clan Perle", 5, 4, "RI", "Clan Perle", "", "ifName:Adamantin,1@Le rival du Clan Diamant ; defAuraT:Pokémon,1@Givrali", "R", { ty: "Glace", rg: "Sinnoh" }),
+  tr("Marcia", "Gardienne de Fragilady", 3, 2, "RI", "Gardien", "", "guard:Pokémon@Protéger la Reine", "U", { ty: "Plante", rg: "Sinnoh" }),
+  tr("Graham", "Gardien de Paragruel", 3, 3, "C", "Gardien", "", "ifDef:1@Le gardien du lac", "U", { ty: "Eau", rg: "Sinnoh" }),
   // --- Unys
   tr("N Harmonia", "Le roi de la Team Plasma", 7, 4, "CRI", "Team Plasma", "celebre", "ifWith:Pokémon,2@Il entend la voix des Pokémon ; enterStand:Pokémon@Idéaux", "L", { ty: "Électrik", rg: "Unys" }),
   tr("Ghetis", "Le vrai maître de la Team Plasma", 6, 3, "RI", "Team Plasma", "intimidation", "winSteal:ruse,2@Manipulation ; actSilence:5@L'ordre du sage", "E", { ty: "Ténèbres", rg: "Unys" }),
-  tr("Goyah", "Maître de la Ligue d'Unys", 6, 4, "CI", "Maître", "celebre", "atkBuff:Pokémon,1@Le vieux sage ; enterDraw:1", "E", { ty: "Insecte", rg: "Unys" }),
+  tr("Goyah", "Maître de la Ligue d'Unys", 7, 5, "CRI", "Maître", "celebre", "atkBuff:Pokémon,1@Le vieux sage ; enterDraw:2@Pyrax et ses amis", "L", { ty: "Insecte", rg: "Unys" }),
   tr("Tcheren", "Le champion d'Ogoesse", 7, 4, "RI", "Champion|Rival", "genie", "aura:Normal,1@La leçon de l'école ; enterDraw:2@Toujours un plan", "L", { ty: "Normal", rg: "Unys" }),
   tr("Nikolaï", "Le savant de la Team Plasma", 5, 2, "RI", "Team Plasma|Savant", "genie", "enterSearch:Pokémon@Recherche ; actStand:Acier@Machine", "R", { ty: "Acier", rg: "Unys" }),
   tr("Iris", "La dresseuse de Dragons", 5, 3, "CI", "Maître", "intimidation", "aura:Dragon,1@Le cœur des Dragons", "R", { ty: "Dragon", rg: "Unys" }),
   tr("Pieris", "Conseil 4 d'Unys", 5, 3, "RI", "Conseil 4", "discret", "winDiscard:ruse,1@Le flambeur", "R", { ty: "Ténèbres", rg: "Unys" }),
   tr("Inezia", "Championne de Méanville", 4, 2, "I", "Champion", "celebre", "domi:1@Sous les projecteurs", "R", { ty: "Électrik", rg: "Unys" }),
+  tr("Strykna", "Championne d'Ondes-sur-Mer", 4, 3, "CR", "Champion|Musicienne", "", "winDiscard:combat,1@Le concert toxique", "U", { ty: "Poison", rg: "Unys" }),
   // --- Kalos
   tr("Dianthéa", "Maître de la Ligue de Kalos", 7, 4, "RI", "Maître", "celebre", "aura:Fée,1@La star de Kalos ; domi:2@Le grand écran", "L", { ty: "Fée", rg: "Kalos" }),
+  tr("Lysandre", "Le chef de la Team Flare", 7, 4, "CRI", "Team Flare", "intimidation", "enterKill:4@L'arme ultime ; actKneel:6@Le plan de Lysandre", "L", { ty: "Feu", rg: "Kalos" }),
+  tr("A.Z.", "L'ancien roi de Kalos", 6, 4, "CRI", "Roi", "celebre", "winKill:combat,3@La colère du roi ; dieDraw:1@Trois mille ans d'attente", "E", { ty: "Fée", rg: "Kalos" }),
+  tr("A.Z.", "Le géant au jardin", 3, 3, "CI", "Roi", "", "enterRecall:Pokémon@Floette est revenue", "U", { ty: "Fée", rg: "Kalos" }),
+  tr("Cornélia", "Championne de Yantreizh", 4, 3, "CR", "Champion", "", "ifName:Lucario,2@Méga-Lucario ; winStand:combat@En rollers", "U", { ty: "Combat", rg: "Kalos" }),
+  tr("Lino", "Champion de Relifac-le-Haut", 4, 4, "C", "Champion|Grimpeur", "", "ifDef:1@La paroi d'escalade", "U", { ty: "Roche", rg: "Kalos" }),
+  // --- Légendes Z-A : Illumis
+  tr("Albia", "Membre des Poings de la Justice", 3, 2, "RI", "Poings de la Justice", "", "ifName:Lugulabre,1@Lugulabre ; winDiscard:ruse,1@Feu Ensorcelé", "U", { ty: "Spectre", rg: "Kalos" }),
+  tr("Corvault", "Le boss du Clan Dérouillard", 5, 4, "C", "Clan Dérouillard", "intimidation", "winKill:combat,2@Brutapode", "R", { ty: "Poison", rg: "Kalos" }),
+  tr("Inno", "Membre de la Team MZ", 3, 3, "CR", "Team MZ", "", "loseStand@Il ne lâche jamais ses amis", "U", { ty: "Ténèbres", rg: "Kalos" }),
+  tr("Violine", "Présidente de la FRIM", 4, 2, "RI", "Noble", "celebre", "income:1@La haute société d'Illumis ; ifName:Mélodelfe,1@Mélodelfe", "R", { ty: "Fée", rg: "Kalos" }),
   // --- Alola
   tr("Guzma", "Le boss de la Team Skull", 6, 4, "C", "Team Skull", "intimidation", "aura:Insecte,1@Le Destructeur ; winRaze:combat@On casse tout", "E", { ty: "Insecte", rg: "Alola" }),
+  tr("Gladio", "Le frère de Lilie", 4, 3, "C", "Fondation Æther|Rival", "", "ifName:Lilie,1@Ma petite sœur ; winKill:combat,2@Silvallié", "R", { ty: "Normal", rg: "Alola" }),
+  tr("Saubohne", "Le directeur de la branche Æther", 3, 2, "RI", "Fondation Æther|Savant", "genie", "enterDiscard:1@Une expérience ratée", "U", { ty: "Psy", rg: "Alola" }),
+  tr("Apocyne", "La grande sœur de la Team Skull", 4, 3, "CR", "Team Skull", "", "ifName:Guzma,1@Pour le boss ; winDiscard:combat,1@Toxik", "U", { ty: "Poison", rg: "Alola" }),
+  tr("Danh", "Doyen d'Ula-Ula", 5, 4, "RI", "Doyen|Police", "discret", "actKneel:4@Le flic fatigué ; ifWith:Ténèbres,1@Persian d'Alola", "R", { ty: "Ténèbres", rg: "Alola" }),
+  tr("Alyxia", "Doyenne d'Akala", 5, 4, "CI", "Doyen|Conseil 4", "", "ifDef:2@Lougaroc ; income:1@La bijouterie", "R", { ty: "Roche", rg: "Alola" }),
+  tr("Margie", "Capitaine du Spectre", 4, 2, "RI", "Capitaine|Conseil 4", "", "ifName:Mimiqui,1@Ma Mimiqui ; escape@Une revenante", "U", { ty: "Spectre", rg: "Alola" }),
+  tr("Kahili", "Conseil 4 d'Alola", 4, 3, "CI", "Conseil 4|Golfeuse", "", "noKneel:combat@Le swing parfait", "U", { ty: "Vol", rg: "Alola" }),
+  tr("Chrys", "Capitaine Électrik", 3, 2, "RI", "Capitaine|Savant", "genie", "actDraw:1@Les gadgets de Chrys", "U", { ty: "Électrik", rg: "Alola" }),
+  tr("Oléa", "Capitaine Fée", 3, 2, "RI", "Capitaine|Artiste", "", "domi:2@Les fresques d'Oléa", "U", { ty: "Fée", rg: "Alola" }),
   // --- Galar
   tr("Tarak", "Le champion invaincu", 7, 5, "CI", "Maître", "celebre", "ifName:Dracaufeu,2@Dracaufeu ; atkBuff:Feu,1@La pose du champion", "L", { ty: "Feu", rg: "Galar" }),
   tr("Roy", "Le rival de Tarak", 5, 4, "CI", "Champion", "", "ifName:Tarak,2@L'éternel rival ; atkBuff:Dragon,1@Tempête de sable", "R", { ty: "Dragon", rg: "Galar" }),
   tr("Faïza", "Championne de Galar", 4, 3, "C", "Champion", "", "ifAlone:2@Entraînement au karaté ; winKneel:combat", "R", { ty: "Combat", rg: "Galar" }),
   tr("Donna", "Championne de Galar", 4, 2, "RI", "Champion", "celebre", "actStand:Eau@La vague de Galar", "R", { ty: "Eau", rg: "Galar" }),
+  tr("Kabu", "Champion de Motorby", 4, 4, "C", "Champion", "", "ifAtk:1@L'esprit du vétéran ; winStand:combat@Footing matinal", "U", { ty: "Feu", rg: "Galar" }),
+  tr("Percy", "Champion de Greenbury", 4, 3, "CI", "Champion|Fermier", "", "income:1@La ferme de Greenbury", "U", { ty: "Plante", rg: "Galar" }),
+  tr("Sally", "Championne de Corrifey", 4, 2, "RI", "Champion", "", "domi:2@Le quiz de Sally ; ifName:Travis,1@Mon héritier", "R", { ty: "Fée", rg: "Galar" }),
+  tr("Travis", "Le successeur de Sally", 4, 3, "RI", "Champion|Rival", "", "ifBehind:2@L'orgueil de Travis ; ifName:Sally,1@Les leçons de Sally", "U", { ty: "Fée", rg: "Galar" }),
+  tr("Peterson", "Champion de Smashings", 4, 3, "CR", "Champion|Musicien", "", "atkKneel:3@Le concert punk", "U", { ty: "Ténèbres", rg: "Galar" }),
+  tr("Rosemary", "La petite sœur de Peterson", 4, 3, "CR", "Rival", "celebre", "ifName:Peterson,1@Grand frère ; winDiscard:ruse,1@La Team Yell", "R", { ty: "Ténèbres", rg: "Galar" }),
+  tr("Mustar", "Maître du Dojo de la Maîtrise", 6, 5, "CI", "Maître", "celebre", "atkBuff:Combat,2@L'ancien Maître invaincu ; ifName:Shifours,1@Shifours", "E", { ty: "Combat", rg: "Galar" }),
+  tr("Saturnin", "L'apprenti Champion Psy", 3, 2, "RI", "Rival", "", "atkKneel:2@Télékinésie", "U", { ty: "Psy", rg: "Galar" }),
+  tr("Liv", "La secrétaire de Macro Cosmos", 4, 3, "RI", "Macro Cosmos", "", "winDiscard:ruse,1@Pour le président Shehroz", "U", { ty: "Poison", rg: "Galar" }),
   // --- Paldea
   tr("Kassis", "Champion de la Ligue Myrtille", 7, 4, "CR", "Rival", "", "aura:Plante,1@Le masque d'Ogerpon ; ifBehind:2@La rancune", "L", { ty: "Plante", rg: "Paldea" }),
   tr("Dendra", "La professeure de combat", 4, 3, "C", "Savant", "", "atkBuff:Combat,1@Cours de combat", "U", { ty: "Combat", rg: "Paldea" }),
+  tr("Menzi", "La rivale ultra-motivée", 5, 4, "CRI", "Maître|Rival", "celebre", "winStand:*@Encore un combat ! ; ifName:Pohmarmotte,1@Pohmarmotte", "R", { ty: "Électrik", rg: "Paldea" }),
+  tr("Cayenn", "Conseil 4 de Paldea", 5, 4, "CR", "Conseil 4", "", "winKneel:combat@L'interrogatoire ; ifDef:1@Sur son terrain", "R", { ty: "Sol", rg: "Paldea" }),
+  tr("Popi", "Conseil 4 de Paldea", 4, 2, "CI", "Conseil 4", "", "atkBuff:Acier,1@Forgelina, frappe ! ; ifName:Forgelina,1@Le marteau de Forgelina", "U", { ty: "Acier", rg: "Paldea" }),
+  tr("Tully", "Championne d'Alforneira", 4, 3, "RI", "Champion|Maquilleuse", "celebre", "domi:2@Le maquillage parfait", "U", { ty: "Psy", rg: "Paldea" }),
+  tr("Kombu", "Champion de Jarramanca", 4, 4, "C", "Champion|Cuisinier", "", "reserve:1@Le marché de Jarramanca ; ifDef:1@Coquillages", "U", { ty: "Eau", rg: "Paldea" }),
+  tr("Meloco", "Boss du Groupe Schedar", 4, 4, "C", "Team Star", "intimidation", "ifAtk:1@Le Starmobile de feu", "U", { ty: "Feu", rg: "Paldea" }),
+  tr("Ortiga", "Boss du Groupe Ruchbah", 4, 3, "RI", "Team Star", "", "atkKneel:3@Le Starmobile féerique", "U", { ty: "Fée", rg: "Paldea" }),
+  tr("Rubépin", "Conseil 4 de la Ligue Myrtille", 4, 3, "CI", "Conseil 4", "", "ifAtk:2@Chaud devant !", "U", { ty: "Feu", rg: "Paldea" }),
+  tr("Taro", "Conseil 4 de la Ligue Myrtille", 4, 2, "RI", "Conseil 4", "", "atkKneel:2@Le règlement du club ; domi:1@La déléguée", "U", { ty: "Fée", rg: "Paldea" }),
 
   // ================= lieux =================
   loc("Le Centre Pokémon", "Soins gratuits", 2, "Ville", "", "reduce:Pokémon,1@Repos", "U"),
   loc("Bourg Palette", "Là où tout commence", 1, "Ville", "limite", "income:1", "C"),
   loc("L'Arène", "Badge en jeu", 3, "Arène", "", "xtraCh:combat", "R"),
   loc("Le laboratoire du Professeur Chen", "Recherches", 2, "Laboratoire", "", "actDraw:1@Pokédex", "U"),
+  loc("Usine de la Team Rocket", "Stade", 2, "Stade|Team Rocket", "", "reduce:Team Rocket,1@La chaîne de production", "U"),
+  loc("Forêt de Vitalité", "Stade", 2, "Stade|Forêt", "", "reduce:Plante,1@La sève de la forêt", "U"),
+  loc("Plage de Surf", "Stade", 2, "Stade|Plage", "", "defAuraT:Eau,1@Les rouleaux", "R", { uni: true }),
+  loc("Illumis", "La Cité de la Lumière", 2, "Ville", "limite", "income:1 ; reserve:1", "U"),
   // --- objets
   obj("Poké Ball", "Rentre !", 1, "Ball", "", "attSave", "C"),
   obj("Super Bonbon", "Niveau +1", 1, "Objet", "", "attStr:1", "C"),
   obj("Pierre Évolution", "Elle brille", 2, "Pierre", "", "attStr:2", "U"),
   obj("Restes", "Objet tenu", 1, "Objet", "", "attStand", "U"),
   obj("Bandeau Choix", "Objet tenu", 2, "Objet", "", "attKw:intimidation", "R"),
+  obj("Bracelet Vaillant", "Outil Pokémon", 1, "Objet", "", "attStr:1 ; attIcon:combat", "U"),
+  obj("Rattrape-Riposte", "Outil Pokémon", 1, "Objet", "", "attBehind:2", "U"),
+  obj("Bombe Géniale", "Outil Pokémon", 2, "Objet", "", "attNoAttack", "R"),
   // --- événements
   ev("Potion", "Soin", 1, "Soin", "evSave:Pokémon", "C"),
   ev("Ultralaser", "Attaque surpuissante", 2, "Attaque", "evBuff:3", "U"),
   ev("Capture !", "Attrapé !", 3, "Ball", "evBounce:4", "R"),
   ev("Abri", "Protection", 2, "Attaque", "evCancel", "R"),
   ev("Échange", "Contre un autre", 1, "Dresseur", "evRecall:Pokémon", "U"),
+  ev("Carton Rouge Spécial", "Expulsion !", 2, "Objet", "evDiscard:2", "U"),
+  ev("Méga Signal", "L'appel de la Méga-Évolution", 1, "Objet", "evPutPlay:Pokémon,4", "R"),
+  ev("PP Plus de N", "Le soin de N", 1, "Objet", "evStand:Pokémon", "U"),
+  ev("Poffin Copain-Copain", "Deux nouveaux amis", 1, "Objet", "evDraw:2", "U"),
+  ev("Puissance Premium Pro", "Coup de poing", 1, "Objet", "evBuffTrait:Combat,3", "U"),
+  ev("Émetteur-Récepteur de la Team Rocket", "Appel au QG", 1, "Team Rocket|Objet", "evRecall:Team Rocket", "U"),
 ];
 
 /** Decks de départ : un par type et par région, chacun mené par son Pokémon ou son Dresseur emblématique (excl : cartes ajoutées d'office). */

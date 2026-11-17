@@ -31,7 +31,7 @@ import * as gundam from "./gundam.js";
 import * as jojo from "./jojo.js";
 import * as neutral from "./neutral.js";
 import * as plots from "./plots.js";
-import { THEMES } from "./themes.js";
+import { THEMES, MORE_THEMES } from "./themes.js";
 
 const MODS = [lyoko, umbrella, toystory, onepiece, pokemon, starac, citesdor, legendaires, capes, hunger, bebop, horde, elite, teenwolf, marvel, dc, stranger, scooby, lol, hp, sw, got, lotr, narnia, ghibli, gundam, jojo];
 
@@ -69,6 +69,8 @@ for (const m of MODS) addFamily(m);
 addFamily(neutral);
 // les 8 decks à thème, faits à la main : les seuls proposés à un nouveau joueur (voir themes.js)
 for (const t of THEMES) STARTER_SPECS.push({ ...t, theme: true });
+// les autres decks à thème (régions, maîtres de type, amis, méchants…) : modèles de deck et adversaires bots, pas au premier lancement
+for (const t of MORE_THEMES) STARTER_SPECS.push({ ...t, theme: true, extra: true });
 for (const d of buildCards("plot", plots.cards, used)) { CARD[d.id] = d; PLOTS.push(d); }
 
 /** Familles jouables (sans « Neutre »). */
@@ -87,6 +89,8 @@ export const RENAMED = {
   "pokemon-draco-4": "pokemon-draco-3", "pokemon-noctali-4": "pokemon-noctali-3", "pokemon-steelix-6": "pokemon-steelix-5",
   "pokemon-ronflex-6": "pokemon-ronflex-5", "pokemon-miaouss-2": "pokemon-miaouss-4", "pokemon-giovanni-5": "pokemon-giovanni-7",
   "pokemon-n-5": "pokemon-n-harmonia-7-2", "pokemon-tcheren-3": "pokemon-tcheren-7", "pokemon-tcheren-6": "pokemon-tcheren-7", "pokemon-cynthia-6": "pokemon-cynthia-7",
+  // Goyah, Maître de la Ligue d'Unys, passe à 7 comme les autres Maîtres (17/11/2026)
+  "pokemon-goyah-6": "pokemon-goyah-7",
 };
 /** Carte remplacée par une autre à la même place : les exemplaires possédés deviennent la nouvelle carte. */
 export const REPLACED = {

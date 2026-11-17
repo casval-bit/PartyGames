@@ -47,7 +47,7 @@ export function artFile(d) {
 const famOf = (h) => { const s = slug(h); const f = Object.values(FAMILY).find((x) => [x.id, x.name, x.short].some((v) => v && slug(v) === s)); return f ? f.id : null; };
 /** Retrouve la ou les cartes d'un nom de fichier (« Gryfenfer 7.jpg », « Mendoza 5 (Cités d'or).png », « Pikachu.png », id exact…).
  *  Une parenthèse finale qui n'est ni une famille ni un sous-titre (« Onze 7 (1).jpg », copie de Windows) est ignorée. */
-export function matchFile(name) {
+export function matchFile(name, dirs = []) {
   const ix = index || buildIndex();
   let raw = String(name).replace(/\.[a-z0-9]{2,5}$/i, "").replace(/_+/g, " ").trim();
   let hint = null;
@@ -61,7 +61,18 @@ export function matchFile(name) {
     if (h2.length) hit = h2;
   }
   const fams = new Set(hit.map((d) => d.fam));
-  if (fams.size > 1) return { cards: [], why: "ambigu" };
+  if (fams.size > 1) {
+    // « Mars.jpg » : le lieu Mars (Cowboy Bebop) porte exactement ce nom ; le personnage Mars (Pokémon) seulement par son nom nu
+    const exact = hit.filter((d) => slug(artFileName(d)) === slug(raw));
+    if (exact.length && new Set(exact.map((d) => d.fam)).size === 1) return { cards: exact, why: "" };
+    // sinon, le dossier de la famille tranche (illustrations/bebop/Mars.jpg), du plus proche au plus lointain
+    for (const dir of [...dirs].reverse()) {
+      const f = famOf(dir);
+      const h2 = f ? hit.filter((d) => d.fam === f) : [];
+      if (h2.length) return { cards: h2, why: "" };
+    }
+    return { cards: [], why: "ambigu" };
+  }
   return { cards: hit, why: "" };
 }
 

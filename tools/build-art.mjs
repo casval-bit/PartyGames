@@ -142,7 +142,7 @@ async function frame(img, bw, bh, f, zoom = 1) {
   return sharp(bg).composite([{ input: fgPng, left, top }]);
 }
 
-const list = files.map((f) => ({ f, name: path.basename(f), m: matchFile(path.basename(f)) }));
+const list = files.map((f) => ({ f, name: path.basename(f), m: matchFile(path.basename(f), path.relative(SRC, path.dirname(f)).split(path.sep).filter(Boolean)) }));
 list.sort((a, b) => a.m.cards.length - b.m.cards.length || a.f.localeCompare(b.f)); // noms précis (avec le coût) d'abord
 const cards = {}, keep = new Set(["index.json"]), bad = [], dup = [];
 let made = 0, reused = 0, used = 0;

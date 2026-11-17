@@ -10,7 +10,7 @@ import { canTest } from "../../config.js";
 import { illustratedIds } from "./artStore.js";
 import * as P from "../progress.js";
 import { GAME_NAME } from "../rules.js";
-import { themeStarters } from "../deck.js";
+import { baseThemes, moreThemes } from "../deck.js";
 import { useState } from "react";
 
 function Row({ icon, label, hint, children }) {
@@ -95,7 +95,8 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
             <Row icon="layers" label="Recevoir un deck à thème" hint="Ses cartes et le deck prêt à jouer (comptes créés avant les decks à thème)">
               <span className="row" style={{ gap: 6, flexWrap: "wrap" }}>
                 <select className="tset-select" value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Deck à thème" data-testid="tset-theme">
-                  {themeStarters().map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <optgroup label="Decks de départ">{baseThemes().map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
+                  <optgroup label="Autres decks à thème">{moreThemes().map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
                 </select>
                 <button className="btn small" data-testid="tset-theme-go" onClick={() => {
                   const r = P.grantTheme(t, theme);
@@ -103,11 +104,13 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
                   setT(r.t); sfx.win();
                   if (flash) flash(`Deck ${r.deck.name} reçu : ${r.added} carte${r.added > 1 ? "s" : ""} ajoutée${r.added > 1 ? "s" : ""}, il est dans Mes decks.`);
                 }}><Icon name="gift" size={16} />Recevoir</button>
-                <button className="btn small primary" data-testid="tset-themes-all" onClick={() => {
-                  const r = P.grantAllThemes(t);
-                  setT(r.t); sfx.win();
-                  if (flash) flash(r.decks ? `${r.decks} deck${r.decks > 1 ? "s" : ""} à thème reçu${r.decks > 1 ? "s" : ""} (${r.added} cartes) : ils sont dans Mes decks.` : `Tu as déjà les 8 decks à thème${r.added ? ` (${r.added} cartes rajoutées)` : ""}.`);
-                }}><Icon name="layers" size={16} />Les 8 d'un coup</button>
+                {[[false, "tset-themes-all", `Les ${baseThemes().length} de départ`], [true, "tset-themes-more", `Les ${moreThemes().length} autres`]].map(([extra, tid, label]) => (
+                  <button key={tid} className="btn small primary" data-testid={tid} onClick={() => {
+                    const r = P.grantAllThemes(t, { extra });
+                    setT(r.t); sfx.win();
+                    if (flash) flash(r.decks ? `${r.decks} deck${r.decks > 1 ? "s" : ""} à thème reçu${r.decks > 1 ? "s" : ""} (${r.added} cartes) : ils sont dans Mes decks.` : `Tu as déjà ces decks à thème${r.added ? ` (${r.added} cartes rajoutées)` : ""}.`);
+                  }}><Icon name="layers" size={16} />{label}</button>
+                ))}
               </span>
             </Row>
           </div>

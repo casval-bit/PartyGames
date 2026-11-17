@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ALL, CARD, FAMILY, PLAYABLE, subOf } from "../cards/index.js";
 import { RARITY, RARITY_ORDER, CARD_TYPES, GAME_NAME } from "../rules.js";
-import { themeStarters, validateDeck, defaultPlots, familyMix } from "../deck.js";
+import { themeStarters, baseThemes, validateDeck, defaultPlots, familyMix } from "../deck.js";
 import * as P from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -47,7 +47,7 @@ const fmtTime = (ms) => { const h = Math.floor(ms / 3600000), m = Math.floor((ms
 
 /* ------------------------------ deck de départ ------------------------------ */
 function StarterPick({ onPick }) {
-  const all = useMemo(() => themeStarters(), []); // les 8 decks à thème (cards/themes.js), faits à la main
+  const all = useMemo(() => baseThemes(), []); // les 8 decks de départ (cards/themes.js), faits à la main
   const [sel, setSel] = useState(null);
   const [look, setLook] = useState(null);
   const [zoom, setZoom] = useState(null);
@@ -154,19 +154,22 @@ function Decks({ t, own, setT, onEdit, flash }) {
             <span className="grow"><b>Partir d'un deck à thème</b><small>Une copie à modifier ; les cartes que tu n'as pas encore sont signalées.</small></span>
           </button>
         </div>
-        {tpl && (
-          <div className="hub-tpls">
-            {themes.map((s) => {
-              const f = FAMILY[s.fam];
-              const miss = Object.entries(s.cards).reduce((k, [id, n]) => k + Math.max(0, n - (own[id] || 0)), 0);
-              return (
-                <button key={s.id} className="hub-tpl" style={{ "--fc": f.color }} onClick={() => { onEdit({ id: null, name: `${s.name} (perso)`.slice(0, 32), fam: s.fam, pt: null, cards: { ...s.cards }, plots: [...s.plots] }); setTpl(false); }} data-testid={"deck-tpl-" + s.id}>
-                  <Icon name={f.icon} size={16} /><b>{s.name}</b><small>{miss ? `il te manque ${miss} carte${miss > 1 ? "s" : ""}` : "toutes à toi"}</small>
-                </button>
-              );
-            })}
+        {tpl && [[false, "Les decks de départ"], [true, "Les autres decks à thème"]].map(([extra, label]) => (
+          <div key={label} className="hub-tplgrp">
+            <small className="hub-tplgrp-h">{label}</small>
+            <div className="hub-tpls">
+              {themes.filter((s) => Boolean(s.extra) === extra).map((s) => {
+                const f = FAMILY[s.fam], sub = subOf(s.fam, s.pt);
+                const miss = Object.entries(s.cards).reduce((k, [id, n]) => k + Math.max(0, n - (own[id] || 0)), 0);
+                return (
+                  <button key={s.id} className="hub-tpl" style={{ "--fc": sub ? sub.color : f.color }} title={s.desc} onClick={() => { onEdit({ id: null, name: `${s.name} (perso)`.slice(0, 32), fam: s.fam, pt: null, cards: { ...s.cards }, plots: [...s.plots] }); setTpl(false); }} data-testid={"deck-tpl-" + s.id}>
+                    <Icon name={f.icon} size={16} /><b>{s.name}</b><small>{miss ? `il te manque ${miss} carte${miss > 1 ? "s" : ""}` : "toutes à toi"}</small>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

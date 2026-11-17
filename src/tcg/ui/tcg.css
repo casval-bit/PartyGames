@@ -1772,6 +1772,8 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .hub-newbtn-i { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: #3a2600; background: radial-gradient(circle at 34% 28%, #fff7d1, #ffd166 55%, #c7901c); }
 .hub-newbtn:hover { border-color: rgba(255,209,102,.6); }
 .hub-newbtn[aria-expanded="true"] { border-color: var(--cyan); box-shadow: var(--halo); }
+.hub-tplgrp { display: flex; flex-direction: column; gap: 6px; }
+.hub-tplgrp-h { font: 600 .68rem var(--display); letter-spacing: .12em; text-transform: uppercase; color: #e9c46a; }
 .hub-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 .hub-tpl { --fc: #5ee1ff; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 10px 12px; border-radius: 14px; text-align: left; color: var(--txt);
   background: linear-gradient(90deg, color-mix(in srgb, var(--fc) 16%, #0e1d3b), #0b1630 75%); border: 1px solid color-mix(in srgb, var(--fc) 40%, #1f3a66); }

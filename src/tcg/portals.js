@@ -78,7 +78,7 @@ export const MONDE_STARS = {
   hunger: ["hunger-katniss-everdeen-7-2", "hunger-president-snow-7"],
   bebop: ["bebop-spike-spiegel-7"],
   teenwolf: ["teenwolf-derek-hale-7"],
-  legendaires: ["legendaires-danael-7", "legendaires-darkhell-7"],
+  legendaires: ["legendaires-danael-7", "legendaires-darkhell-7", "legendaires-jadina-7"],
   capes: ["capes-armand-raynal-de-maupertuis-7"],
   citesdor: ["citesdor-esteban-7"],
   horde: ["horde-golgoth-7"],

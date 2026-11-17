@@ -12,7 +12,7 @@
 //   - quêtes du jour (XP + Éclats, tickets ou boosters, et un coffre quand les trois sont faites), succès permanents,
 //     XP de fin de partie (jamais 0, même en perdant).
 import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId, subOf } from "./cards/index.js";
-import { starterById, themeStarters, validateDeck, deckSize, fillDeck, mainFamily } from "./deck.js";
+import { starterById, baseThemes, moreThemes, validateDeck, deckSize, fillDeck, mainFamily } from "./deck.js";
 import { RARITY_ORDER, DECK_RULES, copiesOf } from "./rules.js";
 import { portalsOf } from "./portals.js";
 
@@ -193,10 +193,11 @@ export function grantTheme(t0, themeId) {
   if (!had) t.decks.unshift(deck);
   return { t: normalizeTcg(t), deck, added, isNew: !had };
 }
-/** Outil de test : les 8 decks à thème d'un coup (cartes et decks). Renvoie { t, added, decks } (decks : nouveaux decks ajoutés). */
-export function grantAllThemes(t0) {
+/** Outil de test : les 8 decks de départ d'un coup (cartes et decks), ou les autres decks à thème (extra : true).
+ *  Renvoie { t, added, decks } (decks : nouveaux decks ajoutés). */
+export function grantAllThemes(t0, { extra = false } = {}) {
   let t = normalizeTcg(t0), added = 0, decks = 0;
-  for (const s of [...themeStarters()].reverse()) { // à l'envers : chaque deck reçu passe en tête, la liste finit dans l'ordre (Team Rocket d'abord)
+  for (const s of [...(extra ? moreThemes() : baseThemes())].reverse()) { // à l'envers : chaque deck reçu passe en tête, la liste finit dans l'ordre (Team Rocket d'abord)
     const r = grantTheme(t, s.id);
     if (r.error) continue;
     t = r.t; added += r.added; if (r.isNew) decks++;
@@ -363,7 +364,7 @@ export const START_GIFT = { ec: 300, packs: { multi: 3 } };
 export function chooseStarter(t0, starterId) {
   const t = clone(normalizeTcg(t0));
   const s = starterById(starterId);
-  if (!s) return { error: "Deck inconnu." };
+  if (!s || s.extra) return { error: "Deck inconnu." }; // les autres decks à thème ne sont pas des decks de départ
   if (t.starter) return { error: "Le deck de départ est déjà choisi." };
   t.starter = s.id;
   for (const [id, n] of Object.entries(s.cards)) { const k = alwaysFoil(CARD[id]) ? "foil" : "coll"; t[k][id] = Math.max(t[k][id] || 0, n); }

@@ -282,6 +282,22 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
     && hit("Josuke Higashikata 7.jpg") === "jojo-josuke-higashikata-7" && hit("Josuke Higashikata (JoJolion) 7.jpeg") === "jojo-josuke-higashikata-jojolion-7" && hit("Jean Pierre Polnareff 3.jpg") === "jojo-jean-pierre-polnareff-3",
   "images JoJo : chaque fichier de Brice va sur la bonne carte (versions « New Body », « Star Platinum », Ceasar, Avdol…)");
   ok(artFile(CARD["jojo-dio-brando-7-2"]) === "Dio Brando (New Body) 7" && artFile(CARD["jojo-dio-brando-7"]) === "Dio Brando 7", "liste des cartes : le nom d'image conseillé de chaque version");
+  // même nom dans deux familles : le nom exact l'emporte (« Mars.jpg » : le lieu de Cowboy Bebop ; « Mars 4.jpg » : la commandante Pokémon),
+  // sinon le dossier de la famille tranche (illustrations/ghibli/Lin 2.jpg)
+  const inDir = (f, dirs) => matchFile(f, dirs).cards.map((d) => d.id).join();
+  ok(hit("Mars.jpg") === "bebop-mars-loc" && hit("Mars 4.jpg") === "pokemon-mars-4" && !hit("Lin 2.jpg") && inDir("Lin 2.jpg", ["ghibli"]) === "ghibli-lin-2" && inDir("Lin 2.jpg", ["Cowboy Bebop"]) === "bebop-lin-2",
+    "images : noms partagés par deux familles départagés par le nom exact ou par le dossier");
+  ok(hit("Supergirl 7 (Woman of Tomorrow).jpg") === "dc-supergirl-7-2" && hit("Superman 7 (Le dernier fils de Krypton).jpg") === "dc-superman-7-2" && hit("A.Z. 6.jpg") === "pokemon-a-z-6" && hit("Goyah 7.png") === "pokemon-goyah-7",
+    "images des nouvelles versions (Supergirl Woman of Tomorrow, A.Z., Goyah 7)");
+  // Rattrape-Riposte : +2 force au porteur seulement quand on est derrière au Pouvoir
+  {
+    const t2 = table(["pokemon-pikachu-3", "pokemon-rattrape-riposte-obj"], ["pokemon-roucool-1"]);
+    const pika = t2.of(t2.A, "pokemon-pikachu-3"), rr = t2.of(t2.A, "pokemon-rattrape-riposte-obj");
+    t2.A.chars.splice(t2.A.chars.indexOf(rr), 1); rr.z = "att"; rr.host = pika.u; pika.att.push(rr);
+    const even = t2.X.str(pika);
+    t2.B.power = 3;
+    ok(even === CARD["pokemon-pikachu-3"].str && t2.X.str(pika) === even + 2, `Rattrape-Riposte : +2 force au porteur seulement quand on est derrière au Pouvoir (${even} puis ${t2.X.str(pika)})`);
+  }
 
   // parties complètes avec les nouvelles cartes 7 dans les decks (bots)
   const sevens = ALL.filter((d) => d.type === "char" && d.cost === 7 && d.abs.some((a) => /enterKneelAll|enterFreeze|enterRevive|enterPutPlay|winStandAll|winBounce|winPowerSteal|winFreeze|defWinPower|dieReturn|domSteal|selfGuard|actStandAll|actSilence|atkTerror|immuneAura|ifPower|oppTax|winRaze|claim|atkBuff/.test(a.tpl)));
@@ -300,7 +316,7 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
 
 /* ---------------- tournoi d'équilibrage ---------------- */
 if (simN) {
-  const pool = process.argv.includes("--themes") ? st.filter((s) => s.theme) : st; // --themes : seulement les 8 decks à thème
+  const pool = process.argv.includes("--themes") ? st.filter((s) => s.theme) : st; // --themes : seulement les decks à thème (les 8 de départ et les autres)
   const res = Object.fromEntries(pool.map((s) => [s.id, { w: 0, n: 0, name: s.name }]));
   const famRes = {};
   for (let i = 0; i < simN; i++) {
