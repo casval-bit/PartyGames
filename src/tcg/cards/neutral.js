@@ -17,7 +17,7 @@ export const cards = [
   loc("Portail interdimensionnel", "Passage entre les mondes", 1, "Portail", "limite", "income:1", "C"),
   loc("Marché noir", "Tout s'achète", 2, "Commerce", "", "reduce:*,1@Bonnes affaires", "U"),
   loc("Grande bibliothèque", "Savoir des mondes", 2, "Savoir", "", "actDraw:1@Lecture", "U"),
-  loc("Forteresse", "Murailles", 3, "Fortification", "", "defAura:1", "R"),
+  loc("Forteresse", "Murailles", 3, "Fortification", "", "defAura:1", "R", { uni: true }),
   obj("Potion de soin", "Remède", 1, "Potion", "", "attSave", "C"),
   obj("Armure", "Plaques d'acier", 2, "Armure", "", "attStr:2", "C"),
   obj("Cape d'ombre", "Tissu des ténèbres", 1, "Cape", "", "attKw:discret", "U"),

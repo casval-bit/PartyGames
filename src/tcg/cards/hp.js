@@ -5,7 +5,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // Chaque maison a son fondateur en carte 7 et son fantôme ; Harry, Voldemort et Dumbledore ont deux versions à 7.
 export const meta = {
   id: "hp", name: "Harry Potter", short: "Harry Potter", color: "#d3a625", color2: "#1a1033", icon: "wand", motif: "hogwarts",
-  desc: "Les sorciers de Poudlard. Choisis une maison : chacune a son bonus, ses élèves, ses professeurs et son fondateur. Les créatures, les Aurors, les sortilèges et les objets magiques vont dans toutes les maisons.",
+  desc: "Les sorciers de Poudlard : les quatre maisons, leurs élèves, leurs professeurs et leurs fondateurs, avec les créatures, les Aurors, les sortilèges et les objets magiques.",
   passive: "",
   sub: { one: "maison", One: "Maison", fem: true, ask: "Quelle maison de Poudlard ?", help: "Un deck Harry Potter ne prend que les sorciers de sa maison (et ceux qui vont partout : créatures, Aurors, sortilèges, objets) ; chaque maison donne un bonus à la famille.",
     pick: "Choisis une maison de Poudlard pour ce deck.", not: "n'est pas de la maison", starter: "hp" },
@@ -142,7 +142,7 @@ export const cards = [
   loc("Le Chemin de Traverse", "Les boutiques des sorciers", 2, "Commerce", "", "reduce:*,1@Les emplettes ; reserve:1", "R"),
   loc("Le Ministère de la Magie", "Le cœur du monde des sorciers", 3, "Ministère", "", "domi:2 ; reserve:1", "R"),
   loc("La Forêt interdite", "Là où vivent les créatures", 2, "Forêt", "", "reduce:Créature,1@Les créatures", "U"),
-  loc("La salle commune de Gryffondor", "Derrière la Grosse Dame", 2, "Salle commune", "", "reserve:1 ; domi:1", "U", { pt: G }),
+  loc("La salle commune de Gryffondor", "Derrière la Grosse Dame", 2, "Salle commune", "", "reserve:1 ; atkAura:Gryffondor,1@Le courage des Gryffondor", "U", { pt: G, uni: true }),
   loc("La salle commune de Serpentard", "Sous le lac", 2, "Salle commune", "", "reserve:1 ; domi:1", "U", { pt: S }),
   loc("La salle commune de Serdaigle", "La tour des énigmes", 2, "Salle commune", "", "reserve:1 ; domi:1", "U", { pt: R }),
   loc("La salle commune de Poufsouffle", "Près des cuisines", 2, "Salle commune", "", "reserve:1 ; domi:1", "U", { pt: P }),

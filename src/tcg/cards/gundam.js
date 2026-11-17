@@ -5,7 +5,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // Amuro, Char et Kira ont deux versions à 7.
 export const meta = {
   id: "gundam", name: "Gundam", short: "Gundam", color: "#e8ecf2", color2: "#1a2a5c", icon: "bot", motif: "gundam",
-  desc: "Les pilotes et leurs Mobile Suits. Choisis un univers : la Fédération ou Zeon (Siècle Universel), After Colony, Cosmic Era, Anno Domini, Post Disaster ou Ad Stella.",
+  desc: "Les pilotes et leurs Mobile Suits : la Fédération et Zeon (Siècle Universel), After Colony, Cosmic Era, Anno Domini, Post Disaster et Ad Stella.",
   passive: "",
   sub: { one: "univers", One: "Univers", fem: false, ask: "Quel univers de Gundam ?", help: "Un deck Gundam ne prend que les pilotes de son univers (et ce qui va partout) ; chaque univers donne un bonus à la famille.",
     pick: "Choisis un univers de Gundam pour ce deck.", not: "n'est pas de l'univers", starter: "gundam" },

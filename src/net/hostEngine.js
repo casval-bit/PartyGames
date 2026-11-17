@@ -12,6 +12,7 @@ import { verifyMsg, validPk } from "./secure.js";
 import { cleanLook, randomFreeLook } from "../data/profile.js";
 import { EMOTE_BY } from "../avatar3d/emotes.js";
 import { troneMethods, AG_DEFAULTS, AG_MAX, AG_GOALS, AG_TIMERS, cleanDeck, cleanAnswer as cleanAgAnswer } from "./hostTrone.js";
+import { cleanTcgLook, botTcgLook } from "../tcg/progress.js";
 import { loupMethods, LG_DEFAULTS, LG_MAX, cleanLgSettings, cleanLgAnswer } from "./hostLg.js";
 import {
   DEFAULT_PER_TEAM, VOTE_SECONDS, DISCARD_SECONDS, BOOSTER_SECONDS, REVEAL_MS, SHUFFLE_MS, COUNTDOWN_MS, HAND_SIZE,
@@ -38,7 +39,7 @@ const VOTE_IDS = new Set([...CATEGORIES.map((c) => c.id), "random", "mixtes"]);
 
 export class HostEngine {
   /** @param {{roomId:string, name:string, host:{id:string,name:string}, emit:(msg:any)=>void}} o */
-  constructor({ roomId, name, host, emit, fresh, signed, dates }) {
+  constructor({ roomId, name, host, emit, fresh, signed, dates, settings }) {
     this.emit = emit;
     this.signed = Boolean(signed);   // vrai : tout message réseau doit être signé par le joueur (voir secure.js)
     this.pks = {};                   // clé publique de chaque joueur : { id: "x.y" }
@@ -90,7 +91,15 @@ export class HostEngine {
       gameNo: 0,    // numéro de la partie dans ce lobby (sert à ne compter chaque partie qu'une fois)
       endsIn: null,
     };
-    this.addPlayer({ id: host.id, name: host.name, pk: host.pk, look: host.look });
+    // salon de Heavy is the Crown (appli du jeu seul) : le jeu est choisi d'avance et ne change plus (settings.tcg)
+    if (settings && typeof settings === "object") {
+      const s = this.state.settings;
+      if (GAMES.some((g) => g.id === settings.game)) s.game = settings.game;
+      if (settings.tcg === true && s.game === "trone") s.tcg = true;
+      if (AG_GOALS.includes(settings.agGoal)) s.agGoal = settings.agGoal;
+      if (AG_TIMERS.some(([v]) => v === settings.agTimer)) s.agTimer = settings.agTimer;
+    }
+    this.addPlayer({ id: host.id, name: host.name, pk: host.pk, look: host.look, tl: host.tl });
     this.hb = setInterval(() => this.broadcast(), 4000);
   }
 
@@ -135,7 +144,7 @@ export class HostEngine {
   }
 
   /* ------------------------------- lobby ------------------------------- */
-  addPlayer({ id, name, pk, look }, isBot = false) {
+  addPlayer({ id, name, pk, look, tl }, isBot = false) {
     if (this.player(id)) return this.broadcast();
     if (this.S.phase !== "lobby") return this.emit({ t: "denied", to: id, reason: "La partie a déjà commencé." });
     if (this.S.players.length >= this.capacity) return this.emit({ t: "denied", to: id, reason: "Le lobby est complet." });
@@ -143,7 +152,9 @@ export class HostEngine {
     let best = 0;
     for (let t = 0; t < this.S.settings.teamCount; t++) if (this.teamSize(t) < this.teamSize(best)) best = t;
     if (pk) this.pks[id] = pk;
-    this.S.players.push({ id, name: cleanName(name), look: isBot ? randomFreeLook() : cleanLook(look), team: best, ci: this.nextColor++, ready: false, bot: isBot, joinedAt: Date.now() });
+    // tl : apparence dans Heavy is the Crown (photo, cadre, bannière, niveau, code ami), vue dans le lobby du jeu
+    const tcgLook = isBot ? (this.S.settings.game === "trone" ? botTcgLook() : null) : cleanTcgLook(tl);
+    this.S.players.push({ id, name: cleanName(name), look: isBot ? randomFreeLook() : cleanLook(look), tl: tcgLook, team: best, ci: this.nextColor++, ready: false, bot: isBot, joinedAt: Date.now() });
     this.broadcast();
   }
   addBot() {
@@ -192,6 +203,13 @@ export class HostEngine {
     p.look = cleanLook(look);
     this.broadcast();
   }
+  /** Le joueur a changé de photo, de cadre ou de bannière (lobby de Heavy is the Crown). */
+  setTcgLook(id, tl) {
+    const p = this.player(id);
+    if (!p || this.S.phase !== "lobby") return;
+    p.tl = cleanTcgLook(tl);
+    this.broadcast();
+  }
   setTeam(id, team) {
     const p = this.player(id);
     if (!p || this.S.phase !== "lobby") return;
@@ -203,7 +221,7 @@ export class HostEngine {
   setSettings(by, patch) {
     if (by !== this.S.hostId || this.S.phase !== "lobby") return;
     const s = this.S.settings;
-    if (GAMES.some((g) => g.id === patch.game)) s.game = patch.game;
+    if (!s.tcg && GAMES.some((g) => g.id === patch.game)) s.game = patch.game; // salon du jeu de cartes : le jeu ne change pas
     if (MG_ROUNDS_OPTIONS.includes(patch.mgRounds)) s.mgRounds = patch.mgRounds;
     if (Array.isArray(patch.mgPick)) s.mgPick = [...new Set(patch.mgPick.filter((id) => typeof id === "string" && MG_BY[id]))].slice(0, 64);
     if (CC_ROUNDS_OPTIONS.includes(patch.ccRounds)) s.ccRounds = patch.ccRounds;
@@ -2166,7 +2184,7 @@ export class HostEngine {
     const clean = sanitize(msg);
     if (!clean) return;
     if (clean.t === "join") {
-      this.addPlayer({ id: from, name: clean.name, look: clean.look, pk: this.signed ? msg.pk : undefined });
+      this.addPlayer({ id: from, name: clean.name, look: clean.look, tl: clean.tl, pk: this.signed ? msg.pk : undefined });
       if (this.signed && this.player(from) && this.pks[from] === msg.pk) this.lastN[from] = Math.max(this.lastN[from] || 0, msg.n);
       return;
     }
@@ -2177,8 +2195,9 @@ export class HostEngine {
   handle(msg) {
     const from = msg.from;
     switch (msg.t) {
-      case "join": return this.addPlayer({ id: from, name: msg.name, look: msg.look });
+      case "join": return this.addPlayer({ id: from, name: msg.name, look: msg.look, tl: msg.tl });
       case "leave": return this.leave(from);
+      case "tlook": return this.setTcgLook(from, msg.tl);
       case "setTeam": return this.setTeam(from, msg.team);
       case "look": return this.setLook(from, msg.look);
       case "vote": return this.vote(from, msg.slots);
@@ -2225,8 +2244,9 @@ const strList = (v, max, n) => (Array.isArray(v) && v.length <= max && v.every((
 /** Ne garde de chaque message que les champs attendus, avec le bon type et une taille raisonnable. */
 function sanitize(m) {
   switch (m.t) {
-    case "join": return { t: "join", name: cleanName(m.name), look: cleanLook(m.look) };
+    case "join": return { t: "join", name: cleanName(m.name), look: cleanLook(m.look), tl: cleanTcgLook(m.tl) };
     case "look": return { t: "look", look: cleanLook(m.look) };
+    case "tlook": { const tl = cleanTcgLook(m.tl); return tl ? { t: "tlook", tl } : null; }
     case "leave": case "btnext": case "tlnext": case "mgnext": case "pbstop": case "ccnext": case "pbok": case "pbnext": case "found": case "begin": case "imgfail": case "who": return { t: m.t };
     case "setTeam": return Number.isInteger(m.team) && m.team >= 0 && m.team < 8 ? { t: "setTeam", team: m.team } : null;
     case "emote": return typeof m.id === "string" && EMOTE_BY[m.id] ? { t: "emote", id: m.id } : null;

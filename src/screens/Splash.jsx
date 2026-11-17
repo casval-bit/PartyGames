@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon.jsx";
 import { DESKTOP } from "../lib/device.js";
+import { GAME_NAME } from "../tcg/rules.js";
 
 const ORBIT = ["hourglass", "help", "music", "history", "gamepad", "dice", "moon", "crown"]; // un jeu par icône (Time's Up… Trône des Mondes)
 
@@ -68,7 +69,7 @@ export default function Splash({ onTap }) {
       {ready
         ? <div className="tap"><Icon name="play" size={16} /> {DESKTOP ? "Clique ou appuie sur Entrée" : "Touche l'écran pour commencer"}</div>
         : <div className="loadbar" aria-label="Chargement"><i /></div>}
-      <p className="muted splash-games" style={{ opacity: ready ? 1 : 0 }}>Time's Up · Qui est-ce ? · Blind test · Frise · Célébrité · Petit bac · Mini-jeux · Plateau · Loup-garou · Trône des Mondes</p>
+      <p className="muted splash-games" style={{ opacity: ready ? 1 : 0 }}>Time's Up · Qui est-ce ? · Blind test · Frise · Célébrité · Petit bac · Mini-jeux · Plateau · Loup-garou · {GAME_NAME}</p>
       {boom && <i className="boom" />}
     </div>
   );

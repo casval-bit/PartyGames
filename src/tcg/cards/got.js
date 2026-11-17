@@ -5,7 +5,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // Varys, Littlefinger, Jaqen H'ghar et quelques autres vont partout. Jon, Daenerys, Arya et Tyrion ont deux versions à 7.
 export const meta = {
   id: "got", name: "Game of Thrones", short: "GoT", color: "#c9a54b", color2: "#16181f", icon: "crown", motif: "westeros",
-  desc: "Quand on joue au jeu des trônes, on gagne ou on meurt. Choisis une faction : une grande maison de Westeros, la Garde de Nuit ou les Marcheurs blancs.",
+  desc: "Quand on joue au jeu des trônes, on gagne ou on meurt. Les grandes maisons de Westeros, la Garde de Nuit et les Marcheurs blancs.",
   passive: "",
   sub: { one: "faction", One: "Faction", fem: true, ask: "Quelle faction de Westeros ?", help: "Un deck Game of Thrones ne prend que les personnages de sa faction (et ceux qui vont partout) ; chaque faction donne un bonus à la famille.",
     pick: "Choisis une faction de Westeros pour ce deck.", not: "n'est pas de la faction", starter: "got" },

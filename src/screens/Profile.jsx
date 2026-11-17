@@ -9,8 +9,9 @@ import { ACHIEVEMENTS, BORDERS, COLORS, isUnlocked, ruleText, progressOf, pct, s
 import { sfx } from "../lib/sfx.js";
 import { APPAREIL, DESKTOP, desktop } from "../lib/device.js";
 import { useFullscreen } from "../lib/orientation.js";
+import { GAME_NAME } from "../tcg/rules.js";
 
-const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité", trone: "Trône des Mondes", loupgarou: "Loup-garou" };
+const GAMES = { timesup: "Time's Up", quiest: "Qui est-ce ?", blindtest: "Blind test", timeline: "Frise", party: "Mini-jeux", board: "Plateau", petitbac: "Petit bac", celeb: "Célébrité", trone: GAME_NAME, loupgarou: "Loup-garou" };
 const GICON = { timesup: "hourglass", quiest: "eye", blindtest: "music", timeline: "history", party: "gamepad", board: "dice", petitbac: "edit", celeb: "image", trone: "crown", loupgarou: "moon" };
 const RESULT = { win: "Victoire", loss: "Défaite", draw: "Égalité", solo: "Solo" };
 const avg = (sum, n) => (n > 0 ? sum / n : null);

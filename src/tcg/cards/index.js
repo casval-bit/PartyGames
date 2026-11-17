@@ -1,6 +1,7 @@
 // Registre de toutes les cartes du Trône des Mondes : familles, cartes, scénarios, sous-groupes (types Pokémon, régions de League of Legends).
 import { buildCards } from "./build.js";
 import { compileAbility } from "../abilities.js";
+import { FAMILY_BONUSES } from "../rules.js";
 import * as lyoko from "./lyoko.js";
 import * as umbrella from "./umbrella.js";
 import * as toystory from "./toystory.js";
@@ -46,7 +47,8 @@ export const POKE_TYPES = []; // (ceux de la famille Pokémon)
 const used = new Set();
 function addFamily(m) {
   const famDef = { name: m.meta.name, type: "fam" };
-  const abs = String(m.meta.passive || "").split(";").map((s) => s.trim()).filter(Boolean).map((s) => compileAbility(s, famDef));
+  // bonus de famille désactivés (rules.js, FAMILY_BONUSES) : la famille n'a aucun effet, comme la carte de faction du Trône de Fer
+  const abs = !FAMILY_BONUSES ? [] : String(m.meta.passive || "").split(";").map((s) => s.trim()).filter(Boolean).map((s) => compileAbility(s, famDef));
   const f = { ...m.meta, abs };
   FAMILIES.push(f);
   FAMILY[f.id] = f;
@@ -56,7 +58,7 @@ function addFamily(m) {
     f.types = [];
     for (const t of m.types) {
       if (TYPE_BONUS[t.id]) throw new Error(`Sous-groupe en double : ${t.id}`);
-      const tb = { ...t, fam: f.id, abs: String(t.bonus || "").split(";").map((s) => s.trim()).filter(Boolean).map((s) => compileAbility(s, { name: t.name, type: "fam" })) };
+      const tb = { ...t, fam: f.id, abs: !FAMILY_BONUSES ? [] : String(t.bonus || "").split(";").map((s) => s.trim()).filter(Boolean).map((s) => compileAbility(s, { name: t.name, type: "fam" })) };
       TYPE_BONUS[t.id] = tb;
       f.types.push(tb);
       if (f.id === "pokemon") POKE_TYPES.push(tb);

@@ -1,7 +1,7 @@
 // Rendu des cartes du Trône des Mondes : carte complète (toutes tailles), scénario (paysage), dos, pion du plateau.
 import { memo, useMemo } from "react";
 import { CARD, FAMILY, subOf, subKind, traitNames } from "../cards/index.js";
-import { RARITY, KEYWORDS, TYPE_NAME, CARD_TYPES } from "../rules.js";
+import { RARITY, KEYWORDS, TYPE_NAME, CARD_TYPES, GAME_NAME } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { cardArt, cardColors } from "./art.js";
 import { useArt } from "./artStore.js";
@@ -137,18 +137,22 @@ export function CardBack({ w, glow, className = "", style }) {
       <span className="tc-edge" aria-hidden="true" />
       <span className="tc-fr" />
       <div className="tb-ring"><Icon name="crown" size={40} stroke={1.6} /></div>
-      <div className="tb-t">Trône des Mondes</div>
+      <div className="tb-t">{GAME_NAME}</div>
     </div>
   );
 }
 
-/** Carte de famille (effet permanent de la famille, + bonus du type Pokémon ou de la région choisis). */
+/**
+ * Carte de famille d'un joueur : la famille la plus présente de son deck. Comme la carte de faction du Trône de Fer, elle n'a
+ * aucun effet (FAMILY_BONUSES, rules.js) : elle représente le deck. Si les bonus revenaient, ils s'afficheraient ici.
+ */
 export function FamilyFace({ fam, pt, w, big }) {
   const f = FAMILY[fam] || FAMILY.neutre;
   const tb = subOf(fam, pt);
   const d = useMemo(() => ({ id: `famille:${fam}:${pt || ""}`, type: "fam", fam, r: "E", name: f.name, artIcon: f.icon, pt: pt ? [pt] : [] }), [fam, pt, f]);
   const art = useCardArt(d, big, false);
   const abs = [...(f.abs || []), ...(tb ? tb.abs : [])].map((ab) => ({ name: ab.name, text: ab.text || "" }));
+  const active = abs.length > 0;
   return (
     <div className="tc r-E fam" style={styleOf(d, w)}>
       <span className="tc-edge" aria-hidden="true" />
@@ -156,13 +160,13 @@ export function FamilyFace({ fam, pt, w, big }) {
       <div className="tc-in">
         <div className="tc-head" style={{ paddingLeft: "4cqw" }}>
           <div className="tc-name"><span>{f.name}</span></div>
-          <div className="tc-sub">Carte de famille{tb ? ` · ${subKind(fam, tb.id)} ${tb.name}` : ""}</div>
+          <div className="tc-sub">Carte de famille{active && tb ? ` · ${subKind(fam, tb.id)} ${tb.name}` : ""}</div>
         </div>
         <div className="tc-art">{art && <img src={art} alt="" draggable={false} />}</div>
         <div className="tc-text t2" style={{ paddingTop: "2cqw" }}>
           <div className="tc-flav" style={{ marginTop: 0 }}>{f.desc}</div>
           {abs.map((a, i) => <div key={i} className="tc-ab">{a.name && <b>{abName(a.name)} </b>}<RichText text={a.text} /></div>)}
-          {tb && tb.desc && <div className="tc-flav">{tb.desc}</div>}
+          {active ? tb && tb.desc && <div className="tc-flav">{tb.desc}</div> : <div className="tc-ab">La famille la plus présente du deck. Elle n'a aucun effet : le Pouvoir gagné s'y pose.</div>}
         </div>
         <div className="tc-foot"><Icon name={f.icon} size={14} className="tc-fam" /><i className="tc-gem" /></div>
       </div>

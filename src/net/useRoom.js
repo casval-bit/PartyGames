@@ -85,18 +85,20 @@ export function useRoom(me) {
   }, [me.id, reset]);
 
   /* --------------------------- créer un salon --------------------------- */
-  const create = useCallback(async (roomName) => {
+  // opts.private : salon absent de la liste publique (on le rejoint par son code ou une invitation) ; opts.code : son code ;
+  // opts.settings : réglages de départ (ex. { game: "trone", tcg: true } : salon de Heavy is the Crown, jeu verrouillé)
+  const create = useCallback(async (roomName, opts = {}) => {
     if (R.current.conn) return;
     setBusy(true); setNotice("");
     try {
       const ident = await ensureIdentity();
-      const roomId = uid(6);
+      const roomId = typeof opts.code === "string" && /^[A-Za-z0-9]{4,12}$/.test(opts.code) ? opts.code : uid(6);
       // tout ce qui arrive du réseau est vérifié (forme, débit, signature) par le moteur avant d'être pris en compte
       const conn = await transport.room(roomId, (msg) => {
         if (R.current.engine) R.current.engine.receive(msg);
       });
       const engine = new HostEngine({
-        roomId, name: String(roomName || `Salon de ${me.name}`).slice(0, 30), host: { ...me, pk: ident && ident.pub }, signed: Boolean(ident),
+        roomId, name: String(roomName || `Salon de ${me.name}`).slice(0, 30), host: { ...me, pk: ident && ident.pub }, signed: Boolean(ident), settings: opts.settings,
         emit: (msg) => {
           apply(msg);
           if (!(msg.to && (msg.to === me.id || String(msg.to).startsWith("bot-")))) {
@@ -105,7 +107,7 @@ export function useRoom(me) {
           if (msg.t === "state") R.current.ad && R.current.ad.update(engine.lobbyInfo());
         },
       });
-      const ad = transport.advertise(engine.lobbyInfo());
+      const ad = opts.private ? null : transport.advertise(engine.lobbyInfo());
       R.current = { ...R.current, engine, conn, ad, isHost: true, joined: true };
       engine.broadcast();
     } catch (e) {
@@ -144,7 +146,7 @@ export function useRoom(me) {
         ID.current.inn = ID.current.inn.then(async () => { if (R.current.conn && (await accept(msg))) apply(msg); }).catch(() => {});
       });
       R.current = { ...R.current, conn, isHost: false, joined: false, lastSeen: Date.now() };
-      const send = () => sendSigned(conn, { t: "join", from: me.id, name: me.name, look: me.look }, ident ? { pk: ident.pub } : {});
+      const send = () => sendSigned(conn, { t: "join", from: me.id, name: me.name, look: me.look, ...(me.tl ? { tl: me.tl } : {}) }, ident ? { pk: ident.pub } : {});
       send();
       const retry = setInterval(send, 1500);
       const t0 = Date.now();
@@ -189,6 +191,7 @@ export function useRoom(me) {
     setTeam: (team) => act({ t: "setTeam", team }),
     emote: (id) => act({ t: "emote", id }),
     setLook: (look) => act({ t: "look", look }),
+    setTcgLook: (tl) => act({ t: "tlook", tl }),
     vote: (slots) => act({ t: "vote", slots }),
     ready: (v) => act({ t: "ready", v }),
     discard: (ids, confirm) => act({ t: "discard", ids, confirm }),

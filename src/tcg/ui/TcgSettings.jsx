@@ -2,13 +2,16 @@
 // ouverture des boosters, plein écran sur PC. Le compte (connecté ou profil local) est rappelé en bas.
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
-import { APPAREIL, DESKTOP, desktop } from "../../lib/device.js";
+import { APPAREIL, DESKTOP, TRONE_ONLY, desktop } from "../../lib/device.js";
 import { useFullscreen } from "../../lib/orientation.js";
 import AccountBadge from "../../ui/AccountBadge.jsx";
 import { setTcgPrefs, useTcgPrefs } from "../prefs.js";
 import { canTest } from "../../config.js";
 import { illustratedIds } from "./artStore.js";
 import * as P from "../progress.js";
+import { GAME_NAME } from "../rules.js";
+import { themeStarters } from "../deck.js";
+import { useState } from "react";
 
 function Row({ icon, label, hint, children }) {
   return (
@@ -28,15 +31,16 @@ const Two = ({ value, a, b, onPick, disabled }) => (
 export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT, flash }) {
   const p = useTcgPrefs();
   const full = useFullscreen();
+  const [theme, setTheme] = useState("theme-dc");
   const set = (patch, ping = true) => { setTcgPrefs(patch); if (ping) sfx.select(); };
   return (
     <div className="modalwrap" onClick={onClose}>
-      <div className="modal tset" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Paramètres du Trône des Mondes">
+      <div className="modal tset" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Paramètres de ${GAME_NAME}`}>
         <div className="row spread">
           <h3 className="tset-h"><Icon name="settings" size={20} />Paramètres du jeu</h3>
           <button className="iconbtn" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
         </div>
-        <p className="muted tset-note">Seulement pour le Trône des Mondes, sur {APPAREIL.ce}. Les autres jeux gardent les réglages de ton profil Party Hub.</p>
+        <p className="muted tset-note">Seulement pour {GAME_NAME}, sur {APPAREIL.ce}{TRONE_ONLY ? "" : ". Les autres jeux gardent les réglages de ton profil Party Hub"}.</p>
 
         <div className="tset-group">
           <span className="eyebrow">Son</span>
@@ -88,6 +92,19 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
                 if (flash) flash(ids.length ? `${ids.length} cartes illustrées : ${r.added} débloquée${r.added > 1 ? "s" : ""} (2 exemplaires, 1 pour les cartes 7).` :"Aucune carte illustrée trouvée (dossier illustrations vide ?).");
               }}><Icon name="image" size={16} />Débloquer les cartes illustrées</button>
             </div>
+            <Row icon="layers" label="Recevoir un deck à thème" hint="Ses cartes et le deck prêt à jouer (comptes créés avant les decks à thème)">
+              <span className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                <select className="tset-select" value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Deck à thème" data-testid="tset-theme">
+                  {themeStarters().map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <button className="btn small" data-testid="tset-theme-go" onClick={() => {
+                  const r = P.grantTheme(t, theme);
+                  if (r.error) { if (flash) flash(r.error); return; }
+                  setT(r.t); sfx.win();
+                  if (flash) flash(`Deck ${r.deck.name} reçu : ${r.added} carte${r.added > 1 ? "s" : ""} ajoutée${r.added > 1 ? "s" : ""}, il est dans Mes decks.`);
+                }}><Icon name="gift" size={16} />Recevoir</button>
+              </span>
+            </Row>
           </div>
         )}
 

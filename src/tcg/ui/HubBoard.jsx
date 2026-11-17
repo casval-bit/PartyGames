@@ -8,7 +8,7 @@
 // les pièces tournent, les défis s'illuminent. Tout est en CSS 3D (aucune scène WebGL) ; le plateau se met à l'échelle de la place.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY, PLOTS, subOf } from "../cards/index.js";
-import { RARITY_ORDER, TYPES, TYPE_NAME, TYPE_ICON, DEFAULT_GOAL } from "../rules.js";
+import { RARITY_ORDER, TYPES, TYPE_NAME, TYPE_ICON, DEFAULT_GOAL, GAME_NAME } from "../rules.js";
 import { starters } from "../deck.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -95,7 +95,7 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
   const f = deck ? FAMILY[deck.fam] || FAMILY.neutre : FAMILY.neutre;
   const of = rv ? FAMILY[rv.fam] || FAMILY.neutre : null;
   const sub = deck ? subOf(deck.fam, deck.pt) : null;
-  const crest = deck ? (sub ? sub.name : f.short || f.name) : "Trône des Mondes";
+  const crest = deck ? (sub ? sub.name : f.short || f.name) : GAME_NAME;
   const color = sub ? sub.color : f.color;
   const ocolor = rv ? (subOf(rv.fam, rv.pt) ? subOf(rv.fam, rv.pt).color : of.color) : "#8b5cf6";
   const mat = useMemo(() => cardArt({ id: `tapis:${deck ? deck.fam : "neutre"}:${(deck && deck.pt) || ""}`, type: "fam", fam: deck ? deck.fam : "neutre", r: "U", name: "", noMedal: true, pt: deck && deck.pt ? [deck.pt] : [] }, 480, 300), [deck]);

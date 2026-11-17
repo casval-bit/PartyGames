@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Avatar } from "../ui/Avatar.jsx";
 import { isEmail } from "../lib/cloud.js";
 import { progressOf } from "../data/profile.js";
-import { APPAREIL } from "../lib/device.js";
+import { APPAREIL, TRONE_ONLY } from "../lib/device.js";
+import Portrait from "../tcg/ui/Portrait.jsx";
+import { normalizeTcg, avatarOf, frameOf, levelOf } from "../tcg/progress.js";
 
 const RESEND_S = 30;
 
@@ -15,6 +17,8 @@ export default function Account({ acc, profile, onBack }) {
   const [wait, setWait] = useState(0);
   const [confirmOut, setConfirmOut] = useState(false);
   const pr = progressOf(profile.xp);
+  // appli du jeu de cartes seul (Heavy is the Crown) : on parle de la collection et des decks, pas du profil Party Hub
+  const tcg = TRONE_ONLY ? normalizeTcg(profile.tcg) : null;
 
   useEffect(() => { if (wait <= 0) return undefined; const t = setTimeout(() => setWait((w) => w - 1), 1000); return () => clearTimeout(t); }, [wait]);
 
@@ -66,16 +70,17 @@ export default function Account({ acc, profile, onBack }) {
       <div className="screen acct">
         {head}
         <div className="acard who">
-          <Avatar look={profile.look} size={64} />
+          {tcg ? <Portrait id={avatarOf(tcg)} frame={frameOf(tcg)} size={64} /> : <Avatar look={profile.look} size={64} />}
           <div>
             <b data-testid="acc-email">{acc.user.email}</b>
-            <small>Niveau {pr.lv} · {profile.stats.played} partie{profile.stats.played > 1 ? "s" : ""}</small>
+            {tcg ? <small>Niveau {levelOf(tcg.xp).lvl} · {tcg.st.games} partie{tcg.st.games > 1 ? "s" : ""}</small>
+              : <small>Niveau {pr.lv} · {profile.stats.played} partie{profile.stats.played > 1 ? "s" : ""}</small>}
           </div>
         </div>
         <div className={"astate " + st[0]} role="status" data-testid="acc-sync"><i />{st[1]}</div>
         {acc.sync === "error" && <button className="btn small" onClick={acc.retry}>Réessayer</button>}
         <p className="muted pnote" style={{ textAlign: "left" }}>
-          Ton niveau, tes statistiques, tes succès et ton avatar sont sauvegardés sur ton compte. Connecte-toi avec la même adresse sur {APPAREIL.autre} (ou après une réinstallation) pour les retrouver.
+          {tcg ? "Ta collection, tes decks, ton niveau, tes succès, ton profil (photo, cadre, bannière) et tes amis" : "Ton niveau, tes statistiques, tes succès et ton avatar"} sont sauvegardés sur ton compte. Connecte-toi avec la même adresse sur {APPAREIL.autre} (ou après une réinstallation) pour les retrouver.
         </p>
         {err && <div className="toast" role="alert"><span>{err}</span></div>}
         {!confirmOut ? (
@@ -98,8 +103,8 @@ export default function Account({ acc, profile, onBack }) {
       {head}
       <div className="acard">
         <h3>Garde ta progression</h3>
-        <p>Connecte-toi avec ton e-mail : ton niveau, tes avatars et tes statistiques sont sauvegardés sur ton compte, pas sur {APPAREIL.le}. Pas de mot de passe : on t'envoie un code.</p>
-        {profile.stats.played > 0 && <p className="muted">Ta progression actuelle sur {APPAREIL.ce} sera ajoutée à ton compte.</p>}
+        <p>Connecte-toi avec ton e-mail : {tcg ? "ta collection, tes decks et ton niveau" : "ton niveau, tes avatars et tes statistiques"} sont sauvegardés sur ton compte, pas sur {APPAREIL.le}.{tcg ? " Il te faut aussi un compte pour ajouter des amis." : ""} Pas de mot de passe : on t'envoie un code.</p>
+        {(tcg ? tcg.st.games > 0 || tcg.starter : profile.stats.played > 0) && <p className="muted">Ta progression actuelle sur {APPAREIL.ce} sera ajoutée à ton compte.</p>}
       </div>
 
       {step === "email" ? (

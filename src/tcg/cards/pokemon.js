@@ -10,7 +10,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // Lugulabre, Spiritomb, Miaouss, évolutions finales) ; 3 = entre les deux (évolutions intermédiaires) ; 1-2 = Pokémon de base.
 export const meta = {
   id: "pokemon", name: "Pokémon", short: "Pokémon", color: "#ffcb05", color2: "#24427d", icon: "bolt", motif: "energy",
-  desc: "Choisis un type ou une région : chacun a son propre bonus et ses propres Pokémon. Les Dresseurs vont dans tous les decks Pokémon.",
+  desc: "Les Pokémon de tous les types et de toutes les régions, et leurs Dresseurs.",
   passive: "",
   // le sous-groupe que choisit chaque deck (voir cards/index.js : subOf, subWords) ; les régions ont leurs propres mots (one, One, not)
   sub: { one: "type", One: "Type", ask: "Quel type ou quelle région ?", help: "Un deck Pokémon choisit un type ou une région : il ne prend que les Pokémon de ce type (ou de cette région), et les Dresseurs. Pikachu, Mew, Mewtwo et Arceus vont dans tous les decks Pokémon ; chaque choix donne un bonus à la famille.",

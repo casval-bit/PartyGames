@@ -2,6 +2,11 @@
 //
 // Le jeu reprend la structure du Trône de Fer JCE 2e édition : 7 phases par round, trois types de défis,
 // revendication, Domination, Pouvoir à accumuler. Les familles remplacent les maisons de Westeros.
+// Comme dans le jeu de base, la famille d'un deck n'apporte aucun effet (la carte de faction n'en a pas) ; contrairement à lui,
+// un deck mélange librement toutes les familles : seules comptent les règles de construction (DECK_RULES).
+
+/** Nom du jeu de cartes, affiché partout (un seul endroit à changer). Ancien nom : « Trône des Mondes ». */
+export const GAME_NAME = "Heavy is the Crown";
 
 export const TYPES = ["combat", "ruse", "influence"];
 export const TYPE_NAME = { combat: "Combat", ruse: "Ruse", influence: "Influence" };
@@ -30,7 +35,6 @@ export const KEYWORDS = {
   pillard: { name: "Pillard", text: "Quand vous gagnez un défi où il attaque, le perdant défausse la carte du dessus de son deck." },
   duel: { name: "Duel", text: "S'il attaque seul, le défenseur ne peut déclarer qu'un seul défenseur." },
   embuscade: { name: "Embuscade", text: "Pendant les défis, vous pouvez le mettre en jeu depuis votre main en payant le coût d'Embuscade." },
-  fidele: { name: "Fidèle", text: "Ne peut pas être joué dans un deck d'une autre famille (alliance)." },
   limite: { name: "Limité", text: "Une seule carte Limitée peut être jouée par round." },
   terminal: { name: "Terminal", text: "Si le personnage attaché quitte le jeu, cet objet est défaussé au lieu de revenir en main." },
   sansobjet: { name: "Sans objet", text: "Ne peut recevoir aucun objet." },
@@ -57,8 +61,12 @@ export const DECK_RULES = {
   minChars: 24,
   maxObjEvt: 18,
   maxLocs: 10,
-  maxAlliance: 10, // cartes non Fidèles d'une seule autre famille
 };
+/**
+ * Bonus de famille (effet permanent de la famille du deck, et de son type, sa région, sa maison…) : désactivés, comme dans le
+ * Trône de Fer où la carte de faction n'a aucun effet. Les textes restent dans cards/*.js (meta.passive, types[].bonus) au cas où.
+ */
+export const FAMILY_BONUSES = false;
 
 /** Exemplaires d'une carte autorisés dans un deck : 2, ou 1 pour une carte de coût 7 (unique). */
 export const copiesOf = (d) => (d && d.type !== "plot" && d.cost >= 7 ? DECK_RULES.max7 : DECK_RULES.maxCopies);

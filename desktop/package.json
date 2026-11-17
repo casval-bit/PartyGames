@@ -1,9 +1,9 @@
 {
   "name": "party-hub-desktop",
-  "productName": "Party Hub",
+  "productName": "Heavy is the Crown",
   "version": "0.1.0",
   "private": true,
-  "description": "Party Hub sur ordinateur : la même appli que l'APK, dans une fenêtre.",
+  "description": "Heavy is the Crown sur ordinateur : le jeu de cartes de Party Hub, seul, dans une fenêtre.",
   "author": "Brice",
   "main": "main.cjs",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "build": {
     "appId": "fr.brice.timesup",
-    "productName": "Party Hub",
+    "productName": "Heavy is the Crown",
     "copyright": "Brice",
     "directories": { "output": "release" },
     "files": ["main.cjs", "preload.cjs", "icon.png", "web/**/*"],
@@ -25,8 +25,8 @@
       "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
       "icon": "icon.png"
     },
-    "nsis": { "artifactName": "Party-Hub-Setup-${version}.${ext}", "shortcutName": "Party Hub" },
-    "portable": { "artifactName": "Party-Hub-${version}-portable.${ext}" },
+    "nsis": { "artifactName": "Heavy-is-the-Crown-Setup-${version}.${ext}", "shortcutName": "Heavy is the Crown" },
+    "portable": { "artifactName": "Heavy-is-the-Crown-${version}-portable.${ext}" },
     "linux": { "target": ["AppImage"], "category": "Game", "icon": "icon.png" },
     "mac": { "target": ["dmg"], "category": "public.app-category.games", "icon": "icon.png" }
   }

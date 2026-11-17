@@ -52,7 +52,6 @@ export function buildCards(fam, raw, used = new Set()) {
     d.traitSet = new Set([...traits, ...pt].map((t) => t.toLowerCase()));
     d.abs = parseAb(x.ab).map((spec) => compileAbility(spec, d));
     if (d.type === "evt" && (!d.abs.length || d.abs[0].kind !== "evt")) throw new Error(`L'événement ${d.name} n'a pas d'effet d'événement`);
-    d.loyal = d.kw.fidele !== undefined;
     out.push(d);
   }
   return out;

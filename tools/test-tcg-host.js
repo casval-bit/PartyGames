@@ -74,5 +74,26 @@ await run(true);
   ok(e.agGame.answers.h === true, "bonne réponse acceptée");
   e.destroy();
 }
+// salon de Heavy is the Crown (appli du jeu seul) : jeu verrouillé, apparence des joueurs (photo, cadre, bannière, code ami)
+{
+  const look = { av: "dc-superman-7", fr: "or", bn: "conquerant", lv: 12, fc: "AB3DF9KM" };
+  const e = new HostEngine({ roomId: "ABC234", name: "T", host: { id: "h", name: "Hôte", tl: look }, emit: () => {}, fresh: async (t) => t, settings: { game: "trone", tcg: true, agGoal: 10 } });
+  ok(e.S.settings.game === "trone" && e.S.settings.tcg && e.S.settings.agGoal === 10, "salon du jeu de cartes : réglages de départ");
+  e.setSettings("h", { game: "timesup" });
+  ok(e.S.settings.game === "trone", "salon du jeu de cartes : le jeu ne change pas");
+  ok(JSON.stringify(e.player("h").tl) === JSON.stringify(look), "l'apparence du créateur est dans l'état du salon");
+  e.addPlayer({ id: "a", name: "Anna", tl: { av: "onepiece-coby-1", fr: "faux", bn: "<script>", lv: 9999, fc: "x", evil: 1 } });
+  const ta = e.player("a").tl;
+  ok(ta.av === null && ta.fr === "bronze" && ta.bn === "heraut" && ta.lv === 200 && ta.fc === null && !("evil" in ta), "apparence reçue nettoyée (photo = carte 7 seulement, cadre et bannière connus)");
+  e.setTcgLook("a", { av: "marvel-thor-7", fr: "argent", bn: "aube", lv: 3 });
+  ok(e.player("a").tl.av === "marvel-thor-7" && e.player("a").tl.bn === "aube", "changement d'apparence dans le lobby");
+  e.addBot();
+  const bot = e.S.players.find((p) => p.bot);
+  ok(bot.tl && bot.tl.av && bot.tl.bn, "un bot a une photo et une bannière dans le lobby");
+  e.destroy();
+  const f = new HostEngine({ roomId: "r2", name: "T", host: { id: "h", name: "Hôte" }, emit: () => {}, fresh: async (t) => t, settings: { game: "timesup", tcg: true } });
+  ok(!f.S.settings.tcg, "le verrou du jeu de cartes ne vaut que pour une partie du jeu de cartes");
+  f.destroy();
+}
 console.log(bad ? `${bad} ÉCHEC(S)` : "Trône (salon) : tout est OK");
 process.exit(bad ? 1 : 0);

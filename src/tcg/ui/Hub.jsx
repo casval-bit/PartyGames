@@ -2,9 +2,9 @@
 // Portails et les boosters, en onglets), quêtes et succès. Tout est enregistré dans le profil (profile.tcg), donc suit le compte
 // d'un téléphone à l'autre.
 import { useEffect, useMemo, useState } from "react";
-import { ALL, CARD, FAMILY, PLAYABLE, subOf, subWords, subGroups } from "../cards/index.js";
-import { RARITY, RARITY_ORDER, CARD_TYPES } from "../rules.js";
-import { themeStarters, validateDeck, defaultPlots } from "../deck.js";
+import { ALL, CARD, FAMILY, PLAYABLE, subOf } from "../cards/index.js";
+import { RARITY, RARITY_ORDER, CARD_TYPES, GAME_NAME } from "../rules.js";
+import { themeStarters, validateDeck, defaultPlots, familyMix } from "../deck.js";
 import * as P from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -12,7 +12,7 @@ import { CardFace } from "./Card.jsx";
 import CardZoom from "./CardZoom.jsx";
 import DeckBuilder from "./DeckBuilder.jsx";
 import PackOpen, { packColor, packIcon } from "./PackOpen.jsx";
-import Rules from "./Rules.jsx";
+import RulesGuide from "./RulesGuide.jsx";
 import { useArtInfo, importFiles, syncRemote } from "./artStore.js";
 import ArtList, { loadTri, saveTri } from "./ArtList.jsx";
 import Album from "./Album.jsx";
@@ -96,24 +96,37 @@ function StarterPick({ onPick }) {
 }
 
 /* ------------------------------ decks ------------------------------ */
+/** Les familles d'un deck en quelques pastilles (la plus présente d'abord), pour la liste des decks. */
+function DeckFams({ cards }) {
+  const mix = familyMix(cards).filter((m) => m.fam !== "neutre");
+  if (!mix.length) return null;
+  return (
+    <span className="hub-deckfams">
+      {mix.slice(0, 4).map((m) => { const f = FAMILY[m.fam]; return <span key={m.fam} style={{ "--fc": f.color }} title={`${f.name} : ${m.n} cartes`}><Icon name={f.icon} size={12} />{f.short || f.name} {m.n}</span>; })}
+      {mix.length > 4 && <span>+{mix.length - 4}</span>}
+    </span>
+  );
+}
 function Decks({ t, own, setT, onEdit, flash }) {
-  const [newFam, setNewFam] = useState(null);
   const [del, setDel] = useState(null);
+  const [tpl, setTpl] = useState(false);
+  const themes = useMemo(() => themeStarters(), []);
   return (
     <div className="hub-body">
       <div className="hub-sec hub-decks">
         <h3>Mes decks <small>le deck coché est celui que tu joues en partie</small></h3>
         {t.decks.map((d) => {
           const v = validateDeck(d, own);
-          const f = FAMILY[d.fam];
+          const f = FAMILY[v.fam] || FAMILY.neutre;
           const on = t.sel === d.id;
           return (
-            <div key={d.id} className={"hub-card" + (on ? "" : "")} style={on ? { borderColor: "var(--cyan)", boxShadow: "var(--halo)" } : undefined}>
+            <div key={d.id} className="hub-card" style={on ? { borderColor: "var(--cyan)", boxShadow: "var(--halo)" } : undefined}>
               <div className="hub-row">
-                <span className="hub-fam" style={famStyle(f, d.pt)}><Icon name={f.icon} size={20} /></span>
-                <div className="grow"><b>{d.name}</b><small>{f.name}{subOf(d.fam, d.pt) ? ` · ${subOf(d.fam, d.pt).name}` : ""} · {v.counts.total || 0} cartes</small></div>
+                <span className="hub-fam" style={{ "--fc": f.color }}><Icon name={f.icon} size={20} /></span>
+                <div className="grow" style={{ minWidth: 0 }}><b>{d.name}</b><small>{v.counts.total || 0} cartes · {v.mix.filter((m) => m.fam !== "neutre").length > 1 ? `${v.mix.filter((m) => m.fam !== "neutre").length} familles` : f.name}</small></div>
                 {v.ok ? <span className="pill ok">Prêt</span> : <span className="pill pink">À compléter</span>}
               </div>
+              <DeckFams cards={d.cards} />
               {!v.ok && <small style={{ color: "#ffd3e1", fontSize: ".78rem" }}>{v.errors[0]}{v.errors.length > 1 ? ` (+${v.errors.length - 1})` : ""}</small>}
               <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
                 {on
@@ -130,23 +143,28 @@ function Decks({ t, own, setT, onEdit, flash }) {
         })}
       </div>
       <div className="hub-sec">
-        <h3>Nouveau deck</h3>
-        <div className="hub-fams">
-          {PLAYABLE.map((f) => <button key={f.id} className="hub-fambtn" style={famStyle(f)} aria-pressed={newFam === f.id} onClick={() => {
-            if (f.types && f.types.length) { setNewFam(f.id); return; }
-            onEdit({ id: null, name: `Deck ${f.short || f.name}`, fam: f.id, pt: null, cards: {}, plots: defaultPlots(f.id) });
-          }}><span className="hub-fam" style={famStyle(f)}><Icon name={f.icon} size={18} /></span><span><b>{f.name}</b><small>{Object.keys(own).filter((id) => CARD[id].fam === f.id).length} cartes possédées</small></span></button>)}
+        <h3>Nouveau deck <small>toutes les familles se mélangent : seules comptent les règles de construction</small></h3>
+        <div className="hub-newdeck">
+          <button className="hub-card hub-newbtn" onClick={() => onEdit({ id: null, name: "Mon deck", fam: null, pt: null, cards: {}, plots: defaultPlots(null) })} data-testid="deck-new">
+            <span className="hub-newbtn-i"><Icon name="plus" size={22} /></span>
+            <span className="grow"><b>Créer un deck</b><small>Un deck vide : choisis tes cartes dans toutes les familles.</small></span>
+          </button>
+          <button className="hub-card hub-newbtn" onClick={() => setTpl((x) => !x)} aria-expanded={tpl} data-testid="deck-from-theme">
+            <span className="hub-newbtn-i"><Icon name="library" size={22} /></span>
+            <span className="grow"><b>Partir d'un deck à thème</b><small>Une copie à modifier ; les cartes que tu n'as pas encore sont signalées.</small></span>
+          </button>
         </div>
-        {newFam && FAMILY[newFam] && FAMILY[newFam].types && (
-          <div className="hub-card">
-            <b style={{ fontFamily: "var(--display)" }}>{subWords(newFam).ask}</b>
-            <small className="muted">{subWords(newFam).help}</small>
-            {subGroups(newFam).map((g, gi, all) => (
-              <div key={g.kind} className="hub-subgrp">
-                {all.length > 1 && <small className="hub-subgrp-h">{g.label}</small>}
-                <div className="hub-filters" style={{ flexWrap: "wrap" }}>{g.list.map((tp) => <button key={tp.id} style={{ borderColor: tp.color }} onClick={() => onEdit({ id: null, name: `${FAMILY[newFam].short || FAMILY[newFam].name} ${tp.name}`.slice(0, 32), fam: newFam, pt: tp.id, cards: {}, plots: defaultPlots(newFam) })}>{tp.name}</button>)}</div>
-              </div>
-            ))}
+        {tpl && (
+          <div className="hub-tpls">
+            {themes.map((s) => {
+              const f = FAMILY[s.fam];
+              const miss = Object.entries(s.cards).reduce((k, [id, n]) => k + Math.max(0, n - (own[id] || 0)), 0);
+              return (
+                <button key={s.id} className="hub-tpl" style={{ "--fc": f.color }} onClick={() => { onEdit({ id: null, name: `${s.name} (perso)`.slice(0, 32), fam: s.fam, pt: null, cards: { ...s.cards }, plots: [...s.plots] }); setTpl(false); }} data-testid={"deck-tpl-" + s.id}>
+                  <Icon name={f.icon} size={16} /><b>{s.name}</b><small>{miss ? `il te manque ${miss} carte${miss > 1 ? "s" : ""}` : "toutes à toi"}</small>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -482,9 +500,9 @@ function SectionHead({ view, t, go, nPacks, onSettings }) {
   const [title, icon] = VIEWS[view];
   return (
     <header className="hs-top">
-      <button className="iconbtn" onClick={() => go("home")} aria-label="Retour à l'accueil du Trône des Mondes" data-testid="hub-home-back"><Icon name="back" /></button>
+      <button className="iconbtn" onClick={() => go("home")} aria-label={`Retour à l'accueil de ${GAME_NAME}`} data-testid="hub-home-back"><Icon name="back" /></button>
       <span className="hs-ico" aria-hidden="true"><Icon name={icon} size={20} /></span>
-      <div className="hs-title"><small>Trône des Mondes</small><h2>{title}</h2></div>
+      <div className="hs-title"><small>{GAME_NAME}</small><h2>{title}</h2></div>
       <span className="grow" />
       <HubCurrencies t={t} go={go} nPacks={nPacks} />
       <button className="iconbtn" onClick={onSettings} aria-label="Paramètres du jeu" title="Paramètres du jeu"><Icon name="settings" /></button>
@@ -498,7 +516,7 @@ function SectionHead({ view, t, go, nPacks, onSettings }) {
  * initialTab : partie ouverte d'emblée ("home" par défaut ; "decks", ou "packs" pour l'onglet boosters de la boutique).
  * onPlay : « Jouer » (retour au lobby, ou nouveau lobby Trône des Mondes) ; inRoom : on est déjà dans un lobby.
  */
-export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, name, onPlay, inRoom }) {
+export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, name, onName, onPlay, inRoom, homeBack }) {
   const t = useMemo(() => P.ensureQuests(P.normalizeTcg(tcg)), [tcg]);
   const own = useMemo(() => P.owned(t), [t]);
   const [view, setView] = useState(SHOP_TAB[initialTab] ? "shop" : VIEWS[initialTab] ? initialTab : "home");
@@ -568,7 +586,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
         <div className="hub-bg" aria-hidden="true" />
         <DeckBuilder deck={edit} owned={own} onCancel={() => setEdit(null)} onSave={(d, ok) => {
           let nt = P.saveDeck(t, d);
-          const saved = nt.decks.find((x) => x.name === d.name && x.fam === d.fam && (d.id ? x.id === d.id : true)) || nt.decks[0];
+          const saved = (d.id && nt.decks.find((x) => x.id === d.id)) || nt.decks[0]; // un nouveau deck est rangé en tête
           if (ok && (!P.playableDeck(nt) || !t.decks.length)) nt = P.selectDeck(nt, saved.id);
           setT(nt); setEdit(null); sfx.apply();
           flash(ok ? "Deck enregistré : il est prêt à jouer." : "Brouillon enregistré. Il faut corriger les erreurs avant de pouvoir le jouer.");
@@ -585,7 +603,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
         <header className="hs-top">
           <button className="iconbtn" onClick={onClose} aria-label="Retour"><Icon name="back" /></button>
           <span className="hs-ico" aria-hidden="true"><Icon name="crown" size={20} /></span>
-          <div className="hs-title"><small>Trône des Mondes</small><h2>Deck de départ</h2></div>
+          <div className="hs-title"><small>{GAME_NAME}</small><h2>Deck de départ</h2></div>
           <span className="grow" />
           <button className="iconbtn" onClick={() => setRules(true)} aria-label="Règles du jeu"><Icon name="book" size={18} /></button>
         </header>
@@ -594,7 +612,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
     );
   } else if (view === "home") {
     const deck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
-    content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} onSettings={() => { setSettings(true); sfx.open(); }}
+    content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} homeBack={homeBack} onRules={() => { setRules(true); sfx.open(); }} onSettings={() => { setSettings(true); sfx.open(); }}
       onZoom={(id) => setZoom({ id })} onFamily={(fam, pt) => (fam ? setZoom({ fam, pt }) : deck && setZoom({ fam: deck.fam, pt: deck.pt }))} onAlbum={() => { setAlbum(true); sfx.open(); }}
       nPacks={nPacks} nQuests={nQuests} calm={prefs.motion === "reduced"} />;
   } else {
@@ -606,7 +624,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
           {view === "coll" && <Collection t={t} own={own} setT={setT} flash={flash} />}
           {view === "shop" && <ShopHub t={t} setT={setT} flash={flash} tab={shopTab} onTab={pickShopTab} onOpen={openPack} onPull={doPull} nPacks={nPacks} />}
           {view === "quests" && <Quests t={t} setT={setT} flash={flash} />}
-          {view === "profile" && <TcgProfile t={t} setT={setT} name={name} acc={acc} onAccount={onAccount} flash={flash} />}
+          {view === "profile" && <TcgProfile t={t} setT={setT} name={name} onName={onName} acc={acc} onAccount={onAccount} flash={flash} />}
         </div>
       </div>
     );
@@ -626,7 +644,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
         {zoom && (zoom.id
           ? <CardZoom id={zoom.id} foil={(t.foil[zoom.id] || 0) > 0} owned={CARD[zoom.id] && CARD[zoom.id].type !== "plot" ? { n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 } : null} shine={shineOf(t, setT, flash)} onClose={() => setZoom(null)} />
           : <CardZoom fam={zoom.fam} pt={zoom.pt} onClose={() => setZoom(null)} />)}
-        {rules && <Rules onClose={() => setRules(false)} />}
+        {rules && <RulesGuide onClose={() => setRules(false)} />}
         {settings && <TcgSettings acc={acc} onAccount={onAccount} t={t} setT={setT} flash={flash} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
       </div>
     </>

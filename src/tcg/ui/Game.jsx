@@ -4,7 +4,7 @@
 // Si le téléphone est tenu en portrait sans pouvoir tourner l'écran, toute l'interface de jeu pivote d'elle-même (CSS).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY, subOf } from "../cards/index.js";
-import { PHASES, PHASE_NAME, TYPE_NAME, SETUP_GOLD } from "../rules.js";
+import { PHASES, PHASE_NAME, TYPE_NAME, SETUP_GOLD, GAME_NAME } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import QuitVote from "../../ui/QuitVote.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -12,7 +12,7 @@ import { vibrate } from "../../lib/util.js";
 import { lockLandscape, unlockOrientation, canFullscreen, toggleFullscreen, useFullscreen } from "../../lib/orientation.js";
 import { CardFace, CardBack, PlotFace, FamilyFace, Token, TYPE_ICON } from "./Card.jsx";
 import CardZoom from "./CardZoom.jsx";
-import Rules from "./Rules.jsx";
+import Rules from "./RulesGuide.jsx";
 import { cardArt } from "./art.js";
 
 const TYPES = ["combat", "ruse", "influence"];
@@ -221,7 +221,7 @@ function EndScreen({ me, api, ag, gain, onHub, onLeave, isHost, setZoom }) {
   return (
     <div className="screen agx">
       <div className="ag-top">
-        <div className="ag-round"><small>Trône des Mondes</small><b>{won ? "Victoire !" : meP ? "Partie terminée" : "Fin de partie"}</b></div>
+        <div className="ag-round"><small>{GAME_NAME}</small><b>{won ? "Victoire !" : meP ? "Partie terminée" : "Fin de partie"}</b></div>
       </div>
       <div className="ag-mid ag-end">
         <ol className="ag-podium" style={{ margin: 0, padding: 0 }}>

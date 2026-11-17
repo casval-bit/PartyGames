@@ -3,7 +3,7 @@
 // Depuis l'album, on feuillette les cartes (flèches, ou ← → au clavier) et les cartes pas encore obtenues restent grisées.
 import { useEffect, useRef, useState } from "react";
 import { CARD, FAMILY, TYPE_BONUS, subOf, subWords, subKind } from "../cards/index.js";
-import { KEYWORDS, RARITY, CARD_TYPES, TYPE_NAME } from "../rules.js";
+import { KEYWORDS, RARITY, CARD_TYPES, TYPE_NAME, FAMILY_BONUSES } from "../rules.js";
 import { starterById } from "../deck.js";
 import { alwaysFoil, shineCost } from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
@@ -290,7 +290,7 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
           </div>
         )}
         {plot && <div className="tz-box"><h4>Scénario</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Revenu : l'or de la phase de Recrutement. Initiative : la plus haute choisit le premier joueur. Revendication : ce que coûte un défi perdu contre vous. Réserve : cartes gardées en main à la fin du round.</p></div>}
-        {!d && <div className="tz-box"><h4>Famille</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>Cet effet est toujours actif pour le joueur de cette famille.</p>{subOf(fam, pt) && <p style={{ margin: 0, fontSize: ".82rem" }}>{subKind(fam, pt, true)} choisi{subWords(fam).fem || subOf(fam, pt).kind === "region" ? "e" : ""} : <b>{subOf(fam, pt).name}</b> — <RichText text={subOf(fam, pt).abs.map((a) => a.text).join(" ")} /></p>}</div>}
+        {!d && <div className="tz-box"><h4>Famille</h4><p style={{ margin: 0, fontSize: ".82rem", color: "var(--txt-2)" }}>{FAMILY_BONUSES ? "Cet effet est toujours actif pour le joueur de cette famille." : "Comme la carte de faction du Trône de Fer, la carte de famille n'a aucun effet : elle montre la famille la plus présente du deck, et le Pouvoir gagné s'y pose. Un deck mélange librement toutes les familles."}</p>{FAMILY_BONUSES && subOf(fam, pt) && <p style={{ margin: 0, fontSize: ".82rem" }}>{subKind(fam, pt, true)} choisi{subWords(fam).fem || subOf(fam, pt).kind === "region" ? "e" : ""} : <b>{subOf(fam, pt).name}</b> — <RichText text={subOf(fam, pt).abs.map((a) => a.text).join(" ")} /></p>}</div>}
         {art && d && !plot && <ArtTools key={d.id} d={d} />}
       </div>
     </div>

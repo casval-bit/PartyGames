@@ -7,7 +7,7 @@ Appli mobile React + Capacitor : plateforme de jeux de soirée avec lobbys en te
 Tablette high-tech nuit bleue : fond marine très sombre avec deux halos (bleu, cyan) et une grille cyan très fine, panneaux arrondis en dégradé marine, pastilles, barres de progression arrondies (vertes, orange quand il reste peu), contours lumineux cyan pour la sélection. Polices embarquées : **Sora** (titres, cartes, chiffres) et **Noto Sans KR** (texte). **Aucune émoji** : toutes les icônes sont des traits fins Lucide (`src/ui/Icon.jsx`, `<Icon name="trophy" />` ; `src/ui/iconPaint.js` les dessine aussi sur les textures 3D).
 Dans un navigateur sur grand écran (≥ 1000 × 640), l'appli s'affiche dans un cadre de tablette (bord noir, caméra, barre d'état) ; sur téléphone et dans l'appli PC, plein écran, sans cadre. Variante de coque rouge et blanche dans les réglages du profil (navigateur).
 **Écran d'accueil** (`src/screens/Splash.jsx`) : un emblème holographique (anneaux qui tournent en sens contraires, rayons, étoile qui pulse en ondes), les icônes des jeux en orbite qui s'allument chacune leur tour, des poussières de lumière qui montent, et le nom PARTY HUB dont les lettres montent d'un flou puis s'éclairent l'une après l'autre. On touche l'écran (ou clic / Entrée sur PC) pour entrer.
-**Transitions** (`src/ui/ScreenFx.jsx`) : à chaque changement d'écran, un voile s'efface pendant qu'un balayage de lumière traverse l'écran ; le Trône des Mondes (collection, partie) s'ouvre directement, sans transition. **Survol à la souris** (PC) : les boutons se soulèvent, s'éclairent et leur icône sautille, avec un petit son (`ui/clickfx.js`, `sfx.hover`), réglable dans Profil > Réglages. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
+**Transitions** (`src/ui/ScreenFx.jsx`) : à chaque changement d'écran, un voile s'efface pendant qu'un balayage de lumière traverse l'écran ; Heavy is the Crown (collection, partie) s'ouvre directement, sans transition. **Survol à la souris** (PC) : les boutons se soulèvent, s'éclairent et leur icône sautille, avec un petit son (`ui/clickfx.js`, `sfx.hover`), réglable dans Profil > Réglages. **Sons** synthétisés (`src/lib/sfx.js`, aucun fichier : bips doux, glissandos, souffle filtré), coupables dans les réglages du profil.
 **Cartes** : cartes holographiques (grille, coins lumineux, nom en Sora) ; boosters en « cartouche de données ». Les mini-jeux se jouent dans des **secteurs virtuels** (sol sombre quadrillé, horizon en grille, colonnes de lumière) à la couleur de leur zone : forêt (vert), désert (orange), banquise (bleu-blanc), montagne (gris-violet), noyau (cyan) — `candyWorld(THREE, scene, { zone })` dans `src/minigames/three/kit3d.jsx`.
 Tout le thème est dans `src/tablet.css` (chargé après `src/styles.css`, il remplace les jetons de couleur et surcharge les composants).
 
@@ -26,6 +26,7 @@ Sans clés Supabase, l'appli passe en « mode local » : ouvre plusieurs onglets
 3. Copie `.env.example` en `.env` et remplis `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
 
 Pour jouer ensemble, aucune table ni SQL : l'appli utilise seulement Realtime (Broadcast + Presence). Les **comptes** (voir 2 ter) demandent une table `profiles`.
+Les **amis** de Heavy is the Crown (voir 11) demandent deux tables : Supabase > SQL Editor > colle `supabase/amis.sql` > Run (une fois ; sans danger si on le relance).
 Le créateur du lobby fait tourner la partie sur son téléphone (il distribue les cartes, gère les votes et les chronos).
 S'il quitte, le lobby se ferme. Pas encore de reconnexion en cours de partie.
 
@@ -33,7 +34,7 @@ S'il quitte, le lobby se ferme. Pas encore de reconnexion en cours de partie.
 
 Dans l'appli : **Se connecter** (menu ou profil) > ton e-mail > un **code** arrive par e-mail > tu le tapes. Pas de mot de passe, pas de lien à ouvrir (un lien ne reviendrait pas dans l'appli Android).
 
-**À qui est la progression affichée ?** Un badge le dit partout où on la voit (menu sous la carte d'identité, profil, en-tête du Trône des Mondes ; `src/ui/AccountBadge.jsx`) :
+**À qui est la progression affichée ?** Un badge le dit partout où on la voit (menu sous la carte d'identité, profil, en-tête de Heavy is the Crown ; `src/ui/AccountBadge.jsx`) :
 - vert, **Compte connecté** + ton e-mail : tout est sauvegardé sur ton compte (orange si la dernière sauvegarde a échoué : touche pour réessayer) ;
 - orange en pointillés, **Profil local, pas sauvegardé** (« seulement sur ce téléphone / cet ordinateur ») : un profil de cet appareil, perdu si on efface les données ; touche le badge pour te connecter et le garder ;
 - gris, **Profil local (hors ligne)** : l'appli tourne sans Supabase, les comptes n'existent pas.
@@ -112,19 +113,28 @@ Pour essayer le jeu (images Wikipédia comprises) sans fabriquer d'APK : 1) Sett
 (ou simple push sur `main`). L'adresse est `https://<ton-pseudo>.github.io/<dépôt>/`, ouvre-la sur ton téléphone. Pour avoir les images embarquées,
 lance d'abord « Chercher les images des cartes » (§8).
 
-## 3 ter. Appli PC (Windows)
+## 3 ter. Appli PC (Windows) : Heavy is the Crown seul
 
-La même appli que l'APK, dans une fenêtre d'ordinateur (Electron, dossier `desktop/`). Elle s'ouvre **en plein écran** la première fois
+L'appli PC n'a plus que le jeu de cartes, **Heavy is the Crown** (l'ancien Trône des Mondes) : pas de Party Hub ni des autres jeux
+(`src/tcg/ui/TcgApp.jsx`, choisi par `TRONE_ONLY` dans `src/lib/device.js` ; dans un navigateur, ajoute `?trone` à l'adresse pour avoir la même appli).
+**Écran titre** (`TitleScreen.jsx`) : une couronne dorée qui s'allume, des dos de cartes en orbite, des braises, le nom gravé ; on entre d'un clic ou avec Entrée
+(sans pseudo, on le choisit là). **Transitions** propres au jeu (`CrownFx.jsx`, plus celles de Party Hub) : deux battants s'écartent derrière une couronne
+(écran titre → jeu, lobby → partie) ; ailleurs, un éventail de dos de cartes balaie l'écran. Le **compte** (connexion par e-mail et code) est le même :
+la collection, les decks, le profil et les amis sont sauvegardés dessus. Le web et l'APK gardent Party Hub avec tous les jeux.
+La fenêtre, l'installeur et le menu s'appellent Heavy is the Crown ; le dossier des données et l'adresse interne gardent l'ancien nom (« Party Hub »,
+`app://party-hub`) : sinon les joueurs qui ont déjà l'appli perdraient leur profil local et leurs illustrations importées.
+
+Une fenêtre d'ordinateur (Electron, dossier `desktop/`). Elle s'ouvre **en plein écran** la première fois
 (**F11** pour passer en fenêtre ou revenir en plein écran, aussi dans Profil > Réglages), puis reprend la taille de la dernière fois.
 Pas de fausse tablette autour : l'appli occupe tout l'écran, et l'interface grandit avec la fenêtre (**Ctrl +** / **Ctrl −** pour l'ajuster,
 **Ctrl 0** pour revenir à la taille normale). Le profil, les decks et les illustrations restent sur l'ordinateur ; connecté par e-mail,
 on retrouve son compte comme sur le téléphone. Comme dans l'APK, les liens Spotify (playlist, morceaux) et Deezer marchent sans blocage.
-La partie du Trône des Mondes ne pivote pas sur PC, même dans une fenêtre plus haute que large.
+La partie de Heavy is the Crown ne pivote pas sur PC, même dans une fenêtre plus haute que large.
 
 **Mise en page PC** (`src/desktop.css`, classe `html.desktop`) : plus de colonne de téléphone, tout l'écran sert.
-- **Menu** : carte d'identité, badge du compte, pseudo et nom du lobby à gauche ; les quatre grandes tuiles (Créer, Rejoindre, Trône des Mondes, Salle d'arcade) à droite, avec la liste des jeux.
+- **Menu** : carte d'identité, badge du compte, pseudo et nom du lobby à gauche ; les quatre grandes tuiles (Créer, Rejoindre, Heavy is the Crown, Salle d'arcade) à droite, avec la liste des jeux.
 - **Lobby** : le jeu et ses réglages à gauche, les joueurs (ou les équipes) à droite, « Lancer la partie » en bas à droite. **Profil** : la carte d'identité à gauche, les stats sur deux colonnes à droite. **Salle d'arcade** : grille de tous les mini-jeux.
-- **Trône des Mondes** : l'accueil du jeu prend tout l'écran (plateau de jeu 3D au centre, « Tes cartes » à gauche, « Boutique et défis » à droite, Jouer en bas, voir 11).
+- **Heavy is the Crown** : l'accueil du jeu prend tout l'écran (plateau de jeu 3D au centre, « Tes cartes » à gauche, « Boutique et défis » à droite, Jouer en bas, voir 11).
   Le **constructeur de deck** montre les cartes à ajouter à gauche et le deck à droite, en même temps (fenêtre d'au moins 1 100 px de large après le zoom).
 - **Écrans de jeu** : centrés dans une colonne large (1 000 px), le plateau 3D est plus grand.
 
@@ -207,7 +217,7 @@ Polices : Fraunces (noms des cartes), Bungee (titres), Figtree (texte).
 
 ## 7. Plateforme : sept jeux
 
-Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Célébrité**, **Petit bac**, **Plateau**, **Mini-jeux**, **Trône des Mondes**, le jeu de cartes décrit au point 11, ou **Loup-garou** version Stranger Things, au point 12). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
+Le créateur choisit le jeu dans le lobby (« Jeu » : **Time's Up**, **Qui est-ce ?**, **Blind test**, **Frise**, **Célébrité**, **Petit bac**, **Plateau**, **Mini-jeux**, **Heavy is the Crown**, le jeu de cartes décrit au point 11, ou **Loup-garou** version Stranger Things, au point 12). Les équipes et le lobby sont communs ; le vote de catégories ne concerne que Time's Up.
 À la fin d'une partie, le créateur appuie sur « Retour au lobby » : tout le monde revient au lobby avec ses équipes.
 
 **Qui est-ce ?** : pas de vote. Trois modes d'image dans le lobby : **Mixte** (une catégorie au hasard, puis une carte de cette catégorie : équilibré), **Tout au hasard** (une carte parmi toutes celles qui existent) et **Choisi par un adversaire** (avant chaque image, un joueur choisit la catégorie de l'image d'un autre ; à 2 équipes chacun choisit pour l'autre, à 3 ou 4 le cycle est retiré au hasard à chaque manche ; sans choix à temps, catégorie au hasard). **Chaque équipe a sa propre image** (et pas forcément le même thème que les autres équipes) ; les coéquipiers voient la même. La catégorie n'est révélée qu'avec la réponse. Nombre d'images au choix : 5, 8, 10, 15.
@@ -368,15 +378,27 @@ Pour ajouter une bordure / une couleur / un succès : une ligne dans `profile.js
 **Sécurité** : l'apparence reçue du réseau est filtrée (seuls des identifiants du catalogue passent). Le statut « débloqué » est local : quelqu'un qui bidouille son
 stockage peut s'équiper d'éléments verrouillés chez lui, ce qui est sans conséquence (purement cosmétique).
 
-## 11. Trône des Mondes (jeu de cartes à collectionner)
+## 11. Heavy is the Crown (jeu de cartes à collectionner, anciennement « Trône des Mondes »)
 
-Le jeu de cartes **Le Trône de Fer JCE 2e édition**, entièrement recodé, avec 26 familles (dont, clin d'œil, Westeros lui-même) :
-Code Lyoko, Umbrella Academy, Toy Story, One Piece, Pokémon (un deck par **type** ou par **région**, avec leurs Dresseurs : voir plus bas), Star Academy, Les Mystérieuses Cités d'or,
+Le nom est dans une seule constante (`GAME_NAME` dans `src/tcg/rules.js`) : il suffit de la changer pour renommer le jeu partout.
+
+**Nouveautés de Heavy is the Crown** :
+- **Familles mélangées librement** : un deck prend n'importe quelles cartes de n'importe quelles familles ; seules comptent les règles de construction
+  (voir « Decks » plus bas). Plus de famille alliée ni de choix de type ou de région.
+- **Plus de bonus de famille** : comme dans le Trône de Fer JCE, où la carte de faction n'a aucun effet (elle identifie le deck et reçoit le Pouvoir),
+  la famille d'un deck (la plus présente dans ses cartes, `mainFamily` dans `deck.js`) n'a aucun effet ; les bonus de type, de région et de maison non plus
+  (`FAMILY_BONUSES = false` dans `rules.js`, les anciens textes restent dans les fichiers de famille).
+- **Lobby à code et amis** (`TcgLobby.jsx`, appli PC ou `?trone`) : voir « Jouer » plus bas.
+- **Bannières de profil** verticales, **créateur de deck** refait, **règles en plusieurs pages** (bouton « ? »).
+
+Les familles :
+Code Lyoko, Umbrella Academy, Toy Story, One Piece, Pokémon (types et régions, avec leurs Dresseurs : voir plus bas), Star Academy, Les Mystérieuses Cités d'or,
 Les Légendaires, De cape et de crocs, Hunger Games, Cowboy Bebop, La Horde du Contrevent, Élite, Teen Wolf, Marvel, DC, Stranger Things, Scooby-Doo (que des gentils)
-League of Legends (un deck par **région** de Runeterra, comme les types Pokémon : voir plus bas), Harry Potter (un deck par **maison** de Poudlard),
-Star Wars (un deck par **camp** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (un deck par **faction** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
-Le Seigneur des Anneaux (un deck par **camp** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli,
-Gundam (un deck par **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella) et JoJo's Bizarre Adventure, plus des cartes Neutres.
+League of Legends (les **régions** de Runeterra), Harry Potter (les **maisons** de Poudlard),
+Star Wars (les **camps** : Jedi, Sith, Rébellion, Empire, Pègre), Game of Thrones (les **factions** : les grandes maisons, la Garde de Nuit, les Marcheurs blancs)
+Le Seigneur des Anneaux (les **peuples** de la Terre du Milieu), Le Monde de Narnia, Studio Ghibli,
+Gundam (les **univers** : Fédération, Zeon, After Colony, Cosmic Era, Anno Domini, Post Disaster, Ad Stella) et JoJo's Bizarre Adventure, plus des cartes Neutres.
+Types, régions, maisons et camps sont écrits dans la ligne des traits de chaque carte ; certaines cartes s'y réfèrent, mais ils ne donnent plus de bonus.
 **Cartes neutres** (`cards/neutral.js`, 42 cartes) : jouables dans tous les decks. Les **communes, peu communes et rares sont offertes à tout le monde**
 (2 exemplaires de chacune, rien à débloquer : `giftNeutral` dans `progress.js`) et ne sortent jamais des boosters, de la boutique ni des Portails ;
 les **épiques et légendaires** se gagnent comme les autres cartes (boosters, boutique, Portails) : Sherlock Holmes, L, Ryuk et le Death Note, Loid et Yor Forger,
@@ -414,23 +436,36 @@ Les textes s'accordent au féminin (« Lissandra devrait être tuée, remettez-l
 
 **Tester sur son compte en local** (`npm run dev`, `npm run desktop`) : le fichier `.env` à la racine du projet (jamais versionné) donne
 `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (les mêmes que les secrets GitHub) ; sans lui, l'appli locale reste en mode local, sans compte.
-`VITE_TESTEURS` (adresses séparées par des virgules) : sur un ordinateur où elle est remplie, Trône des Mondes > Paramètres montre des outils de test
-pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, tickets de portail, boosters, et « Débloquer les cartes illustrées »
-(2 exemplaires de chaque carte qui a une vraie image). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
+`VITE_TESTEURS` (adresses séparées par des virgules) : sur un ordinateur où elle est remplie, Heavy is the Crown > Paramètres montre des outils de test
+pour le profil local (pas connecté) et pour les comptes de la liste : Éclats, jetons de brillance, tickets de portail, boosters, « Débloquer les cartes illustrées »
+(2 exemplaires de chaque carte qui a une vraie image) et **« Recevoir un deck à thème »** (ses cartes et le deck prêt à jouer, sans toucher au deck de départ :
+pour les comptes créés avant les decks à thème ; `grantTheme` dans `progress.js`). Connecté, c'est sauvegardé sur le compte. Les builds GitHub n'ont pas cette variable : personne d'autre ne les voit.
 « Éclats et jetons à volonté » (activé par défaut, réglable au même endroit) : jamais moins de 100 000 Éclats et 500 jetons sur ces profils.
 **Decks et cartes retirées** : si une carte disparaît du jeu, chaque deck qui la contenait est complété tout seul (cartes possédées d'abord,
 sinon cartes du deck de départ de la famille offertes) ; les decks Code Lyoko abîmés par le retrait de Franz Hopper 7, du Clone de William
 et d'Anthea Hopper (48/50) sont réparés à l'ouverture. Dans le constructeur, « Compléter avec mes cartes » remplit les places libres d'un deck
 avec des cartes possédées (et les scénarios manquants avec la sélection conseillée).
-**Jouer** : dans le lobby, Jeu > **Trône des Mondes** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
+**Jouer** (appli PC, ou `?trone`) : « Jouer » ouvre le **lobby du jeu** (`TcgLobby.jsx`). **Créer le salon** donne un **code de 6 caractères**
+(sans 0/O ni 1/I/L) à copier et à donner ; les amis le tapent dans « Rejoindre avec un code ». Les salons du jeu ne sont pas dans la liste publique
+de Party Hub, et le jeu y est verrouillé (`settings.tcg`). Dans le salon, chaque joueur est sur sa **bannière** (photo dans son cadre, pseudo, niveau, deck choisi,
+couronne du créateur) ; les places libres proposent « Inviter un ami » et « Ajouter un bot » ; dessous, mon deck, les réglages du créateur (objectif, temps)
+et « Lancer la partie ». Le bouton **« ? »** ouvre les règles en plusieurs pages (`RulesGuide.jsx` : onglets, boutons < et >, flèches du clavier) ;
+il est aussi sur l'accueil du jeu. Après la partie, retour au salon.
+**Amis** (il faut être connecté ; une fois `supabase/amis.sql` exécuté) : chaque joueur a un **code ami** (8 caractères) ; on cherche quelqu'un par pseudo
+ou par code, on lui envoie une demande, il l'accepte (liste rafraîchie toutes les 15 s). On voit qui est **en ligne** (ou dans un salon, ou en partie) et on
+l'**invite** d'un clic : un bandeau « X t'invite dans son salon » avec « Rejoindre » apparaît chez lui. Depuis le salon, « Ami » sur la bannière d'un joueur
+lui envoie une demande. Tables `tcg_players` (pseudo, code ami, photo, cadre, bannière, niveau ; jamais l'e-mail) et `tcg_friends` (demandes et amitiés),
+avec RLS ; la présence en ligne et les invitations passent par Realtime (canal `tcg-online`, sans table). `src/lib/friends.js` (vrai serveur, ou simulé
+pour les tests), `src/lib/useFriends.js`.
+Dans Party Hub (web, APK), on joue toujours depuis le lobby de Party Hub : Jeu > **Heavy is the Crown** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
 Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
 (Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés
-(Célèbre, Discret, Intimidation, Génie, Pillard, Duel, Embuscade, Fidèle, Limité…). Le bouton livre (en haut de la collection) explique les règles.
+(Célèbre, Discret, Intimidation, Génie, Pillard, Duel, Embuscade, Limité…). Le bouton « ? » (accueil du jeu, lobby) explique les règles.
 Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
 
-**Accueil du jeu** (bouton « Trône des Mondes » du menu, ou depuis le lobby ; `src/tcg/ui/HubHome.jsx`) : un écran épuré, façon lobby de jeu de cartes.
+**Accueil du jeu** (bouton « Heavy is the Crown » du menu de Party Hub, dans l'appli PC après l'écran titre, ou depuis le lobby ; `src/tcg/ui/HubHome.jsx`) : un écran épuré, façon lobby de jeu de cartes.
 - En haut : ta **photo de profil du jeu** (pas ton personnage Party Hub) avec ton pseudo et ton niveau, tes boosters à ouvrir, tes **Éclats** (le diamant ; le « + » ouvre la boutique) et les **paramètres du jeu**.
 - Au centre, en grand : un **plateau de jeu en 3D** (`HubBoard.jsx`, tout en CSS 3D), une table en bois avec un tapis aux couleurs de ta famille et une partie en cours.
   De ton côté, ton deck joué posé comme en partie : tes 4 personnages les plus forts (l'un agenouillé, un autre avec un objet **attaché** glissé dessous, des **jetons de Pouvoir**),
@@ -449,15 +484,19 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   un par un ou par 5, et ceux à acheter). Sur téléphone, le bandeau est étroit (icône et nom court).
   En haut, à côté des boosters, des jetons et des Éclats : les **tickets de portail** (sur grand écran). La pastille des boosters ouvre l'onglet Boosters, celle des tickets
   le Portail des Légendes, celle des Éclats la boutique ; le bouton « Boosters » du lobby et de la fin de partie ouvre aussi l'onglet Boosters.
-- En bas : **Jouer** (crée un lobby réglé sur le Trône des Mondes, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les cinq boutons.
+- En bas : **Jouer** (appli PC : le lobby du jeu ; Party Hub : crée un lobby réglé sur Heavy is the Crown, ou ramène au lobby si tu viens de là) et le deck joué (« Changer »). Sur téléphone : le plateau en haut, puis Jouer et les cinq boutons.
   Chaque bouton ouvre sa partie en plein écran, avec un retour à l'accueil ; changer de partie fait glisser une carte (son).
 - **Profil du jeu** (`TcgProfile.jsx`) : statistiques du jeu de cartes (parties, victoires, défis gagnés, éliminations, Dominations, boosters, collection, brillantes, cartes 7, succès).
   **Photo** : n'importe quelle carte 7 que tu possèdes (par défaut, celle du deck joué ; sans carte 7, le blason du jeu).
   **Cadres** à débloquer par des missions : Bronze (offert), Argent (5 victoires), Duelliste (60 défis gagnés), Voyageur des mondes (8 familles jouées), Bourreau (40 éliminations),
   Collectionneur (300 cartes différentes), Or (25 victoires), Holographique (15 brillantes, animé), Dominateur (30 Dominations), Légende (niveau 20, animé), Trône (tous les succès, avec une couronne).
-- **Paramètres du jeu** (roue dentée, `TcgSettings.jsx`, propres au Trône des Mondes et enregistrés sur l'appareil, `src/tcg/prefs.js`) : sons du jeu (oui / coupés), volume,
+  **Bannières** (`Banner.jsx`, `BANNERS` dans `progress.js`) : un étendard vertical suspendu à une hampe dorée, derrière la photo, dans le lobby et en tête du profil.
+  Trois offertes (Héraut, Aube, Braise), sept par mission (Marée : 5 parties ; Conquérant : 10 victoires ; Prisme : 10 brillantes ; Portail : 30 invocations ;
+  Archives : 250 cartes différentes ; Multivers : 10 familles jouées ; Souverain : niveau 25) et **une par famille** (aux couleurs et au décor de la famille),
+  débloquée avec 20 cartes différentes de cette famille. Le **pseudo** se change aussi dans le profil (appli PC : il n'y a plus le menu de Party Hub).
+- **Paramètres du jeu** (roue dentée, `TcgSettings.jsx`, propres à Heavy is the Crown et enregistrés sur l'appareil, `src/tcg/prefs.js`) : sons du jeu (oui / coupés), volume,
   son au survol des boutons, animations complètes ou réduites, ouverture des boosters (déchirer en glissant, ou directe), plein écran sur PC ; le compte (connecté ou profil local) y est rappelé.
-  Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Trône des Mondes (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
+  Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Heavy is the Crown (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
 
 **Collection** :
 - **Deck de départ** : choisi une seule fois parmi **8 decks à thème** faits à la main (`cards/themes.js`) : Team Rocket (Giovanni et Mewtwo à 7), Orchidia (Jadina et Jadilyna),
@@ -466,12 +505,24 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   chez les Gryffondor, pas de Sylas chez Demacia, pas de méchant avec Superman et Supergirl). Il débloque ses 50 cartes (dont une version exclusive : Shimy 4 dans Orchidia,
   Dustin 4 dans Hawkins) + 300 Éclats et 3 boosters. Les autres decks de départ (`starters` de chaque famille) ne sont plus proposés : ce sont ceux des bots,
   et les modèles de « Compléter avec mes cartes ». Un ancien joueur garde le sien.
-  Équilibrage (`node tools/test-tcg.js --sim 2000 --themes` : les 8 decks entre eux) : entre 35 % et 62 % de victoires. Pour y arriver, la meute de Teen Wolf
-  (passif : +1 force en attaque et en défense pour la Meute) et les héros de Hawkins (passif : +1 force en défense pour Hawkins) ont été renforcés.
-- **Decks** : constructeur avec compteurs en direct ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
+  Équilibrage (`node tools/test-tcg.js --sim 4000 --themes` : les 8 decks entre eux) : entre 41 % et 60 % de victoires environ (DC en tête, Hawkins en dernier), sans aucun bonus de famille.
+  Ce que les bonus apportaient est passé sur des cartes : Intimidation sur les Sith et les Inquisiteurs (sauf les moins chers) et sur les loups-garous de Teen Wolf ;
+  +1 force aux membres de la Meute, aux humains de Beacon Hills (Shérif, Deaton, Melissa) et à la bande de Hawkins (Mike, Dustin, Lucas 3, Will, Max) ;
+  la ville de Hawkins (+1 force en défense pour Hawkins), la Grande Cité de Demacia (+1 en défense pour Demacia) et la salle commune de Gryffondor
+  (+1 en attaque pour Gryffondor), uniques ; la clinique de Deaton fait recruter moins cher. Forteresse et Themyscira sont uniques (plus d'empilement),
+  Power Girl passe à 5 de force. Decks : un seul Artikodin et le Magicarpe de James chez la Team Rocket, Albion (le père de Shimy) à la place du Diplomate
+  à Orchidia, le manoir Hale en double dans la Meute et la ville de Hawkins en double.
+- **Decks** : **toutes les familles se mélangent** ; un deck qui ne respecte pas les règles reste un brouillon et ne peut pas être joué (message d'erreur, ex. Shimy 7 et Shimy 4 dans le même deck).
   Règles : 50 cartes + 7 scénarios différents ; 2 exemplaires max par carte, mais **une carte 7 est unique (1 exemplaire)** ; **une seule version par personnage**
-  (Aelita 5 ou Aelita 7, pas les deux : dans « Ajouter », les autres versions sont grisées) ; au plus 3 cartes de coût 7+ (différentes), 6 de coût 6, 8 de coût 5 ;
-  au moins 24 personnages ; au plus 18 objets + événements et 10 lieux ; jusqu'à 10 cartes d'UNE famille alliée (sauf les Fidèles).
+  (Aelita 5 ou Aelita 7, pas les deux : les autres versions sont grisées) ; au plus 3 cartes de coût 7+ (différentes), 6 de coût 6, 8 de coût 5 ;
+  au moins 24 personnages ; au plus 18 objets + événements et 10 lieux. C'est tout : plus de famille principale imposée ni de famille alliée.
+  **Mes decks** : chaque deck montre ses familles ; « Créer un deck » part d'un deck vide, « Partir d'un deck à thème » d'une copie d'un des 8 decks à thème
+  (les cartes qui manquent sont signalées).
+  **Créateur de deck** (`DeckBuilder.jsx`, `deckbuilder.css`) : à gauche les cartes (recherche, type, coût, rareté, tri, une rangée de familles : toutes ou une seule,
+  celles dont tu as des cartes d'abord ; « Seulement mes cartes », ou toutes avec celles qui manquent grisées), + et − sur chaque carte ;
+  à droite le deck : **les règles cochées en direct** (vert : respectée, jaune : pas encore atteinte, rouge : dépassée), la **répartition par famille**
+  (barre aux couleurs des familles), la courbe des personnages et la liste. Onglet Scénarios ; « Compléter avec mes cartes » remplit les places libres
+  (la famille la plus présente d'abord, puis les neutres, puis le reste). Sur téléphone : trois onglets (cartes, deck, scénarios).
 - **Album** (Collection > « Album : toutes les cartes ») : toutes les cartes qui existent, famille par famille avec le compte de chacune (ou toutes
   familles mêlées par coût), filtres Obtenues / Manquantes / Brillantes. Celles qui manquent sont grisées mais s'ouvrent en grand (toujours grisées).
   En grand, la carte s'incline un peu sous le doigt ou la souris (et quand on penche le téléphone) ; le reflet arc-en-ciel des brillantes suit la direction
@@ -735,7 +786,7 @@ Réglages : composition automatique (on coche les boîtes de rôles et le nombre
 | Larry Kline | Dictateur (fanmade) | | Mama (Terry Ives) | Chaman (fanmade) |
 | Kali | Noctambule (fanmade) | | Holly Wheeler | Chaperon rouge (fanmade) |
 
-Les cartes de rôle sont carrées ; leurs illustrations sont celles des cartes Stranger Things du Trône des Mondes (une image importée pour « Onze 7 » apparaît aussi sur la Voyante).
+Les cartes de rôle sont carrées ; leurs illustrations sont celles des cartes Stranger Things de Heavy is the Crown (une image importée pour « Onze 7 » apparaît aussi sur la Voyante).
 
 Code : `src/lg/` — `roles.js` (rôles, compositions), `engine.js` (moteur : nuit, jour, morts en chaîne, victoires), `view.js` (ce qui part
 sur le réseau), `ui/` (écran de partie, réglages du lobby) ; côté créateur du lobby : `src/net/hostLg.js` (minuteurs, bots).

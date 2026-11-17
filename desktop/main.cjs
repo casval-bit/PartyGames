@@ -1,6 +1,8 @@
-// Party Hub en appli PC : la même appli que l'APK (le site construit par Vite, copié dans desktop/web), dans une fenêtre Electron.
+// Heavy is the Crown en appli PC : le jeu de cartes seul (le site construit par Vite, copié dans desktop/web, s'ouvre en mode
+// « jeu de cartes » sur ordinateur : voir TRONE_ONLY dans src/lib/device.js), dans une fenêtre Electron.
 // Les fichiers sont servis par une adresse interne fixe (app://party-hub/…), comme un vrai site sécurisé : le profil, les decks,
-// les illustrations importées et la connexion au compte restent d'un lancement à l'autre.
+// les illustrations importées et la connexion au compte restent d'un lancement à l'autre. L'adresse et le dossier des données
+// gardent l'ancien nom (Party Hub) : changer l'un ou l'autre ferait tout perdre aux joueurs qui ont déjà l'appli.
 // Au premier lancement, l'appli s'ouvre en plein écran (F11 pour passer en fenêtre) ; ensuite elle reprend la taille de la dernière fois.
 const { app, BrowserWindow, Menu, ipcMain, net, protocol, screen, session, shell } = require("electron");
 const fs = require("node:fs");
@@ -18,6 +20,10 @@ protocol.registerSchemesAsPrivileged([
 ]);
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required"); // blind test et frise : le son part sans clic
 if (process.platform === "win32") app.setAppUserModelId("fr.brice.timesup");
+
+// dossier des données (profil local, illustrations importées, taille de la fenêtre) : celui de l'ancienne appli « Party Hub »,
+// même si l'appli s'appelle maintenant Heavy is the Crown (sinon Electron en prendrait un nouveau, vide)
+app.setPath("userData", path.join(app.getPath("appData"), "Party Hub"));
 
 let win = null;
 let state = null; // { x, y, width, height, max, full, zoom }
@@ -97,13 +103,14 @@ function createWindow() {
     show: false,
     fullscreen: Boolean(state.full),
     backgroundColor: BG,
-    title: "Party Hub",
+    title: "Heavy is the Crown",
     icon: path.join(__dirname, "icon.png"),
     autoHideMenuBar: true, // menu caché : touche Alt pour l'afficher
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false },
   });
   if (state.max && !state.full) win.maximize();
   win.once("ready-to-show", () => win.show());
+  win.on("page-title-updated", (e) => e.preventDefault()); // le titre de la fenêtre reste le nom du jeu
   const wc = win.webContents;
   wc.setWindowOpenHandler(({ url }) => { openOutside(url); return { action: "deny" }; });
   wc.on("will-navigate", (e, url) => { if (!url.startsWith(ORIGIN + "/")) { e.preventDefault(); openOutside(url); } });
@@ -145,7 +152,7 @@ function shoot(out) {
 
 function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate([
-    { label: "Party Hub", submenu: [{ role: "reload", label: "Recharger" }, { type: "separator" }, { role: "quit", label: "Quitter" }] },
+    { label: "Heavy is the Crown", submenu: [{ role: "reload", label: "Recharger" }, { type: "separator" }, { role: "quit", label: "Quitter" }] },
     {
       label: "Affichage",
       submenu: [

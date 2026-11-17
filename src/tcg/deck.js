@@ -1,24 +1,44 @@
 // Trône des Mondes : règles de construction des decks, decks de départ et scénarios conseillés.
-import { CARD, ALL, PLOTS, FAMILY, FAMILIES, STARTER_SPECS, subOf, hasSubs, subWords } from "./cards/index.js";
+import { CARD, ALL, PLOTS, FAMILY, FAMILIES, STARTER_SPECS, hasSubs, subWords } from "./cards/index.js";
 import { DECK_RULES as R, slug, copiesOf } from "./rules.js";
 
 /** Nombre total de cartes d'un deck. */
 export const deckSize = (deck) => Object.values(deck.cards || {}).reduce((s, n) => s + n, 0);
 
 /**
- * Vérifie un deck. Renvoie { ok, errors: [texte…], alli, counts }.
+ * Famille la plus présente d'un deck (sans compter les neutres) : sa couleur et son icône représentent le deck.
+ * Elle n'a aucun effet en jeu (pas de bonus de famille). « neutre » pour un deck sans carte de famille.
+ * À égalité, la première dans l'ordre des familles.
+ */
+export function mainFamily(cards) {
+  const by = {};
+  for (const [id, n] of Object.entries(cards || {})) {
+    const d = CARD[id];
+    if (d && d.type !== "plot" && n > 0 && d.fam !== "neutre") by[d.fam] = (by[d.fam] || 0) + n;
+  }
+  let best = null;
+  for (const f of FAMILIES) if (by[f.id] && (!best || by[f.id] > by[best])) best = f.id;
+  return best || "neutre";
+}
+/** Répartition d'un deck par famille : [{ fam, n }], la plus présente d'abord, les neutres à la fin. */
+export function familyMix(cards) {
+  const by = {};
+  for (const [id, n] of Object.entries(cards || {})) { const d = CARD[id]; if (d && d.type !== "plot" && n > 0) by[d.fam] = (by[d.fam] || 0) + n; }
+  const order = Object.fromEntries(FAMILIES.map((f, i) => [f.id, i]));
+  return Object.entries(by).map(([fam, n]) => ({ fam, n }))
+    .sort((a, b) => (a.fam === "neutre") - (b.fam === "neutre") || b.n - a.n || order[a.fam] - order[b.fam]);
+}
+
+/**
+ * Vérifie un deck. Les familles se mélangent librement : seules comptent les règles de construction (DECK_RULES).
+ * Renvoie { ok, errors: [texte…], counts, fam (famille la plus présente), mix (répartition par famille) }.
  * `owned` (facultatif) : { idCarte: nombre possédé } — vérifie que le joueur a bien les cartes.
  */
 export function validateDeck(deck, owned = null) {
   const errors = [];
-  const fam = FAMILY[deck && deck.fam];
-  if (!fam || fam.id === "neutre") return { ok: false, errors: ["Choisis une famille."], counts: {} };
-  const subs = hasSubs(fam.id), sub = subs ? subOf(fam.id, deck.pt) : null, words = subWords(fam.id);
-  if (subs && !sub) errors.push(words.pick);
-  const entries = Object.entries(deck.cards || {}).filter(([, n]) => n > 0);
-  const counts = { total: 0, chars: 0, locs: 0, objEvt: 0, c7: 0, c6: 0, c5: 0, alli: 0 };
+  const entries = Object.entries((deck && deck.cards) || {}).filter(([, n]) => n > 0);
+  const counts = { total: 0, chars: 0, locs: 0, objEvt: 0, c7: 0, c6: 0, c5: 0 };
   const byKey = {};
-  let alli = null;
   for (const [id, n] of entries) {
     const d = CARD[id];
     if (!d || d.type === "plot") { errors.push("Carte inconnue dans le deck."); continue; }
@@ -30,13 +50,6 @@ export function validateDeck(deck, owned = null) {
     else counts.objEvt += n;
     if (d.cost >= 7) counts.c7 += n; else if (d.cost === 6) counts.c6 += n; else if (d.cost === 5) counts.c5 += n;
     (byKey[d.key] = byKey[d.key] || new Set()).add(d.id);
-    if (d.fam !== fam.id && d.fam !== "neutre") {
-      if (alli && alli !== d.fam) errors.push(`Une seule famille alliée : ${FAMILY[alli].name} ou ${FAMILY[d.fam].name}, pas les deux.`);
-      alli = alli || d.fam;
-      counts.alli += n;
-      if (d.loyal) errors.push(`${d.name} est Fidèle : il ne peut pas rejoindre une autre famille.`);
-    }
-    if (sub && d.fam === fam.id && d.pt.length && !d.pt.includes(sub.id)) errors.push(`${d.name} ${sub.not || words.not} ${sub.name}.`);
   }
   for (const set of Object.values(byKey)) {
     if (set.size > 1) {
@@ -51,13 +64,12 @@ export function validateDeck(deck, owned = null) {
   if (counts.chars < R.minChars) errors.push(`Au moins ${R.minChars} personnages (actuellement ${counts.chars}).`);
   if (counts.objEvt > R.maxObjEvt) errors.push(`Au plus ${R.maxObjEvt} objets et événements (actuellement ${counts.objEvt}).`);
   if (counts.locs > R.maxLocs) errors.push(`Au plus ${R.maxLocs} lieux (actuellement ${counts.locs}).`);
-  if (counts.alli > R.maxAlliance) errors.push(`Au plus ${R.maxAlliance} cartes d'une famille alliée (actuellement ${counts.alli}).`);
-  const plots = deck.plots || [];
+  const plots = (deck && deck.plots) || [];
   if (plots.length !== R.plots || new Set(plots).size !== R.plots || plots.some((id) => !CARD[id] || CARD[id].type !== "plot")) errors.push(`Choisis ${R.plots} scénarios différents.`);
-  return { ok: errors.length === 0, errors: [...new Set(errors)], alli, counts };
+  return { ok: errors.length === 0, errors: [...new Set(errors)], counts, fam: mainFamily(deck && deck.cards), mix: familyMix(deck && deck.cards) };
 }
 
-/** Les cartes qu'un deck de cette famille peut contenir (hors alliance). */
+/** Les cartes d'un deck de départ (bots) de cette famille : la famille (et son sous-groupe) et les neutres. */
 export function legalPool(fam, pt) {
   const subs = hasSubs(fam);
   return ALL.filter((d) => d.fam === "neutre" || (d.fam === fam && (!subs || !d.pt.length || !pt || d.pt.includes(pt))));
@@ -65,7 +77,8 @@ export function legalPool(fam, pt) {
 
 /** Le deck de départ le plus proche d'un deck : même famille (et même sous-groupe si possible), le plus de cartes en commun. */
 export function starterFor(deck) {
-  const all = starters().filter((s) => s.fam === deck.fam);
+  const fam = deck.fam && FAMILY[deck.fam] && deck.fam !== "neutre" ? deck.fam : mainFamily(deck.cards);
+  const all = starters().filter((s) => s.fam === fam);
   const same = all.filter((s) => (s.pt || null) === (deck.pt || null));
   let best = null, bv = -1;
   for (const s of same.length ? same : all) {
@@ -78,9 +91,9 @@ export function starterFor(deck) {
 
 const RARITY_RANK = { L: 4, E: 3, R: 2, U: 1, C: 0 };
 /**
- * Complète un deck jusqu'à R.size cartes sans enfreindre les règles : cartes de sa famille (et de son type ou de sa région)
- * ou neutres, une version par personnage, R.maxCopies exemplaires au plus (1 pour une carte 7), plafonds des coûts 5, 6 et 7, des lieux, des objets
- * et événements, assez de personnages. Les cartes du deck de départ le plus proche passent en premier.
+ * Complète un deck jusqu'à R.size cartes sans enfreindre les règles : une version par personnage, R.maxCopies exemplaires au plus
+ * (1 pour une carte 7), plafonds des coûts 5, 6 et 7, des lieux, des objets et événements, assez de personnages. Les cartes du deck de
+ * départ le plus proche passent en premier, puis celles de la famille la plus présente, les neutres et enfin les autres familles.
  *   owned : { id: n } possédés (un exemplaire déjà dans le deck n'est plus libre) ;
  *   extra : s'il n'y a pas assez de cartes possédées, on en prend d'autres (renvoyées dans `granted`, à offrir au joueur) ;
  *   upTo : nombre de cartes visé (R.size par défaut ; moins pour ne remplacer que quelques cartes perdues).
@@ -90,19 +103,22 @@ export function fillDeck(deck, { owned = {}, extra = false, upTo = R.size } = {}
   const cards = {};
   for (const [id, n] of Object.entries(deck.cards || {})) if (n > 0 && CARD[id] && CARD[id].type !== "plot") cards[id] = n;
   const added = {}, granted = {};
-  const fam = FAMILY[deck.fam];
   let need = Math.min(R.size, upTo) - deckSize({ cards });
-  if (!fam || fam.id === "neutre" || need <= 0) return { cards, added, granted, missing: Math.max(0, need) };
+  if (need <= 0) return { cards, added, granted, missing: 0 };
+  const main = deckSize({ cards }) ? mainFamily(cards) : deck.fam && FAMILY[deck.fam] ? deck.fam : "neutre"; // famille la plus présente
   const c = { ...validateDeck({ ...deck, cards }).counts };
   const keyOwner = {};
   for (const id of Object.keys(cards)) keyOwner[CARD[id].key] = id;
   const st = starterFor({ ...deck, cards });
   const rank = new Map(Object.keys((st && st.cards) || {}).map((id, i) => [id, i]));
   const free = (d) => (owned[d.id] || 0) - (cards[d.id] || 0);
-  const base = legalPool(fam.id, deck.pt).filter((d) => !d.st || rank.has(d.id) || free(d) > 0);
-  // ordre : deck de départ, sa famille avant les neutres, personnages d'abord ; les meilleures cartes possédées, les plus simples à offrir
+  // toutes les familles se mélangent : n'importe quelle carte possédée peut compléter le deck
+  const base = ALL.filter((d) => !d.st || rank.has(d.id) || free(d) > 0);
+  const near = (d) => (d.fam === main ? 0 : d.fam === "neutre" ? 1 : 2);
+  // ordre : deck de départ, la famille la plus présente, puis les neutres, puis les autres familles, personnages d'abord ;
+  // les meilleures cartes possédées, les plus simples à offrir
   const order = (best) => [...base].sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 1e6) - (rank.has(b.id) ? rank.get(b.id) : 1e6)
-    || (a.fam === fam.id ? 0 : 1) - (b.fam === fam.id ? 0 : 1) || (a.type === "char" ? 0 : 1) - (b.type === "char" ? 0 : 1)
+    || near(a) - near(b) || (a.type === "char" ? 0 : 1) - (b.type === "char" ? 0 : 1)
     || (best ? RARITY_RANK[b.r] - RARITY_RANK[a.r] : RARITY_RANK[a.r] - RARITY_RANK[b.r]) || a.cost - b.cost || a.id.localeCompare(b.id));
   const fits = (d) => {
     if ((cards[d.id] || 0) >= copiesOf(d)) return false;
@@ -122,6 +138,7 @@ export function fillDeck(deck, { owned = {}, extra = false, upTo = R.size } = {}
   if (extra && need > 0) {
     for (const d of order(false)) {
       if (RARITY_RANK[d.r] >= RARITY_RANK.E || d.cost >= 7) continue; // on n'offre ni épique, ni légendaire, ni carte 7
+      if (free(d) <= 0 && !rank.has(d.id) && near(d) > 1) continue; // ni une carte d'une autre famille qu'on n'a pas
       while (need > 0 && fits(d)) put(d, free(d) <= 0);
       if (!need) break;
     }

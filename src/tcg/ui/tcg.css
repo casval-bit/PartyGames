@@ -1683,3 +1683,102 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 }
 .hq-chest-i { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: #2a1700; background: linear-gradient(180deg, #ffe7a6, #ffb83d); }
 .hq-chest.ok { border-color: rgba(255,209,102,.75); box-shadow: 0 0 18px rgba(255,209,102,.25); }
+
+/* ---------------- bannières de profil (Banner.jsx) : étendard vertical, hampe dorée, deux pointes ---------------- */
+.bnr { --w: 120px; --bg: linear-gradient(180deg, #2c2470, #1a1446 55%, #0f0b2e); --trim: #e9c46a; --emb: rgba(255, 224, 150, .22);
+  position: relative; display: inline-block; flex: none; width: var(--w); height: calc(var(--w) * 2.3); filter: drop-shadow(0 8px 14px rgba(0,0,0,.5)); }
+.bnr-cloth { position: absolute; inset: calc(var(--w) * .04) 0 0; overflow: hidden; background: var(--bg); background-size: var(--bgs, auto);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 89.6%, 0 100%); }
+.bnr-tex { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .62; mix-blend-mode: screen; }
+.bnr-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.28), transparent 18%, transparent 82%, rgba(0,0,0,.28)),
+  linear-gradient(180deg, rgba(255,255,255,.1), transparent 22%, transparent 70%, rgba(0,0,0,.35)); }
+.bnr-emb { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); color: var(--emb); display: grid; filter: drop-shadow(0 1px 0 rgba(0,0,0,.35)); }
+.bnr-trim { position: absolute; inset: calc(var(--w) * .04) 0 0; width: 100%; height: calc(100% - var(--w) * .04); overflow: visible; pointer-events: none; }
+.bnr-trim path { fill: none; stroke: var(--trim); stroke-width: max(2px, calc(var(--w) * .022)); opacity: .9; }
+.bnr-rod { position: absolute; left: -7%; right: -7%; top: 0; height: max(5px, calc(var(--w) * .07)); border-radius: 99px; z-index: 2;
+  background: linear-gradient(180deg, #fff1c2, #d9a640 45%, #8a5a14); box-shadow: 0 2px 5px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.6); }
+.bnr-rod::before, .bnr-rod::after { content: ""; position: absolute; top: 50%; width: max(7px, calc(var(--w) * .1)); aspect-ratio: 1; border-radius: 50%; transform: translateY(-50%);
+  background: radial-gradient(circle at 35% 30%, #fff6d6, #d9a640 55%, #7a4c0e); box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.bnr-rod::before { left: calc(var(--w) * -.05); }
+.bnr-rod::after { right: calc(var(--w) * -.05); }
+.bnr-in { position: absolute; inset: calc(var(--w) * .16) calc(var(--w) * .06) calc(var(--w) * .36); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: calc(var(--w) * .05);
+  text-align: center; min-width: 0; }
+.bnr-lock { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; color: #e7ecf7; background: rgba(4,8,18,.5);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 89.6%, 0 100%); }
+.bnr.locked .bnr-cloth { filter: saturate(.35) brightness(.7); }
+.pbn-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 calc(var(--w) * .118)/1.15 var(--display); color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.75); }
+.pbn-lv { font: 700 calc(var(--w) * .078)/1 var(--display); letter-spacing: .04em; text-transform: uppercase; color: #ffe7a6; padding: 3px 8px; border-radius: 99px;
+  background: rgba(8,12,28,.55); border: 1px solid rgba(255,214,120,.35); }
+
+/* les bannières (sauf celles de famille, peintes avec les couleurs de leur famille) */
+.bnr.b-fam { --bg: linear-gradient(180deg, color-mix(in srgb, var(--bc) 78%, #fff 6%), color-mix(in srgb, var(--bc2) 70%, #000) 72%, color-mix(in srgb, var(--bc2) 45%, #000));
+  --trim: color-mix(in srgb, var(--bc) 45%, #ffe9b0); --emb: color-mix(in srgb, #fff 32%, transparent); }
+.bnr.b-heraut { --bg: repeating-linear-gradient(45deg, rgba(255,214,120,.05) 0 6px, transparent 6px 12px), linear-gradient(180deg, #34298a, #1d1652 55%, #100b30); }
+.bnr.b-aube { --bg: radial-gradient(circle at 50% 108%, rgba(255,240,180,.65), transparent 45%), linear-gradient(180deg, #ffc49b, #f2668b 46%, #5b2f97 100%);
+  --trim: #fff0c9; --emb: rgba(255,250,230,.4); }
+.bnr.b-braise { --bg: radial-gradient(circle at 50% 100%, rgba(255,190,80,.6), transparent 42%), linear-gradient(180deg, #ff9d45, #d43a1f 48%, #3c0b08 100%);
+  --trim: #ffd27a; --emb: rgba(255,226,170,.32); }
+.bnr.b-maree { --bg: radial-gradient(ellipse 60% 14% at 50% 30%, rgba(255,255,255,.18), transparent 70%), radial-gradient(ellipse 60% 14% at 50% 55%, rgba(255,255,255,.12), transparent 70%),
+  linear-gradient(180deg, #7deaff, #2079c0 50%, #0b2748); --trim: #c9f5ff; --emb: rgba(220,250,255,.3); }
+.bnr.b-conquerant { --bg: repeating-linear-gradient(-35deg, rgba(0,0,0,.18) 0 9px, transparent 9px 18px), linear-gradient(180deg, #a01226, #520914 60%, #16030a);
+  --trim: #f0c35c; --emb: rgba(255,210,150,.26); }
+.bnr.b-prisme { --bg: conic-gradient(from var(--hr) at 50% 40%, #ff6ab0, #ffd166, #5dff9a, #5ee1ff, #b48cff, #ff6ab0); animation: frSpin 6s linear infinite;
+  --trim: #ffffff; --emb: rgba(255,255,255,.42); }
+.bnr.b-prisme .bnr-shade { background: linear-gradient(180deg, rgba(10,8,30,.15), rgba(10,8,30,.55)); }
+.bnr.b-portail { --bg: repeating-conic-gradient(from var(--hr) at 50% 62%, rgba(180,140,255,.35) 0 12deg, transparent 12deg 30deg),
+  radial-gradient(circle at 50% 62%, #c8a6ff, #6a3fd8 32%, #1b0e45 70%); animation: frSpin 14s linear infinite; --trim: #e3d2ff; --emb: rgba(240,230,255,.36); }
+.bnr.b-archives { --bg: repeating-linear-gradient(90deg, rgba(0,0,0,.16) 0 7px, transparent 7px 15px), linear-gradient(180deg, #2fd28a, #0d6440 58%, #05271a);
+  --trim: #ffe2a0; --emb: rgba(220,255,236,.28); }
+.bnr.b-multivers { --bg: radial-gradient(1.5px 1.5px at 20% 18%, #fff, transparent), radial-gradient(1.5px 1.5px at 72% 30%, #fff, transparent),
+  radial-gradient(1px 1px at 40% 52%, #fff, transparent), radial-gradient(1.5px 1.5px at 80% 66%, #fff, transparent), radial-gradient(1px 1px at 28% 76%, #fff, transparent),
+  radial-gradient(circle at 70% 25%, rgba(94,225,255,.35), transparent 38%), radial-gradient(circle at 25% 70%, rgba(255,106,176,.3), transparent 40%),
+  linear-gradient(180deg, #19143f, #0a0a24); --trim: #9fd8ff; --emb: rgba(200,235,255,.3); }
+.bnr.b-souverain { --bg: linear-gradient(115deg, #fff8dc, #ffd166 22%, #fffdf2 32%, #e9b649 46%, #fff3c4 60%, #c99124 78%, #ffe9a6); --bgs: 260% 100%;
+  --trim: #8a5a14; --emb: rgba(120,78,10,.3); }
+.bnr.b-souverain .bnr-cloth { animation: frGold 5s linear infinite; }
+.bnr.b-souverain .bnr-shade { background: linear-gradient(180deg, rgba(255,255,255,.12), transparent 30%, rgba(80,50,0,.28)); }
+.bnr.b-souverain .pbn-name { color: #fff; }
+.bnr.calm, .hubh.calm .bnr, .bnr.calm .bnr-cloth, .hubh.calm .bnr-cloth { animation: none; }
+@media (prefers-reduced-motion: reduce) { .bnr, .bnr-cloth { animation: none !important; } }
+
+/* profil : bannière en tête, pseudo modifiable, choix des bannières */
+.pf-hero .pf-bnr { margin: -4px 4px -8px; }
+.pf-pseudo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.pf-pseudo .pf-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pf-pseudo-in { height: 40px; max-width: 220px; font-weight: 700; }
+.pf-seen { font-size: .76rem; }
+.pf-banners { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.pf-bn { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; padding: 12px 8px 10px; border-radius: 18px; text-align: center; color: var(--txt);
+  background: rgba(8,15,32,.55); border: 1px solid var(--line); cursor: pointer; }
+.pf-bn:disabled { cursor: default; }
+.pf-bn b { font: 700 .84rem var(--display); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-bn small { font-size: .72rem; color: var(--txt-2); }
+.pf-bn .bar2 { width: 100%; margin-top: 2px; }
+.pf-bn.on { border-color: rgba(255,209,102,.85); background: rgba(60,44,8,.38); box-shadow: 0 0 20px rgba(255,209,102,.3); }
+.pf-bn.fresh { border-color: rgba(93,255,154,.75); box-shadow: 0 0 20px rgba(93,255,154,.25); }
+.pf-bn.fresh small { color: var(--ok-pale); }
+@media (hover: hover) { .pf-bn:not(:disabled):hover { transform: translateY(-3px); border-color: rgba(255,209,102,.6); } }
+
+/* ---------------- mes decks : familles d'un deck, création (vide ou à partir d'un deck à thème) ---------------- */
+.hub-deckfams { display: flex; flex-wrap: wrap; gap: 5px; }
+.hub-deckfams span { --fc: #5ee1ff; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 99px; font: 600 .7rem var(--display); color: var(--txt-2);
+  background: color-mix(in srgb, var(--fc) 12%, #0a1226); border: 1px solid color-mix(in srgb, var(--fc) 35%, #1f3a66); }
+.hub-deckfams span .ico { color: var(--fc); }
+.hub-newdeck { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.hub-newbtn { flex-direction: row; align-items: center; gap: 12px; text-align: left; cursor: pointer; color: var(--txt); }
+.hub-newbtn b { display: block; font: 700 .95rem var(--display); }
+.hub-newbtn small { display: block; font-size: .78rem; color: var(--txt-2); }
+.hub-newbtn-i { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: #3a2600; background: radial-gradient(circle at 34% 28%, #fff7d1, #ffd166 55%, #c7901c); }
+.hub-newbtn:hover { border-color: rgba(255,209,102,.6); }
+.hub-newbtn[aria-expanded="true"] { border-color: var(--cyan); box-shadow: var(--halo); }
+.hub-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.hub-tpl { --fc: #5ee1ff; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 10px 12px; border-radius: 14px; text-align: left; color: var(--txt);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--fc) 16%, #0e1d3b), #0b1630 75%); border: 1px solid color-mix(in srgb, var(--fc) 40%, #1f3a66); }
+.hub-tpl .ico { grid-row: span 2; color: var(--fc); }
+.hub-tpl b { font: 700 .86rem var(--display); }
+.hub-tpl small { font-size: .72rem; color: var(--txt-2); }
+.hub-tpl:hover { border-color: var(--fc); }
+.tset-select { height: 34px; padding: 0 28px 0 12px; border-radius: 99px; font: 600 .8rem var(--display); color: var(--txt); background-color: var(--track); border: 1px solid var(--line);
+  appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--txt-2) 50%), linear-gradient(135deg, var(--txt-2) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }

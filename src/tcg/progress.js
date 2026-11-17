@@ -11,8 +11,8 @@
 //     ou en tickets de portail, avec une carte cible garantie au plus tard à la 50e invocation ;
 //   - quêtes du jour (XP + Éclats, tickets ou boosters, et un coffre quand les trois sont faites), succès permanents,
 //     XP de fin de partie (jamais 0, même en perdant).
-import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId } from "./cards/index.js";
-import { starterById, validateDeck, deckSize, fillDeck } from "./deck.js";
+import { ALL, CARD, FAMILY, PLAYABLE, PLOTS, RETIRED, currentId, subOf } from "./cards/index.js";
+import { starterById, validateDeck, deckSize, fillDeck, mainFamily } from "./deck.js";
 import { RARITY_ORDER, DECK_RULES, copiesOf } from "./rules.js";
 import { portalsOf } from "./portals.js";
 
@@ -36,7 +36,8 @@ const pickW = (r, table) => { let x = r() * table.reduce((s, [, w]) => s + w, 0)
 // tk : tickets de portail ; por : Portails (gift : cadeau d'ouverture reçu ; leg / monde : n = invocations depuis la dernière cible obtenue, c = cible choisie)
 export const emptyTcg = () => ({ v: 2, at: 0, starter: null, ec: 0, xp: 0, jet: 0, tk: 0, coll: {}, foil: {}, decks: [], sel: null, packs: {}, quests: null, shop: null, games: [],
   por: { gift: false, leg: { n: 0, c: null }, monde: { n: 0, c: null } },
-  st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0, pulls: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"], seed: Math.random().toString(36).slice(2, 10) });
+  st: { games: 0, wins: 0, packs: 0, bought: 0, fams: [], chal: 0, kills: 0, dom: 0, played: 0, pulls: 0 }, ms: {}, av: null, fr: "bronze", frSeen: ["bronze"],
+  bn: "heraut", bnSeen: [], seed: Math.random().toString(36).slice(2, 10) });
 
 /** Neutre offerte à tout le monde : commune, peu commune ou rare (les épiques et légendaires se gagnent : boosters, boutique, Portails). */
 export const giftNeutral = (d) => Boolean(d) && d.fam === "neutre" && d.type !== "plot" && !d.st && d.r !== "E" && d.r !== "L";
@@ -121,6 +122,8 @@ export function normalizeTcg(raw) {
   t.av = av && avatarOk(CARD[av]) ? av : null;
   t.fr = typeof raw.fr === "string" && FRAME_BY[raw.fr] ? raw.fr : "bronze";
   t.frSeen = Array.isArray(raw.frSeen) ? [...new Set(["bronze", ...raw.frSeen.filter((f) => FRAME_BY[f])])] : ["bronze"];
+  t.bn = typeof raw.bn === "string" && BANNER_BY[raw.bn] ? raw.bn : "heraut";
+  t.bnSeen = Array.isArray(raw.bnSeen) ? [...new Set(raw.bnSeen.filter((b) => BANNER_BY[b]))] : [];
   t.seed = typeof raw.seed === "string" && raw.seed ? raw.seed.slice(0, 12) : t.seed;
   return t;
 }
@@ -167,6 +170,25 @@ export function unlockCards(t0, ids, n = 2) {
     if (have < want) { addCard(t, id, false, want - have); added++; }
   }
   return { t, added };
+}
+
+/**
+ * Outil de test : reçoit un deck à thème (cartes et deck tout prêt), même si le deck de départ est déjà choisi
+ * (comptes créés avant les decks à thème). Ne change ni le deck de départ ni les cadeaux de bienvenue.
+ * Renvoie { t, deck, added } (added : exemplaires ajoutés) ou { error }.
+ */
+export function grantTheme(t0, themeId) {
+  const s = starterById(themeId);
+  if (!s || !s.theme) return { error: "Deck à thème inconnu." };
+  const t = clone(normalizeTcg(t0));
+  let added = 0;
+  for (const [id, n] of Object.entries(s.cards)) {
+    const have = (t.coll[id] || 0) + (t.foil[id] || 0);
+    if (have < n) { addCard(t, id, false, n - have); added += n - have; }
+  }
+  const deck = { id: "d" + Math.random().toString(36).slice(2, 8), name: s.name, fam: s.fam, pt: s.pt || null, cards: { ...s.cards }, plots: [...s.plots] };
+  t.decks.unshift(deck);
+  return { t: normalizeTcg(t), deck, added };
 }
 
 /* ------------------------------ niveaux ------------------------------ */
@@ -343,7 +365,9 @@ export function chooseStarter(t0, starterId) {
 /* ------------------------------ decks ------------------------------ */
 export function saveDeck(t0, deck) {
   const t = clone(normalizeTcg(t0));
-  const d = { id: deck.id || "d" + Math.random().toString(36).slice(2, 8), name: String(deck.name || "Mon deck").slice(0, 32), fam: deck.fam, pt: deck.pt || null, cards: { ...deck.cards }, plots: [...(deck.plots || [])] };
+  // la famille d'un deck n'est que sa famille la plus présente (couleur, icône) : les familles se mélangent librement
+  const fam = Object.keys(deck.cards || {}).length ? mainFamily(deck.cards) : FAMILY[deck.fam] ? deck.fam : "neutre";
+  const d = { id: deck.id || "d" + Math.random().toString(36).slice(2, 8), name: String(deck.name || "Mon deck").slice(0, 32), fam, pt: deck.pt && subOf(fam, deck.pt) ? deck.pt : null, cards: { ...deck.cards }, plots: [...(deck.plots || [])] };
   const i = t.decks.findIndex((x) => x.id === d.id);
   if (i >= 0) t.decks[i] = d; else t.decks.unshift(d);
   if (!t.sel) t.sel = d.id;
@@ -716,6 +740,63 @@ export function markFramesSeen(t0) {
   const t = clone(normalizeTcg(t0));
   t.frSeen = [...new Set([...t.frSeen, ...FRAMES.filter((f) => frameUnlocked(t, f)).map((f) => f.id)])];
   return t;
+}
+
+/**
+ * Bannières de profil : un étendard vertical derrière la photo, dans le lobby et sur le profil. Trois offertes, des spéciales
+ * (missions) et une par famille (20 cartes différentes de cette famille). Le dessin est dans ui/Banner.jsx et tcg.css (.bnr.b-<id>).
+ */
+const famCards = (t, fam) => Object.keys(owned(t)).filter((id) => CARD[id] && CARD[id].fam === fam).length;
+export const BANNER_FAM_GOAL = 20;
+export const BANNERS = [
+  { id: "heraut", name: "Héraut", kind: "base", icon: "crown", text: "Offerte", goal: 1, got: () => 1 },
+  { id: "aube", name: "Aube", kind: "base", icon: "sun", text: "Offerte", goal: 1, got: () => 1 },
+  { id: "braise", name: "Braise", kind: "base", icon: "flame", text: "Offerte", goal: 1, got: () => 1 },
+  { id: "maree", name: "Marée", kind: "special", icon: "waves", text: "Joue 5 parties", goal: 5, got: (t) => t.st.games },
+  { id: "conquerant", name: "Conquérant", kind: "special", icon: "swords", text: "Gagne 10 parties", goal: 10, got: (t) => t.st.wins },
+  { id: "prisme", name: "Prisme", kind: "special", icon: "sparkles", text: "Possède 10 cartes brillantes", goal: 10, got: (t) => Object.keys(t.foil).length },
+  { id: "portail", name: "Portail", kind: "special", icon: "orbit", text: "Invoque 30 fois dans les Portails", goal: 30, got: (t) => t.st.pulls || 0 },
+  { id: "archives", name: "Archives", kind: "special", icon: "library", text: "Possède 250 cartes différentes", goal: 250, got: (t) => Object.keys(owned(t)).length },
+  { id: "multivers", name: "Multivers", kind: "special", icon: "globe", text: "Joue avec 10 familles différentes", goal: 10, got: (t) => t.st.fams.length },
+  { id: "souverain", name: "Souverain", kind: "special", icon: "castle", text: "Atteins le niveau 25", goal: 25, got: (t) => levelOf(t.xp).lvl },
+  ...PLAYABLE.map((f) => ({ id: "f-" + f.id, fam: f.id, name: f.short || f.name, kind: "fam", icon: f.icon,
+    text: `Possède ${BANNER_FAM_GOAL} cartes différentes : ${f.name}`, goal: BANNER_FAM_GOAL, got: (t) => famCards(t, f.id) })),
+];
+export const BANNER_BY = Object.fromEntries(BANNERS.map((b) => [b.id, b]));
+export const bannerProgress = (t, b) => Math.min(b.goal, Math.max(0, b.got(t) || 0));
+export const bannerUnlocked = (t, b) => bannerProgress(t, b) >= b.goal;
+/** Bannière affichée : celle choisie si elle est débloquée, sinon le Héraut. */
+export const bannerOf = (t) => (BANNER_BY[t.bn] && bannerUnlocked(t, BANNER_BY[t.bn]) ? t.bn : "heraut");
+export function setBanner(t0, id) {
+  const t = clone(normalizeTcg(t0));
+  const b = BANNER_BY[id];
+  if (!b || !bannerUnlocked(t, b)) return { error: "Cette bannière n'est pas encore débloquée." };
+  t.bn = id;
+  return { t };
+}
+/** Bannières débloquées pas encore vues (pastille « nouveau »), sans les trois offertes. */
+export const newBanners = (t) => BANNERS.filter((b) => b.kind !== "base" && bannerUnlocked(t, b) && !t.bnSeen.includes(b.id));
+export function markBannersSeen(t0) {
+  const t = clone(normalizeTcg(t0));
+  t.bnSeen = [...new Set([...t.bnSeen, ...BANNERS.filter((b) => b.kind !== "base" && bannerUnlocked(t, b)).map((b) => b.id)])];
+  return t;
+}
+/** Ce que les autres joueurs voient de moi dans un lobby : photo (carte 7), cadre, bannière, niveau (+ fc : code ami, ajouté par l'appli). */
+export const tcgLook = (t0) => { const t = normalizeTcg(t0); return { av: avatarOf(t), fr: frameOf(t), bn: bannerOf(t), lv: levelOf(t.xp).lvl }; };
+/** Apparence d'un joueur reçue du réseau (lobby) : seulement des valeurs connues, null si ce n'est pas un objet. */
+export function cleanTcgLook(l) {
+  if (!l || typeof l !== "object" || Array.isArray(l)) return null;
+  const av = typeof l.av === "string" && CARD[l.av] && avatarOk(CARD[l.av]) ? l.av : null;
+  return {
+    av, fr: typeof l.fr === "string" && FRAME_BY[l.fr] ? l.fr : "bronze", bn: typeof l.bn === "string" && BANNER_BY[l.bn] ? l.bn : "heraut",
+    lv: Number.isInteger(l.lv) ? Math.max(1, Math.min(200, l.lv)) : 1, fc: typeof l.fc === "string" && /^[A-Z0-9]{6,10}$/.test(l.fc) ? l.fc : null,
+  };
+}
+/** Apparence d'un bot dans le lobby : une carte 7 en photo, un cadre et une bannière au hasard. */
+export function botTcgLook(r = Math.random) {
+  const sevens = ALL.filter((d) => avatarOk(d));
+  const pick = (l) => l[Math.floor(r() * l.length)];
+  return { av: pick(sevens).id, fr: pick(FRAMES).id, bn: pick(BANNERS).id, lv: 2 + Math.floor(r() * 28), fc: null };
 }
 
 export { PLOTS };

@@ -8,7 +8,7 @@
 //   - à la fin : toutes les cartes, de la plus rare à la moins rare (touche une carte pour la voir en grand).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY } from "../cards/index.js";
-import { RARITY } from "../rules.js";
+import { RARITY, GAME_NAME } from "../rules.js";
 import { tierOf } from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -94,7 +94,7 @@ function TearPack({ pack, count = 1, onOpen }) {
           <div className="pk-in">
             <div className="pk-body">
               <div className="pk-art">
-                <span className="pk-brand">Trône des Mondes</span>
+                <span className="pk-brand">{GAME_NAME}</span>
                 <div className="pk-medal"><Icon name={packIcon(pack)} size={44} stroke={1.5} /></div>
                 <div className="pk-t1">{pack.name.replace(/^Booster /, "")}</div>
                 <div className="pk-t2">{count * 5} cartes</div>

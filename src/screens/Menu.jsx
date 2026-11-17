@@ -5,6 +5,7 @@ import { Avatar } from "../ui/Avatar.jsx";
 import { Icon } from "../ui/Icon.jsx";
 import { progressOf } from "../data/profile.js";
 import AccountBadge from "../ui/AccountBadge.jsx";
+import { GAME_NAME } from "../tcg/rules.js";
 
 const GICON = { timesup: "hourglass", quiest: "eye", blindtest: "music", timeline: "history", party: "gamepad", board: "dice", petitbac: "edit", celeb: "image", trone: "crown", loupgarou: "moon" };
 
@@ -71,7 +72,7 @@ export default function Menu({ name, setName, notice, clearNotice, busy, onCreat
         {onTrone && (
           <button className="bigbtn d" data-testid="menu-trone" onClick={onTrone}>
             <span className="bigico" aria-hidden="true"><Icon name="crown" size={26} /></span>
-            <strong>Trône des Mondes</strong>
+            <strong>{GAME_NAME}</strong>
             <span>Tes cartes : decks, boosters, boutique, quêtes</span>
           </button>
         )}

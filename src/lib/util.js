@@ -1,5 +1,9 @@
 export const uid = (n = 8) => Math.random().toString(36).slice(2, 2 + n) + Date.now().toString(36).slice(-3);
 export const pick = (a) => a[(Math.random() * a.length) | 0];
+/** Code de salon à dicter ou à copier : 6 caractères, sans ceux qu'on confond (0/O, 1/I/L). */
+export const roomCode = () => Array.from({ length: 6 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[(Math.random() * 31) | 0]).join("");
+/** Code tapé par un joueur : sans espaces ni tirets, en majuscules pour un code de 6 caractères (salon du jeu de cartes). */
+export const cleanRoomCode = (s) => { const c = String(s || "").replace(/[\s-]/g, ""); return c.length === 6 ? c.toUpperCase() : c; };
 export function shuffle(a) {
   const r = a.slice();
   for (let i = r.length - 1; i > 0; i--) {

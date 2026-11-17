@@ -1,8 +1,8 @@
 // Tests du Trône des Mondes : données des cartes, règles de deck, decks de départ, et parties complètes bot contre bot.
 // Lancer : node tools/test-tcg.js            (rapide)
 //          node tools/test-tcg.js --sim 400  (tournoi d'équilibrage : taux de victoire par deck de départ)
-import { CARD, ALL, PLOTS, FAMILIES, PLAYABLE } from "../src/tcg/cards/index.js";
-import { validateDeck, starters, buildStarter } from "../src/tcg/deck.js";
+import { CARD, ALL, PLOTS, FAMILIES, PLAYABLE, TYPE_BONUS } from "../src/tcg/cards/index.js";
+import { validateDeck, starters, buildStarter, mainFamily, familyMix, fillDeck } from "../src/tcg/deck.js";
 import { Game, createGame, makeApi } from "../src/tcg/engine.js";
 import { plain } from "../src/tcg/rules.js";
 
@@ -38,6 +38,22 @@ if (twoVersions) {
   ok(!v.ok && v.errors.some((e) => e.includes("Une seule version")), "deux versions du même personnage : refusé avec un message");
 }
 ok(!validateDeck({ ...s0, cards: { ...s0.cards, [Object.keys(s0.cards)[0]]: 3 } }).ok, "3 exemplaires d'une carte : refusé");
+// familles mélangées librement : un deck fait de personnages de 4 familles (et des neutres) est valide
+{
+  const dc = st.find((s) => s.id === "theme-dc"), sith = st.find((s) => s.id === "theme-sith");
+  ok(mainFamily(dc.cards) === "dc" && familyMix(dc.cards)[0].fam === "dc" && familyMix(dc.cards).at(-1).fam === "neutre", "famille la plus présente d'un deck, et sa répartition (neutres à la fin)");
+  const cards = {};
+  const take = (s, n, keep) => { let k = 0; for (const [id, x] of Object.entries(s.cards)) { if (k >= n) break; if (!keep(CARD[id]) || cards[id]) continue; cards[id] = x; k += x; } };
+  const cheap = (d) => d.type === "char" && d.cost <= 4 && !Object.keys(cards).some((id) => CARD[id].key === d.key);
+  take(dc, 16, cheap);
+  take(sith, 12, cheap);
+  take(st.find((s) => s.id === "theme-hawkins"), 8, cheap);
+  const mix = { name: "Mélange", cards, plots: dc.plots };
+  const r = fillDeck(mix, { owned: Object.fromEntries(ALL.map((d) => [d.id, 2])) });
+  const v = validateDeck({ ...mix, cards: r.cards });
+  ok(v.ok && v.mix.filter((m) => m.fam !== "neutre").length >= 3, `deck de ${v.mix.length} familles mélangées : valide${v.ok ? "" : " (" + v.errors.join(" / ") + ")"}`);
+  ok(validateDeck({ name: "x", cards: {}, plots: [] }).errors.every((e) => !/famille/i.test(e)), "plus de règle de famille ni d'alliance");
+}
 ok(validateDeck(s0, {}).errors.some((e) => e.startsWith("Il te manque")), "cartes non possédées : refusé");
 
 /* ---------------- parties ---------------- */
@@ -252,10 +268,10 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
   ok(tusk.cond(t.X, me, winEv) && !tusk.cond(t.X, me, { p: t.A, loser: t.B, ch: { type: "combat", parts: [me.u] } }), "Tusk Act 4 : il faut un participant du perdant");
   drive(tusk.run(t.X, me, winEv));
   ok(t.B.dead.includes(zoro), "Tusk Act 4 : Zoro (force 6) meurt, quelle que soit sa force");
+  // pas de bonus de famille (comme la carte de faction du Trône de Fer) : la « carte famille » d'un joueur n'a aucun effet
   t = table(["jojo-iggy-1", "jojo-guido-mista-2"], ["onepiece-coby-1"]);
-  const famJ = t.G.inst[t.A.fu], solo = FAMILIES.find((f) => f.id === "jojo").abs[0];
-  ok(solo.cond(t.X, famJ, { p: t.A, ch: { type: "ruse", parts: [t.of(t.A, "jojo-iggy-1").u, t.of(t.B, "onepiece-coby-1").u] } }), "Un contre un : défi gagné avec un seul personnage, on pioche");
-  ok(!solo.cond(t.X, famJ, { p: t.A, ch: { type: "ruse", parts: [t.of(t.A, "jojo-iggy-1").u, t.of(t.A, "jojo-guido-mista-2").u] } }), "Un contre un : pas à deux");
+  ok(FAMILIES.every((f) => !f.abs.length) && Object.values(TYPE_BONUS).every((x) => !x.abs.length) && !t.X.abs(t.G.inst[t.A.fu]).length,
+    "aucun bonus de famille ni de type, région ou maison");
   // versions alternatives (même nom = une seule par deck) et noms d'images de Brice
   const { matchFile, artFile } = await import("../src/tcg/artNames.js");
   ok(CARD["jojo-dio-brando-7"].key === CARD["jojo-dio-brando-7-2"].key && CARD["jojo-josuke-higashikata-7"].key !== CARD["jojo-josuke-higashikata-jojolion-7"].key, "Dio Brando et Dio Brando (New Body) : alternatives ; Josuke (JoJolion) : un autre personnage");
@@ -302,6 +318,6 @@ if (simN) {
   for (const [f, r] of Object.entries(famRes).sort((x, y) => y[1].w / y[1].n - x[1].w / x[1].n)) console.log(`  ${(100 * r.w / r.n).toFixed(0).padStart(3)} %  ${f}`);
 }
 
-console.log(fail ? `${fail} ÉCHEC(S)` : "Trône des Mondes : tout est OK");
+console.log(fail ? `${fail} ÉCHEC(S)` : "Cartes et règles : tout est OK");
 process.exit(fail ? 1 : 0);
 void plain; void FAMILIES; void buildStarter;

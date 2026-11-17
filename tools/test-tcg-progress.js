@@ -339,6 +339,28 @@ ok(P.mergeTcg({ xp: 10 }, { xp: 500 }).xp === 500, "fusion de comptes : on garde
   ok(P.QUESTS.every((d) => { const rw = P.questReward(d); return rw.ec + rw.tk * 100 + Object.keys(rw.packs).length * 120 >= 50; }), "chaque quête rapporte quelque chose en plus de l'XP");
 }
 
+// bannières, apparence dans le lobby, deck à thème offert par l'outil testeur
+{
+  let t = P.normalizeTcg({});
+  ok(P.BANNERS.length >= 30 && P.BANNERS.filter((b) => P.bannerUnlocked(t, b)).map((b) => b.id).join() === "heraut,aube,braise", "bannières : trois offertes au départ");
+  ok(P.setBanner(t, "f-dc").error && P.bannerOf(t) === "heraut", "bannière de famille verrouillée sans ses cartes");
+  t = P.chooseStarter(t, "theme-dc").t;
+  ok(P.newBanners(t).some((b) => b.id === "f-dc") && !P.setBanner(t, "f-dc").error, "deck à thème DC : la bannière DC se débloque (20 cartes DC différentes)");
+  t = P.setBanner(t, "f-dc").t;
+  const raw = JSON.parse(JSON.stringify(t));
+  ok(P.normalizeTcg(raw).bn === "f-dc" && P.normalizeTcg({ ...raw, bn: "inconnue" }).bn === "heraut", "bannière choisie gardée dans la sauvegarde, inconnue remplacée");
+  ok(P.newBanners(P.markBannersSeen(t)).length === 0, "bannières vues : plus de pastille");
+  const look = P.tcgLook(t);
+  ok(look.av === "dc-superman-7" && look.bn === "f-dc" && look.fr === "bronze" && look.lv >= 1, "apparence dans le lobby : photo, cadre, bannière, niveau");
+  ok(P.cleanTcgLook({ ...look, fc: "AB3DF9KM" }).fc === "AB3DF9KM" && P.cleanTcgLook("x") === null && P.cleanTcgLook({ av: "dc-krypto-2" }).av === null, "apparence reçue du réseau vérifiée");
+  const bl = P.botTcgLook(() => 0.5);
+  ok(CARD[bl.av] && CARD[bl.av].cost >= 7 && P.BANNER_BY[bl.bn], "apparence d'un bot valide");
+  const g = P.grantTheme(t, "theme-sith");
+  ok(!g.error && g.added > 0 && g.t.decks[0].name === "Sith" && g.t.starter === "theme-dc" && g.t.ec === t.ec, "outil testeur : un deck à thème en plus (cartes et deck), sans changer le deck de départ ni les Éclats");
+  ok(validateDeck(g.t.decks[0], P.owned(g.t)).ok && g.t.foil["sw-dark-vador-7"] >= 1, "le deck à thème reçu est jouable, ses cartes 7 brillantes");
+  ok(P.grantTheme(t, "pokemon-kanto").error, "seulement les decks à thème");
+}
+
 // vues réseau
 const g = new Game({ players: [{ id: "a", name: "A", deck: st[0] }, { id: "b", name: "B", bot: true, deck: st[3] }], seed: 3 });
 const pv = publicView(g);

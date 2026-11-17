@@ -6,7 +6,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // Les pouvoirs s'inspirent de l'histoire de chaque champion ; les noms d'effets reprennent ses techniques.
 export const meta = {
   id: "lol", name: "League of Legends", short: "LoL", color: "#c8aa6e", color2: "#0a1428", icon: "hexagon", motif: "runeterra",
-  desc: "Les champions de Runeterra. Choisis une région : chacune a son bonus et ses champions. Bard, ses meeps, les sbires, les monstres et les objets de la Faille vont dans tous les decks.",
+  desc: "Les champions de Runeterra, de Demacia à Noxus et d'Ionia au Freljord, avec Bard, ses meeps, les sbires, les monstres et les objets de la Faille.",
   passive: "",
   sub: { one: "région", One: "Région", fem: true, ask: "Quelle région de Runeterra ?", help: "Un deck League of Legends ne prend que les champions de cette région (et ceux qui vont partout : Bard, les sbires, les objets…) ; chaque région donne un bonus à la famille.",
     pick: "Choisis une région de Runeterra pour ce deck.", not: "n'est pas de la région", starter: "lol" },
@@ -197,7 +197,7 @@ export const cards = [
   loc("Rakelstake", "La forteresse de l'Avarosa", 2, "Forteresse", "", "income:1", "U", { pt: FR }),
   loc("Le Pont du Progrès", "Entre la ville haute et la ville basse", 3, "Cité", "", "reduce:*,1@Le progrès ; reserve:1", "R", { pt: PZ }),
   loc("Le Bastion immortel", "Le siège de l'empire", 2, "Forteresse", "", "domi:2", "U", { pt: NX }),
-  loc("La Grande Cité de Demacia", "Des remparts de pétricite", 2, "Cité", "", "income:1", "U", { pt: DE }),
+  loc("La Grande Cité de Demacia", "Des remparts de pétricite", 2, "Cité", "", "income:1 ; defAuraT:Demacia,1@Les remparts de pétricite", "U", { pt: DE, uni: true }),
   loc("Ixaocan", "La cité cachée", 2, "Cité", "", "actStand:Ixtal@Les sentiers de la jungle", "U", { pt: IX }),
   loc("La Cité de Bandle", "Le foyer des yordles", 2, "Cité", "", "income:1", "U", { pt: BA }),
 

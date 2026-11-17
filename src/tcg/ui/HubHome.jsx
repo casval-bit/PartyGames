@@ -12,6 +12,8 @@ import { portalsOf, msToPortalChange } from "../portals.js";
 import { Icon } from "../../ui/Icon.jsx";
 import Portrait from "./Portrait.jsx";
 import HubBoard from "./HubBoard.jsx";
+import { GAME_NAME } from "../rules.js";
+import { TRONE_ONLY } from "../../lib/device.js";
 
 const SHOP_KEY = "ph-tcg-shop-seen";
 /** La boutique du jour a-t-elle été ouverte aujourd'hui sur cet appareil ? (pastille « nouveau ») */
@@ -51,13 +53,13 @@ function Nav({ id, icon, label, labelShort, sub, short, badge, tone, onClick }) 
   );
 }
 
-export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onSettings, onZoom, onFamily, onAlbum, nPacks, nQuests, calm }) {
+export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, homeBack, onRules, onSettings, onZoom, onFamily, onAlbum, nPacks, nQuests, calm }) {
   const lv = P.levelOf(t.xp);
   const deck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
   const v = deck ? validateDeck(deck, own) : null;
   const f = deck ? FAMILY[deck.fam] : null;
   const sub = deck ? subOf(deck.fam, deck.pt) : null;
-  const nFr = P.newFrames(t).length;
+  const nFr = P.newFrames(t).length + P.newBanners(t).length;
   const [left, setLeft] = useState(P.msToMidnight());
   const [pLeft, setPLeft] = useState(msToPortalChange());
   useEffect(() => { const iv = setInterval(() => { setLeft(P.msToMidnight()); setPLeft(msToPortalChange()); }, 30000); return () => clearInterval(iv); }, []);
@@ -71,24 +73,25 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onS
   return (
     <div className="hh" data-testid="hub-home">
       <header className="hh-top">
-        <button className="iconbtn" onClick={onClose} aria-label={inRoom ? "Retour au lobby" : "Retour au menu"}><Icon name="back" /></button>
-        <button className="hh-me" onClick={() => go("profile")} aria-label="Mon profil du Trône des Mondes" title="Mon profil du jeu" data-testid="hub-nav-profile">
+        <button className="iconbtn" onClick={onClose} aria-label={homeBack || (inRoom ? "Retour au lobby" : "Retour au menu")} title={homeBack || undefined} data-testid="hub-close"><Icon name="back" /></button>
+        <button className="hh-me" onClick={() => go("profile")} aria-label={`Mon profil ${GAME_NAME}`} title="Mon profil du jeu" data-testid="hub-nav-profile">
           <Portrait id={P.avatarOf(t)} frame={P.frameOf(t)} size={54} />
           <span className="hh-me-txt">
             <b>{name || "Joueur"}</b>
             <span className="hh-lv"><em>Niv. {lv.lvl}</em><span className="bar2 gold"><i style={{ width: `${(100 * lv.cur) / lv.need}%` }} /></span></span>
           </span>
           <span className="hh-me-go"><Icon name="idcard" size={16} />Profil</span>
-          {nFr > 0 && <i className="hh-badge" aria-label="Nouveau cadre débloqué">!</i>}
+          {nFr > 0 && <i className="hh-badge" aria-label="Nouveau cadre ou nouvelle bannière débloqués">!</i>}
         </button>
         <span className="grow" />
         <HubCurrencies t={t} go={go} nPacks={nPacks} />
+        {onRules && <button className="iconbtn" onClick={onRules} aria-label="Les règles du jeu" title="Les règles" data-testid="hub-rules"><Icon name="help" /></button>}
         <button className="iconbtn" onClick={onSettings} aria-label="Paramètres du jeu" title="Paramètres du jeu" data-testid="hub-settings"><Icon name="settings" /></button>
       </header>
 
       <div className="hh-logo">
         <span className="hh-crest" aria-hidden="true"><Icon name="crown" size={22} stroke={1.8} /></span>
-        <span><small>Jeu de cartes</small><b>Trône des Mondes</b></span>
+        <span><small>Jeu de cartes</small><b>{GAME_NAME}</b></span>
       </div>
 
       <section className="hh-stage" aria-label="Plateau de jeu">
@@ -116,7 +119,7 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, onS
       <div className="hh-play">
         <button className="hh-act play" onClick={onPlay} data-testid="hub-play">
           <span className="hh-act-i"><Icon name="swords" size={28} stroke={1.8} /></span>
-          <span className="hh-act-t"><b>Jouer</b><small>{inRoom ? "Retour au lobby" : "Créer un lobby"}</small></span>
+          <span className="hh-act-t"><b>Jouer</b><small>{inRoom ? (TRONE_ONLY ? "Retour au salon" : "Retour au lobby") : TRONE_ONLY ? "Salon, code, amis" : "Créer un lobby"}</small></span>
           <Icon name="next" size={22} className="hh-act-go" />
         </button>
         {deck ? (

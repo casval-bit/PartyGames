@@ -10,7 +10,7 @@ const J = "Justicier";
 export const cards = [
   ch("Batman", "Le détective", 4, 4, "CR", `${J}|Bat-famille|Milliardaire`, "discret|genie", "", "R"),
   ch("Batman", "Le Chevalier noir", 7, 6, "CRI", `${J}|Bat-famille|Milliardaire|Ligue`, "celebre|discret|genie", "enterSearch:Bat-famille@Plan d'urgence ; winKneel:*@La peur", "L"),
-  ch("Superman", "L'homme d'acier", 7, 6, "CI", `${J}|Ligue|Kryptonien`, "celebre|intimidation", "noKneel:combat@Plus rapide qu'une balle ; defStand@Bouclier humain", "L"),
+  ch("Superman", "L'homme d'acier", 7, 6, "CI", `${J}|Ligue|Kryptonien`, "celebre", "noKneel:combat@Plus rapide qu'une balle ; defStand@Bouclier humain", "L"),
   ch("Wonder Woman", "Diana de Themyscira", 5, 5, "CI", `${J}|Ligue|Amazone`, "celebre", "winStand:combat@Bracelets", "E"),
   ch("Flash", "Barry Allen", 4, 3, "C", `${J}|Ligue|Speedster`, "", "noKneel:combat@La vitesse de la lumière", "R"),
   ch("Aquaman", "Roi d'Atlantis", 5, 5, "CI", `${J}|Ligue|Atlante|Roi`, "", "income:1", "R"),
@@ -45,7 +45,7 @@ export const cards = [
   // --- lieux
   loc("La Batcave", "Sous le manoir Wayne", 2, "Bat-famille", "", "reduce:Bat-famille,1@Équipement", "U"),
   loc("Metropolis", "La cité de demain", 1, "Ville", "limite", "income:1", "C"),
-  loc("Themyscira", "L'île des Amazones", 3, "Amazone", "", "defAura:1", "U"),
+  loc("Themyscira", "L'île des Amazones", 3, "Amazone", "", "defAura:1", "U", { uni: true }),
   loc("L'asile d'Arkham", "Pour les fous de Gotham", 2, "Gotham", "", "reduce:Vilain,1@Évasion", "U"),
   loc("La Tour de guet", "QG de la Ligue", 3, "Ligue", "", "xtraCh:influence", "R"),
   // --- objets
@@ -88,7 +88,7 @@ export const cards = [
   ch("Bizarro", "Moi pas aimer toi", 5, 6, "C", "Vilain|Kryptonien", "", "ifAtk:1@Le monde de Bizarro", "U"),
   ch("Général Zod", "Le tyran de Krypton", 6, 6, "C", "Vilain|Kryptonien", "", "winKill:combat,3@Agenouille-toi devant Zod !", "R"),
   ch("Supergirl", "La Fille d'Acier", 7, 6, "CRI", `${J}|Kryptonien`, "celebre", "aura:Kryptonien,1@La Maison d'El ; winStand:combat@Vol supersonique", "L"),
-  ch("Power Girl", "Kara de Terre-2", 5, 6, "C", `${J}|Kryptonien`, "", "ifAtk:1@La force de Terre-2", "U"),
+  ch("Power Girl", "Kara de Terre-2", 5, 5, "C", `${J}|Kryptonien`, "", "ifAtk:1@La force de Terre-2", "U"),
   ch("Lois Lane", "La reporter du Daily Planet", 2, 1, "RI", "Daily Planet", "", "enterDraw:1@Le scoop", "U"),
   ch("Krypto", "Le super-chien", 2, 2, "C", `${J}|Kryptonien`, "", "ifName:Superman,1@Le chien de Superman", "C"),
   // --- comics : la Ligue et les Teen Titans

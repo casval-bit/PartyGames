@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
+import TcgApp from "./tcg/ui/TcgApp.jsx";
 import "./styles.css";
 import "./tablet.css";
 import "./desktop.css";
 import { installClickFx } from "./ui/clickfx.js";
 import { Icon } from "./ui/Icon.jsx";
 import { sfx } from "./lib/sfx.js";
-import { DESKTOP, desktopHint } from "./lib/device.js";
+import { DESKTOP, TRONE_ONLY, desktopHint } from "./lib/device.js";
 
 installClickFx();
 if (DESKTOP) document.documentElement.classList.add("desktop"); // appli PC : voir lib/device.js
@@ -32,5 +33,7 @@ function Shell({ children }) {
 }
 
 // Sur l'appli PC, l'écran de l'ordinateur est déjà l'écran du jeu : pas de fausse tablette, l'appli occupe toute la fenêtre.
-createRoot(document.getElementById("root")).render(DESKTOP ? <App /> : <Shell><App /></Shell>);
+// L'appli PC (et un navigateur ouvert avec « ?trone ») n'a que le jeu de cartes, Heavy is the Crown (src/tcg/ui/TcgApp.jsx).
+if (TRONE_ONLY) document.documentElement.classList.add("tcg-only");
+createRoot(document.getElementById("root")).render(TRONE_ONLY ? <TcgApp /> : DESKTOP ? <App /> : <Shell><App /></Shell>);
 desktopHint();

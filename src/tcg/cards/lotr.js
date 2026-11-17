@@ -5,7 +5,7 @@ import { ch, loc, obj, ev } from "./build.js";
 // Gandalf, Aragorn et Sauron ont deux versions à 7.
 export const meta = {
   id: "lotr", name: "Le Seigneur des Anneaux", short: "Seigneur des Anneaux", color: "#d4af37", color2: "#16200f", icon: "mountain", motif: "middleearth",
-  desc: "Un Anneau pour les gouverner tous. Choisis un camp de la Terre du Milieu : les Peuples libres (Hobbits, Elfes, Nains, Gondor, Rohan) ou l'Ombre (Mordor, Isengard).",
+  desc: "Un Anneau pour les gouverner tous. Les Peuples libres (Hobbits, Elfes, Nains, Gondor, Rohan) face à l'Ombre (Mordor, Isengard).",
   passive: "",
   sub: { one: "camp", One: "Camp", fem: false, ask: "Quel camp de la Terre du Milieu ?", help: "Un deck Seigneur des Anneaux ne prend que les personnages de son camp (et ceux qui vont partout) ; chaque camp donne un bonus à la famille.",
     pick: "Choisis un camp de la Terre du Milieu pour ce deck.", not: "n'est pas du camp", starter: "lotr" },

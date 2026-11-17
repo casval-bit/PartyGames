@@ -1,7 +1,7 @@
 // Trône des Mondes côté créateur du salon : decks des joueurs, partie (moteur src/tcg/engine.js), bots, minuteur.
 // Ces méthodes sont ajoutées à HostEngine (voir la fin de hostEngine.js).
 import { Game } from "../tcg/engine.js";
-import { starters, validateDeck } from "../tcg/deck.js";
+import { starters, validateDeck, mainFamily } from "../tcg/deck.js";
 import { FAMILY } from "../tcg/cards/index.js";
 import { publicView, privateView } from "../tcg/view.js";
 
@@ -12,14 +12,18 @@ export const AG_DEFAULTS = { agGoal: 15, agTimer: 90 };
 
 const botDelay = () => (globalThis.TRONE_FAST ? 2 : 650);
 
-/** Nettoie un deck reçu du réseau (forme seulement ; les règles sont vérifiées par validateDeck). */
+/**
+ * Nettoie un deck reçu du réseau (forme seulement ; les règles sont vérifiées par validateDeck). Sa famille (couleur, icône,
+ * aucun effet en jeu) est recalculée ici : la plus présente dans ses cartes.
+ */
 export function cleanDeck(d) {
-  if (!d || typeof d !== "object" || typeof d.fam !== "string" || !FAMILY[d.fam]) return null;
+  if (!d || typeof d !== "object") return null;
   const cards = {};
   const entries = d.cards && typeof d.cards === "object" ? Object.entries(d.cards).slice(0, 80) : [];
   for (const [id, n] of entries) if (typeof id === "string" && id.length <= 60 && Number.isInteger(n) && n >= 1 && n <= 2) cards[id] = n;
   const plots = Array.isArray(d.plots) ? d.plots.filter((x) => typeof x === "string" && x.length <= 60).slice(0, 7) : [];
-  return { name: String(d.name || "Deck").slice(0, 32), fam: d.fam, pt: typeof d.pt === "string" ? d.pt.slice(0, 20) : null, cards, plots };
+  const fam = mainFamily(cards);
+  return { name: String(d.name || "Deck").slice(0, 32), fam, pt: typeof d.pt === "string" && FAMILY[fam] ? d.pt.slice(0, 20) : null, cards, plots };
 }
 /** Nettoie une réponse de joueur (seulement des champs connus, de taille bornée). */
 export function cleanAnswer(a) {
