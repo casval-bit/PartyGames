@@ -1,54 +1,53 @@
-// Album du Trône des Mondes : toutes les cartes qui existent, famille par famille (ou toutes familles mêlées par coût).
+// Album du Trône des Mondes : toutes les cartes qui existent, triées au choix (famille, coût, force, rareté, nom, exemplaires ;
+// croissant ou décroissant), avec un en-tête par groupe (« Coût 5 », « Légendaire »…) et ses cartes obtenues.
 // Celles qu'on n'a pas encore sont grisées mais s'ouvrent quand même en grand (toujours grisées) ; les brillantes qu'on possède
 // scintillent. En grand, on feuillette l'album avec les flèches (ou ← → au clavier).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ALL, FAMILY, PLAYABLE, traitNames } from "../cards/index.js";
+import { RARITY, RARITY_ORDER, CARD_TYPES } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
 import { CardFace } from "./Card.jsx";
 import CardZoom from "./CardZoom.jsx";
-import { loadTri, saveTri } from "./ArtList.jsx";
+import { SortPick, cardSorter, cardGroup, loadSort } from "./sortCards.jsx";
 
 const FAM_ORDER = [...PLAYABLE.map((f) => f.id), "neutre"];
-const TYPE_ORDER = ["char", "loc", "obj", "evt"];
 const STEP = 72; // cartes ajoutées à l'affichage à chaque fois qu'on approche du bas
 const norm = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const KEY = new Map(ALL.map((d) => [d.id, norm(`${d.name} ${d.title} ${traitNames(d).join(" ")}`)])); // « Kanto », « Gryffondor »… trouvent aussi leurs cartes
-// dans une famille : personnages par coût, puis lieux, objets, événements (comme un classeur)
-const byFamily = (a, b) => FAM_ORDER.indexOf(a.fam) - FAM_ORDER.indexOf(b.fam) || TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type)
-  || a.cost - b.cost || a.name.localeCompare(b.name, "fr") || a.id.localeCompare(b.id);
-const byCost = (a, b) => a.cost - b.cost || a.name.localeCompare(b.name, "fr") || FAM_ORDER.indexOf(a.fam) - FAM_ORDER.indexOf(b.fam) || a.id.localeCompare(b.id);
 const SHOW = [["all", "Toutes"], ["own", "Obtenues"], ["miss", "Manquantes"], ["foil", "Brillantes"]];
 
 export default function Album({ t, onClose, shine }) {
   const [q, setQ] = useState("");
   const [fam, setFam] = useState("all");
   const [show, setShow] = useState("all");
-  const [tri, setTri] = useState(loadTri);
+  const [type, setType] = useState("all");
+  const [rar, setRar] = useState("all");
+  const [sort, setSort] = useState(loadSort);
   const [lim, setLim] = useState(STEP);
   const [zoom, setZoom] = useState(null); // index dans la liste affichée
   const end = useRef(null);
   const body = useRef(null);
   const has = (id) => (t.coll[id] || 0) + (t.foil[id] || 0) > 0;
-  const byFam = tri !== "cost";
+  const count = (d) => (t.coll[d.id] || 0) + (t.foil[d.id] || 0);
+  const base = (d, s) => (fam === "all" || d.fam === fam) && (type === "all" || d.type === type) && (rar === "all" || d.r === rar) && (!s || KEY.get(d.id).includes(s));
 
   const list = useMemo(() => {
     const s = norm(q.trim());
-    return ALL.filter((d) => (fam === "all" || d.fam === fam) && (!s || KEY.get(d.id).includes(s))
-      && (show === "all" || (show === "own" ? has(d.id) : show === "miss" ? !has(d.id) : (t.foil[d.id] || 0) > 0)))
-      .sort(byFam ? byFamily : byCost);
-  }, [q, fam, show, byFam, t]); // eslint-disable-line react-hooks/exhaustive-deps
+    return ALL.filter((d) => base(d, s) && (show === "all" || (show === "own" ? has(d.id) : show === "miss" ? !has(d.id) : (t.foil[d.id] || 0) > 0)))
+      .sort(cardSorter(sort.k, sort.dir, count));
+  }, [q, fam, type, rar, show, sort, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // compteurs des en-têtes (sur toutes les cartes du groupe, quel que soit le filtre « afficher »)
+  // compteurs des en-têtes : toutes les cartes du groupe avec ces filtres, quel que soit le filtre « afficher »
   const counts = useMemo(() => {
-    const m = {};
+    const m = {}, s = norm(q.trim());
     for (const d of ALL) {
-      if (!byFam && fam !== "all" && d.fam !== fam) continue;
-      const g = byFam ? d.fam : d.cost, x = (m[g] = m[g] || { n: 0, ok: 0 });
+      if (!base(d, s)) continue;
+      const g = cardGroup(sort.k, d, count).g, x = (m[g] = m[g] || { n: 0, ok: 0 });
       x.n++; if (has(d.id)) x.ok++;
     }
     return m;
-  }, [byFam, fam, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q, fam, type, rar, sort, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = useMemo(() => ({ ok: ALL.filter((d) => has(d.id)).length, foil: ALL.filter((d) => (t.foil[d.id] || 0) > 0).length }), [t]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -60,7 +59,7 @@ export default function Album({ t, onClose, shine }) {
     io.observe(el);
     return () => io.disconnect();
   }, [list.length, lim]);
-  useEffect(() => { setLim(STEP); if (body.current) body.current.scrollTop = 0; }, [q, fam, show, tri]);
+  useEffect(() => { setLim(STEP); if (body.current) body.current.scrollTop = 0; }, [q, fam, type, rar, show, sort]);
   useEffect(() => {
     const k = (e) => { if (e.key === "Escape" && zoom === null) onClose(); };
     window.addEventListener("keydown", k);
@@ -69,8 +68,8 @@ export default function Album({ t, onClose, shine }) {
 
   const groups = [];
   for (const d of list.slice(0, lim)) {
-    const g = byFam ? d.fam : d.cost;
-    if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, cards: [] });
+    const gr = cardGroup(sort.k, d, count);
+    if (!groups.length || groups[groups.length - 1].g !== gr.g) groups.push({ ...gr, cards: [] });
     groups[groups.length - 1].cards.push(d);
   }
   let idx = 0;
@@ -91,16 +90,18 @@ export default function Album({ t, onClose, shine }) {
       <div className="hub-filters">
         {SHOW.map(([v, label]) => <button key={v} aria-pressed={show === v} onClick={() => setShow(v)}>{label}</button>)}
         <select value={fam} onChange={(e) => setFam(e.target.value)} aria-label="Famille"><option value="all">Toutes les familles</option>{FAM_ORDER.map((f) => <option key={f} value={f}>{FAMILY[f].name}</option>)}</select>
-        <select value={tri} onChange={(e) => { setTri(e.target.value); saveTri(e.target.value); }} aria-label="Tri"><option value="fam">Par famille</option><option value="cost">Par coût (familles mêlées)</option></select>
+        <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Type"><option value="all">Tous types</option>{["char", "loc", "obj", "evt"].map((x) => <option key={x} value={x}>{CARD_TYPES[x]}</option>)}</select>
+        <select value={rar} onChange={(e) => setRar(e.target.value)} aria-label="Rareté"><option value="all">Toutes raretés</option>{RARITY_ORDER.map((r) => <option key={r} value={r}>{RARITY[r].name}</option>)}</select>
       </div>
+      <SortPick value={sort} onChange={setSort} testid="alb-sort" />
       <div className="alb-body" ref={body}>
-        {groups.map(({ g, cards }) => {
-          const c = counts[g] || { n: 0, ok: 0 }, f = byFam ? FAMILY[g] : null;
+        {groups.map(({ g, label, icon, color, cards }) => {
+          const c = counts[g] || { n: 0, ok: 0 };
           return (
             <section key={g} className="alb-sec">
-              <div className="alb-head" style={{ "--fc": f ? f.color : "#ffd166" }}>
-                {f ? <Icon name={f.icon} size={16} /> : <Icon name="coins" size={16} />}
-                <b>{f ? f.name : `Coût ${g}`}</b>
+              <div className="alb-head" style={{ "--fc": color || "#ffd166" }}>
+                <Icon name={icon} size={16} />
+                <b>{label}</b>
                 <small>{c.ok} / {c.n}</small>
                 <span className="alb-mini"><i style={{ width: `${(100 * c.ok) / Math.max(1, c.n)}%` }} /></span>
               </div>

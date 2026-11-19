@@ -12,6 +12,7 @@ import {
   Briefcase, Apple, Building, Tag, Volleyball, UtensilsCrossed, Locate, OctagonExclamationPoint,
   Umbrella, ToyBrick, Wind, Castle, Scroll, EyeOff, Sprout, BookOpen, Sparkle, WandSparkles, Theater,
   Lightbulb, Bike, Radio, Copy, ClipboardList, ImageOff, Dog, Crop, Ticket,
+  ArrowDownWideNarrow, ArrowUpNarrowWide, SlidersHorizontal, Keyboard, MonitorCog, UserRoundCog,
 } from "lucide-react";
 
 const MAP = {
@@ -35,6 +36,7 @@ const MAP = {
   building: Building, tag: Tag, ball: Volleyball, food: UtensilsCrossed, locate: Locate,
   umbrella: Umbrella, toy: ToyBrick, wind: Wind, castle: Castle, scroll: Scroll, eyeoff: EyeOff, sprout: Sprout, book: BookOpen, sparkle: Sparkle, wandsp: WandSparkles, theater: Theater,
   bulb: Lightbulb, bike: Bike, radio: Radio, copy: Copy, cliplist: ClipboardList, imageoff: ImageOff, dog: Dog, crop: Crop, ticket: Ticket,
+  sortdown: ArrowDownWideNarrow, sortup: ArrowUpNarrowWide, sliders: SlidersHorizontal, keyboard: Keyboard, monitor: MonitorCog, usercog: UserRoundCog,
 };
 
 /** Icône par nom (`back`, `trophy`, `gem`…). size en px, stroke = épaisseur du trait (fin par défaut). */

@@ -494,8 +494,11 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   Trois offertes (Héraut, Aube, Braise), sept par mission (Marée : 5 parties ; Conquérant : 10 victoires ; Prisme : 10 brillantes ; Portail : 30 invocations ;
   Archives : 250 cartes différentes ; Multivers : 10 familles jouées ; Souverain : niveau 25) et **une par famille** (aux couleurs et au décor de la famille),
   débloquée avec 20 cartes différentes de cette famille. Le **pseudo** se change aussi dans le profil (appli PC : il n'y a plus le menu de Party Hub).
-- **Paramètres du jeu** (roue dentée, `TcgSettings.jsx`, propres à Heavy is the Crown et enregistrés sur l'appareil, `src/tcg/prefs.js`) : sons du jeu (oui / coupés), volume,
-  son au survol des boutons, animations complètes ou réduites, ouverture des boosters (déchirer en glissant, ou directe), plein écran sur PC ; le compte (connecté ou profil local) y est rappelé.
+- **Réglages** (roue dentée, `TcgSettings.jsx` + `settings.css`, propres à Heavy is the Crown et enregistrés sur l'appareil, `src/tcg/prefs.js`), présentés comme un menu
+  d'options de jeu vidéo : les catégories dans une colonne à gauche (une rangée d'onglets sur téléphone), leurs options à droite avec de grands interrupteurs,
+  des choix et un curseur. **Compte** (connecté ou profil local, pseudo), **Partie** (ouverture des boosters : animation ou directe, règles du jeu),
+  **Affichage** (animations complètes ou réduites, **taille des cartes** dans la collection, l'album et l'outil de deck sur grand écran : petites, moyennes,
+  grandes, via la variable CSS `--tcg-k`, plein écran sur PC), **Son** (sons du jeu, volume, son au survol), **Testeur** (si `VITE_TESTEURS`), **Aide** (règles, raccourcis clavier).
   Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Heavy is the Crown (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
 
 **Collection** :
@@ -529,13 +532,16 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   au moins 24 personnages ; au plus 18 objets + événements et 10 lieux. C'est tout : plus de famille principale imposée ni de famille alliée.
   **Mes decks** : chaque deck montre ses familles ; « Créer un deck » part d'un deck vide, « Partir d'un deck à thème » d'une copie d'un des 24 decks à thème
   (les 8 de départ, puis les autres ; les cartes qui manquent sont signalées).
-  **Créateur de deck** (`DeckBuilder.jsx`, `deckbuilder.css`) : à gauche les cartes (recherche, type, coût, rareté, tri, une rangée de familles : toutes ou une seule,
-  celles dont tu as des cartes d'abord ; « Seulement mes cartes », ou toutes avec celles qui manquent grisées), + et − sur chaque carte ;
-  à droite le deck : **les règles cochées en direct** (vert : respectée, jaune : pas encore atteinte, rouge : dépassée), la **répartition par famille**
-  (barre aux couleurs des familles), la courbe des personnages et la liste. Onglet Scénarios ; « Compléter avec mes cartes » remplit les places libres
-  (la famille la plus présente d'abord, puis les neutres, puis le reste). Sur téléphone : trois onglets (cartes, deck, scénarios).
-- **Album** (Collection > « Album : toutes les cartes ») : toutes les cartes qui existent, famille par famille avec le compte de chacune (ou toutes
-  familles mêlées par coût), filtres Obtenues / Manquantes / Brillantes. Celles qui manquent sont grisées mais s'ouvrent en grand (toujours grisées).
+  **Outil de deck** (`DeckBuilder.jsx`, `deckbuilder.css`) : un nouveau deck commence par **« Comment veux-tu commencer ? »** (un deck à thème, « Remplir
+  avec mes cartes » d'une famille choisie, ou un deck vide). En haut, la **prochaine étape** en une phrase (« Ajoute encore 18 cartes, dont 6 personnages »,
+  « Retire 3 cartes », « Choisis encore 2 scénarios »…) avec son bouton, les trois étapes (cartes, scénarios, enregistrer) et une barre de progression ;
+  toutes les règles cochées sont dans « Les règles ». À gauche les cartes : recherche, type, et le reste replié dans **« Filtres et tri »** (mes cartes,
+  coût, rareté, tri, familles ; les filtres actifs restent visibles en pastilles qu'on retire d'un clic). Sous chaque carte, un bouton **« Ajouter »**, puis
+  **− 1/2 +** une fois dans le deck (la carte est cerclée de vert, avec ×1 ou ×2). À droite le deck : la liste par type avec − / + et la **corbeille**,
+  les compteurs (personnages, lieux, objets et événements), le détail replié (familles, courbe). Sur téléphone : trois onglets (Ajouter, Mon deck, Scénarios).
+- **Album** (Collection > « Album : toutes les cartes ») : toutes les cartes qui existent, avec un en-tête par groupe et son compte, filtres
+  Obtenues / Manquantes / Brillantes, famille, type et rareté. **Tri** (album, collection et outil de deck, `sortCards.jsx`, gardé sur l'appareil) : par famille,
+  coût, force, rareté, nom ou exemplaires, et le bouton du sens juste à côté (croissant / décroissant, A → Z / Z → A, légendaires d'abord…). Celles qui manquent sont grisées mais s'ouvrent en grand (toujours grisées).
   En grand, la carte s'incline un peu sous le doigt ou la souris (et quand on penche le téléphone) ; le reflet arc-en-ciel des brillantes suit la direction
   et se renforce quand on penche ou agite la carte (pas de balayage lumineux en grand ; sur la table et dans la collection, un éclat passe toutes les 11 s environ,
   décalé d'une carte à l'autre), et on feuillette l'album avec les flèches (← → au clavier).

@@ -14,7 +14,8 @@ import DeckBuilder from "./DeckBuilder.jsx";
 import PackOpen, { packColor, packIcon } from "./PackOpen.jsx";
 import RulesGuide from "./RulesGuide.jsx";
 import { useArtInfo, importFiles, syncRemote } from "./artStore.js";
-import ArtList, { loadTri, saveTri } from "./ArtList.jsx";
+import ArtList from "./ArtList.jsx";
+import { SortPick, cardSorter, loadSort } from "./sortCards.jsx";
 import Album from "./Album.jsx";
 import { APPAREIL } from "../../lib/device.js";
 import { useTcgPrefs } from "../prefs.js";
@@ -187,17 +188,15 @@ function Collection({ t, own, setT, flash }) {
   const [imp, setImp] = useState(null);
   const [rc, setRc] = useState(false);
   const [names, setNames] = useState(false);
-  const [tri, setTri] = useState(loadTri);
+  const [sort, setSort] = useState(loadSort);
   const [album, setAlbum] = useState(false);
   const art = useArtInfo();
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     return ALL.filter((d) => (!mine || own[d.id]) && (fam === "all" || d.fam === fam) && (type === "all" || d.type === type) && (rar === "all" || d.r === rar)
       && (!s || d.name.toLowerCase().includes(s) || d.title.toLowerCase().includes(s) || d.traits.some((x) => x.toLowerCase().includes(s))))
-      .sort(tri === "cost"
-        ? (a, b) => a.cost - b.cost || a.name.localeCompare(b.name, "fr") || RARITY_ORDER.indexOf(b.r) - RARITY_ORDER.indexOf(a.r) || a.fam.localeCompare(b.fam)
-        : (a, b) => a.fam.localeCompare(b.fam) || RARITY_ORDER.indexOf(b.r) - RARITY_ORDER.indexOf(a.r) || b.cost - a.cost);
-  }, [q, fam, type, rar, mine, own, tri]);
+      .sort(cardSorter(sort.k, sort.dir, (d) => own[d.id] || 0));
+  }, [q, fam, type, rar, mine, own, sort]);
   const distinct = Object.keys(own).length;
   const rec = P.recyclable(t);
   const doImport = async (e) => {
@@ -233,8 +232,8 @@ function Collection({ t, own, setT, flash }) {
         <select value={fam} onChange={(e) => { setFam(e.target.value); setLim(48); }} aria-label="Famille"><option value="all">Toutes les familles</option>{[...PLAYABLE, FAMILY.neutre].map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
         <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Type"><option value="all">Tous types</option>{["char", "loc", "obj", "evt"].map((x) => <option key={x} value={x}>{CARD_TYPES[x]}</option>)}</select>
         <select value={rar} onChange={(e) => setRar(e.target.value)} aria-label="Rareté"><option value="all">Toutes raretés</option>{RARITY_ORDER.map((r) => <option key={r} value={r}>{RARITY[r].name}</option>)}</select>
-        <select value={tri} onChange={(e) => { setTri(e.target.value); saveTri(e.target.value); setLim(48); }} aria-label="Tri"><option value="fam">Tri par famille</option><option value="cost">Tri par coût</option></select>
       </div>
+      <SortPick value={sort} onChange={(v) => { setSort(v); setLim(48); }} testid="col-sort" />
       <div className="hub-grid">
         {list.slice(0, lim).map((d) => {
           const n = t.coll[d.id] || 0, f = t.foil[d.id] || 0;
@@ -648,7 +647,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
           ? <CardZoom id={zoom.id} foil={(t.foil[zoom.id] || 0) > 0} owned={CARD[zoom.id] && CARD[zoom.id].type !== "plot" ? { n: t.coll[zoom.id] || 0, f: t.foil[zoom.id] || 0 } : null} shine={shineOf(t, setT, flash)} onClose={() => setZoom(null)} />
           : <CardZoom fam={zoom.fam} pt={zoom.pt} onClose={() => setZoom(null)} />)}
         {rules && <RulesGuide onClose={() => setRules(false)} />}
-        {settings && <TcgSettings acc={acc} onAccount={onAccount} t={t} setT={setT} flash={flash} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
+        {settings && <TcgSettings acc={acc} onAccount={onAccount} t={t} setT={setT} flash={flash} name={name} onName={onName} onClose={() => { setSettings(false); sfx.close(); }} onRules={() => setRules(true)} />}
       </div>
     </>
   );
