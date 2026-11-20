@@ -1,5 +1,7 @@
-// Écran titre de Heavy is the Crown (appli du jeu seul) : une couronne dorée qui s'allume, des cartes qui tournent autour,
-// des braises qui montent, le nom du jeu gravé. On entre d'un clic (ou Entrée). Sans pseudo, on le choisit ici d'abord.
+// Écran titre de Heavy is the Crown (appli du jeu seul) : la couronne dorée et le nom du jeu, posés sur la salle en 3D (la table
+// ronde vue d'en haut, qui tourne lentement, TableScene.jsx). On entre d'un clic (ou Entrée) : le titre s'envole et la caméra
+// descend s'asseoir à sa place, devant son plateau (l'accueil). Sans pseudo, on le choisit ici d'abord. Sans la salle en 3D
+// (scene absent), l'ancien décor : rayons, braises et cartes qui tournent.
 // En haut : le compte (connexion par e-mail : la progression est sauvegardée et suit le joueur).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../../ui/Icon.jsx";
@@ -40,14 +42,14 @@ export function CrownMark({ size = 160, className = "" }) {
   );
 }
 
-export default function TitleScreen({ name, setName, acc, onAccount, onEnter }) {
+export default function TitleScreen({ name, setName, acc, onAccount, onEnter, scene = false }) {
   const [ready, setReady] = useState(false);
   const [boom, setBoom] = useState(false);
   const [pseudo, setPseudo] = useState(name || "");
   const need = !String(name || "").trim();
   const done = useRef(false);
   useEffect(() => { // polices prêtes, au moins 1,2 s pour laisser la couronne s'allumer
-    const min = new Promise((r) => setTimeout(r, 1200));
+    const min = new Promise((r) => setTimeout(r, scene ? 700 : 1200));
     const fonts = (document.fonts && document.fonts.ready) || Promise.resolve();
     Promise.all([min, fonts.catch(() => {})]).then(() => setReady(true));
   }, []);
@@ -56,7 +58,7 @@ export default function TitleScreen({ name, setName, acc, onAccount, onEnter }) 
     if (need) { const p = pseudo.trim().slice(0, 16); if (!p) return; setName(p); }
     done.current = true;
     setBoom(true);
-    setTimeout(onEnter, 420);
+    setTimeout(onEnter, scene ? 360 : 420);
   };
   useEffect(() => {
     const k = (e) => { if ((e.key === "Enter" || e.key === " ") && !need && !e.target.closest("input,button,textarea")) go(); };
@@ -65,11 +67,15 @@ export default function TitleScreen({ name, setName, acc, onAccount, onEnter }) 
   }); // eslint-disable-line react-hooks/exhaustive-deps
   const embers = useMemo(() => Array.from({ length: 22 }, (_, i) => ({ i, x: (i * 37) % 100, d: 6 + ((i * 13) % 9), s: 2 + (i % 3), delay: (i * 0.71) % 8 })), []);
   return (
-    <div className={"hts" + (ready ? " on" : "") + (boom ? " boom" : "")} onClick={need ? undefined : go} data-testid="title-screen">
-      <div className="hub-bg" aria-hidden="true" />
-      <div className="hts-rays" aria-hidden="true" />
-      <div className="hts-embers" aria-hidden="true">{embers.map((e) => <i key={e.i} style={{ "--x": e.x + "%", "--d": e.d + "s", "--s": e.s + "px", "--dl": e.delay + "s" }} />)}</div>
-      <div className="hts-orbit" aria-hidden="true">{Array.from({ length: 8 }, (_, i) => <span key={i} style={{ "--i": i }}><CardBack w={54} /></span>)}</div>
+    <div className={"hts" + (ready ? " on" : "") + (boom ? " boom" : "") + (scene ? " on3d" : "")} onClick={need ? undefined : go} data-testid="title-screen">
+      {!scene && (
+        <>
+          <div className="hub-bg" aria-hidden="true" />
+          <div className="hts-rays" aria-hidden="true" />
+          <div className="hts-embers" aria-hidden="true">{embers.map((e) => <i key={e.i} style={{ "--x": e.x + "%", "--d": e.d + "s", "--s": e.s + "px", "--dl": e.delay + "s" }} />)}</div>
+          <div className="hts-orbit" aria-hidden="true">{Array.from({ length: 8 }, (_, i) => <span key={i} style={{ "--i": i }}><CardBack w={54} /></span>)}</div>
+        </>
+      )}
 
       <header className="hts-top" onClick={(e) => e.stopPropagation()}>
         {acc && <AccountBadge acc={acc} onClick={onAccount} compact testId="ts-account" />}
@@ -98,7 +104,7 @@ export default function TitleScreen({ name, setName, acc, onAccount, onEnter }) 
         ) : <div className="loadbar" aria-label="Chargement"><i /></div>}
         <small className="hts-save">{acc && acc.user ? "Ta progression est sauvegardée sur ton compte." : acc && acc.enabled ? "Connecte-toi avec ton e-mail pour sauvegarder ta progression." : "Profil local : il reste sur cet appareil."}</small>
       </div>
-      {boom && <i className="hts-boom" aria-hidden="true" />}
+      {boom && !scene && <i className="hts-boom" aria-hidden="true" />}
     </div>
   );
 }

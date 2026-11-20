@@ -1,10 +1,11 @@
 // Accueil du Trône des Mondes, façon lobby de jeu de cartes :
 //   - en haut : la photo de profil du jeu (bouton Profil), les boosters, les Éclats et les paramètres ;
-//   - au centre : le plateau de jeu en 3D isométrique (HubBoard), posé avec le deck joué ;
+//   - au centre : le plateau de jeu (HubBoard, avec le deck joué), posé sur la table ronde de la salle en 3D (TableScene, avec deux
+//     autres parties en cours au fond) ;
 //   - à gauche, « Tes cartes » : Mes decks (créer, choisir), Mes cartes (celles que tu possèdes), Album (toutes les cartes du jeu) ;
 //   - à droite, « Boutique et défis » : la Boutique (cartes du jour, les deux Portails et les boosters, en onglets), Quêtes ;
 //   - en bas, au centre : Jouer, et le deck joué (Changer).
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { ALL, FAMILY, subOf } from "../cards/index.js";
 import { validateDeck } from "../deck.js";
 import * as P from "../progress.js";
@@ -14,6 +15,9 @@ import Portrait from "./Portrait.jsx";
 import HubBoard from "./HubBoard.jsx";
 import { GAME_NAME } from "../rules.js";
 import { TRONE_ONLY } from "../../lib/device.js";
+
+// la salle en 3D, si l'appli ne l'a pas déjà mise derrière (Party Hub dans un navigateur)
+const TableScene = lazy(() => import("./table3d/TableScene.jsx"));
 
 const SHOP_KEY = "ph-tcg-shop-seen";
 /** La boutique du jour a-t-elle été ouverte aujourd'hui sur cet appareil ? (pastille « nouveau ») */
@@ -53,7 +57,7 @@ function Nav({ id, icon, label, labelShort, sub, short, badge, tone, onClick }) 
   );
 }
 
-export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, homeBack, onRules, onSettings, onZoom, onFamily, onAlbum, nPacks, nQuests, calm }) {
+export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, homeBack, onRules, onSettings, onZoom, onFamily, onAlbum, nPacks, nQuests, calm, outerScene = false, intro = false }) {
   const lv = P.levelOf(t.xp);
   const deck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
   const v = deck ? validateDeck(deck, own) : null;
@@ -71,7 +75,8 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, hom
   const shopSub = nPacks ? `${nPacks} booster${nPacks > 1 ? "s" : ""} à ouvrir ; cartes du jour, Portails (${por.monde.sub}…)`
     : `Cartes du jour (nouvelles dans ${fmtLeft(left)}), Portails (${por.monde.sub}, encore ${pDays} j) et boosters`;
   return (
-    <div className="hh" data-testid="hub-home">
+    <div className={"hh ontable" + (intro && !calm ? " intro" : "")} data-testid="hub-home">
+      {!outerScene && <Suspense fallback={null}><TableScene mode="menu" deck={deck} calm={calm} /></Suspense>}
       <header className="hh-top">
         <button className="iconbtn" onClick={onClose} aria-label={homeBack || (inRoom ? "Retour au lobby" : "Retour au menu")} title={homeBack || undefined} data-testid="hub-close"><Icon name="back" /></button>
         <button className="hh-me" onClick={() => go("profile")} aria-label={`Mon profil ${GAME_NAME}`} title="Mon profil du jeu" data-testid="hub-nav-profile">
@@ -95,7 +100,7 @@ export default function HubHome({ t, own, name, go, onClose, onPlay, inRoom, hom
       </div>
 
       <section className="hh-stage" aria-label="Plateau de jeu">
-        <HubBoard deck={deck} foil={(id) => (t.foil[id] || 0) > 0} onZoom={onZoom} onFamily={onFamily} calm={calm} />
+        <HubBoard deck={deck} foil={(id) => (t.foil[id] || 0) > 0} onZoom={onZoom} onFamily={onFamily} calm={calm} ontable />
       </section>
 
       <aside className="hh-side l" aria-label="Tes cartes">

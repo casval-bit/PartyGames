@@ -2,7 +2,7 @@
 // autres jeux. Écran titre → accueil du jeu (collection, decks, boutique, quêtes, profil) → lobby à code et amis → partie.
 // Le compte (connexion par e-mail) est le même que dans Party Hub : le profil, la collection et les decks sont sauvegardés
 // dessus et suivent le joueur d'un appareil à l'autre.
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useRoom } from "../../net/useRoom.js";
 import { useProfile, useGameRecorder } from "../../lib/useProfile.js";
 import { useAccount } from "../../lib/useAccount.js";
@@ -12,12 +12,16 @@ import { sfx } from "../../lib/sfx.js";
 import Account from "../../screens/Account.jsx";
 import { recordTcgGame, summaryFromView, tcgLook, normalizeTcg } from "../progress.js";
 import { GAME_NAME } from "../rules.js";
+import { useTcgPrefs } from "../prefs.js";
 import Hub from "./Hub.jsx";
 import TroneGame from "./Game.jsx";
 import TitleScreen from "./TitleScreen.jsx";
 import TcgLobby, { InviteToast } from "./TcgLobby.jsx";
 import CrownFx from "./CrownFx.jsx";
 import "./tcgapp.css";
+
+// la salle en 3D (three.js, chargé à part) : derrière l'écran titre et l'accueil, la même du début à la fin (la caméra glisse de l'un à l'autre)
+const TableScene = lazy(() => import("./table3d/TableScene.jsx"));
 
 export default function TcgApp() {
   const [view, setView] = useState("title"); // title | hub | lobby (dans un salon : lobby ou partie)
@@ -26,6 +30,9 @@ export default function TcgApp() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [name, setName] = useState(() => store("tu-name") || "");
+  const [hubView, setHubView] = useState("home"); // ce que montre l'accueil (home, decks, coll…) : la salle 3D ne se dessine qu'à l'accueil
+  const [intro, setIntro] = useState(false); // on vient d'entrer depuis l'écran titre : l'accueil apparaît pendant que la caméra descend
+  const prefs = useTcgPrefs();
   const id = useMemo(() => {
     // un identifiant par onglet (sessionStorage) pour tester plusieurs joueurs dans un même navigateur
     try {
@@ -99,7 +106,7 @@ export default function TcgApp() {
   } else if (view === "hub" || (view === "title" && room)) {
     body = <Hub key={hubKey} tcg={prof.profile.tcg} setTcg={prof.setTcg} initialTab={hubTab} acc={acc} onAccount={() => setAccountOpen(true)}
       onClose={() => setView(room ? "lobby" : "title")} name={name.trim()} onName={setName} inRoom={Boolean(room)} onPlay={() => setView("lobby")}
-      homeBack={room ? "Retour au salon" : "Écran titre"} />;
+      homeBack={room ? "Retour au salon" : "Écran titre"} onView={setHubView} outerScene intro={intro} />;
   } else if (inGame) {
     body = <TroneGame room={room} me={me} api={net} priv={net.agPriv} onLeave={leave} gain={tcgGain} isHost={net.isHost} onHub={(tab) => openHub(tab || "decks")} />;
   } else if (view === "lobby" || room) {
@@ -107,16 +114,25 @@ export default function TcgApp() {
       notice={notice} clearNotice={() => { setNotice(""); net.clearNotice(); }} busy={net.busy}
       onBack={() => openHub("home")} onDecks={() => openHub("decks")} onProfile={() => openHub("profile")} onCreate={create} onJoin={join} />;
   } else {
-    body = <TitleScreen name={name} setName={setName} acc={acc} onAccount={() => setAccountOpen(true)} onEnter={() => openHub("home")} />;
+    body = <TitleScreen name={name} setName={setName} acc={acc} onAccount={() => setAccountOpen(true)} scene
+      onEnter={() => { setIntro(true); openHub("home"); setTimeout(() => setIntro(false), 2800); }} />;
   }
 
   // transitions propres au jeu (CrownFx) : écran titre, accueil, lobby, partie, compte
   const fxKey = accountOpen ? "account" : view === "hub" ? "hub" : inGame ? "game" : view === "lobby" || room ? "lobby" : "title";
   const inv = fr.invites[0];
+  // la salle 3D : à l'écran titre (vue d'en haut) et à l'accueil du jeu (assis devant son plateau) ; cachée ailleurs
+  const onTitle = fxKey === "title", onHub = fxKey === "hub";
+  const sceneDeck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
   return (
     <div className={"app tcgapp" + (inGame && view !== "hub" ? " ingame" : "")} data-view={fxKey}>
+      {(onTitle || onHub) && (
+        <Suspense fallback={null}>
+          <TableScene mode={onTitle ? "title" : "menu"} active={onTitle || hubView === "home"} deck={sceneDeck} calm={prefs.motion === "reduced"} />
+        </Suspense>
+      )}
       {body}
-      <CrownFx k={fxKey} />
+      <CrownFx k={fxKey} skip={["title>hub"]} />
       {inv && !(room && room.id === inv.room) && !accountOpen && (
         <InviteToast inv={inv} onJoin={() => { fr.dismiss(inv.k); join(inv.room); }} onClose={() => fr.dismiss(inv.k)} />
       )}

@@ -59,6 +59,15 @@ html.tcg-only body::before { background: radial-gradient(42% 32% at 18% 12%, rgb
   background: radial-gradient(circle, rgba(255,241,194,.95), rgba(255,209,102,.5) 40%, transparent 70%); animation: tsBoom .45s ease-out forwards; }
 @keyframes tsBoom { to { width: 260vmax; height: 260vmax; opacity: 0; } }
 .hts.boom .hts-center { transition: transform .4s, opacity .4s; transform: scale(1.06); opacity: 0; }
+/* sur la salle en 3D : pas de fond, le titre un peu plus haut ; en entrant, il s'envole et le reste s'efface */
+.hts.on3d { cursor: pointer; }
+.hts.on3d .hts-center { margin-top: -12vh; }
+.hts.on3d .hts-crown { filter: drop-shadow(0 0 30px rgba(255,190,70,.6)) drop-shadow(0 12px 22px rgba(0,0,0,.75)); }
+.hts.on3d .hts-title { text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+.hts.on3d.boom .hts-center { transition: transform .55s cubic-bezier(.55,0,.8,.3), opacity .45s ease-in; transform: translateY(-16vh) scale(.9); opacity: 0; }
+.hts.on3d.boom .hts-bottom, .hts.on3d.boom .hts-top { transition: opacity .3s; opacity: 0; }
+/* la salle en 3D (TableScene) est derrière tout le reste de l'appli */
+.tcgapp { isolation: isolate; }
 
 /* ------------------------------ transitions (CrownFx) ------------------------------ */
 .cfx { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }

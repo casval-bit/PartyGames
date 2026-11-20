@@ -117,9 +117,11 @@ lance d'abord « Chercher les images des cartes » (§8).
 
 L'appli PC n'a plus que le jeu de cartes, **Heavy is the Crown** (l'ancien Trône des Mondes) : pas de Party Hub ni des autres jeux
 (`src/tcg/ui/TcgApp.jsx`, choisi par `TRONE_ONLY` dans `src/lib/device.js` ; dans un navigateur, ajoute `?trone` à l'adresse pour avoir la même appli).
-**Écran titre** (`TitleScreen.jsx`) : une couronne dorée qui s'allume, des dos de cartes en orbite, des braises, le nom gravé ; on entre d'un clic ou avec Entrée
-(sans pseudo, on le choisit là). **Transitions** propres au jeu (`CrownFx.jsx`, plus celles de Party Hub) : deux battants s'écartent derrière une couronne
-(écran titre → jeu, lobby → partie) ; ailleurs, un éventail de dos de cartes balaie l'écran. Le **compte** (connexion par e-mail et code) est le même :
+**Écran titre** (`TitleScreen.jsx`) : simple, la couronne dorée et le nom du jeu posés sur la **salle en 3D** (la table ronde vue d'en haut, qui tourne
+lentement, assombrie) ; on entre d'un clic ou avec Entrée (sans pseudo, on le choisit là). **L'entrée dans le jeu** : le titre s'envole et la caméra
+descend s'asseoir à ta place, devant ton plateau, pendant que l'accueil apparaît (la même salle 3D du début à la fin, `TcgApp.jsx`). Autres
+**transitions** propres au jeu (`CrownFx.jsx`) : deux battants s'écartent derrière une couronne (lobby → partie) ; ailleurs, un éventail de dos de cartes
+balaie l'écran ; elles s'affichent avant le nouvel écran (plus d'éclair du nouvel écran avant la transition). Le **compte** (connexion par e-mail et code) est le même :
 la collection, les decks, le profil et les amis sont sauvegardés dessus. Le web et l'APK gardent Party Hub avec tous les jeux.
 La fenêtre, l'installeur et le menu s'appellent Heavy is the Crown ; le dossier des données et l'adresse interne gardent l'ancien nom (« Party Hub »,
 `app://party-hub`) : sinon les joueurs qui ont déjà l'appli perdraient leur profil local et leurs illustrations importées.
@@ -467,10 +469,17 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
 
 **Accueil du jeu** (bouton « Heavy is the Crown » du menu de Party Hub, dans l'appli PC après l'écran titre, ou depuis le lobby ; `src/tcg/ui/HubHome.jsx`) : un écran épuré, façon lobby de jeu de cartes.
 - En haut : ta **photo de profil du jeu** (pas ton personnage Party Hub) avec ton pseudo et ton niveau, tes boosters à ouvrir, tes **Éclats** (le diamant ; le « + » ouvre la boutique) et les **paramètres du jeu**.
-- Au centre, en grand : un **plateau de jeu en 3D** (`HubBoard.jsx`, tout en CSS 3D), une table en bois avec un tapis aux couleurs de ta famille et une partie en cours.
+- Derrière tout l'accueil : la **salle en 3D** (`table3d/TableScene.jsx` et `table3d/tableWorld.js`, three.js chargé à part) : une **table ronde en bois**
+  (planches, filet de laiton, vernis), six **chaises** à dossier haut (sans personne), une grosse lampe chaude qui vacille un peu. **Un plateau par joueur** :
+  le tien devant toi, et ceux de deux autres joueurs (des decks à thème d'autres familles, qui changent chaque jour) devant leurs places, qu'on voit en
+  partie au fond ; **au milieu de la table**, ce qui est commun : le trésor (piles d'Or), les trois défis (Combat, Ruse, Influence) et la réserve de Pouvoir.
+  Ton plateau est le vrai (`HubBoard.jsx`, en CSS 3D, ci-dessous) : il envoie sa place à l'écran (événement `tcg-board`) et la caméra se cale pour
+  que la table soit juste dessous. Ombres et grandes textures sur PC ; plus légère sur téléphone ; immobile avec les animations réduites ; le rendu
+  s'arrête dès qu'un autre écran la recouvre. Dans un navigateur (Party Hub), l'accueil met sa propre salle (sans l'écran titre).
+- Au centre, en grand : **ton plateau** (`HubBoard.jsx`, tout en CSS 3D, sur la table ronde : seulement ton côté, sans cadre en bois).
   De ton côté, ton deck joué posé comme en partie : tes 4 personnages les plus forts (l'un agenouillé, un autre avec un objet **attaché** glissé dessous, des **jetons de Pouvoir**),
   puis ta rangée, chaque emplacement gravé dans le tapis avec son nom : **Scénarios** (l'actif posé sur deux déjà joués), **Famille**, **Lieu**, **Pioche**, **Défausse**
-  et **Morts** (un personnage éteint, une tête de mort dessus) ; le jeton **1er joueur** et **ton Or**. En face, **l'adversaire du jour** (le deck de départ d'une autre famille,
+  et **Morts** (un personnage éteint, une tête de mort dessus) ; le jeton **1er joueur** et **ton Or**. Sans la table ronde (`ontable` absent), en face, **l'adversaire du jour** (le deck de départ d'une autre famille,
   le même toute la journée, jamais Star Academy) : ses personnages face visible tournés vers lui, sa rangée (scénario face cachée, famille, lieu, pioche, défausse), sa main en éventail
   et son Or. Au milieu, la ligne qui sépare les camps : le **Trésor**, les trois **défis** (Combat, Ruse, Influence) et la réserve de **Pouvoir** (15 pour gagner) ;
   les blasons des deux familles en filigrane. Toutes les cartes face visible (les siennes aussi) se soulèvent au survol et s'ouvrent en grand ; les pioches se **mélangent**,

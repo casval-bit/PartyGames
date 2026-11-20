@@ -128,6 +128,15 @@ function start() {
 }
 
 /* ------------------------------ lecture ------------------------------ */
+/** Illustration d'une carte tout de suite, hors composant (décor 3D de l'accueil) : choisie sur l'appareil, intégrée, ou null. */
+export function artNow(id) {
+  start();
+  const v = id ? mem.get(id) : null;
+  return v ? v.img : (id && bundled.get(id)) || null;
+}
+/** Prévient quand les illustrations changent (fin du chargement de la liste intégrée, image ajoutée) ; renvoie de quoi se désabonner. */
+export const onArtChange = (f) => sub(f);
+
 /** Illustration d'une carte (choisie sur l'appareil, sinon intégrée à l'appli) ou null. Le composant se met à jour quand elle change. */
 export function useArt(id) {
   useSyncExternalStore(sub, () => ver, () => ver);

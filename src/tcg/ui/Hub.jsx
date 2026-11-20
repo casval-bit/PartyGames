@@ -518,7 +518,7 @@ function SectionHead({ view, t, go, nPacks, onSettings }) {
  * initialTab : partie ouverte d'emblée ("home" par défaut ; "decks", ou "packs" pour l'onglet boosters de la boutique).
  * onPlay : « Jouer » (retour au lobby, ou nouveau lobby Trône des Mondes) ; inRoom : on est déjà dans un lobby.
  */
-export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, name, onName, onPlay, inRoom, homeBack }) {
+export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, name, onName, onPlay, inRoom, homeBack, onView, outerScene = false, intro = false }) {
   const t = useMemo(() => P.ensureQuests(P.normalizeTcg(tcg)), [tcg]);
   const own = useMemo(() => P.owned(t), [t]);
   const [view, setView] = useState(SHOP_TAB[initialTab] ? "shop" : VIEWS[initialTab] ? initialTab : "home");
@@ -533,6 +533,9 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
   const prefs = useTcgPrefs();
   useEffect(() => sfx.enter("tcg"), []); // sons du Trône des Mondes : ses propres réglages tant qu'il est ouvert
   useEffect(() => { if (view === "shop" && shopTab === "day") markShopSeen(); }, [view, shopTab]);
+  // ce que montre l'accueil (l'appli du jeu ne dessine la salle 3D qu'à l'accueil, quand rien ne la recouvre)
+  const shownView = edit ? "edit" : !t.starter ? "starter" : view;
+  useEffect(() => { if (onView) onView(shownView); }, [shownView]); // eslint-disable-line react-hooks/exhaustive-deps
   // compte testeur (VITE_TESTEURS, sur cet ordinateur) : Éclats et jetons rechargés tout seuls (désactivable dans les paramètres)
   const tester = canTest(acc);
   useEffect(() => {
@@ -614,7 +617,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
     );
   } else if (view === "home") {
     const deck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
-    content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} homeBack={homeBack} onRules={() => { setRules(true); sfx.open(); }} onSettings={() => { setSettings(true); sfx.open(); }}
+    content = <HubHome t={t} own={own} name={name} go={go} onClose={onClose} onPlay={onPlay || onClose} inRoom={inRoom} homeBack={homeBack} outerScene={outerScene} intro={intro} onRules={() => { setRules(true); sfx.open(); }} onSettings={() => { setSettings(true); sfx.open(); }}
       onZoom={(id) => setZoom({ id })} onFamily={(fam, pt) => (fam ? setZoom({ fam, pt }) : deck && setZoom({ fam: deck.fam, pt: deck.pt }))} onAlbum={() => { setAlbum(true); sfx.open(); }}
       nPacks={nPacks} nQuests={nQuests} calm={prefs.motion === "reduced"} />;
   } else {
@@ -634,7 +637,7 @@ export default function Hub({ tcg, setTcg, onClose, initialTab, acc, onAccount, 
 
   return (
     <>
-      <div className="hub-bg" aria-hidden="true" />
+      {shownView !== "home" && <div className="hub-bg" aria-hidden="true" />}
       <div className={"screen hub hubh" + (prefs.motion === "reduced" ? " calm" : "")} data-view={t.starter ? view : "starter"}>
         {content}
         {toast && <div className="toast hub-toast" role="status">{toast}</div>}

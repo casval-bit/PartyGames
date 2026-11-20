@@ -1795,3 +1795,24 @@ html.desktop .hub-toast { left: 0; right: 0; margin-inline: auto; width: max-con
 .sortpick-d { display: inline-flex; align-items: center; gap: 7px; padding: 0 13px; border-radius: 12px; border: 1px solid rgba(255,209,102,.45); background: rgba(255,209,102,.1); color: #ffe6a8; font: 700 .8rem var(--display); white-space: nowrap; cursor: pointer; }
 .sortpick-d:hover { background: rgba(255,209,102,.18); }
 .sortpick-d:active { transform: scale(.97); }
+
+/* ---------- le plateau de l'accueil posé sur la table ronde (salle 3D) : sans cadre en bois, face à la caméra ---------- */
+.ib.ontable .ib-plane { --rz: 0deg; --rx: 45deg; padding: 0; background: none; box-shadow: none; height: 440px; margin-top: -220px; }
+.ib.ontable .ib-mat { grid-template-rows: auto auto; align-content: space-evenly; padding-top: 16px; }
+.ib.ontable .ib-emblem.me { top: 50%; }
+.ib.ontable .ib-plane::before { display: none; }
+.ib.ontable .ib-plane::after { inset: -24px; border-radius: 60px; transform: translateZ(-6px); background: radial-gradient(closest-side, rgba(0,0,0,.6), rgba(0,0,0,.25) 70%, transparent); }
+.hh.ontable { isolation: isolate; }
+/* l'entrée depuis l'écran titre : l'accueil apparaît pendant que la caméra descend s'asseoir */
+.hh.intro > .hh-top { animation: hhInTop .7s 1.05s both cubic-bezier(.2,.8,.2,1); }
+.hh.intro > .hh-logo { animation: hhFade .8s 1.2s both; }
+.hh.intro > .hh-side.l { animation: hhInL .7s 1.2s both cubic-bezier(.2,.8,.2,1); }
+.hh.intro > .hh-side.r { animation: hhInR .7s 1.2s both cubic-bezier(.2,.8,.2,1); }
+.hh.intro > .hh-stage { animation: hhBoard .55s 1.45s both ease-out; }
+.hh.intro > .hh-play { animation: hhInUp .7s 1.4s both cubic-bezier(.2,.8,.2,1); }
+@keyframes hhInTop { from { opacity: 0; transform: translateY(-26px); } }
+@keyframes hhInL { from { opacity: 0; transform: translateX(-34px); } }
+@keyframes hhInR { from { opacity: 0; transform: translateX(34px); } }
+@keyframes hhInUp { from { opacity: 0; transform: translateY(26px); } }
+@keyframes hhFade { from { opacity: 0; } }
+@keyframes hhBoard { from { opacity: 0; } }

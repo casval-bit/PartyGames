@@ -6,6 +6,9 @@
 //   - au milieu : le trésor (l'Or), les trois défis (Combat, Ruse, Influence) et la réserve de Pouvoir (15 pour gagner).
 // Les cartes face visible s'ouvrent en grand ; les pioches se mélangent, la main adverse se bat, le scénario adverse se révèle un instant,
 // les pièces tournent, les défis s'illuminent. Tout est en CSS 3D (aucune scène WebGL) ; le plateau se met à l'échelle de la place.
+// Sur la table ronde de la salle 3D (ontable) : un plateau par joueur, donc seulement ton côté (tes personnages, ta rangée, ton Or),
+// sans cadre en bois, face à la caméra, en bas (on voit le milieu de la table et les deux autres joueurs au fond) ; il envoie sa
+// place à l'écran (événement « tcg-board ») pour que la table se cale dessous.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY, PLOTS, subOf } from "../cards/index.js";
 import { RARITY_ORDER, TYPES, TYPE_NAME, TYPE_ICON, DEFAULT_GOAL, GAME_NAME } from "../rules.js";
@@ -80,7 +83,7 @@ const Coins = ({ n, x = 0, y = 0 }) => (
   </span>
 );
 
-export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
+export default function HubBoard({ deck, foil, onZoom, onFamily, calm, ontable = false }) {
   const wrap = useRef(null), plane = useRef(null);
   const [k, setK] = useState(0.6);
   const [shuf, setShuf] = useState(false);
@@ -115,20 +118,33 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
       // grand écran : un peu aussi (les coins de la table, en biais, passent au-dessus et au-dessous des boutons des côtés)
       const hub = el.closest(".hubh");
       const hw = hub ? hub.getBoundingClientRect().width : 1000;
-      const over = hw < 620 ? 1.45 : hw >= 880 ? 1.04 : 1;
-      const next = Math.max(0.25, Math.min(1.4, Math.min((box.width * over) / r.width, box.height / r.height) * 0.98));
+      const over = hw < 620 ? (ontable ? 1.3 : 1.45) : hw >= 880 ? 1.04 : 1;
+      const next = Math.max(0.25, Math.min(1.4, Math.min((box.width * over) / r.width, box.height / r.height) * (ontable ? 0.88 : 0.98)));
       pl.style.setProperty("--k", String(next));
-      // recentrer le dessin du plateau dans sa zone
+      // recentrer le dessin du plateau dans sa zone (sur la table : un peu plus bas, pour laisser voir le fond de la table)
       const r2 = pl.getBoundingClientRect();
-      const dx = box.left + box.width / 2 - (r2.left + r2.width / 2), dy = box.top + box.height / 2 - (r2.top + r2.height / 2);
+      const dx = box.left + box.width / 2 - (r2.left + r2.width / 2);
+      const dy = box.top + box.height / 2 - (r2.top + r2.height / 2) + (ontable ? Math.max(0, box.height - r2.height) * 0.42 : 0);
       pl.style.setProperty("--dx", `${Math.round(dx)}px`); pl.style.setProperty("--dy", `${Math.round(dy)}px`);
       setK(next);
+      send();
+    };
+    // la place du tapis à l'écran, pour la table 3D dessous (TableScene)
+    const send = () => {
+      if (!ontable) return;
+      const m = pl.querySelector(".ib-mat");
+      if (!m) return;
+      const q = m.getBoundingClientRect();
+      if (q.width > 10) window.dispatchEvent(new CustomEvent("tcg-board", { detail: { x: q.left, y: q.top, w: q.width, h: q.height } }));
     };
     fit();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;
     if (ro) ro.observe(el);
-    return () => { if (ro) ro.disconnect(); };
-  }, []);
+    // encore une fois quand l'accueil a fini d'apparaître (ses animations déplacent un peu le plateau)
+    const tms = [setTimeout(send, 700), setTimeout(send, 2300), setTimeout(send, 3200)];
+    window.addEventListener("resize", send);
+    return () => { if (ro) ro.disconnect(); tms.forEach(clearTimeout); window.removeEventListener("resize", send); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (!plotUp) return undefined; const tm = setTimeout(() => { setPlotUp(null); sfx.flip(); }, 2600); return () => clearTimeout(tm); }, [plotUp]);
   useEffect(() => { if (!lit) return undefined; const tm = setTimeout(() => setLit(null), calm ? 400 : 1300); return () => clearTimeout(tm); }, [lit, calm]);
@@ -143,16 +159,16 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
   const CW = 130, OW = 100, SW = 92, OSW = 76, PW = 136, OPW = 112; // largeurs (pixels du plateau) : tes personnages, les siens, les autres cartes, les scénarios
   const zoom = (id) => () => onZoom(id);
   return (
-    <div className={"ib" + (calm ? " calm" : "")} ref={wrap}>
+    <div className={"ib" + (calm ? " calm" : "") + (ontable ? " ontable" : "")} ref={wrap}>
       <div className="ib-plane" ref={plane} style={{ "--k": k, "--mat": `url(${mat})`, "--fc": color, "--oc": ocolor }} aria-label="Plateau de jeu">
         <div className="ib-mat">
           <i className="ib-felt" aria-hidden="true" />
           {/* les blasons des deux familles, en grand et en filigrane sous les cartes de chaque camp */}
-          {of && <i className="ib-emblem opp" style={{ "--cc": ocolor }} aria-hidden="true"><Icon name={of.icon} size={250} stroke={0.9} /><b>{of.short || of.name}</b></i>}
+          {of && !ontable && <i className="ib-emblem opp" style={{ "--cc": ocolor }} aria-hidden="true"><Icon name={of.icon} size={250} stroke={0.9} /><b>{of.short || of.name}</b></i>}
           <i className="ib-emblem me" style={{ "--cc": color }} aria-hidden="true"><Icon name={f.icon} size={300} stroke={0.9} /><b>{crest}</b></i>
 
-          {/* en face : l'adversaire du jour ; sa table est tournée vers lui */}
-          {opp && (
+          {/* en face : l'adversaire du jour ; sa table est tournée vers lui (pas sur la table ronde : un plateau par joueur, les autres sont en 3D) */}
+          {opp && !ontable && (
             <div className="ib-row ib-back opp" aria-label={`Table de l'adversaire : ${rv.name}`}>
               <Slot>
                 <button className={"ib-plotx ib-hit" + (plotUp ? " up" : "")} style={{ "--pw": OPW + "px" }} onClick={doReveal} aria-label="Scénario adverse : le révéler" title="Scénario adverse (face cachée)">
@@ -175,7 +191,7 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
               </Slot>
             </div>
           )}
-          {opp && (
+          {opp && !ontable && (
             <div className="ib-row ib-line opp">
               <span className="ib-side l"><span className="ib-gold"><Coins n={4} /><Coins n={2} x={34} y={12} /></span></span>
               <div className="ib-chars">
@@ -190,8 +206,8 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
             </div>
           )}
 
-          {/* au milieu : le trésor, les trois défis, la réserve de Pouvoir */}
-          <div className="ib-mid">
+          {/* au milieu : le trésor, les trois défis, la réserve de Pouvoir (sur la table ronde, ils sont au milieu de la table, en 3D) */}
+          {!ontable && <div className="ib-mid">
             <button className={"ib-coins ib-hit" + (coin ? " spin" : "")} key={"c" + coin} onClick={doCoin} aria-label="Trésor : lancer une pièce d'Or" title="Trésor (Or)">
               <Coins n={6} /><Coins n={4} x={-40} y={10} /><Coins n={3} x={38} y={12} />
               <span className="ib-lab">Trésor</span>
@@ -209,7 +225,7 @@ export default function HubBoard({ deck, foil, onZoom, onFamily, calm }) {
               <span className="ib-power" aria-hidden="true">{[0, 1, 2, 3].map((i) => <i key={i} style={{ "--i": i }}><Icon name="crown" size={12} stroke={2.4} /></i>)}</span>
               <span className="ib-lab">Pouvoir</span>
             </div>
-          </div>
+          </div>}
 
           {/* ton côté : la table du deck joué */}
           <div className="ib-row ib-line me">

@@ -1,28 +1,31 @@
 // Transitions de Heavy is the Crown (appli du jeu seul), à la place de celles de Party Hub :
 //  - « porte » (écran titre → jeu, lobby → partie) : deux battants sombres s'écartent depuis une couronne dorée qui s'illumine ;
 //  - « donne » (entre les autres écrans) : un éventail de dos de cartes balaie l'écran, comme une donne rapide.
-// Rejouée quand `k` change (jamais au premier affichage). Ne bloque jamais les clics. Rien si le système demande moins d'animations.
-import { useEffect, useRef, useState } from "react";
+// Rejouée quand `k` change (jamais au premier affichage), avant que le nouvel écran ne s'affiche (aucun éclair du nouvel écran avant
+// la transition). Ne bloque jamais les clics. Rien si le système demande moins d'animations, ni pour les passages de `skip`
+// (écran titre → accueil : c'est la caméra de la salle 3D qui fait la transition).
+import { useLayoutEffect, useRef, useState } from "react";
 import { sfx } from "../../lib/sfx.js";
 import { CrownMark } from "./TitleScreen.jsx";
 import { CardBack } from "./Card.jsx";
 
 const GATE = new Set(["title>hub", "title>lobby", "lobby>game", "hub>game", "game>lobby"]);
 
-export default function CrownFx({ k }) {
+export default function CrownFx({ k, skip = [] }) {
   const prev = useRef(null);
   const [fx, setFx] = useState(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const was = prev.current;
     prev.current = k;
     if (was === null || was === k) return undefined;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+    if (skip.includes(`${was}>${k}`)) return undefined;
     const kind = GATE.has(`${was}>${k}`) ? "gate" : "deal";
     setFx({ n: Date.now(), kind });
     if (kind === "gate") sfx.sweep(); else sfx.slide();
     const t = setTimeout(() => setFx(null), kind === "gate" ? 950 : 720);
     return () => clearTimeout(t);
-  }, [k]);
+  }, [k]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!fx) return null;
   if (fx.kind === "gate") {
     return (
