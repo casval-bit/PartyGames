@@ -11,8 +11,10 @@
 // fem (accorde les textes au féminin ; par défaut d'après la liste de cards/gender.js),
 // art (nom de son image, sans extension, quand il diffère de « Nom Coût » : « Dio Brando (New Body) 7 » pour une autre version de même nom et coût),
 // fill:false (carte neutre que les decks de départ ne prennent jamais pour se compléter : les personnages venus d'autres univers).
+// Mots-clés : ceux de la ligne, plus ceux du rôle de la carte (espions dans l'ombre, géants à l'assaut, pirates pillards… : keywords.js).
 import { compileAbility } from "../abilities.js";
 import { FEM } from "./gender.js";
+import { withRoleKeywords } from "./keywords.js";
 import { slug } from "../rules.js";
 
 const list = (s) => String(s || "").split("|").map((x) => x.trim()).filter(Boolean);
@@ -33,7 +35,8 @@ export const plot = (name, univ, inc, ini, clm, res, traits, ab, o = {}) => ({ t
 /** Transforme les lignes compactes d'une famille en cartes complètes (identifiants stables, effets compilés). */
 export function buildCards(fam, raw, used = new Set()) {
   const out = [];
-  for (const x of raw) {
+  for (const x0 of raw) {
+    const x = withRoleKeywords(x0, fam); // mots-clés du rôle de la carte (keywords.js)
     const base = `${fam}-${slug(x.name)}-${x.type === "char" ? x.cost : x.type}`;
     let id = base, k = 2;
     while (used.has(id)) id = `${base}-${k++}`;

@@ -28,13 +28,19 @@ export const PHASE_NAME = Object.fromEntries(PHASES.map((p) => [p.id, p.name]));
 export const CARD_TYPES = { char: "Personnage", loc: "Lieu", obj: "Objet", evt: "Événement", plot: "Scénario" };
 
 export const KEYWORDS = {
-  celebre: { name: "Célèbre", text: "Quand il gagne un défi auquel il participe, ce personnage gagne 1 Pouvoir." },
+  // les 13 mots-clés du Trône de Fer JCE 2e édition (Célèbre = Renown, Discret = Stealth, Génie = Insight, Pillard = Pillage,
+  // Embuscade = Ambush, Assaut = Assault, Don = Bestow, Ombre = Shadow, Mise à prix = Prized…), plus Duel, propre à ce jeu
+  celebre: { name: "Célèbre", text: "Quand vous gagnez un défi auquel il participe, ce personnage gagne 1 Pouvoir." },
   discret: { name: "Discret", text: "Quand il attaque, choisissez un personnage adverse sans Discret : il ne peut pas défendre pendant ce défi." },
-  intimidation: { name: "Intimidation", text: "Quand vous gagnez un défi où il attaque, agenouillez un personnage du perdant dont la force ne dépasse pas l'écart." },
-  genie: { name: "Génie", text: "Quand vous gagnez un défi où il attaque, piochez 1 carte." },
-  pillard: { name: "Pillard", text: "Quand vous gagnez un défi où il attaque, le perdant défausse la carte du dessus de son deck." },
+  intimidation: { name: "Intimidation", text: "Quand vous gagnez un défi où il attaque, agenouillez un personnage du perdant dont la force ne dépasse pas l'écart (une seule Intimidation par défi)." },
+  genie: { name: "Génie", text: "Quand vous gagnez un défi auquel il participe, piochez 1 carte." },
+  pillard: { name: "Pillard", text: "Quand vous gagnez un défi auquel il participe, le perdant défausse la carte du dessus de son deck." },
+  assaut: { name: "Assaut", text: "Quand il attaque, choisissez un lieu du défenseur de coût inférieur au sien : ce lieu perd son texte jusqu'à la fin du défi, et s'agenouille si vous gagnez (un seul lieu par défi)." },
   duel: { name: "Duel", text: "S'il attaque seul, le défenseur ne peut déclarer qu'un seul défenseur." },
   embuscade: { name: "Embuscade", text: "Pendant les défis, vous pouvez le mettre en jeu depuis votre main en payant le coût d'Embuscade." },
+  ombre: { name: "Ombre", text: "Pendant le Recrutement, payez 2 or pour la poser face cachée dans votre ombre. Plus tard, en action, payez son coût d'Ombre pour la mettre en jeu (un événement se joue depuis l'ombre pour ce coût)." },
+  don: { name: "Don", text: "Quand cette carte entre en jeu, vous pouvez poser dessus jusqu'à X or de votre or. Ses capacités utilisent cet or, perdu si elle quitte le jeu." },
+  prime: { name: "Mise à prix", text: "Quand cette carte quitte le jeu, chaque adversaire gagne X Pouvoir." },
   limite: { name: "Limité", text: "Une seule carte Limitée peut être jouée par round." },
   terminal: { name: "Terminal", text: "Si le personnage attaché quitte le jeu, cet objet est défaussé au lieu de revenir en main." },
   sansobjet: { name: "Sans objet", text: "Ne peut recevoir aucun objet." },

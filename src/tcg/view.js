@@ -1,16 +1,18 @@
 // Trône des Mondes : ce qui part sur le réseau.
 //   publicView : ce que tout le monde voit (plateaux, scénarios révélés, Pouvoir, or, nombre de cartes en main…)
-//   privateView : la main du joueur, ses scénarios restants et la question qui lui est posée.
+//   privateView : la main du joueur, ses cartes dans l'ombre (face cachée pour les autres), ses scénarios restants et la question posée.
 import { TYPES } from "./rules.js";
 
 const icons = (X, c) => TYPES.filter((t) => X.hasIcon(c, t)).map((t) => t[0].toUpperCase()).join("");
-const KWS = ["celebre", "discret", "intimidation", "genie", "pillard", "duel"];
+const KWS = ["celebre", "discret", "intimidation", "genie", "pillard", "duel", "assaut"];
 function instView(X, c) {
   const d = X.card(c);
   const v = { u: c.u, d: c.id, k: c.k ? 1 : 0 };
   if (c.pw) v.pw = c.pw;
   if (c.dup.length) v.dup = c.dup.length;
-  if (c.att.length) v.att = c.att.map((a) => ({ u: a.u, d: a.id, o: a.o }));
+  if (c.gold) v.au = c.gold; // or posé dessus (Don)
+  if (X.blank(c)) v.bl = 1; // texte perdu pendant le défi (Assaut)
+  if (c.att.length) v.att = c.att.map((a) => (a.gold ? { u: a.u, d: a.id, o: a.o, au: a.gold } : { u: a.u, d: a.id, o: a.o }));
   if (d.type === "char") {
     v.s = X.str(c);
     v.ic = icons(X, c);
@@ -38,7 +40,7 @@ export function publicView(game) {
       id: p.id, name: p.name, bot: p.bot, fam: p.fam, pt: p.pt, deck: p.deckName,
       power: X.totalPower(p), fp: p.power, gold: p.gold, hand: p.hand.length, left: p.deck.length, plotsLeft: p.plots.length,
       plot: p.plot ? p.plot.id : null, used: p.used.map((c) => c.id), disc: p.disc.map((c) => c.id), dead: p.dead.map((c) => c.id),
-      chars: p.chars.map((c) => instView(X, c)), locs: p.locs.map((c) => instView(X, c)),
+      chars: p.chars.map((c) => instView(X, c)), locs: p.locs.map((c) => instView(X, c)), sh: p.shadows.length, // l'ombre : face cachée
       res: X.reserve(p), inc: p.plot ? X.income(p) : 0,
     })),
     log: G.log.slice(-60),
@@ -62,5 +64,5 @@ export function privateView(game, pid) {
     if (data.cands && typeof data.cands === "object" && !Array.isArray(data.cands)) for (const l of Object.values(data.cands)) for (const u of l) us.add(u);
     prompt.cmap = Object.fromEntries([...us].map((u) => [u, X.inst(u).id]).filter(([, id]) => id));
   }
-  return { hand: p.hand.map((c) => ({ u: c.u, d: c.id })), plots: p.plots.map((c) => ({ u: c.u, d: c.id })), prompt };
+  return { hand: p.hand.map((c) => ({ u: c.u, d: c.id })), shadows: p.shadows.map((c) => ({ u: c.u, d: c.id })), plots: p.plots.map((c) => ({ u: c.u, d: c.id })), prompt };
 }

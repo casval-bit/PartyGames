@@ -290,6 +290,23 @@ export const TPL = {
   }, { text: `Action : sacrifiez ${c.name} pour tuer un personnage adverse de force ${num(m)} ou moins.` }),
   actSacDraw: ([n], c) => action("any", () => true, function* (X, me) { const p = X.ctrl(me); yield* X.sacrifice(me); X.draw(p, num(n)); }, { text: `Action : sacrifiez ${c.name} pour piocher ${carte(num(n))}.` }),
 
+  /* ------------------ l'or posé sur la carte (mot-clé Don : il ne sert qu'à ces capacités) ------------------ */
+  goldStr: ([], c) => statik({ text: `${c.name} gagne +1 force par or posé dessus.`, str: (X, me, tg) => (tg === me ? me.gold || 0 : 0) }),
+  attGoldStr: () => statik({ text: "Le personnage attaché gagne +1 force par or posé sur cet objet.", str: (X, me, tg) => (me.host === tg.u ? me.gold || 0 : 0) }),
+  actGoldBuff: ([n], c) => action("challenge", (X, me) => (me.gold || 0) >= 1 && partChar(X).some((o) => mine(X, me, o)), function* (X, me) {
+    me.gold -= 1; yield* buffOne(X, me, () => true, num(n, 2), `+${num(n, 2)} force`, "mine");
+  }, { text: `Action : retirez 1 or de ${c.name} : un de vos personnages participants gagne +${num(n, 2)} force jusqu'à la fin du défi.` }),
+  actGoldDraw: ([n], c) => action("any", (X, me) => (me.gold || 0) >= 1, function* (X, me) { me.gold -= 1; X.draw(X.ctrl(me), num(n)); }, { text: `Action : retirez 1 or de ${c.name} pour piocher ${carte(num(n))}.` }),
+  actGoldBank: ([], c) => action("any", (X, me) => (me.gold || 0) >= 1, function* (X, me) { me.gold -= 1; X.gainGold(X.ctrl(me), 1); X.log(`${X.ctrl(me).name} reprend 1 or posé sur ${c.name}.`, { p: X.ctrl(me).id }); }, {
+    text: `Action : reprenez dans votre or 1 or posé sur ${c.name} (l'or posé n'est pas perdu à la Taxe).`,
+  }),
+  actGoldKneel: ([m], c) => action("any", (X, me) => (me.gold || 0) >= 1 && X.opps(X.ctrl(me)).some((o) => X.chars(o).some((x) => !x.k && X.str(x) <= num(m))), function* (X, me) {
+    me.gold -= 1; yield* kneelOpp(X, me, num(m), "Agenouiller un personnage adverse");
+  }, { text: `Action : retirez 1 or de ${c.name} pour agenouiller un personnage adverse de force ${num(m)} ou moins.` }),
+  goldSave: ([n], c) => interrupt("wouldDie", (X, me, ev) => !ev.saved && ev.inst === me && (me.gold || 0) >= num(n, 2), function* (X, me, ev) { me.gold -= num(n, 2); ev.saved = true; }, {
+    text: `Interruption : quand ${c.name} devrait être tu${ée(c)}, retirez-en ${num(n, 2)} or pour ${gn(c).le} sauver.`,
+  }),
+
   /* -------------------------------- objets -------------------------------- */
   attStr: ([n]) => statik({ text: `Le personnage attaché gagne +${num(n)} force.`, str: (X, me, tg) => (me.host === tg.u ? num(n) : 0) }),
   attIcon: ([ty]) => statik({ text: `Le personnage attaché gagne l'icône {${ty}}.`, icon: (X, me, tg, q) => (me.host === tg.u && q === ty ? 1 : 0) }),

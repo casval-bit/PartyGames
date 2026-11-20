@@ -462,7 +462,19 @@ pour les tests), `src/lib/useFriends.js`.
 Dans Party Hub (web, APK), on joue toujours depuis le lobby de Party Hub : Jeu > **Heavy is the Crown** ; 2 à 4 joueurs, chacun avec un deck valide (choisi dans le lobby), bots possibles.
 Réglages : objectif de Pouvoir (15, ou 10 en partie rapide) et temps par décision (trop long : l'ordinateur joue le coup). Un round = 7 phases
 (Scénario, Pioche, Recrutement, Défis, Domination, Redressement, Taxe), défis de Combat / Ruse / Influence, revendication, Domination, doublons, mots-clés
-(Célèbre, Discret, Intimidation, Génie, Pillard, Duel, Embuscade, Limité…). Le bouton « ? » (accueil du jeu, lobby) explique les règles.
+(les 13 de l'original : Célèbre, Discret, Intimidation, Génie, Pillard, Embuscade (X), Assaut, Don (X), Ombre (X), Mise à prix (X), Limité, Terminal,
+Sans objet ; plus Duel). Le bouton « ? » (accueil du jeu, lobby) explique les règles.
+**Mots-clés** (`rules.js` pour leurs textes, `engine.js` pour leurs effets, comme dans le Trône de Fer JCE 2e édition) : Génie et Pillard servent à tout personnage
+participant du gagnant (attaquant ou défenseur) ; une seule Intimidation par défi. **Assaut** : quand il attaque, un lieu du défenseur moins cher que lui perd son texte
+pendant le défi, et s'agenouille si l'attaquant gagne. **Don (X)** : en entrant en jeu, on peut poser jusqu'à X or sur la carte ; cet or ne sert qu'à ses capacités
+(force par or, piocher, reprendre l'or plus tard car il n'est pas perdu à la Taxe, sauver la carte…) et il est perdu si elle quitte le jeu. **Ombre (X)** : pendant le
+Recrutement, on pose la carte face cachée dans son ombre pour 2 or (pile « Ombre » sur la table ; les adversaires ne voient que le nombre), puis on la sort en action
+pour X or (pendant le Recrutement ou les défis) ; un événement se joue depuis l'ombre pour X. **Mise à prix (X)** : quand la carte quitte le jeu, chaque adversaire gagne
+X Pouvoir. Les mots-clés viennent de la ligne de la carte et de son rôle (`cards/keywords.js`, appliqué à toutes les familles sauf Star Academy) : espions, spectres,
+Mangemorts… dans l'Ombre ; assassins, chasseurs, loups-garous en Embuscade ; dragons, géants, monstres à l'Assaut ; pirates pillards ; rois, nobles, milliardaires,
+châteaux et trésors avec Don ; chefs, vilains et pirates de coût 5 ou plus mis à prix (2 pour une carte 7) ; lieux de revenu Limités ; objets jetables Terminaux ;
+animaux Sans objet. Pas de pose dans l'ombre pendant la mise en place (simplification). **La Jacinthe Violette** (Purple Hyacinth, neutres) : Kieran White
+(3, 4, 5, 7), Lauren Sinclair (2, 4, 7), Kym Ladell (1, 3, 4), William Hawkes (2, 3, 4) ; images rangées par `ranger-jacinthe.ps1`.
 Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).

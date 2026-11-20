@@ -174,8 +174,8 @@ export function FamilyFace({ fam, pt, w, big }) {
   );
 }
 
-const KW_SHORT = { celebre: "Célèbre", discret: "Discret", intimidation: "Intimid.", genie: "Génie", pillard: "Pillard", duel: "Duel" };
-/** Carte posée sur la table (vue réseau : { u, d, k, pw, dup, att, s, ic, kw, fz, sil }). Elle pivote quand elle s'agenouille,
+const KW_SHORT = { celebre: "Célèbre", discret: "Discret", intimidation: "Intimid.", genie: "Génie", pillard: "Pillard", duel: "Duel", assaut: "Assaut" };
+/** Carte posée sur la table (vue réseau : { u, d, k, pw, au (or posé : Don), bl (sans texte : Assaut), dup, att, s, ic, kw, fz, sil }). Elle pivote quand elle s'agenouille,
  *  les objets attachés dépassent en dessous, les doublons sont glissés derrière. */
 export const Token = memo(function Token({ v, cls = "", w, onClick, enter }) {
   const d = CARD[v.d];
@@ -187,12 +187,14 @@ export const Token = memo(function Token({ v, cls = "", w, onClick, enter }) {
   return (
     <div className={"tt-slot" + (enter ? " enter" : "")} style={w ? { "--tw": w + "px" } : undefined}>
       <div className={"tt-rot" + (v.k ? " k" : "") + (/\bpick\b/.test(cls) ? " up" : "")} style={{ "--fc": c.c }}>
-        {att.slice(0, 3).map((a, i) => { const ad = CARD[a.d]; return <span key={a.u} className="tt-under att" style={{ "--i": i + 1, "--ac": ad ? cardColors(ad).c : "#ffd166" }}><b>{ad ? ad.name : ""}</b></span>; })}
+        {att.slice(0, 3).map((a, i) => { const ad = CARD[a.d]; return <span key={a.u} className="tt-under att" style={{ "--i": i + 1, "--ac": ad ? cardColors(ad).c : "#ffd166" }}><b>{ad ? ad.name : ""}{a.au ? ` · ${a.au} or` : ""}</b></span>; })}
         {Array.from({ length: Math.min(2, v.dup || 0) }, (_, i) => <span key={"d" + i} className="tt-under dup" style={{ "--i": i + 1 }} />)}
-        <button className={`tt ${cls}`} onClick={onClick} aria-label={`${d.name}${v.k ? ", agenouillé" : ""}${v.fz ? ", gelé" : ""}${v.sil ? ", neutralisé" : ""}${loc ? "" : `, force ${v.s}`}${v.pw ? `, ${v.pw} Pouvoir` : ""}${att.length ? `, ${att.length} objet(s)` : ""}`}>
+        <button className={`tt ${cls}${v.bl ? " bl" : ""}`} onClick={onClick} aria-label={`${d.name}${v.k ? ", agenouillé" : ""}${v.fz ? ", gelé" : ""}${v.sil ? ", neutralisé" : ""}${v.bl ? ", sans texte (Assaut)" : ""}${loc ? "" : `, force ${v.s}`}${v.pw ? `, ${v.pw} Pouvoir` : ""}${v.au ? `, ${v.au} or posé` : ""}${att.length ? `, ${att.length} objet(s)` : ""}`}>
           {art && <img src={art} alt="" draggable={false} />}
           {!loc && <span className="tt-ics">{ICONS.filter((t) => (v.ic || "").includes(t[0].toUpperCase())).map((t) => <i key={t} className={t}><Icon name={TYPE_ICON[t]} size={8} stroke={2.4} /></i>)}</span>}
           {v.pw > 0 && <span className="tt-pw"><Icon name="crown" size={8} stroke={2.6} />{v.pw}</span>}
+          {v.au > 0 && <span className="tt-au" title="Or posé (Don)"><Icon name="coins" size={8} stroke={2.6} />{v.au}</span>}
+          {v.bl ? <span className="tt-bl">Sans texte</span> : null}
           {(v.fz || v.sil) ? <span className="tt-tags"><span className="st">{v.sil ? "Neutralisé" : "Gelé"}</span></span>
             : (v.kw || []).length > 0 && <span className="tt-tags">{v.kw.slice(0, 1).map((k) => <span key={k} className="kw">{KW_SHORT[k] || k}</span>)}</span>}
           <span className={"tt-nm" + (loc ? " loc" : "")}>{d.name}</span>

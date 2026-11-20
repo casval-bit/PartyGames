@@ -4,6 +4,9 @@
 //   mise en place (main de 7, mulligan, 8 or de cartes posées), puis chaque round :
 //   Scénario → Pioche → Recrutement → Défis → Domination → Redressement → Taxe.
 // Le premier joueur à atteindre l'objectif de Pouvoir (15 par défaut) gagne immédiatement.
+// Les 13 mots-clés de l'original (rules.js, KEYWORDS) : Célèbre, Discret, Intimidation, Génie et Pillard (défis), Embuscade et
+// Ombre (mises en jeu), Assaut (un lieu perd son texte), Don (or posé sur la carte), Mise à prix, Limité, Terminal, Sans objet ;
+// plus Duel. Une carte dans l'ombre (zone « shadow ») est face cachée : seul son propriétaire la voit (view.js).
 //
 // Le déroulé est écrit comme un générateur : chaque fois qu'un joueur doit choisir, le générateur « produit »
 // une question (prompt). La classe Game attend la réponse (ou la calcule pour un bot) et relance le générateur.
@@ -43,7 +46,7 @@ export function createGame({ players, goal = DEFAULT_GOAL, seed, maxRounds = MAX
   players.forEach((pl, i) => {
     const P = {
       id: pl.id, name: pl.name || "Joueur", bot: Boolean(pl.bot), idx: i, fam: pl.deck.fam, pt: pl.deck.pt || null, deckName: pl.deck.name || "",
-      deck: [], hand: [], disc: [], dead: [], plots: [], used: [], plot: null, chars: [], locs: [],
+      deck: [], hand: [], disc: [], dead: [], plots: [], used: [], plot: null, chars: [], locs: [], shadows: [],
       power: 0, gold: 0, limited: false, cheap: 0, done: { combat: 0, ruse: 0, influence: 0 }, fu: "F" + i,
     };
     for (const [id, n] of Object.entries(pl.deck.cards)) for (let k = 0; k < n; k++) if (CARD[id]) P.deck.push(mk(G, id, P.id, "deck"));
@@ -96,7 +99,9 @@ export function makeApi(G) {
     }
     return out;
   };
-  X.abs = (inst) => (!inst ? [] : inst.fam ? famAbs(P(inst.o)) : (CARD[inst.id] && CARD[inst.id].abs) || []);
+  /** Lieu touché par un Assaut : il perd son texte (capacités et mots-clés) jusqu'à la fin du défi. */
+  X.blank = (inst) => Boolean(inst && G.ch && G.ch.blank === inst.u);
+  X.abs = (inst) => (!inst || X.blank(inst) ? [] : inst.fam ? famAbs(P(inst.o)) : (CARD[inst.id] && CARD[inst.id].abs) || []);
   const each = (hook, fn) => { for (const src of X.sources()) for (const ab of X.abs(src)) if (ab[hook]) fn(ab, src); };
 
   X.str = (inst) => {
@@ -123,7 +128,7 @@ export function makeApi(G) {
   };
   X.hasKw = (inst, k) => {
     const d = X.card(inst);
-    if (!d) return false;
+    if (!d || X.blank(inst)) return false;
     if (d.kw && d.kw[k] !== undefined) return true;
     let yes = false;
     each("kw", (ab, src) => { if (!yes && ab.kw(X, src, inst, k)) yes = true; });
@@ -169,6 +174,7 @@ export function makeApi(G) {
       case "loc": rm(cc.locs); break;
       case "att": { const h = G.inst[inst.host]; if (h) rm(h.att); break; }
       case "dup": { const h = G.inst[inst.host]; if (h) rm(h.dup); break; }
+      case "shadow": rm(owner.shadows); break;
       default:
     }
     inst.host = null;
@@ -176,9 +182,9 @@ export function makeApi(G) {
   const toPile = (inst, z) => {
     detach(inst);
     const owner = P(inst.o);
-    inst.c = inst.o; inst.k = false; inst.pw = 0; inst.z = z;
+    inst.c = inst.o; inst.k = false; inst.pw = 0; inst.gold = 0; inst.z = z;
     G.mods = G.mods.filter((m) => m.u !== inst.u);
-    ({ hand: owner.hand, disc: owner.disc, dead: owner.dead, deck: owner.deck })[z].push(inst);
+    ({ hand: owner.hand, disc: owner.disc, dead: owner.dead, deck: owner.deck, shadow: owner.shadows })[z].push(inst);
   };
   X.detach = detach;
   X.toPile = toPile;
@@ -251,13 +257,24 @@ export function makeApi(G) {
   };
 
   /* --- sorties de jeu --- */
+  /** Mise à prix (X) : quand la carte quitte le jeu, chaque adversaire de son contrôleur gagne X Pouvoir. */
+  const prized = (inst) => {
+    const d = def(inst);
+    const n = d && d.kw && Number(d.kw.prime);
+    if (!n || X.blank(inst)) return;
+    const p = X.ctrl(inst);
+    for (const o of X.opps(p)) X.gainPower(o, n, null, inst);
+  };
+  /** Un objet quitte le jeu (défaussé, rendu, ou son porteur s'en va : Terminal le défausse). */
+  const attOff = (a, dest) => { prized(a); toPile(a, dest); };
   X.leavePlay = function* (inst, dest) {
-    const owner = P(inst.o);
-    for (const a of [...inst.att]) { const ad = def(a); toPile(a, ad.kw && ad.kw.terminal !== undefined ? "disc" : "hand"); }
+    for (const a of [...inst.att]) { const ad = def(a); attOff(a, ad.kw && ad.kw.terminal !== undefined ? "disc" : "hand"); }
     for (const d of [...inst.dup]) toPile(d, "disc");
     if (inst.pw > 0) X.log(`${inst.pw} Pouvoir de ${X.name(inst)} retourne à la réserve.`);
+    if (inst.gold > 0) X.log(`${inst.gold} or posé sur ${X.name(inst)} est perdu.`);
+    const out = { ...inst };
     toPile(inst, dest);
-    void owner;
+    prized({ ...out, z: dest });
   };
   X.kill = function* (inst, src) {
     if (!inst || inst.z !== "char") return false;
@@ -275,9 +292,21 @@ export function makeApi(G) {
     yield* fire(G, X, { ev: "killed", inst, p, src });
     return true;
   };
-  X.sacrifice = function* (inst) { if (inst && X.inPlay(inst)) { const p = X.ctrl(inst); X.log(`${p.name} sacrifie ${X.name(inst)}.`, { p: p.id }); if (inst.z === "att") toPile(inst, "disc"); else yield* X.leavePlay(inst, "disc"); } };
-  X.discardFromPlay = function* (inst) { if (inst && X.inPlay(inst)) { if (inst.z === "att") toPile(inst, "disc"); else yield* X.leavePlay(inst, "disc"); } };
-  X.returnToHand = function* (inst) { if (inst && X.inPlay(inst)) { X.log(`${X.name(inst)} retourne dans la main de son propriétaire.`); if (inst.z === "att") toPile(inst, "hand"); else yield* X.leavePlay(inst, "hand"); } };
+  X.sacrifice = function* (inst) { if (inst && X.inPlay(inst)) { const p = X.ctrl(inst); X.log(`${p.name} sacrifie ${X.name(inst)}.`, { p: p.id }); if (inst.z === "att") attOff(inst, "disc"); else yield* X.leavePlay(inst, "disc"); } };
+  X.discardFromPlay = function* (inst) { if (inst && X.inPlay(inst)) { if (inst.z === "att") attOff(inst, "disc"); else yield* X.leavePlay(inst, "disc"); } };
+  X.returnToHand = function* (inst) { if (inst && X.inPlay(inst)) { X.log(`${X.name(inst)} retourne dans la main de son propriétaire.`); if (inst.z === "att") attOff(inst, "hand"); else yield* X.leavePlay(inst, "hand"); } };
+
+  /** Don (X) : quand la carte entre en jeu, son joueur peut y poser jusqu'à X or de son or (ses capacités s'en servent). */
+  const bestow = function* (p, inst) {
+    const d = def(inst);
+    const max = Math.min(Number(d.kw && d.kw.don) || 0, p.gold);
+    if (max <= 0 || !X.inPlay(inst)) return;
+    const opts = Array.from({ length: max + 1 }, (_, k) => ({ id: String(max - k), label: max - k ? `Poser ${max - k} or` : "Ne rien poser" }));
+    const ans = yield ask(G, [p.id], { kind: "option", title: `Don (${d.kw.don}) : combien d'or poser sur ${d.name} ?`, opts, don: inst.u, src: d.id },
+      (pid, a) => (a && opts.some((o) => o.id === a.pick) ? a.pick : null), () => "0");
+    const k = Math.min(Number(ans) || 0, p.gold);
+    if (k > 0 && X.inPlay(inst)) { p.gold -= k; inst.gold = (inst.gold || 0) + k; X.log(`${p.name} pose ${k} or sur ${d.name} (Don).`, { p: p.id }); }
+  };
 
   /** Met en jeu un personnage ou un lieu (doublon s'il est unique et déjà en jeu). */
   X.putIntoPlay = function* (p, inst, from, o = {}) {
@@ -287,14 +316,17 @@ export function makeApi(G) {
     detach(inst);
     inst.c = p.id; inst.k = Boolean(o.knelt); inst.pw = 0;
     if (d.type === "char") { inst.z = "char"; p.chars.push(inst); } else { inst.z = "loc"; p.locs.push(inst); }
-    if (!o.quiet) X.log(`${p.name} met en jeu ${d.name}${from === "ambush" ? " (Embuscade)" : ""}.`, { p: p.id, c: inst.id });
-    if (!o.setup) yield* fire(G, X, { ev: "enter", inst, p });
+    if (!o.quiet) X.log(`${p.name} met en jeu ${d.name}${from === "ambush" ? " (Embuscade)" : from === "shadow" ? " (sorti de l'ombre)" : ""}.`, { p: p.id, c: inst.id });
+    if (o.setup) return;
+    if (d.kw.don) yield* bestow(p, inst);
+    yield* fire(G, X, { ev: "enter", inst, p });
   };
-  X.attach = function* (p, inst, host) {
+  X.attach = function* (p, inst, host, from = "hand") {
     detach(inst);
     inst.z = "att"; inst.host = host.u; inst.c = p.id; inst.k = false;
     host.att.push(inst);
-    X.log(`${p.name} attache ${X.name(inst)} à ${X.name(host)}.`, { p: p.id, c: inst.id });
+    X.log(`${p.name} attache ${X.name(inst)} à ${X.name(host)}${from === "shadow" ? " (sorti de l'ombre)" : ""}.`, { p: p.id, c: inst.id });
+    if (def(inst).kw.don) yield* bestow(p, inst);
     yield* fire(G, X, { ev: "enter", inst, p });
   };
   return X;
@@ -353,21 +385,25 @@ function* fire(G, X, ev) {
       }
     }
   }
-  // événements « Réaction » en main
+  // événements « Réaction » en main, ou dans l'ombre (joués pour leur coût d'Ombre)
   for (const p of order) {
     let guard = 0;
     while (guard++ < 6) {
-      const opts = p.hand.filter((c) => { const d = def(c); const ab = d.abs[0]; return d.type === "evt" && ab && ab.timing === "react" && ab.on === ev.ev && d.cost <= p.gold && safe(() => ab.cond(X, c, ev)); });
+      const ok = (c) => { const d = def(c); const ab = d.abs[0]; return d.type === "evt" && ab && ab.timing === "react" && ab.on === ev.ev && safe(() => ab.cond(X, c, ev)); };
+      const opts = [...p.hand.filter((c) => ok(c) && def(c).cost <= p.gold).map((c) => ({ u: c.u, id: c.id, cost: def(c).cost })),
+        ...p.shadows.filter((c) => ok(c) && shadowCost(c) <= p.gold).map((c) => ({ u: c.u, id: c.id, cost: shadowCost(c), sh: 1 }))];
       if (!opts.length) break;
-      const pick = yield ask(G, [p.id], { kind: "react", title: reactTitle(ev, X), opts: opts.map((c) => ({ u: c.u, id: c.id, cost: def(c).cost })) },
-        (pid, a) => (a && a.pass ? "pass" : a && opts.some((c) => c.u === a.u) ? a.u : null), () => "pass");
+      const pick = yield ask(G, [p.id], { kind: "react", title: reactTitle(ev, X), opts },
+        (pid, a) => (a && a.pass ? "pass" : a && opts.some((o) => o.u === a.u) ? a.u : null), () => "pass");
       if (pick === "pass") break;
-      const c = G.inst[pick];
-      yield* playEvent(G, X, p, c, ev);
+      const o = opts.find((x) => x.u === pick);
+      yield* playEvent(G, X, p, G.inst[pick], ev, o.sh ? o.cost : null);
       if (G.over) return;
     }
   }
 }
+/** Coût d'Ombre d'une carte (le X de « Ombre (X) »). */
+const shadowCost = (c) => Number(def(c).kw.ombre) || 0;
 const safe = (fn) => { try { return Boolean(fn()); } catch { return false; } };
 function reactTitle(ev, X) {
   switch (ev.ev) {
@@ -379,12 +415,13 @@ function reactTitle(ev, X) {
     default: return "Réagir ?";
   }
 }
-function* playEvent(G, X, p, c, ev) {
+function* playEvent(G, X, p, c, ev, cost = null) {
   const d = def(c);
-  p.gold -= d.cost;
+  const fromShadow = c.z === "shadow";
+  p.gold -= cost ?? d.cost;
+  X.detach(c);
   c.z = "limbo";
-  p.hand.splice(p.hand.indexOf(c), 1);
-  X.log(`${p.name} joue ${d.name}.`, { p: p.id, ty: "evt", c: d.id });
+  X.log(`${p.name} joue ${d.name}${fromShadow ? " depuis l'ombre" : ""}.`, { p: p.id, ty: "evt", c: d.id });
   G.st[p.id].events++;
   try { yield* d.abs[0].run(X, c, ev); } finally { if (c.z === "limbo") { c.z = "disc"; p.disc.push(c); } }
 }
@@ -402,9 +439,10 @@ function* interruptWindow(G, X, ev) {
         if (ab.kind === "interrupt" && ab.on === ev.ev && !isUsed(G, src, i) && safe(() => ab.cond(X, src, ev))) opts.push({ k: "ab", u: src.u, i, id: src.id || null, label: ab.name || X.name(src) });
       });
     }
-    for (const c of p.hand) {
+    for (const c of [...p.hand, ...p.shadows]) {
       const d = def(c); const ab = d.abs[0];
-      if (d.type === "evt" && ab && ab.timing === "interrupt" && ab.on === ev.ev && d.cost <= p.gold && safe(() => ab.cond(X, c, ev))) opts.push({ k: "evt", u: c.u, id: c.id, cost: d.cost, label: d.name });
+      const cost = c.z === "shadow" ? shadowCost(c) : d.cost;
+      if (d.type === "evt" && ab && ab.timing === "interrupt" && ab.on === ev.ev && cost <= p.gold && safe(() => ab.cond(X, c, ev))) opts.push({ k: "evt", u: c.u, id: c.id, cost, label: d.name + (c.z === "shadow" ? " (ombre)" : ""), sh: c.z === "shadow" ? 1 : 0 });
     }
     if (!opts.length) return;
     const title = ev.ev === "wouldDie" ? `${X.name(ev.inst)} va être tué : le sauver ?` : `La revendication s'applique contre vous : l'annuler ?`;
@@ -414,7 +452,7 @@ function* interruptWindow(G, X, ev) {
     const o = opts[pick];
     if (o.k === "dup") { const d = ev.inst.dup[0]; X.toPile(d, "disc"); ev.saved = true; X.log(`${p.name} défausse un doublon pour sauver ${X.name(ev.inst)}.`, { p: p.id, ty: "save" }); }
     else if (o.k === "ab") { const src = G.inst[o.u]; markUsed(G, src, o.i); X.log(`${X.name(src)}${X.abs(src)[o.i].name ? ` — ${X.abs(src)[o.i].name}` : ""}.`, { p: p.id, ty: "ab" }); yield* X.abs(src)[o.i].run(X, src, ev); }
-    else if (o.k === "evt") yield* playEvent(G, X, p, G.inst[o.u], ev);
+    else if (o.k === "evt") yield* playEvent(G, X, p, G.inst[o.u], ev, o.sh ? o.cost : null);
   }
 }
 
@@ -459,8 +497,28 @@ function marshalOpts(G, X, p) {
       const ab = d.abs[0];
       if (ab && ab.timing === "action" && (ab.when === "marshal" || ab.when === "any") && d.cost <= p.gold && safe(() => ab.can(X, c))) opts.push({ k: "evt", u: c.u, cost: d.cost });
     }
+    // Ombre : la poser face cachée pour 2 or (ce n'est pas la jouer : Limité ne compte pas)
+    if (d.kw.ombre !== undefined && p.gold >= 2) opts.push({ k: "shd", u: c.u, cost: 2 });
   }
+  opts.push(...shadowOpts(G, X, p, "marshal"));
   pushActs(G, X, p, opts, ["marshal", "any"]);
+  return opts;
+}
+/** Cartes de l'ombre qu'on peut sortir maintenant (personnage, lieu, objet) ou jouer (événement d'action), pour leur coût d'Ombre. */
+function shadowOpts(G, X, p, when) {
+  const opts = [];
+  for (const c of p.shadows) {
+    const d = def(c), cost = shadowCost(c);
+    if (cost > p.gold) continue;
+    if (d.type === "char" || d.type === "loc") { if (X.canEnter(p, c)) opts.push({ k: "out", u: c.u, cost }); }
+    else if (d.type === "obj") {
+      if (d.uni && X.allChars().some((h) => h.att.some((a) => a.c === p.id && def(a).key === d.key))) continue;
+      if (attachTargets(G, X, p, c).length) opts.push({ k: "out", u: c.u, cost });
+    } else if (d.type === "evt") {
+      const ab = d.abs[0];
+      if (ab && ab.timing === "action" && (ab.when === when || ab.when === "any") && safe(() => ab.can(X, c))) opts.push({ k: "out", u: c.u, cost });
+    }
+  }
   return opts;
 }
 function pushActs(G, X, p, opts, whens) {
@@ -482,6 +540,7 @@ function challengeActOpts(G, X, p) {
       opts.push({ k: "amb", u: c.u, cost: d.kw.embuscade });
     }
   }
+  opts.push(...shadowOpts(G, X, p, "challenge"));
   pushActs(G, X, p, opts, ["challenge", "any"]);
   return opts;
 }
@@ -656,6 +715,8 @@ function* doMarshal(G, X, p, o) {
   const c = G.inst[o.u];
   if (o.k === "act") return yield* useAction(G, X, p, o);
   if (o.k === "evt") return yield* playEvent(G, X, p, c, null);
+  if (o.k === "shd") { p.gold -= 2; X.detach(c); c.z = "shadow"; p.shadows.push(c); X.log(`${p.name} pose une carte face cachée dans son ombre.`, { p: p.id }); return; }
+  if (o.k === "out") return yield* fromShadow(G, X, p, c);
   const d = def(c);
   if (o.k === "dup") { yield* X.putIntoPlay(p, c, "hand"); G.st[p.id].played++; return; }
   if (d.type === "obj") {
@@ -675,6 +736,21 @@ function* doMarshal(G, X, p, o) {
   if (d.kw.limite !== undefined) p.limited = true;
   G.st[p.id].played++;
   yield* X.putIntoPlay(p, c, "hand");
+}
+/** Sortir une carte de l'ombre en payant son coût d'Ombre : elle entre en jeu par effet (ni recrutée ni jouée : Limité ne compte pas). */
+function* fromShadow(G, X, p, c, ev = null) {
+  const d = def(c), cost = shadowCost(c);
+  if (c.z !== "shadow" || cost > p.gold) return;
+  if (d.type === "evt") return yield* playEvent(G, X, p, c, ev, cost);
+  if (d.type === "obj") {
+    const tg = attachTargets(G, X, p, c);
+    const [u] = yield* X.choose(p, { title: `Sortir ${d.name} de l'ombre : l'attacher à…`, cands: tg.map((x) => x.u), min: 1, max: 1, src: d.id, ask: true });
+    if (!u) return;
+    p.gold -= cost;
+    return yield* X.attach(p, c, G.inst[u], "shadow");
+  }
+  p.gold -= cost;
+  yield* X.putIntoPlay(p, c, "shadow");
 }
 function* useAction(G, X, p, o) {
   const src = G.inst[o.u];
@@ -705,6 +781,7 @@ function* actionWindow(G, X, label) {
     if (pick.k === "evt") yield* playEvent(G, X, p, c, null);
     else if (pick.k === "act") yield* useAction(G, X, p, pick);
     else if (pick.k === "amb") { p.gold -= def(c).kw.embuscade; G.st[p.id].played++; yield* X.putIntoPlay(p, c, "ambush"); }
+    else if (pick.k === "out") yield* fromShadow(G, X, p, c);
     if (G.over) return;
   }
 }
@@ -727,6 +804,15 @@ function* runChallenge(G, X, A, pick) {
     if (!pool.length) continue;
     const [b] = yield* X.choose(A, { title: `Discret (${X.name(c)}) : qui ne pourra pas défendre ?`, cands: pool.map((x) => x.u), min: 1, max: 1, src: c.id });
     if (b) { ch.bypass.push(b); X.log(`${X.name(G.inst[b])} ne peut pas défendre (Discret).`, { p: A.id }); }
+  }
+  // Assaut : un lieu du défenseur de coût inférieur à celui de l'attaquant perd son texte pendant le défi (un seul lieu par défi)
+  for (const u of ch.atk) {
+    const c = G.inst[u];
+    if (ch.blank || !c || c.z !== "char" || !X.hasKw(c, "assaut")) continue;
+    const pool = D.locs.filter((l) => (def(l).cost || 0) < (def(c).cost || 0));
+    if (!pool.length) continue;
+    const [b] = yield* X.choose(A, { title: `Assaut (${X.name(c)}) : quel lieu perd son texte pendant ce défi ?`, cands: pool.map((l) => l.u), min: 0, max: 1, src: c.id, ask: true, harm: true });
+    if (b) { ch.blank = b; X.log(`${X.name(G.inst[b])} perd son texte pendant ce défi (Assaut de ${X.name(c)}).`, { p: A.id }); }
   }
   yield* actionWindow(G, X, "Attaquants déclarés : une action ?");
   if (G.over) return;
@@ -769,17 +855,24 @@ function* runChallenge(G, X, A, pick) {
     X.gainPower(A, 1 + X.unoppBonus(A), null);
   }
   for (const c of winners) if (c.z === "char" && X.hasKw(c, "celebre")) X.gainPower(W, 1, c);
+  // Génie et Pillard : pour chaque personnage participant du gagnant (qu'il attaque ou qu'il défende)
+  for (const c of winners) {
+    if (c.z !== "char") continue;
+    if (X.hasKw(c, "genie")) { X.draw(W, 1); X.log(`${W.name} pioche 1 carte (Génie de ${X.name(c)}).`, { p: W.id }); }
+    if (X.hasKw(c, "pillard")) X.discardTop(L, 1);
+  }
   if (W === A) {
+    let intim = false; // une seule Intimidation par défi
     for (const c of atkL) {
-      if (c.z !== "char") continue;
-      if (X.hasKw(c, "intimidation")) {
-        const diff = sa - sd;
-        const pool = D.chars.filter((x) => !x.k && X.str(x) <= diff);
-        if (pool.length) { const [u] = yield* X.choose(A, { title: `Intimidation (${X.name(c)}) : agenouiller…`, cands: pool.map((x) => x.u), min: 1, max: 1, src: c.id }); if (u) { X.kneel(G.inst[u]); X.log(`${X.name(G.inst[u])} est agenouillé (Intimidation).`); } }
-      }
-      if (X.hasKw(c, "genie")) { X.draw(A, 1); X.log(`${A.name} pioche 1 carte (Génie de ${X.name(c)}).`, { p: A.id }); }
-      if (X.hasKw(c, "pillard")) X.discardTop(D, 1);
+      if (intim || c.z !== "char" || !X.hasKw(c, "intimidation")) continue;
+      const diff = sa - sd;
+      const pool = D.chars.filter((x) => !x.k && X.str(x) <= diff);
+      if (!pool.length) continue;
+      const [u] = yield* X.choose(A, { title: `Intimidation (${X.name(c)}) : agenouiller…`, cands: pool.map((x) => x.u), min: 1, max: 1, src: c.id });
+      if (u) { intim = true; X.kneel(G.inst[u]); X.log(`${X.name(G.inst[u])} est agenouillé (Intimidation).`); }
     }
+    const hit = ch.blank && G.inst[ch.blank];
+    if (hit && hit.z === "loc" && !hit.k) { X.kneel(hit); X.log(`${X.name(hit)} est agenouillé (Assaut).`, { p: A.id }); }
     // revendication
     const n = X.claimOf(ch);
     const cev = { ev: "claim", ch, p: A, target: D, n, cancel: false };

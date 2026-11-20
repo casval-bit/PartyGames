@@ -3,7 +3,7 @@
 // Sert pour les bots, pour les simulations d'équilibrage et quand un joueur met trop longtemps à répondre.
 import { TYPES } from "./rules.js";
 
-const KW_VAL = { celebre: 1.2, discret: 0.6, intimidation: 0.5, genie: 0.7, pillard: 0.4, duel: 0.3, embuscade: 0.3 };
+const KW_VAL = { celebre: 1.2, discret: 0.6, intimidation: 0.5, genie: 0.7, pillard: 0.4, duel: 0.3, embuscade: 0.3, assaut: 0.5, ombre: 0.3, don: 0.3, sansobjet: -0.2 };
 
 /** Valeur approximative d'une carte (pour choisir quoi jouer, quoi défausser, quoi sacrifier). */
 export function cardValue(d) {
@@ -12,6 +12,7 @@ export function cardValue(d) {
     const icons = TYPES.filter((t) => d.icons && d.icons[t]).length;
     let v = (d.str || 0) + icons * 0.9 + (d.abs || []).length * 0.9;
     for (const k of Object.keys(d.kw || {})) v += KW_VAL[k] || 0;
+    if (d.kw && d.kw.prime) v -= 0.8 * d.kw.prime; // Mise à prix : sa mort rapporte aux adversaires
     return v;
   }
   if (d.type === "loc") return 1.5 + (d.abs || []).reduce((s, ab) => s + (ab.tpl === "income" ? 2.2 * (+ab.args[0] || 1) : 1), 0);
@@ -88,6 +89,12 @@ export function botAnswer(X, P, q) {
     }
     case "choose": return { pick: choose(X, P, q) };
     case "option": {
+      if (q.don) { // Don : poser l'or en gardant de quoi jouer la carte la moins chère de la main
+        const max = Math.max(0, ...q.opts.map((o) => +o.id || 0));
+        const cheap = Math.min(99, ...P.hand.filter((c) => ["char", "loc", "obj"].includes(X.card(c).type)).map((c) => X.card(c).cost));
+        const keep = X.G.phase === "marshal" && cheap <= P.gold ? cheap : 0;
+        return { pick: String(Math.max(0, Math.min(max, P.gold - keep))) };
+      }
       const best = [...q.opts].sort((a, b) => X.totalPower(X.player(b.id) || P) - X.totalPower(X.player(a.id) || P))[0];
       return { pick: (best || q.opts[0]).id };
     }
@@ -103,7 +110,7 @@ function marshal(X, P, q) {
   const evGold = q.opts.find((o) => o.k === "evt" && X.card(C(o.u)).abs[0].tpl === "evGold");
   if (evGold) return evGold;
   const holdFor = Math.min(2, ...P.hand.filter((c) => X.card(c).type === "evt" && X.card(c).abs[0].timing !== "action" || (X.card(c).type === "evt" && X.card(c).abs[0].when === "challenge")).map((c) => X.card(c).cost).concat([9]));
-  const scored = q.opts.filter((o) => o.k === "play").map((o) => {
+  const scored = q.opts.filter((o) => o.k === "play" || (o.k === "out" && X.card(C(o.u)).type !== "evt")).map((o) => {
     const d = X.card(C(o.u));
     let v = cardValue(d);
     if (d.type === "char") v += P.chars.length < 4 ? 3 : 1;
@@ -113,10 +120,12 @@ function marshal(X, P, q) {
   }).filter((x) => x.v > 0);
   const actDraw = q.opts.find((o) => o.k === "act" && /Draw|Gold/.test(X.abs(C(o.u))[o.i].tpl));
   if (actDraw) return actDraw;
-  if (!scored.length) return { pass: true };
   scored.sort((a, b) => b.v - a.v);
   const top = scored.find((x) => P.gold - x.o.cost >= (holdFor < 9 ? holdFor : 0)) || (P.gold >= 4 ? scored[0] : null);
-  return top ? top.o : { pass: true };
+  if (top) return top.o;
+  // rien de mieux : on cache une carte dans l'ombre (2 or) pour la sortir plus tard, moins cher ou par surprise
+  const shd = q.opts.filter((o) => o.k === "shd").map((o) => ({ o, v: cardValue(X.card(C(o.u))) })).sort((a, b) => b.v - a.v)[0];
+  return shd && P.gold >= 2 ? shd.o : { pass: true };
 }
 
 function oppDefense(X, D, t, bypassPower = 0) {
@@ -215,10 +224,11 @@ function action(X, P, q) {
   for (const o of q.opts) {
     const c = C(o.u);
     const d = X.card(c);
-    const tpl = o.k === "act" ? X.abs(c)[o.i].tpl : o.k === "evt" ? d.abs[0].tpl : "amb";
+    const tpl = o.k === "act" ? X.abs(c)[o.i].tpl : o.k === "evt" || (o.k === "out" && d.type === "evt") ? d.abs[0].tpl : o.k === "out" ? "out" : "amb";
     if (o.k === "amb") { if (ch && ch.def === P.id && ch.stage !== "res") return o; continue; }
-    if (/^(evDraw|actDraw|evRecall|evGold)$/.test(tpl)) return o;
-    if (/^(evKill|evKneel|actKneel|actSacKill)$/.test(tpl)) { if (tpl !== "actSacKill" || Math.random() < 0.3) return o; continue; }
+    if (tpl === "out") return o; // sortir de l'ombre : un personnage de plus pour les défis et la Domination
+    if (/^(evDraw|actDraw|evRecall|evGold|actGoldDraw)$/.test(tpl)) return o;
+    if (/^(evKill|evKneel|actKneel|actSacKill|actGoldKneel)$/.test(tpl)) { if (tpl !== "actSacKill" || Math.random() < 0.3) return o; continue; }
     if (tpl === "evKillAll") {
       const m = +d.abs[0].args[0] || 1;
       const theirs = X.opps(P).flatMap((op) => op.chars).filter((x) => X.str(x) <= m).reduce((a, x) => a + X.card(x).cost, 0);

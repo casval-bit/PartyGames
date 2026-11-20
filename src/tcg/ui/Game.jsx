@@ -113,6 +113,11 @@ function Board({ p, ag, mine, cls, onCard, onZoom, onPile, fresh, onBack, waitin
         <button className="tb-plots" onClick={() => onPile(p.id, "used")} aria-label={`Scénarios : ${p.plotsLeft} restants, ${p.used.length} joués`}><Icon name="scroll" size={13} />{p.plotsLeft}</button>
         <CardRow className="tb-locs" items={p.locs} w={bw} gap={5} render={(v) => <Token v={v} w={bw} cls={cls(v)} onClick={() => onCard(v, p)} enter={fresh.has(v.u)} />} empty={null} />
         <div className="tb-piles">
+          {p.sh > 0 && (
+            <button className="tb-pile shadow" style={{ width: bw }} onClick={() => onPile(p.id, "shadow")} aria-label={`Ombre : ${p.sh} carte${p.sh > 1 ? "s" : ""} face cachée`}>
+              <CardBack w={bw} /><span className="tb-cnt">{p.sh}</span><span className="tb-shl">Ombre</span>
+            </button>
+          )}
           <Pile kind="deck" w={bw} count={p.left} label="Deck" onClick={() => onPile(p.id, "used")} />
           <Pile kind="disc" w={bw} count={p.disc.length} top={p.disc[p.disc.length - 1]} label="Défausse" onClick={() => onPile(p.id, "disc")} />
           {p.dead.length > 0 && <button className="tb-dead" onClick={() => onPile(p.id, "dead")} aria-label={`Morts : ${p.dead.length}`}><Icon name="skull" size={11} />{p.dead.length}</button>}
@@ -349,7 +354,10 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
 
   /* ---------- main : quelles cartes sont jouables maintenant ---------- */
   const setupInfo = (us) => { let gold = 0, lim = 0; const keys = new Set(); for (const u of us) { const d = CARD[handMap[u]]; if (!d) continue; if (d.uni && keys.has(d.key)) continue; keys.add(d.key); gold += d.cost; if (d.kw.limite !== undefined) lim++; } return { gold, lim }; };
-  const handOpt = (u) => (q && !busy && (kind === "marshal" || kind === "action") ? (q.opts || []).find((o) => o.u === u && o.k !== "act") : kind === "react" && !q.save ? (q.opts || []).find((o) => o.u === u) : null);
+  const handOpts = (u) => (q && !busy && (kind === "marshal" || kind === "action") ? (q.opts || []).filter((o) => o.u === u && o.k !== "act") : kind === "react" && !q.save ? (q.opts || []).filter((o) => o.u === u) : []);
+  const handOpt = (u) => handOpts(u).find((o) => o.k !== "shd") || handOpts(u)[0] || null;
+  const optLabel = (o, d) => (o.k === "dup" ? "Poser en doublon (gratuit)" : o.k === "shd" ? "Poser face cachée dans l'ombre (2 or)" : o.k === "out" ? `Sortir de l'ombre (${o.cost} or)` : o.k === "evt" ? `Jouer l'événement (${o.cost} or)`
+    : o.k === "amb" ? `Embuscade : le mettre en jeu (${o.cost} or)` : kind === "react" ? `Jouer en réaction (${o.cost} or${o.sh ? ", depuis l'ombre" : ""})` : d && d.type === "obj" ? `Attacher (${o.cost} or)` : `Recruter (${o.cost} or)`);
   const tapHand = (h) => {
     const d = CARD[h.d];
     if (kind === "setup" && (d.type === "char" || d.type === "loc")) {
@@ -359,19 +367,15 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
       if (inf.lim > 1) { setToast("Une seule carte Limitée pendant la mise en place."); sfx.error(); return; }
       setSel([...sel, h.u]); vibrate(8); return;
     }
-    const o = handOpt(h.u);
-    const acts = [];
-    if (o) {
-      const label = o.k === "dup" ? "Poser en doublon (gratuit)" : o.k === "evt" ? `Jouer l'événement (${o.cost} or)` : o.k === "amb" ? `Embuscade : le mettre en jeu (${o.cost} or)` : kind === "react" ? `Jouer en réaction (${o.cost} or)` : d.type === "obj" ? `Attacher (${o.cost} or)` : `Recruter (${o.cost} or)`;
-      acts.push({ label, icon: "play", onClick: () => answer(kind === "react" ? { u: o.u } : { k: o.k, u: o.u }) });
-    }
-    setZoom({ id: h.d, acts, note: o ? null : kind === "marshal" ? "Pas jouable maintenant (pas assez d'or, carte Limitée déjà jouée, ou pas de cible)." : null });
+    const os = handOpts(h.u);
+    const acts = os.map((o) => ({ label: optLabel(o, d), icon: o.k === "shd" ? "eye" : "play", onClick: () => answer(kind === "react" ? { u: o.u } : { k: o.k, u: o.u }) }));
+    setZoom({ id: h.d, acts, note: os.length ? null : kind === "marshal" ? "Pas jouable maintenant (pas assez d'or, carte Limitée déjà jouée, ou pas de cible)." : null });
   };
   const handState = (h) => {
     const d = CARD[h.d];
     const o = handOpt(h.u);
     if (kind === "setup") return { cls: sel.includes(h.u) ? "pick" : d && (d.type === "char" || d.type === "loc") ? "play" : "off" };
-    if (o) return { cls: "play", badge: <span className={"tb-cost" + (o.k === "dup" ? " free" : "")}>{o.k === "dup" ? "Doublon" : `${o.cost} or`}</span> };
+    if (o) return { cls: "play", badge: <span className={"tb-cost" + (o.k === "dup" ? " free" : "")}>{o.k === "dup" ? "Doublon" : o.k === "shd" ? "Ombre" : `${o.cost} or`}</span> };
     return { cls: kind === "marshal" || kind === "action" ? "off" : "" };
   };
 
@@ -390,9 +394,13 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
     dock = { title: "Tu as l'initiative", sub: "Qui joue en premier ce round ?", acts: q.cands.map((id) => ({ label: id === me.id ? "Moi" : (players.find((p) => p.id === id) || {}).name, kind: id === me.id ? "primary" : "", onClick: () => answer({ pick: id }) })) };
   } else if (kind === "marshal") {
     const abil = (q.opts || []).filter((o) => o.k === "act");
+    const outs = (q.opts || []).filter((o) => o.k === "out");
     const n = (q.opts || []).filter((o) => o.k !== "act").length;
     dock = { title: `Recrutement · ${q.gold} or`, sub: n ? "Touche une carte qui brille dans ta main" : "Plus rien de jouable",
-      extra: abil.length ? <div className="ag-chips">{abil.map((o, i) => <button key={i} className="ag-chip" onClick={() => answer({ k: "act", u: o.u, i: o.i })}><Icon name="bolt" size={14} />{o.name}</button>)}</div> : null,
+      extra: abil.length || outs.length ? <div className="ag-chips">
+        {outs.map((o) => <button key={o.u} className="ag-chip shadow" onClick={() => answer({ k: "out", u: o.u })}><Icon name="eye" size={14} />Sortir de l'ombre : {nameOf(o.u)} ({o.cost} or)</button>)}
+        {abil.map((o, i) => <button key={i} className="ag-chip" onClick={() => answer({ k: "act", u: o.u, i: o.i })}><Icon name="bolt" size={14} />{o.name}</button>)}
+      </div> : null,
       acts: [{ ...pass("Fin du recrutement"), kind: n ? "ghost" : "primary" }] };
   } else if (kind === "challenge") {
     if (!chType) {
@@ -421,11 +429,12 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
       if (q.save) return o.label + (o.cost ? ` (${o.cost} or)` : "");
       if (o.k === "act") return o.name;
       const nm = nameOf(o.u);
-      return o.k === "amb" ? `Embuscade : ${nm} (${o.cost} or)` : `${nm} (${o.cost} or)`;
+      return o.k === "amb" ? `Embuscade : ${nm} (${o.cost} or)` : o.k === "out" ? `Ombre : ${nm} (${o.cost} or)` : o.sh ? `${nm} (ombre, ${o.cost} or)` : `${nm} (${o.cost} or)`;
     };
     const pick = (o) => {
       if (q.save) return answer({ j: o.j });
       if (o.k === "act") { const src = insts[o.u]; if (src) setZoom({ id: src.v.d, inst: src.v, who: "à toi", acts: [{ label: `Utiliser : ${o.name}`, icon: "bolt", onClick: () => answer({ k: "act", u: o.u, i: o.i }) }] }); else answer({ k: "act", u: o.u, i: o.i }); return; }
+      if (o.k === "out") { const id = (q.cmap || {})[o.u]; if (id) setZoom({ id, acts: [{ label: `Sortir de l'ombre (${o.cost} or)`, icon: "eye", onClick: () => answer({ k: "out", u: o.u }) }] }); else answer({ k: "out", u: o.u }); return; }
       tapHand({ u: o.u, d: handMap[o.u] || (q.cmap || {})[o.u] });
     };
     dock = { title: q.title, sub: kind === "react" ? "Une carte peut réagir" : "Tu peux jouer une action",
@@ -478,6 +487,20 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
   let infoSheet = null;
   if (sheet === "log") {
     infoSheet = <Sheet title="Journal de la partie" onClose={() => setSheet(null)}><div className="ag-log">{[...ag.log].reverse().map((l) => <p key={l.n} className={"ty-" + (l.ty || "") + (l.p === me.id ? " own" : "")} onClick={l.c && CARD[l.c] ? () => setZoom({ id: l.c }) : undefined}>{l.t}</p>)}</div></Sheet>;
+  } else if (sheet && sheet.pile && sheet.kind === "shadow") {
+    const p = players.find((x) => x.id === sheet.pile);
+    const mineSh = meP && p && p.id === meP.id;
+    const list = mineSh ? (priv && priv.shadows) || [] : [];
+    const outOf = (u) => (q && !busy ? (q.opts || []).find((o) => o.k === "out" && o.u === u) : null);
+    infoSheet = (
+      <Sheet title={`Ombre${p && !mineSh ? ` · ${p.name}` : ""}`} sub={mineSh ? "Tes cartes face cachée : les adversaires ne les voient pas. Pour les sortir, paie leur coût d'Ombre (pendant le Recrutement, ou en action pendant les défis)." : `${p ? p.sh : 0} carte(s) face cachée.`} onClose={() => setSheet(null)}>
+        <div className="ag-grid">{mineSh ? list.map((h) => { const o = outOf(h.u); return (
+          <div key={h.u} className="gi">
+            <CardFace d={CARD[h.d]} onClick={() => setZoom({ id: h.d, acts: o ? [{ label: `Sortir de l'ombre (${o.cost} or)`, icon: "eye", onClick: () => { setSheet(null); answer({ k: "out", u: o.u }); } }] : [] })} />
+            <small>Ombre ({CARD[h.d].kw.ombre} or){o ? " · prête" : ""}</small>
+          </div>); }) : Array.from({ length: p ? p.sh : 0 }, (_, i) => <div key={i} className="gi"><CardBack /></div>)}</div>
+      </Sheet>
+    );
   } else if (sheet && sheet.pile) {
     const p = players.find((x) => x.id === sheet.pile);
     const list = p ? p[sheet.kind] || [] : [];
