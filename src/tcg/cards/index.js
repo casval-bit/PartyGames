@@ -104,6 +104,8 @@ export const RETIRED = {
   "lyoko-franz-hopper-7": { r: "L", seven: true },
   "lyoko-le-clone-de-william-3": { r: "U", seven: false },
   "lyoko-anthea-hopper-3": { r: "U", seven: false },
+  "neutre-kym-ladell-4": { r: "R", seven: false }, // devenue Kym Ladell 7 (même image)
+  "neutre-william-hawkes-4": { r: "R", seven: false }, // devenu William Hawkes 7 (même image)
 };
 /** Identifiant actuel d'une carte d'une ancienne sauvegarde (null si elle n'existe plus). */
 export const currentId = (id) => { const k = RENAMED[id] || REPLACED[id] || id; return CARD[k] ? k : null; };

@@ -9,15 +9,15 @@
 // Embuscade (X) = coût ; Don (X) = 2, ou 3 à partir du coût 5 ; Mise à prix (X) = 1, ou 2 pour une carte 7.
 
 const LOW = (a) => new Set(a.map((t) => t.toLowerCase()));
-const OMBRE = LOW(["Espion", "Voleur", "Hors-la-loi", "Infiltré", "Imposteur", "Spectre", "Fantôme", "Mangemort", "Team Rocket", "Syndicat", "Faux de l'ombre", "Agent", "Ombre", "Russe", "Monde à l'envers", "District 13", "Meister", "Olmèque", "Bat-famille", "Passione", "Gang", "Esprit"]);
+const OMBRE = LOW(["Espion", "Voleur", "Hors-la-loi", "Infiltré", "Imposteur", "Spectre", "Fantôme", "Mangemort", "Team Rocket", "Syndicat", "Faux de l'ombre", "Agent", "Ombre", "Russe", "Monde à l'envers", "District 13", "Meister", "Olmèque", "Passione", "Gang", "Esprit", "Kitsune", "Kanima", "Chimère"]);
 const EMBUSCADE = LOW(["Assassin", "Ninja", "Chasseur", "Chasseur de primes", "Loup-garou", "Vampire", "Prédateur", "Tueur", "Archer", "Sniper", "Carrière", "Commission", "Traceur"]);
-const ASSAUT = LOW(["Géant", "Titan", "Dragon", "Kaiju", "Armée", "Soldat", "Orque", "Troll", "Golem", "Barbare", "Guerrier", "Monstre", "Combat", "Mobile Suit", "Uruk-hai", "Ent", "Créature", "Tekkadan", "ZAFT", "OZ", "Gjallarhorn", "Croc", "Pack", "Kryptonien", "Amazone"]);
-const PILLARD = LOW(["Pirate", "Bandit", "Barbare", "Viking", "Orque", "Corsaire", "Pillard", "Hors-la-loi", "Voleur", "Chapeau de paille", "Conquistador"]);
+const ASSAUT = LOW(["Géant", "Titan", "Dragon", "Kaiju", "Armée", "Soldat", "Orque", "Troll", "Golem", "Barbare", "Guerrier", "Monstre", "Combat", "Mobile Suit", "Uruk-hai", "Ent", "Créature", "Tekkadan", "ZAFT", "OZ", "Gjallarhorn", "Croc", "Pack", "Alpha", "Chevalier", "Mandalorien"]);
+const PILLARD = LOW(["Pirate", "Bandit", "Barbare", "Viking", "Orque", "Corsaire", "Pillard", "Hors-la-loi", "Voleur", "Chapeau de paille", "Conquistador", "Contrebandier"]);
 const DON_RICHE = LOW(["Milliardaire", "Marchand", "Banquier", "Riche", "Commerce", "Capitole", "Inca"]);
 const DON_ROI = LOW(["Roi", "Reine", "Empereur", "Impératrice", "Seigneur", "Zabi"]);
 const DON_COUR = LOW(["Noble", "Prince", "Princesse", "Dame", "Duc", "Duchesse"]);
-const PRIME = LOW(["Roi", "Reine", "Empereur", "Impératrice", "Seigneur", "Chef", "Capitaine", "Champion", "Légendaire", "Pirate", "Hors-la-loi", "Vilain", "Méchant", "Président", "Zabi"]);
-const SANS_OBJET = LOW(["Animal", "Bête"]);
+const PRIME = LOW(["Roi", "Reine", "Empereur", "Impératrice", "Seigneur", "Chef", "Capitaine", "Champion", "Légendaire", "Pirate", "Hors-la-loi", "Vilain", "Méchant", "Président", "Zabi", "Ligue", "Kryptonien"]);
+const SANS_OBJET = LOW(["Animal"]);
 // traits exigés par des objets (« Scooby Snacks » : Chien, « Chapeau de shérif » : Cow-boy…) : ces cartes gardent leurs objets
 const PORTEURS = LOW(["Chien", "Bretteur", "Cow-boy", "Chasseur", "Pirate", "Lyoko", "Pilote", "Gryffondor", "District 12", "Ado", "Space Ranger", "Enfant du Soleil", "Légendaire"]);
 const LIEU_DON = LOW(["Château", "Palais", "Commerce", "Magasin", "Banque", "Trésor", "Royaume", "Bar"]);

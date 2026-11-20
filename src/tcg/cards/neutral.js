@@ -64,7 +64,8 @@ export const cards = [
   ch("Kirikou", "Il n'est pas grand", 1, 1, "RI", "Enfant", "", "ifAlone:2@…mais il est vaillant", "U", { fill: false }),
   ch("Rémy", "Le petit chef", 1, 1, "I", "Animal|Cuisinier", "", "actGold:1@Tout le monde peut cuisiner", "U", { fill: false }),
   // La Jacinthe Violette (Purple Hyacinth) : Lauren, la policière qui sait quand on lui ment, et Kieran, l'assassin de la Faux de
-  // l'ombre, alliés en secret ; Kym et Will, ses amis de la police d'Ardhalis. Une version par image (Kieran White 7 = Kieran White 2.png).
+  // l'ombre, alliés en secret ; Kym et Will, ses amis de la police d'Ardhalis. Une version par image (Kieran White 7 = Kieran White 2.png) ;
+  // chacun des quatre a sa carte 7.
   ch("Kieran White", "La Jacinthe Violette", 7, 6, "CR", "Assassin|Faux de l'ombre|Ardhalis", "discret", "enterKill:4@Le contrat ; escape@Il disparaît dans la nuit", "L", { fill: false }),
   ch("Kieran White", "L'assassin de la Faux de l'ombre", 5, 5, "CR", "Assassin|Faux de l'ombre|Ardhalis", "discret", "winKill:combat,2@Une lame dans l'ombre", "E", { fill: false }),
   ch("Kieran White", "Le partenaire secret", 4, 3, "CR", "Assassin|Faux de l'ombre|Ardhalis", "", "ifWith:Police,2@Une alliance improbable", "R", { fill: false }),
@@ -72,10 +73,10 @@ export const cards = [
   ch("Lauren Sinclair", "Rien que la vérité", 7, 5, "CRI", "Police|Ardhalis", "celebre", "actMinus:3@Elle sait quand on lui ment ; winDraw:ruse,1@La piste d'Allendale", "L", { fill: false, fem: true }),
   ch("Lauren Sinclair", "En mission d'infiltration", 4, 3, "RI", "Police|Ardhalis", "discret", "winDiscard:ruse,1@Le mensonge se voit", "R", { fill: false, fem: true }),
   ch("Lauren Sinclair", "Policière rétrogradée", 2, 2, "CI", "Police|Ardhalis", "", "ifAtk:2@Trop impulsive", "U", { fill: false, fem: true }),
-  ch("Kym Ladell", "Au cœur des flammes", 4, 4, "C", "Police|Ardhalis", "", "guard:Police@Toujours là pour ses amis", "R", { fill: false, fem: true }),
+  ch("Kym Ladell", "Au cœur des flammes", 7, 6, "CI", "Police|Ardhalis", "celebre", "guard:Police@Toujours là pour ses amis ; winStand:combat@Elle se relève toujours", "L", { fill: false, fem: true }),
   ch("Kym Ladell", "Le grand déguisement", 3, 2, "RI", "Police|Ardhalis", "discret", "winGold:ruse,1@Couverture parfaite", "U", { fill: false, fem: true }),
   ch("Kym Ladell", "La bonne humeur", 1, 1, "I", "Police|Ardhalis", "", "enterDraw:1@Les nouvelles du commissariat", "C", { fill: false, fem: true }),
-  ch("William Hawkes", "Le collègue fidèle", 4, 3, "CI", "Police|Ardhalis", "", "ifName:Lauren Sinclair,2@Toujours à ses côtés", "R", { fill: false }),
+  ch("William Hawkes", "Le collègue fidèle", 7, 6, "CI", "Police|Ardhalis", "intimidation", "ifName:Lauren Sinclair,2@Toujours à ses côtés ; defWinPower:1@Il tient la ligne", "L", { fill: false }),
   ch("William Hawkes", "Dans la tourmente", 3, 3, "C", "Police|Ardhalis", "", "ifDef:1@Il tient bon", "U", { fill: false }),
   ch("William Hawkes", "Ronde de nuit", 2, 2, "C", "Police|Ardhalis", "", "ifDef:1@De garde ce soir", "C", { fill: false }),
 ];

@@ -474,7 +474,9 @@ X Pouvoir. Les mots-clés viennent de la ligne de la carte et de son rôle (`car
 Mangemorts… dans l'Ombre ; assassins, chasseurs, loups-garous en Embuscade ; dragons, géants, monstres à l'Assaut ; pirates pillards ; rois, nobles, milliardaires,
 châteaux et trésors avec Don ; chefs, vilains et pirates de coût 5 ou plus mis à prix (2 pour une carte 7) ; lieux de revenu Limités ; objets jetables Terminaux ;
 animaux Sans objet. Pas de pose dans l'ombre pendant la mise en place (simplification). **La Jacinthe Violette** (Purple Hyacinth, neutres) : Kieran White
-(3, 4, 5, 7), Lauren Sinclair (2, 4, 7), Kym Ladell (1, 3, 4), William Hawkes (2, 3, 4) ; images rangées par `ranger-jacinthe.ps1`.
+(3, 4, 5, 7), Lauren Sinclair (2, 4, 7), Kym Ladell (1, 3, 7), William Hawkes (2, 3, 7) : chacun a sa carte 7 (Kym Ladell 4 et William Hawkes 4,
+devenues leurs cartes 7, sont dans RETIRED) ; images rangées par `ranger-jacinthe.ps1`. Équilibrage : tournoi entre les decks à thème avant/après les mots-clés
+(`node tools/test-tcg.js --sim 3000 --themes`) ; les familles qui y perdaient ont reçu plus de mots-clés (Teen Wolf, League of Legends).
 Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
