@@ -505,7 +505,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   débloquée avec 20 cartes différentes de cette famille. Le **pseudo** se change aussi dans le profil (appli PC : il n'y a plus le menu de Party Hub).
 - **Réglages** (roue dentée, `TcgSettings.jsx` + `settings.css`, propres à Heavy is the Crown et enregistrés sur l'appareil, `src/tcg/prefs.js`), présentés comme un menu
   d'options de jeu vidéo : les catégories dans une colonne à gauche (une rangée d'onglets sur téléphone), leurs options à droite avec de grands interrupteurs,
-  des choix et un curseur. **Compte** (connecté ou profil local, pseudo), **Partie** (ouverture des boosters : animation ou directe, règles du jeu),
+  des choix et un curseur. **Compte** (connecté ou profil local, pseudo), **Partie** (ouverture des boosters et des Portails : animée ou directe, règles du jeu),
   **Affichage** (animations complètes ou réduites, **taille des cartes** dans la collection, l'album et l'outil de deck sur grand écran : petites, moyennes,
   grandes, via la variable CSS `--tcg-k`, plein écran sur PC), **Son** (sons du jeu, volume, son au survol), **Testeur** (si `VITE_TESTEURS`), **Aide** (règles, raccourcis clavier).
   Ces sons s'appliquent dans l'accueil, les parties du jeu et pendant les parties de Heavy is the Crown (`sfx.enter("tcg")`) ; les autres jeux gardent les réglages du profil.
@@ -560,9 +560,12 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   en grand, c'est une vraie tranche en 3D, plus épaisse, qui se voit aussi sur le côté quand la carte penche.
 - **Boosters** (5 cartes, au moins une rare) : Multivers (120 Éclats), Héros et Arsenal (140), **Découverte** (200 : que des cartes que tu n'as pas encore, tant qu'il en reste),
   Prestige (600 : rares ou mieux). Il n'y a plus de booster par famille : ceux qui n'étaient pas encore ouverts sont remboursés 160 Éclats chacun.
-  **Ouvrir par 5** : quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à 5 d'un coup (`openPacks`) : un paquet de boosters en éventail qu'on déchire une fois,
-  puis les cartes booster par booster (« Booster 2 / 5 »), et à la fin les 25 cartes de la plus rare à la moins rare.
-  **Ouverture** (`PackOpen.jsx`) : le paquet s'incline vers la souris et la lumière glisse dessus ; la carte du dessus brille à travers son dos selon sa rareté
+  **Ouvrir par 5** : quand tu en as plusieurs du même type, « ×5 » en ouvre jusqu'à 5 d'un coup (`openPacks`) : les boosters en éventail, qu'on touche une seule fois,
+  puis les cartes booster par booster (« Booster 1 / 5 »), et à la fin les 25 cartes de la plus rare à la moins rare.
+  **Ouverture** (`PackOpen.jsx`, `opening/BoosterIntro.jsx`) : les paquets scellés flottent, brillent (reflet arc-en-ciel) et s'inclinent vers la souris. On les touche
+  (ou Entrée) : ils tremblent, la soudure du haut s'allume, puis chacun saute à son tour : l'opercule s'envole, un rayon de lumière de la couleur de sa meilleure carte
+  (blanc, bleu, or, violet, orange), des étincelles ; les cartes sortent du paquet en éventail, l'emballage tombe et les cartes filent au centre. Toucher pendant l'animation
+  la passe. Ensuite la carte du dessus brille à travers son dos selon sa rareté
   (dorée : rare, violette : épique, orange qui pulse : légendaire) ; au retournement, le fond prend la couleur de la rareté, un reflet balaie la carte,
   et une légendaire fait trembler l'écran (rayons et flash) ; des pastilles en bas comptent les cartes du booster (de la couleur de leur rareté une fois retournées) ;
   au résumé, les nouvelles brillent et on touche une carte pour la voir en grand.
@@ -571,7 +574,7 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   pour les coûts 3 à 6), et elles ont un autre foil, un peu moins éclatant : cadre chromé argenté, reflet argenté (sans paillettes : ni les 7 ni elles n'ont de grille de points).
   Sur une épique, un bouton grisé « Pleine carte · Bientôt » annonce la suite : une épique brillante pourra passer en pleine carte (même image), pas encore disponible. Les jetons viennent
   du recyclage des doubles (1 par commune ou peu commune, 2 par rare, 3 par épique, 5 par légendaire) et de chaque booster (1, ou 3 pour un Prestige ;
-  un de plus une fois sur 4). 1 booster sur 200 est **doré** : que des rares ou mieux, et 10 jetons en plus. Ouverture façon TCG Pocket : on déchire le paquet en glissant le doigt, puis on retourne les cartes une à une.
+  un de plus une fois sur 4). 1 booster sur 200 est **doré** : que des rares ou mieux, et 10 jetons en plus (son paquet est doré). On ouvre le paquet d'un toucher, puis on retourne les cartes une à une.
 - **Éclats** (la monnaie) : fins de partie (jamais zéro, même en perdant), quêtes, niveaux, succès, recyclage des doubles. Ils achètent des boosters et les cartes de la **boutique du jour**
   (6 cartes au hasard parmi toutes, renouvelées à minuit ; commune 80, peu commune 200, rare 500, épique 1 200, légendaire 3 000 ; pas de brillante en vente, sauf les cartes 7).
   Recycler les doubles (au-delà de 2 normales et 1 brillante) rapporte des Éclats selon la rareté, et des jetons de brillance.
@@ -587,8 +590,11 @@ On touche n'importe quelle carte visible (scénarios compris) pour la lire en gr
   et au passage suivant de la famille, d'autres cartes 7 prennent la vedette. On choisit sa **cible** parmi les vedettes. Une invocation : 100 Éclats ou 1 ticket ; par 10 : 900 Éclats (ou 10 tickets, les tickets passent avant les Éclats),
   avec une épique au moins. Taux : Légendaire (une carte 7) 2 %, Épique 10 %, Rare 38 %, Peu commune 50 % ; **une légendaire sur deux est la cible**, et elle est
   **garantie au plus tard à la 50e invocation** dans ce portail (compteur gardé quand les portails changent). En moyenne une cible coûte environ 3 600 Éclats (au pire 4 500),
-  contre 3 000 pour une légendaire au hasard dans la boutique : on paie un peu plus pour choisir. Révélation : un vortex qu'on touche, qui prend la couleur de la meilleure carte
-  (violet : épique, or : légendaire) avant de s'ouvrir. Cadeau d'ouverture : 10 tickets.
+  contre 3 000 pour une légendaire au hasard dans la boutique : on paie un peu plus pour choisir. Révélation (`opening/PortalOrb.jsx`, en 3D : `opening/orbWorld.js`) :
+  une orbe de pierre en plaques qui tourne sur elle-même dans tous les sens. On la touche : elle accélère et tremble, des fissures de la couleur de la meilleure carte courent
+  sur la coquille et la lumière passe entre les plaques ; puis la coquille éclate (les plaques volent, une onde, des étincelles) et le **cœur** apparaît, de la couleur
+  de la rareté (gris : commune, bleu : peu commune, or : rare, violet : épique, orange avec des rayons : légendaire), avec son nom en dessous, comme un Météno qui perd
+  sa carapace. Sans WebGL, une orbe en CSS fait la même chose en plus simple. Toucher pendant l'animation la passe. Cadeau d'ouverture : 10 tickets.
 - **Tickets de portail** et quêtes : chaque quête du jour rapporte de l'XP et une récompense : des Éclats, un **ticket de portail** (Gagne une partie, Ouvre 2 boosters),
   un **booster** (Domination : Multivers ; 10 Pouvoir : Héros) ou, pour la quête de famille, **deux tickets**.
   **Coffre du jour** : les 3 quêtes récupérées, 1 ticket et 100 Éclats de plus.

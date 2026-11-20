@@ -100,7 +100,7 @@ export default function TcgSettings({ onClose, acc, onAccount, onRules, t, setT,
     ),
     game: (
       <>
-        <Line icon="gift" label="Ouverture des boosters" hint="Avec l'animation, ou les cartes tout de suite.">
+        <Line icon="gift" label="Ouverture des boosters et des Portails" hint="Animée (le paquet qui saute, l'orbe qui se brise), ou les cartes tout de suite.">
           <Choice value={p.tear} options={[[true, "Animation"], [false, "Directe"]]} onPick={(v) => set({ tear: v })} testid="tsx-tear" />
         </Line>
         {onRules && (

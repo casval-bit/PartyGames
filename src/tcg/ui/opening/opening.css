@@ -1,0 +1,179 @@
+/* =====================================================================================================================
+   Ouverture : les boosters (BoosterIntro.jsx) et l'orbe des Portails (PortalOrb.jsx), dans l'écran d'ouverture .bo (tcg.css).
+   ===================================================================================================================== */
+
+/* ------------------------------ les boosters : paquets scellés, en éventail pour un groupe ------------------------------ */
+.bx { --w: 200px; position: relative; flex: none; width: 100%; height: calc(var(--w) * 1.62 + 40px); cursor: pointer; outline: none; perspective: 1100px;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.bx:focus-visible::after { content: ""; position: absolute; left: 50%; top: 4px; width: calc(var(--w) * 1.3); height: calc(var(--w) * 1.62 + 22px); translate: -50% 0;
+  border-radius: 18px; box-shadow: 0 0 0 3px rgba(255,255,255,.45); pointer-events: none; }
+.bx-p { position: absolute; left: 50%; top: 16px; width: var(--w); aspect-ratio: 1 / 1.62; margin-left: calc(var(--w) / -2); z-index: calc(10 + var(--i, 0)); container-type: inline-size;
+  transform: translateX(var(--x, 0px)) translateY(var(--y, 0px)) rotate(var(--r, 0deg)); animation: bxIn .75s cubic-bezier(.2,1.25,.4,1) both; animation-delay: calc(var(--i, 0) * 80ms); }
+@keyframes bxIn { from { translate: 0 55vh; rotate: -8deg; opacity: 0; } }
+.bx-p.gold { --pc: #d9a520; }
+.bx-tilt { position: absolute; inset: 0; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s ease-out;
+  filter: drop-shadow(0 20px 18px rgba(0,0,0,.55)); animation: bxFloat 3.6s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -.7s); }
+@keyframes bxFloat { 50% { translate: 0 -7px; rotate: .7deg; } }
+@media (hover: hover) and (pointer: fine) { .bx:not(.open):hover .bx-tilt { filter: drop-shadow(0 22px 20px rgba(0,0,0,.55)) brightness(1.06); } }
+
+/* l'emballage : aluminium coloré, bombé (bords plus sombres), rayons autour du médaillon, reflet arc-en-ciel qui suit la souris */
+.bx-body { position: absolute; left: 0; right: 0; top: 12%; bottom: 0; z-index: 2; overflow: hidden; border-radius: 0 0 5px 5px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--w) * .045); padding: 4% 8% 13%; text-align: center; color: #fff;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.42), rgba(255,255,255,.16) 6%, transparent 15%, transparent 85%, rgba(255,255,255,.1) 94%, rgba(0,0,0,.42)),
+    radial-gradient(75% 38% at 50% 40%, rgba(255,255,255,.34), transparent 70%),
+    repeating-conic-gradient(from 0deg at 50% 40%, rgba(255,255,255,.085) 0 4deg, transparent 4deg 12deg),
+    linear-gradient(170deg, color-mix(in srgb, var(--pc) 55%, #fff) 0%, var(--pc) 30%, color-mix(in srgb, var(--pc) 60%, #1b0b3c) 70%, color-mix(in srgb, var(--pc) 32%, #060312) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3), inset 0 -10px 24px rgba(0,0,0,.35);
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat, conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0) bottom / 10px 6px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat, conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0) bottom / 10px 6px repeat-x; }
+/* bas du paquet : la soudure striée ; un reflet qui balaie le paquet de temps en temps */
+.bx-body::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8%; pointer-events: none; box-shadow: 0 -2px 0 rgba(255,209,102,.6);
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.2) 0 2px, rgba(0,0,0,.24) 2px 4px), linear-gradient(180deg, rgba(0,0,0,.3), rgba(0,0,0,.1)); }
+.bx-body::before { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; right: -60%; pointer-events: none; transform: translateX(-70%);
+  background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.42) 50%, transparent 58%); animation: bxSheen 4.4s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .3s + 1s); }
+@keyframes bxSheen { 0%, 58% { transform: translateX(-70%); } 88%, 100% { transform: translateX(70%); } }
+.bx-holo { position: absolute; inset: 0; pointer-events: none; opacity: .3; mix-blend-mode: color-dodge; transition: background-position .3s;
+  background: linear-gradient(115deg, #ff4fa3, #ffd166 20%, #5dff9a 40%, #5ee1ff 60%, #c084fc 80%, #ff4fa3) var(--gx, 30%) 0 / 300% 100%; }
+.bx-glare { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay;
+  background: radial-gradient(circle at var(--gx, 35%) var(--gy, 30%), rgba(255,255,255,.8), rgba(255,255,255,.12) 26%, transparent 52%); }
+.bx-brand { position: relative; font: 800 calc(var(--w) * .046) / 1 var(--display); letter-spacing: .26em; text-transform: uppercase; color: #ffe6a8; text-shadow: 0 2px 6px rgba(0,0,0,.6); white-space: nowrap; }
+.bx-medal { position: relative; width: calc(var(--w) * .44); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; color: var(--gold);
+  background: radial-gradient(circle at 35% 30%, rgba(40,26,70,.72), rgba(8,5,20,.92) 70%); border: calc(var(--w) * .014) solid var(--gold);
+  box-shadow: 0 0 0 calc(var(--w) * .03) rgba(255,209,102,.18), 0 0 calc(var(--w) * .12) rgba(255,209,102,.5), inset 0 0 calc(var(--w) * .08) rgba(255,209,102,.25); }
+.bx-medal svg { width: 52%; height: auto; filter: drop-shadow(0 0 6px rgba(255,209,102,.6)); }
+.bx-name { position: relative; max-width: 100%; font: 800 calc(var(--w) * .105) / 1.05 var(--display); overflow-wrap: anywhere; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 16px rgba(0,0,0,.5); }
+.bx-n { position: relative; padding: .28em .8em; border-radius: 99px; font: 700 calc(var(--w) * .056) / 1 var(--display); white-space: nowrap; background: rgba(10,6,24,.55); border: 1px solid rgba(255,255,255,.45); }
+@container (max-width: 125px) { .bx-brand, .bx-n { display: none; } .bx-name { font-size: calc(var(--w) * .12); } }
+.bx-p.gold .bx-body { box-shadow: inset 0 0 0 1px rgba(255,240,190,.7), inset 0 -10px 24px rgba(0,0,0,.3), inset 0 0 28px rgba(255,230,150,.35); }
+.bx-p.gold .bx-holo { opacity: .5; }
+
+/* l'opercule du haut (strié, bord en dents de scie) et la soudure qui s'allume quand le paquet va sauter */
+.bx-cap { position: absolute; left: 0; right: 0; top: 0; height: 12.6%; z-index: 3; border-radius: 4px 4px 0 0; transform-origin: 20% 100%;
+  background:
+    linear-gradient(180deg, transparent 70%, rgba(0,0,0,.35) 70% 79%, rgba(255,209,102,.7) 79% 86%, transparent 86%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 2px, rgba(0,0,0,.24) 2px 4px),
+    linear-gradient(180deg, color-mix(in srgb, var(--pc) 60%, #fff), color-mix(in srgb, var(--pc) 70%, #000));
+  -webkit-mask: linear-gradient(#000 0 0) bottom / 100% calc(100% - 6px) no-repeat, conic-gradient(from 135deg at 50% 0, #000 90deg, #0000 0) top / 10px 6px repeat-x;
+  mask: linear-gradient(#000 0 0) bottom / 100% calc(100% - 6px) no-repeat, conic-gradient(from 135deg at 50% 0, #000 90deg, #0000 0) top / 10px 6px repeat-x; }
+.bx-seam { position: absolute; left: 3%; right: 3%; top: 12.3%; height: 3px; margin-top: -1.5px; z-index: 5; border-radius: 3px; background: #fff; opacity: 0; transform: scaleX(0); pointer-events: none;
+  box-shadow: 0 0 8px 2px var(--tc), 0 0 22px 6px var(--tc); }
+.bx-leak { position: absolute; left: -12%; right: -12%; top: -8%; height: 40%; z-index: 4; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(50% 45% at 50% 50%, color-mix(in srgb, var(--tc) 85%, #fff), transparent 72%); }
+
+/* les cartes, cachées dans le paquet ; elles s'ouvrent en éventail en sortant */
+.bx-cards { position: absolute; left: 8%; right: 8%; top: 13.5%; z-index: 1; aspect-ratio: 63 / 88; }
+.bx-cards > .tc.bx-c { position: absolute; inset: 0; }
+.bx-c.c1 { z-index: 2; }
+
+/* effets de l'ouverture, posés sur la soudure : éclair, rayon de la couleur de la meilleure carte, étincelles */
+.bx-fx { position: absolute; left: 50%; top: 12%; width: 0; height: 0; z-index: 6; pointer-events: none; }
+.bx-fx > i { position: absolute; opacity: 0; }
+.bx-fx .beam { left: calc(var(--w) * -.5); bottom: 0; width: var(--w); height: calc(var(--w) * 2.8); transform-origin: 50% 100%; mix-blend-mode: screen;
+  clip-path: polygon(40% 100%, 60% 100%, 100% 0, 0 0);
+  background: repeating-linear-gradient(90deg, transparent 0 7%, rgba(255,255,255,.16) 8%, transparent 9% 15%),
+    linear-gradient(90deg, transparent 4%, color-mix(in srgb, var(--tc) 50%, transparent) 26%, color-mix(in srgb, var(--tc) 75%, #fff) 45%, #fff 50%, color-mix(in srgb, var(--tc) 75%, #fff) 55%, color-mix(in srgb, var(--tc) 50%, transparent) 74%, transparent 96%);
+  -webkit-mask: linear-gradient(to top, #000 0 15%, rgba(0,0,0,.55) 55%, transparent 97%); mask: linear-gradient(to top, #000 0 15%, rgba(0,0,0,.55) 55%, transparent 97%); }
+.bx-fx .flash { left: calc(var(--w) * -.8); top: calc(var(--w) * -.8); width: calc(var(--w) * 1.6); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 10%, color-mix(in srgb, var(--tc) 90%, #fff) 26%, transparent 66%); }
+.bx-fx .sp { left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px var(--tc); }
+.bx-p:is(.t-E, .t-L) .bx-fx .beam { width: calc(var(--w) * 1.5); left: calc(var(--w) * -.75); height: calc(var(--w) * 3.4); }
+.bx-p:is(.t-E, .t-L) .bx-fx .flash { scale: 1.5; }
+.bx-merge { position: absolute; left: 50%; top: calc(16px + var(--w) * .81); width: calc(var(--w) * 2); aspect-ratio: 1; margin: calc(var(--w) * -1) 0 0 calc(var(--w) * -1);
+  border-radius: 50%; z-index: 40; pointer-events: none; opacity: 0; background: radial-gradient(circle, #fff 0 9%, color-mix(in srgb, var(--tc) 90%, #fff) 26%, transparent 66%); }
+
+/* on touche : tout le monde tremble, la soudure s'allume ; puis chaque paquet saute à son tour (délai --bd) */
+.bx.open .bx-tilt { transform: none; animation: bxWob .11s linear 0s var(--wn, 4), bxLift var(--bd) ease-in 0s 1 both; }
+@keyframes bxWob { 25% { rotate: -1.8deg; } 75% { rotate: 1.8deg; } }
+@keyframes bxLift { from { filter: drop-shadow(0 20px 18px rgba(0,0,0,.55)) drop-shadow(0 0 0 transparent); }
+  to { translate: 0 -6px; scale: 1.05; filter: drop-shadow(0 20px 18px rgba(0,0,0,.55)) drop-shadow(0 0 14px color-mix(in srgb, var(--tc) 80%, transparent)); } }
+.bx.open .bx-seam { animation: bxSeam var(--bd) cubic-bezier(.6,0,1,1) both; }
+@keyframes bxSeam { 0% { opacity: .2; transform: scaleX(0); } 99.5% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+.bx.open .bx-leak { animation: bxLeak var(--bd) ease-in both; }
+@keyframes bxLeak { 0% { opacity: 0; } 99% { opacity: .85; } 100% { opacity: 0; } }
+.bx.open .bx-cap { animation: bxCap .8s cubic-bezier(.25,.7,.4,1) var(--bd) forwards; }
+@keyframes bxCap { 15% { transform: translateY(-35%) rotate(-5deg); } 100% { transform: translate(35%, -300%) rotate(40deg); opacity: 0; } }
+.bx.open .bx-fx .flash { animation: bxFlash .55s ease-out var(--bd) both; }
+@keyframes bxFlash { 0% { opacity: 0; transform: scale(.2); } 15% { opacity: 1; } 100% { opacity: 0; transform: scale(1.7); } }
+.bx.open .bx-fx .beam { animation: bxBeam 1.05s cubic-bezier(.2,.8,.3,1) var(--bd) both; }
+@keyframes bxBeam { 0% { opacity: 0; transform: scale(.4, 0); } 16% { opacity: 1; transform: scale(1, 1); } 100% { opacity: 0; transform: scale(1.7, 1.2); } }
+.bx.open .bx-fx .sp { animation: bxSpark .9s cubic-bezier(.1,.8,.3,1) calc(var(--bd) + var(--sd, 0s)) both; }
+@keyframes bxSpark { 0% { opacity: 1; transform: translate(0, 0) scale(1.2); } 100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(.3); } }
+.bx.open .bx-cards { animation: bxRise .6s cubic-bezier(.2,1.15,.3,1) calc(var(--bd) + .05s) both, bxGather .42s cubic-bezier(.6,0,.85,.4) var(--gd) forwards; }
+@keyframes bxRise { from { transform: translateY(0); } to { transform: translateY(-60%); } }
+@keyframes bxGather { from { transform: translateY(-60%); opacity: 1; } to { transform: translate(calc(var(--x, 0px) * -1), 8%) scale(.55); opacity: 0; } }
+.bx.open .bx-c.c0 { animation: bxFan0 .6s cubic-bezier(.2,1.15,.3,1) calc(var(--bd) + .12s) both; }
+.bx.open .bx-c.c2 { animation: bxFan2 .6s cubic-bezier(.2,1.15,.3,1) calc(var(--bd) + .12s) both; }
+@keyframes bxFan0 { to { translate: -14% 4%; rotate: -10deg; } }
+@keyframes bxFan2 { to { translate: 14% 4%; rotate: 10deg; } }
+.bx.open .bx-body { animation: bxDrop .62s cubic-bezier(.5,0,.75,.3) calc(var(--bd) + .32s) forwards; }
+@keyframes bxDrop { to { transform: translateY(65%) rotate(-7deg); opacity: 0; } }
+.bx.open .bx-merge { animation: bxMerge .6s ease-out calc(var(--gd) + .22s) both; }
+@keyframes bxMerge { 0% { opacity: 0; transform: scale(.3); } 40% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
+/* animations réduites : pas de mouvement, un fondu */
+.bx.still .bx-tilt, .bx.still .bx-body::before, .bx.still .bx-p { animation: none; }
+.bx.calm { animation: bxFade .3s ease-out forwards; }
+@keyframes bxFade { to { opacity: 0; } }
+.bo-hint.off { visibility: hidden; }
+
+/* les cartes arrivent au centre : depuis les paquets (un éclat), ou depuis le cœur de l'orbe */
+.bo-stack.from-pack .bo-c.rise { animation: boLand .55s cubic-bezier(.2,1.25,.4,1) backwards; animation-delay: calc(var(--d, 0) * 45ms); }
+@keyframes boLand { from { transform: scale(.55); opacity: 0; filter: brightness(2.2); } }
+.bo-stack.from-orb .bo-c.rise { animation: boBloom .7s cubic-bezier(.2,1.2,.4,1) backwards; animation-delay: calc(var(--d, 0) * 50ms); }
+@keyframes boBloom { from { transform: scale(.15); opacity: 0; filter: brightness(3) blur(3px); } }
+
+/* ------------------------------ l'orbe des Portails ------------------------------ */
+/* la 3D est dessinée sur une toile qui couvre tout l'écran d'ouverture ; l'orbe (bouton) marque sa place et reçoit le toucher */
+.bo > .orb-gl { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .35s ease; }
+.bo > .orb-gl.on { opacity: 1; }
+.orb-gl canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.orb { position: relative; flex: none; width: min(64vw, 300px, 40vh); aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: none; color: inherit;
+  cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.orb:focus-visible { box-shadow: 0 0 0 3px rgba(255,255,255,.4); }
+.orb-flash { position: absolute; left: 50%; top: 50%; z-index: 3; width: 420%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255,255,255,.95) 0 6%, color-mix(in srgb, var(--tc) 70%, transparent) 18%, transparent 55%); animation: orbFlash .7s ease-out both; }
+@keyframes orbFlash { from { opacity: 1; transform: scale(.4); } to { opacity: 0; transform: scale(1.1); } }
+.orb-say { flex: none; min-height: 3.6em; display: grid; place-items: center; text-align: center; }
+.orb-say .bo-hint { margin: 0; }
+.orb-tier { margin: 0; display: grid; gap: 3px; animation: orbTier .6s cubic-bezier(.2,1.4,.4,1) .1s both; }
+.orb-tier small { font: 700 .72rem var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--txt-2); }
+.orb-tier b { font: 800 clamp(1.5rem, 6vw, 2.2rem) / 1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 72%, #fff);
+  text-shadow: 0 0 18px var(--tc), 0 0 40px color-mix(in srgb, var(--tc) 60%, transparent); }
+@keyframes orbTier { from { transform: scale(.4); opacity: 0; } }
+
+/* orbe en CSS (en attendant la 3D, ou sans WebGL) : 8 morceaux de coquille qui tournent, des fissures, un cœur caché dessous */
+.o2 { position: absolute; inset: 0; transition: opacity .35s ease; animation: orbIn .8s cubic-bezier(.2,1.2,.4,1) both; }
+@keyframes orbIn { from { transform: scale(.3); opacity: 0; } }
+.orb.gl .o2 { opacity: 0; }
+.o2 > i, .o2-spin, .o2-pc { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.o2 > .o2-glow { inset: -24%; background: radial-gradient(circle, color-mix(in srgb, var(--pc) 55%, transparent), transparent 66%); filter: blur(6px); animation: orbPulse 2.6s ease-in-out infinite; }
+@keyframes orbPulse { 50% { transform: scale(1.07); opacity: .7; } }
+.o2 > .o2-core { inset: 6%; background: radial-gradient(circle, #fff 0 12%, color-mix(in srgb, var(--tc) 75%, #fff) 30%, var(--tc) 55%, color-mix(in srgb, var(--tc) 55%, #000) 100%);
+  box-shadow: 0 0 40px var(--tc), 0 0 90px color-mix(in srgb, var(--tc) 60%, transparent); }
+.o2-spin { animation: spin 14s linear infinite; }
+.o2-pc { transition: transform .9s cubic-bezier(.2,.7,.3,1), opacity .9s ease-in;
+  background: radial-gradient(circle at 22% 30%, rgba(255,255,255,.1) 0 9%, transparent 9.6%), radial-gradient(circle at 71% 24%, rgba(0,0,0,.2) 0 12%, transparent 12.6%),
+    radial-gradient(circle at 63% 69%, rgba(255,255,255,.08) 0 14%, transparent 14.6%), radial-gradient(circle at 29% 74%, rgba(0,0,0,.18) 0 11%, transparent 11.6%),
+    radial-gradient(circle at 47% 45%, rgba(255,255,255,.06) 0 17%, transparent 17.6%), radial-gradient(circle at 84% 52%, rgba(0,0,0,.16) 0 8%, transparent 8.6%),
+    radial-gradient(circle at 12% 55%, rgba(255,255,255,.07) 0 7%, transparent 7.6%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, #4a4458 78%, var(--pc)) 40%, color-mix(in srgb, #2a2536 85%, var(--pc)) 78%, #0d0b14 100%); }
+.o2 > .o2-shade { background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.38), transparent 45%), radial-gradient(circle at 50% 50%, transparent 52%, rgba(0,0,0,.55) 100%); transition: opacity .2s; }
+.o2-cracks { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.o2-cracks polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.o2-cracks .g { stroke: rgba(6,4,12,.6); stroke-width: .8; }
+.o2-cracks .k { stroke: color-mix(in srgb, var(--tc) 70%, #fff); stroke-width: 1.4; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 1.5px var(--tc)) drop-shadow(0 0 4px var(--tc)); }
+.orb.charge .o2-spin { animation-duration: 1.2s; }
+.orb.charge .o2 { animation: orbShake .09s linear infinite; }
+@keyframes orbShake { 25% { transform: translate(-2px, 1px); } 75% { transform: translate(2px, -1px); } }
+.orb.charge .o2-cracks .k { animation: orbCrack var(--cd, 1.2s) cubic-bezier(.4,0,.8,.6) forwards; }
+@keyframes orbCrack { to { stroke-dashoffset: 0; } }
+.orb.charge .o2 > .o2-glow { background: radial-gradient(circle, color-mix(in srgb, var(--tc) 60%, transparent), transparent 66%); }
+.orb:is(.burst, .exit) .o2-pc { transform: translate(var(--dx), var(--dy)) rotate(var(--rt)) scale(.8); opacity: 0; }
+.orb:is(.burst, .exit) .o2-cracks, .orb:is(.burst, .exit) .o2 > .o2-shade { opacity: 0; transition: opacity .15s; }
+.orb:is(.burst, .exit) .o2 > .o2-core { animation: orbCore .6s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes orbCore { from { transform: scale(.7); filter: brightness(2); } }
+.orb:is(.burst, .exit) .o2 > .o2-glow { inset: -40%; background: radial-gradient(circle, var(--tc), transparent 66%); }
+.orb.exit .o2 > .o2-core { transform: scale(4); opacity: 0; transition: transform .4s ease-in, opacity .35s ease-in .1s; }
+.orb.calm .o2-spin, .orb.calm .o2 > .o2-glow, .orb.calm .o2 { animation: none; }
+.orb.calm:is(.burst, .exit) .o2-pc { transform: none; transition: opacity .3s; }
+@media (prefers-reduced-motion: reduce) { .bx-tilt, .bx-body::before, .o2-spin, .o2 > .o2-glow { animation: none !important; } }

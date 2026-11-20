@@ -92,6 +92,14 @@ export const sfx = {
   flip() { whoosh(0.22, 900, 2600, 0.25); tone(660, 0.08, 0.3, 990, "sine", 0.18); },
   apply() { tone(660, 0.09, 0.45); tone(990, 0.12, 0.45, null, "sine", 0.08); tone(1320, 0.18, 0.35, null, "sine", 0.16); },
   materialize() { whoosh(0.9, 300, 3200, 0.3); tone(240, 0.7, 0.25, 960, "sine", 0.05); tone(1560, 0.25, 0.12, null, "triangle", 0.62); },
+  /** Montée de tension pendant d secondes (orbe qui se charge, boosters qui tremblent). */
+  charge(d = 1) { whoosh(d, 200, 2600, 0.2); tone(150, d, 0.16, 620, "triangle"); tone(300, d * 0.9, 0.07, 1240, "sine", d * 0.1); },
+  /** Petit craquement sec (une fissure). */
+  crack() { whoosh(0.06, 3200, 1800, 0.32); tone(2400 + Math.random() * 900, 0.05, 0.1, 900, "square"); },
+  /** Coquille qui éclate : choc sourd, souffle, éclats qui tintent. */
+  shatter() { tone(120, 0.3, 0.55, 50, "sine"); whoosh(0.7, 5200, 600, 0.42); for (let i = 0; i < 7; i++) tone(2200 + Math.random() * 2600, 0.12, 0.1, null, "sine", 0.03 + i * 0.045 + Math.random() * 0.03); },
+  /** Booster qui saute : un « pop » et un souffle. */
+  burst() { tone(260, 0.12, 0.42, 110, "triangle"); whoosh(0.32, 900, 5200, 0.3); tone(1040, 0.16, 0.16, 1560, "sine", 0.03); },
   scan() { tone(1200, 0.5, 0.18, 1800, "sine"); },
   error() { tone(220, 0.16, 0.45, 160, "triangle"); },
   emote() { tone(780, 0.08, 0.35, 1170); },

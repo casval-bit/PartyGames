@@ -1,145 +1,33 @@
 // Ouverture de boosters (un seul, ou un groupe jusqu'à 5 d'un coup) et révélation des invocations des Portails.
-//   - booster : façon Pokémon TCG Pocket, on déchire le haut du paquet d'un glissement de doigt (le paquet suit la souris et
-//     brille sous la lumière ; pour un groupe, les autres boosters attendent derrière et s'ouvrent tous ensemble) ;
-//   - portail : un vortex qu'on touche ; en s'ouvrant il prend la couleur de la meilleure carte (violet : épique, or : légendaire) ;
-//   - les cartes jaillissent face cachée et se retournent une à une, de la moins rare à la plus rare. La carte du dessus brille à
+//   - booster (opening/BoosterIntro.jsx) : les paquets scellés flottent et brillent ; on les touche une fois, ils tremblent, puis
+//     chacun saute à son tour (l'opercule s'envole, un rayon de la couleur de sa meilleure carte) et les cartes en sortent ;
+//   - portail (opening/PortalOrb.jsx) : une orbe de pierre en 3D qui tourne dans tous les sens ; on la touche, elle se fissure et
+//     éclate, et son cœur a la couleur de la meilleure carte tirée (comme un Météno qui perd sa carapace) ;
+//   - les cartes arrivent face cachée et se retournent une à une, de la moins rare à la plus rare. La carte du dessus brille à
 //     travers son dos selon sa rareté ; au retournement : éclat doré (rare), onde violette (épique), rayons, flash et écran qui
 //     tremble (légendaire), reflet arc-en-ciel (brillante). Des pastilles comptent les cartes du booster en cours ;
 //   - à la fin : toutes les cartes, de la plus rare à la moins rare (touche une carte pour la voir en grand).
+// Paramètres du jeu : « Ouverture » directe (pas de paquet ni d'orbe) ; animations réduites (fondus).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY } from "../cards/index.js";
-import { RARITY, GAME_NAME } from "../rules.js";
+import { RARITY } from "../rules.js";
 import { tierOf } from "../progress.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
-import { tcgPrefs } from "../prefs.js";
+import { tcgPrefs, tcgCalm } from "../prefs.js";
 import { vibrate } from "../../lib/util.js";
 import { CardFace, CardBack } from "./Card.jsx";
 import CardZoom from "./CardZoom.jsx";
+import BoosterIntro from "./opening/BoosterIntro.jsx";
+import PortalOrb from "./opening/PortalOrb.jsx";
+import { TIERS, tierRank } from "./opening/tiers.js";
+import "./opening/opening.css";
 
 export const PACK_COLOR = { multi: "#2f8bff", heros: "#ff5a5f", arsenal: "#1fb57a", prestige: "#d4a537", decouverte: "#2ec4b6" };
 export const packColor = (p) => (p.color ? p.color : p.fam ? FAMILY[p.fam].color : PACK_COLOR[p.id] || "#2f8bff");
 export const packIcon = (p) => (p.icon ? p.icon : p.fam ? FAMILY[p.fam].icon : p.id === "heros" ? "swords" : p.id === "arsenal" ? "gem" : p.id === "prestige" ? "sparkles" : p.id === "decouverte" ? "compass" : "crown");
-const TIERS = ["C", "U", "R", "E", "L"];
-const tierRank = (id) => TIERS.indexOf(tierOf(CARD[id]));
-const TIER_COLOR = { L: "#ffb347", E: "#c084fc", R: "#ffd166" };
 const bestOf = (cards) => cards.reduce((b, c) => Math.max(b, tierRank(c.id)), 0);
 const glowOf = (rank) => (rank >= 4 ? "L" : rank >= 3 ? "E" : rank >= 2 ? "R" : null);
-
-/** Le paquet scellé : glisser le doigt le long des pointillés pour le déchirer. count > 1 : un groupe de boosters. */
-function TearPack({ pack, count = 1, onOpen }) {
-  const el = useRef(null);
-  const st = useRef({ x0: 0, w: 1, left: 0, dragging: false, done: false, moved: 0 });
-  const [phase, setPhase] = useState("sealed");
-  const [shake, setShake] = useState(false);
-  const setVars = (x) => {
-    const s = st.current, node = el.current;
-    if (!node) return;
-    node.style.setProperty("--sx", Math.min(s.x0, x) - s.left + "px");
-    node.style.setProperty("--sw", Math.abs(x - s.x0) + "px");
-    node.style.setProperty("--fx", x - s.left + "px");
-    node.style.setProperty("--cut", Math.min(1, Math.abs(x - s.x0) / (s.w * 0.72)).toFixed(3));
-  };
-  const finish = () => {
-    const s = st.current;
-    if (s.done) return;
-    s.done = true; s.dragging = false;
-    el.current.style.setProperty("--cut", "1");
-    vibrate(count > 1 ? [20, 30, 60, 30, 120] : [20, 30, 90]); sfx.open();
-    setPhase("open");
-    setTimeout(onOpen, count > 1 ? 1100 : 900);
-  };
-  // le paquet s'incline vers la souris (ou le doigt) et la lumière glisse sur son emballage
-  const tilt = (e) => {
-    const node = el.current, s = st.current;
-    if (!node || s.dragging || s.done) return;
-    const r = node.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
-    node.style.setProperty("--ry", ((x - 0.5) * 22).toFixed(1) + "deg");
-    node.style.setProperty("--rx", ((0.5 - y) * 16).toFixed(1) + "deg");
-    node.style.setProperty("--gx", (x * 100).toFixed(0) + "%");
-    node.style.setProperty("--gy", (y * 100).toFixed(0) + "%");
-  };
-  const untilt = () => { const node = el.current; if (!node) return; node.style.setProperty("--ry", "0deg"); node.style.setProperty("--rx", "0deg"); };
-  const down = (e) => {
-    if (phase === "open") return;
-    const r = el.current.getBoundingClientRect();
-    Object.assign(st.current, { x0: e.clientX, w: r.width, left: r.left, dragging: true, moved: 0 });
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    untilt(); setVars(e.clientX); setPhase("drag");
-  };
-  const move = (e) => {
-    const s = st.current;
-    if (!s.dragging || s.done) return;
-    setVars(e.clientX);
-    const w = Math.abs(e.clientX - s.x0);
-    if (w - s.moved > 28) { s.moved = w; vibrate(8); }
-    if (w >= s.w * 0.72) finish();
-  };
-  const up = () => {
-    const s = st.current;
-    if (!s.dragging) return;
-    const tapped = (parseFloat(el.current.style.getPropertyValue("--sw")) || 0) < 8;
-    s.dragging = false;
-    el.current.style.setProperty("--cut", "0"); el.current.style.setProperty("--sw", "0px");
-    setPhase("sealed");
-    if (tapped) { setShake(true); setTimeout(() => setShake(false), 480); }
-  };
-  return (
-    <>
-      <div ref={el} className={"pk " + (phase === "drag" ? "drag " : "") + (phase === "open" ? "open " : "") + (shake ? "shake " : "") + (count > 1 ? "group" : "")}
-        style={{ "--pc": packColor(pack), "--n": count }} onPointerMove={tilt} onPointerLeave={untilt}>
-        {count > 1 && Array.from({ length: Math.min(4, count - 1) }, (_, k) => <i key={k} className="pk-ghost" style={{ "--g": k + 1 }} aria-hidden="true"><i /></i>)}
-        <div className="pk-tilt">
-          <div className="pk-in">
-            <div className="pk-body">
-              <div className="pk-art">
-                <span className="pk-brand">{GAME_NAME}</span>
-                <div className="pk-medal"><Icon name={packIcon(pack)} size={44} stroke={1.5} /></div>
-                <div className="pk-t1">{pack.name.replace(/^Booster /, "")}</div>
-                <div className="pk-t2">{count * 5} cartes</div>
-              </div>
-            </div>
-            <div className="pk-top" />
-            <i className="pk-guide"><i /></i>
-          </div>
-          <i className="pk-glare" aria-hidden="true" />
-        </div>
-        {count > 1 && <span className="pk-count">×{count}</span>}
-        <i className="pk-seam" />
-        <i className="pk-spark" />
-        {phase === "open" && <div className="pk-burst"><i className="beam" /><i className="rays" /><i className="glow" /></div>}
-        <div className="pk-zone" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} role="button" aria-label="Glisse pour déchirer le booster" />
-      </div>
-      <p className="bo-hint">{phase === "open" ? "" : count > 1 ? `Glisse sur les pointillés : les ${count} boosters s'ouvrent ensemble` : "Glisse le doigt sur les pointillés pour déchirer"}</p>
-      {phase !== "open" && <button className="btn ghost small" onClick={finish}>Ouvrir sans glisser</button>}
-    </>
-  );
-}
-
-/** Le vortex d'un portail : on le touche, il prend la couleur de la meilleure carte, puis s'ouvre. */
-function PortalIntro({ color, best, count, onOpen }) {
-  const [open, setOpen] = useState(false);
-  const go = () => {
-    if (open) return;
-    setOpen(true);
-    vibrate(best === "L" ? [30, 50, 30, 50, 140] : [20, 40, 90]);
-    sfx.materialize();
-    setTimeout(() => sfx.open(), 650);
-    setTimeout(onOpen, best === "L" ? 1700 : 1250);
-  };
-  return (
-    <>
-      <button className={"pv" + (open ? " open" : "") + (best ? " best-" + best : "")} style={{ "--pc": open && best ? TIER_COLOR[best] : color }} onClick={go}
-        aria-label="Touche le portail pour invoquer" data-testid="portal-open">
-        <i className="pv-halo" /><i className="pv-ring a" /><i className="pv-ring b" /><i className="pv-ring c" /><i className="pv-core" />
-        <i className="pv-stars" />
-        {open && <span className="pv-burst"><i className="rays" /><i className="glow" /></span>}
-      </button>
-      <p className="bo-hint">{open ? "" : count > 1 ? `Touche le portail : ${count} invocations` : "Touche le portail"}</p>
-    </>
-  );
-}
 
 function Sparks({ color, n = 18 }) {
   const list = useMemo(() => Array.from({ length: n }, (_, i) => {
@@ -164,7 +52,7 @@ function Banners({ c, r }) {
 /**
  * Ouverture complète.
  *   pack : { id, name, color?, icon?, fam? } ; packs : [{ cards: [{ id, foil, isNew, star?, target? }], jet, golden }]
- *   (cartes triées de la moins rare à la plus rare) ; label : « Booster » ou « Portail » ; intro : "tear" (booster) ou "portal".
+ *   (cartes triées de la moins rare à la plus rare) ; label : « Booster » ou « Portail » ; intro : "portal" (l'orbe), sinon le booster.
  *   onDone() ferme ; onAgain() recommence (« Ouvrir les suivants », « Invoquer encore ») ; again : texte de ce bouton.
  */
 export default function PackOpen({ pack, packs, label = "Booster", intro = "tear", again = "", onDone, onAgain }) {
@@ -177,9 +65,10 @@ export default function PackOpen({ pack, packs, label = "Booster", intro = "tear
   const [shk, setShk] = useState(false);
   const [tint, setTint] = useState(null);
   const [zoom, setZoom] = useState(null);
+  const [from, setFrom] = useState(null); // d'où arrivent les premières cartes : "pack" ou "orb"
+  const calm = useMemo(() => tcgCalm(), []);
   const drag = useRef({ x0: 0, dx: 0, live: false, node: null });
   const all = useMemo(() => packs.flatMap((p) => p.cards), [packs]);
-  const best = glowOf(bestOf(all));
   const cards = (packs[pi] || packs[0]).cards;
   const cur = cards[i];
   const d = cur ? CARD[cur.id] : null;
@@ -242,12 +131,12 @@ export default function PackOpen({ pack, packs, label = "Booster", intro = "tear
         {stage !== "cards" && <button className="iconbtn" onClick={onDone} aria-label="Fermer"><Icon name="close" /></button>}
       </div>
       {stage === "sealed" && (intro === "portal"
-        ? <PortalIntro color={packColor(pack)} best={best === "R" ? null : best} count={all.length} onOpen={() => setStage("cards")} />
-        : <TearPack pack={pack} count={packs.length} onOpen={() => { setStage("cards"); if (best) sfx.materialize(); }} />)}
+        ? <PortalOrb color={packColor(pack)} tier={TIERS[bestOf(all)]} count={all.length} calm={calm} onOpen={() => { setFrom("orb"); setStage("cards"); }} />
+        : <BoosterIntro packs={packs} name={pack.name.replace(/^Booster /, "")} color={packColor(pack)} icon={packIcon(pack)} calm={calm} onOpen={() => { setFrom("pack"); setStage("cards"); }} />)}
       {stage === "cards" && cur && (
         <>
           {curGolden && <div className="bo-golden">Booster doré : que des rares ou mieux, et 10 jetons de brillance !</div>}
-          <div className={"bo-stack" + (shk ? " shk" : "")}>
+          <div className={"bo-stack" + (shk ? " shk" : "") + (from && pi === 0 ? " from-" + from : "")}>
             {cards.map((c, k) => {
               if (k < i) return null;
               const depth = k - i;
