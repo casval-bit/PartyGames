@@ -4,7 +4,7 @@
 import { CARD, ALL, PLOTS, FAMILIES, PLAYABLE, TYPE_BONUS } from "../src/tcg/cards/index.js";
 import { validateDeck, starters, buildStarter, mainFamily, familyMix, fillDeck } from "../src/tcg/deck.js";
 import { Game, createGame, makeApi } from "../src/tcg/engine.js";
-import { plain } from "../src/tcg/rules.js";
+import { plain, TITLES } from "../src/tcg/rules.js";
 
 let fail = 0;
 const ok = (c, m) => { if (!c) { fail++; console.log("ÉCHEC :", m); } else if (!process.argv.includes("--quiet")) console.log("ok    :", m); };
@@ -87,6 +87,113 @@ ok(errors === 0 && ended === 12, `12 mêlées à 3 ou 4 joueurs terminées sans 
   while (!g.G.over && n++ < 5000) { if (!g.wait) break; for (const id of g.waitingFor()) g.auto(id); }
   ok(g.G.over, `partie humain (joué automatiquement) terminée en ${n} réponses`);
   ok(g.G.log.length > 20 && g.G.log.every((l) => typeof l.t === "string"), "journal de partie rempli");
+}
+
+/* ---------------- un round joué « à la main » : déroulé, revendication de Combat, Domination, round suivant ---------------- */
+{
+  const g = new Game({ players: [{ id: "a", name: "A", deck: st[0] }, { id: "b", name: "B", deck: st[2] }], seed: 31, autoBots: false });
+  const X = g.X, A = g.P("a"), B = g.P("b");
+  const phases = [];
+  let killed = null, keep = [], dom = null, guard = 0, launched = false, handPlot = null, handMarshal = null, drawWant = null;
+  const say = (pid, a) => ok(g.answer(pid, a), `réponse acceptée (${g.wait && g.wait.kind})`, true);
+  while (!g.G.over && guard++ < 400) {
+    const q = g.wait;
+    if (!q) break;
+    if (!phases.length || phases[phases.length - 1] !== g.G.phase) phases.push(g.G.phase);
+    if (g.G.round === 2 && q.kind === "plot") break; // le round suivant commence
+    const pid = g.waitingFor()[0], P = g.P(pid);
+    if (q.kind === "mulligan") { for (const id of g.waitingFor()) g.answer(id, { keep: true }); continue; }
+    if (q.kind === "setup") {
+      for (const id of g.waitingFor()) {
+        const p = g.P(id), pick = [];
+        let gold = 0;
+        for (const c of [...p.hand].sort((x, y) => (CARD[x.id].cost - CARD[y.id].cost))) {
+          const d = CARD[c.id];
+          if (d.type === "char" && gold + d.cost <= 8 && !pick.some((u) => CARD[g.G.inst[u].id].key === d.key) && d.kw.limite === undefined) { pick.push(c.u); gold += d.cost; }
+        }
+        g.answer(id, { pick });
+      }
+      continue;
+    }
+    if (q.kind === "plot") { handPlot = A.hand.length; for (const id of g.waitingFor()) g.answer(id, { pick: g.P(id).plots[0].u }); continue; }
+    if (q.kind === "first") { g.answer(pid, { pick: "a" }); continue; }
+    if (q.kind === "marshal" && handMarshal === null && pid === "a") { handMarshal = A.hand.length; drawWant = 2 + X.drawBonus(); }
+    if (q.kind === "marshal" || q.kind === "action" || q.kind === "react") { g.answer(pid, { pass: true }); continue; }
+    if (q.kind === "challenge") {
+      if (pid === "a" && !launched && q.types.includes("combat")) {
+        const best = q.cands.combat.map((u) => g.G.inst[u]).sort((x, y) => X.str(y) - X.str(x))[0];
+        launched = true;
+        g.answer(pid, { type: "combat", def: "b", atk: [best.u] });
+      } else {
+        if (pid === "b") dom = g.G.players.map((p) => X.domOf(p)); // la Domination se calcule juste après les défis
+        g.answer(pid, { pass: true });
+      }
+      continue;
+    }
+    if (q.kind === "defend") { g.answer(pid, { dfd: [] }); continue; } // sans défense : l'attaquant gagne
+    if (q.kind === "choose" && /Revendication Combat/.test(q.title)) {
+      // le défenseur choisit LE personnage qui meurt : le dernier de la liste, pas le premier
+      killed = q.cands[q.cands.length - 1];
+      keep = q.cands.slice(0, -1);
+      g.answer(pid, { pick: [killed] });
+      continue;
+    }
+    g.auto(pid);
+  }
+  void say;
+  const at = (re) => g.G.log.findIndex((l) => re.test(l.t));
+  const marks = [/révèle «/, /recrute avec/, /lance un défi/, /^(Domination :|Pas de Domination)/, /^— Round 2 —/].map(at);
+  ok(marks.every((v, i) => v >= 0 && (i === 0 || v > marks[i - 1])), "un round dans l'ordre : scénario, pioche, recrutement, défis, Domination, puis round 2");
+  ok(phases[0] === "setup" && phases.includes("plot") && phases.includes("marshal") && phases.includes("challenges"), `questions posées dans l'ordre : ${phases.join(" > ")}`);
+  ok(handMarshal - handPlot === drawWant, `pioche : ${drawWant} cartes au début du round`);
+  ok(launched, "A a lancé un défi de Combat");
+  if (killed) {
+    ok(B.dead.some((c) => c.u === killed) && !B.chars.some((c) => c.u === killed), "Combat : le personnage choisi par le défenseur meurt");
+    ok(keep.every((u) => B.chars.some((c) => c.u === u)), "Combat : les autres personnages du défenseur restent en jeu");
+  } else ok(B.dead.length >= 1, "Combat : le défenseur n'avait pas le choix (un seul personnage) et il meurt");
+  const dl = g.G.log.find((l) => l.t.startsWith("Domination :"));
+  ok(Boolean(dl), "la Domination est annoncée");
+  if (dl && dom) {
+    const want = `Domination : ${g.G.players.map((p, i) => ({ p, v: dom[i] })).sort((x, y) => y.v - x.v).map((x) => `${x.p.name} ${x.v}`).join(", ")}.`;
+    ok(dl.t === want, `Domination : force des personnages debout + or restant (${dl.t})`);
+    const win = dom[0] === dom[1] ? null : dom[0] > dom[1] ? "A" : "B";
+    ok(win ? g.G.log.some((l) => l.t === `${win} gagne la Domination.`) : !g.G.log.some((l) => /gagne la Domination/.test(l.t)), "Domination : le bon gagnant (personne en cas d'égalité)");
+  }
+  ok(g.G.round === 2 && g.wait && g.wait.kind === "plot", "on passe bien au round 2 (choix du scénario)");
+  ok([...A.chars, ...B.chars].every((c) => !c.k || X.noStand(c)), "round 2 : tout le monde s'est relevé");
+}
+
+/* ---------------- titres de la Mêlée ---------------- */
+{
+  let sup = 0, two = 0, three = 0, rival = 0, errs = 0;
+  for (let i = 0; i < 30; i++) {
+    const n = 2 + (i % 3);
+    const decks = Array.from({ length: n }, (_, k) => st[(i * 7 + k * 3) % st.length]);
+    try {
+      const g = play(decks, 7700 + i);
+      let titles = {};
+      for (const { t } of g.G.log) {
+        if (t.startsWith("— Round")) titles = {};
+        if (t.startsWith("Titres :")) { if (n === 2) two++; else three++; for (const part of t.slice(9, -1).split(" ; ")) { const [who, ...rest] = part.split(", "); titles[who] = TITLES.find((x) => x.name === rest.join(", ")); } }
+        const m = t.match(/^(Bot\d) lance un défi de \w+ contre (Bot\d)/);
+        if (m && titles[m[1]] && titles[m[2]] && titles[m[1]].supports.includes(titles[m[2]].id)) sup++;
+        if (t.includes("bat son rival")) rival++;
+      }
+    } catch (e) { errs++; if (errs < 3) console.log(e.stack); }
+  }
+  ok(errs === 0, "titres : 30 parties de 2 à 4 joueurs sans erreur");
+  ok(two === 0 && three > 0, "titres : seulement à 3 joueurs ou plus");
+  ok(sup === 0, "titres : personne ne défie le joueur qu'il soutient");
+  ok(rival > 0, "titres : battre un rival rapporte du Pouvoir");
+}
+{
+  // option de partie « au hasard » : personne ne choisit, chacun reçoit un titre parmi les 6
+  const decks = [st[0], st[1], st[2]];
+  const g = new Game({ players: decks.map((d, i) => ({ id: "h" + i, name: "J" + i, deck: d })), seed: 515, titles: "hasard", autoBots: false });
+  let asked = 0, n = 0;
+  while (!g.G.over && g.wait && n++ < 3000) { if (g.wait.kind === "title") asked++; for (const id of g.waitingFor()) g.auto(id); }
+  const draws = g.G.log.filter((l) => l.t.startsWith("Titres tirés au hasard")).length;
+  ok(asked === 0 && draws >= 1 && g.G.over, "titres au hasard : aucun choix demandé, un tirage à chaque round, la partie va au bout");
 }
 
 /* ---------------- effets des grandes cartes (coût 7) ---------------- */

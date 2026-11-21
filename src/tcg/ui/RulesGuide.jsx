@@ -2,7 +2,7 @@
 // les boutons < et > (ou les flèches du clavier) pour passer d'une page à l'autre, Échap pour fermer.
 // Écrit pour des amis qui n'ont jamais joué au jeu de cartes du Trône de Fer.
 import { useEffect, useState } from "react";
-import { KEYWORDS, DECK_RULES as R, TYPE_NAME, GAME_NAME, DEFAULT_GOAL } from "../rules.js";
+import { KEYWORDS, DECK_RULES as R, TYPE_NAME, GAME_NAME, DEFAULT_GOAL, TITLES, TITLE, titleText } from "../rules.js";
 import { CARD } from "../cards/index.js";
 import { Icon } from "../../ui/Icon.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -75,7 +75,32 @@ function Challenges() {
   );
 }
 function Keywords() {
-  return <div className="rg-kw">{Object.values(KEYWORDS).map((k) => <div key={k.name}><b>{k.name}</b><span>{k.text}</span></div>)}</div>;
+  return (
+    <>
+      <div className="rg-kw">{Object.values(KEYWORDS).map((k) => <div key={k.name}><b>{k.name}</b><span>{k.text}</span></div>)}</div>
+      <div className="rg-rules" style={{ marginTop: 10 }}>
+        <div><b>Traits</b><span>Les mots sous l'image (Police, Chevalier, Pokémon Feu…). Ils ne font rien seuls : des effets les nomment (« tes personnages Police gagnent
+          +1 force », un objet réservé aux Chevaliers). Quand un texte cite un trait, il parle de toutes les cartes qui l'ont. Touche une carte en partie pour voir ses
+          mots-clés et ses traits expliqués.</span></div>
+      </div>
+    </>
+  );
+}
+function Titles() {
+  return (
+    <>
+      <p className="rg-lead">À <b>3 ou 4 joueurs</b>, chaque round, après les scénarios : on mélange les 6 titres, on en retire au hasard (2 à 3 joueurs,
+        1 à 4), et chacun en choisit un dans l'ordre du tour. Personne ne voit le titre des autres avant que tout le monde ait choisi. Ils repartent à la fin du round.
+        Option du salon : <b>Au hasard</b>, chacun reçoit un titre tiré parmi les 6, sans choisir.</p>
+      <div className="rg-rules">
+        <div><b>Soutien</b><span>Tu ne peux pas lancer de défi contre le joueur dont tu soutiens le titre.</span></div>
+        <div><b>Rival</b><span>Gagner un défi, en attaquant ou en défendant, contre le joueur qui a un titre rival du tien rapporte 1 Pouvoir (une fois par round et par rival).</span></div>
+      </div>
+      <div className="rg-kw">{TITLES.map((t) => (
+        <div key={t.id}><b>{t.name}</b><span>{titleText(t)}{t.supports.length ? ` Soutient : ${t.supports.map((x) => TITLE[x].name).join(", ")}.` : ""}{t.rivals.length ? ` Rivaux : ${t.rivals.map((x) => TITLE[x].name).join(", ")}.` : ""}</span></div>
+      ))}</div>
+    </>
+  );
 }
 function Deck() {
   const rules = [
@@ -111,12 +136,13 @@ const PAGES = [
   { id: "cartes", icon: "layers", name: "Les cartes", C: Cards },
   { id: "defis", icon: "swords", name: "Les défis", C: Challenges },
   { id: "mots", icon: "tag", name: "Mots-clés", C: Keywords },
+  { id: "titres", icon: "crown", name: "Les titres", C: Titles },
   { id: "deck", icon: "library", name: "Ton deck", C: Deck },
   { id: "lobby", icon: "users", name: "Jouer à plusieurs", C: Lobby },
 ];
 
-export default function RulesGuide({ onClose, start = 0 }) {
-  const [i, setI] = useState(start);
+export default function RulesGuide({ onClose, start = 0, page = null }) {
+  const [i, setI] = useState(() => { const k = page ? PAGES.findIndex((x) => x.id === page) : -1; return k >= 0 ? k : start; });
   const go = (n) => { const k = Math.max(0, Math.min(PAGES.length - 1, n)); if (k !== i) { setI(k); sfx.select(); } };
   useEffect(() => {
     const k = (e) => {

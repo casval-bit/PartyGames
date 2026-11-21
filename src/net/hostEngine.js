@@ -11,7 +11,7 @@ import { safeUrl } from "../lib/safeUrl.js";
 import { verifyMsg, validPk } from "./secure.js";
 import { cleanLook, randomFreeLook } from "../data/profile.js";
 import { EMOTE_BY } from "../avatar3d/emotes.js";
-import { troneMethods, AG_DEFAULTS, AG_MAX, AG_GOALS, AG_TIMERS, cleanDeck, cleanAnswer as cleanAgAnswer } from "./hostTrone.js";
+import { troneMethods, AG_DEFAULTS, AG_MAX, AG_GOALS, AG_TIMERS, AG_TITLES, cleanDeck, cleanAnswer as cleanAgAnswer } from "./hostTrone.js";
 import { cleanTcgLook, botTcgLook } from "../tcg/progress.js";
 import { loupMethods, LG_DEFAULTS, LG_MAX, cleanLgSettings, cleanLgAnswer } from "./hostLg.js";
 import {
@@ -98,6 +98,7 @@ export class HostEngine {
       if (settings.tcg === true && s.game === "trone") s.tcg = true;
       if (AG_GOALS.includes(settings.agGoal)) s.agGoal = settings.agGoal;
       if (AG_TIMERS.some(([v]) => v === settings.agTimer)) s.agTimer = settings.agTimer;
+      if (AG_TITLES.some(([v]) => v === settings.agTitles)) s.agTitles = settings.agTitles;
     }
     this.addPlayer({ id: host.id, name: host.name, pk: host.pk, look: host.look, tl: host.tl });
     this.hb = setInterval(() => this.broadcast(), 4000);
@@ -227,6 +228,7 @@ export class HostEngine {
     if (CC_ROUNDS_OPTIONS.includes(patch.ccRounds)) s.ccRounds = patch.ccRounds;
     if (AG_GOALS.includes(patch.agGoal)) s.agGoal = patch.agGoal;
     if (AG_TIMERS.some(([v]) => v === patch.agTimer)) s.agTimer = patch.agTimer;
+    if (AG_TITLES.some(([v]) => v === patch.agTitles)) s.agTitles = patch.agTitles;
     cleanLgSettings(patch, s);
     if (typeof patch.ccHint === "boolean") s.ccHint = patch.ccHint;
     if (PB_ROUNDS_OPTIONS.includes(patch.pbRounds)) s.pbRounds = patch.pbRounds;

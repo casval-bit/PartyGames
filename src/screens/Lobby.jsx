@@ -12,7 +12,7 @@ import { EMOTE_BY } from "../avatar3d/emotes.js";
 import { FAMILY, TYPE_BONUS } from "../tcg/cards/index.js";
 import { validateDeck } from "../tcg/deck.js";
 import { normalizeTcg, owned as ownedOf, selectDeck } from "../tcg/progress.js";
-import { AG_GOALS, AG_TIMERS, AG_MAX } from "../net/hostTrone.js";
+import { AG_GOALS, AG_TIMERS, AG_TITLES, AG_MAX } from "../net/hostTrone.js";
 import { LG_MAX } from "../net/hostLg.js";
 import LoupSettings, { lgCanStart, lgStartHint } from "../lg/ui/LoupLobby.jsx";
 
@@ -288,6 +288,7 @@ export default function Lobby({ room, me, isHost, api, onLeave, onProfile, tcg, 
             <>
               <Field label="Objectif de Pouvoir"><Seg value={settings.agGoal} options={AG_GOALS.map((n) => [n, n === 10 ? "10 (partie rapide)" : `${n} (classique)`])} disabled={!isHost} onPick={(v) => api.setSettings({ agGoal: v })} /></Field>
               <Field label="Temps pour chaque décision"><Seg value={settings.agTimer} options={AG_TIMERS} disabled={!isHost} onPick={(v) => api.setSettings({ agTimer: v })} /></Field>
+              <Field label="Titres (à 3 ou 4 joueurs)"><Seg value={settings.agTitles || "choix"} options={AG_TITLES.map(([v, l, sub]) => [v, `${l} (${sub})`])} disabled={!isHost} onPick={(v) => api.setSettings({ agTitles: v })} /></Field>
               <p className="muted" style={{ fontSize: ".85rem", margin: 0 }}>De 2 à 4 joueurs, chacun avec son deck. Trop long à décider : l'ordinateur joue le coup à ta place. Les bots prennent un deck de départ au hasard.</p>
             </>
           )}

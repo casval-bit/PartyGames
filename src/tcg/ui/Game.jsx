@@ -4,7 +4,7 @@
 // Si le téléphone est tenu en portrait sans pouvoir tourner l'écran, toute l'interface de jeu pivote d'elle-même (CSS).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CARD, FAMILY, subOf } from "../cards/index.js";
-import { PHASES, PHASE_NAME, TYPE_NAME, SETUP_GOLD, GAME_NAME } from "../rules.js";
+import { PHASES, PHASE_NAME, TYPE_NAME, SETUP_GOLD, GAME_NAME, TITLE, titleText } from "../rules.js";
 import { Icon } from "../../ui/Icon.jsx";
 import QuitVote from "../../ui/QuitVote.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -18,7 +18,7 @@ import { cardArt } from "./art.js";
 const TYPES = ["combat", "ruse", "influence"];
 const PHASE_HELP = {
   setup: "Chacun garde ou change sa main, puis pose jusqu'à 8 or de personnages et de lieux.",
-  plot: "Chacun choisit en secret un Scénario : or, initiative, revendication et réserve du round.",
+  plot: "Chacun choisit en secret un Scénario : or, initiative, revendication et réserve du round. À 3 ou 4, chacun prend ensuite un titre.",
   draw: "Chacun pioche 2 cartes.",
   marshal: "À tour de rôle, chacun dépense l'or de son Scénario pour poser des cartes.",
   challenges: "À tour de rôle, un défi de chaque type (Combat, Ruse, Influence) contre un adversaire.",
@@ -98,6 +98,7 @@ function Board({ p, ag, mine, cls, onCard, onZoom, onPile, fresh, onBack, waitin
           {!mine && <span className="tb-tok hd" title="Cartes en main"><Icon name="layers" size={12} stroke={2.2} />{p.hand}</span>}
           {waiting && <span className="tb-think" aria-hidden="true"><i /><i /><i /></span>}
         </span>
+        {p.ti && TITLE[p.ti] && <span className="agb-ti" title={titleText(TITLE[p.ti])}><Icon name={TITLE[p.ti].icon} size={13} />{TITLE[p.ti].name}</span>}
         <span className="agb-stats">Revenu <b>{p.inc}</b> · Réserve <b>{p.res}</b> · {f.short || f.name}{subOf(p.fam, p.pt) ? ` ${subOf(p.fam, p.pt).name}` : ""}</span>
         {!mine && onBack && <button className="btn small agb-back" onClick={onBack}><Icon name="back" size={15} />Ma table</button>}
       </div>
@@ -331,8 +332,10 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
 
   /* ---------- quelles cartes de la table se touchent pour répondre ---------- */
   const kind = q && !busy ? q.kind : null;
-  const opps2 = kind === "challenge" ? q.opps || [] : [];
-  const chDefEff = chDef || (opps2.length === 1 ? opps2[0] : null);
+  const opps2 = kind === "challenge" ? (chType && q.oppsBy ? q.oppsBy[chType] || [] : q.opps || []) : [];
+  const chDefEff = (chDef && opps2.includes(chDef) ? chDef : null) || (opps2.length === 1 ? opps2[0] : null);
+  // titres : battre un rival rapporte 1 Pouvoir ; on ne défie pas celui qu'on soutient
+  const isRival = (id) => { const o = players.find((x) => x.id === id); return Boolean(meP && meP.ti && o && o.ti && TITLE[meP.ti].rivals.includes(o.ti)); };
   const atkCands = kind === "challenge" && chType && chDefEff ? (q.cands[chType] || []) : [];
   const dfdCands = kind === "defend" ? q.cands || [] : [];
   const selectable = new Set([...atkCands, ...dfdCands]);
@@ -360,12 +363,15 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
     : o.k === "amb" ? `Embuscade : le mettre en jeu (${o.cost} or)` : kind === "react" ? `Jouer en réaction (${o.cost} or${o.sh ? ", depuis l'ombre" : ""})` : d && d.type === "obj" ? `Attacher (${o.cost} or)` : `Recruter (${o.cost} or)`);
   const tapHand = (h) => {
     const d = CARD[h.d];
-    if (kind === "setup" && (d.type === "char" || d.type === "loc")) {
-      if (sel.includes(h.u)) { setSel(sel.filter((x) => x !== h.u)); return; }
+    if (kind === "setup") {
+      // la carte s'ouvre en grand pour la lire ; on la pose (ou la retire) depuis là
+      const on = sel.includes(h.u), can = d.type === "char" || d.type === "loc";
       const inf = setupInfo([...sel, h.u]);
-      if (inf.gold > SETUP_GOLD) { setToast(`Budget dépassé : ${inf.gold} or sur ${SETUP_GOLD}.`); sfx.error(); return; }
-      if (inf.lim > 1) { setToast("Une seule carte Limitée pendant la mise en place."); sfx.error(); return; }
-      setSel([...sel, h.u]); vibrate(8); return;
+      const why = !can ? "Seuls les personnages et les lieux se posent à la mise en place." : !on && inf.gold > SETUP_GOLD ? `Budget dépassé : ${inf.gold} or sur ${SETUP_GOLD}.` : !on && inf.lim > 1 ? "Une seule carte Limitée pendant la mise en place." : null;
+      const acts = on ? [{ label: "Retirer de la mise en place", icon: "minus", kind: "ghost", onClick: () => { setSel(sel.filter((x) => x !== h.u)); setZoom(null); } }]
+        : can ? [{ label: `Poser à la mise en place (${d.cost} or)`, icon: "play", disabled: Boolean(why), onClick: () => { setSel([...sel, h.u]); setZoom(null); vibrate(8); } }] : [];
+      setZoom({ id: h.d, acts, note: why || `Mise en place : ${setupInfo(sel).gold}/${SETUP_GOLD} or déjà choisis.` });
+      return;
     }
     const os = handOpts(h.u);
     const acts = os.map((o) => ({ label: optLabel(o, d), icon: o.k === "shd" ? "eye" : "play", onClick: () => answer(kind === "react" ? { u: o.u } : { k: o.k, u: o.u }) }));
@@ -389,7 +395,7 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
     dock = { title: q.title, sub: kind === "choose" && q.src && CARD[q.src] ? `Effet de ${CARD[q.src].name}` : "", acts: [{ label: kind === "plot" ? "Choisir mon scénario" : kind === "mulligan" ? "Voir ma main" : "Faire mon choix", icon: "layers", kind: "primary", onClick: () => setHideQ(false) }] };
   } else if (kind === "setup") {
     const inf = setupInfo(sel);
-    dock = { title: "Mise en place", sub: `Touche dans ta main les cartes à poser · ${inf.gold}/${SETUP_GOLD} or`, acts: [{ label: sel.length ? `Poser (${sel.length})` : "Ne rien poser", icon: "check", kind: "primary", onClick: () => answer({ pick: sel }) }] };
+    dock = { title: "Mise en place", sub: `Touche une carte de ta main pour la lire et la poser · ${inf.gold}/${SETUP_GOLD} or`, acts: [{ label: sel.length ? `Poser (${sel.length})` : "Ne rien poser", icon: "check", kind: "primary", onClick: () => answer({ pick: sel }) }] };
   } else if (kind === "first") {
     dock = { title: "Tu as l'initiative", sub: "Qui joue en premier ce round ?", acts: q.cands.map((id) => ({ label: id === me.id ? "Moi" : (players.find((p) => p.id === id) || {}).name, kind: id === me.id ? "primary" : "", onClick: () => answer({ pick: id }) })) };
   } else if (kind === "marshal") {
@@ -408,7 +414,9 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
         extra: <div className="tb-seals">{TYPES.map((t) => { const ok = q.types.includes(t) && (q.cands[t] || []).length > 0; return <button key={t} className={"tb-sealbtn " + t} disabled={!ok} onClick={() => { setChType(t); setSel([]); }}><span><Icon name={TYPE_ICON[t]} size={20} stroke={2.2} /></span>{TYPE_NAME[t]}<small>{!q.types.includes(t) ? "déjà fait" : !(q.cands[t] || []).length ? "personne" : "prêt"}</small></button>; })}</div>,
         acts: [pass("Fin des défis")] };
     } else if (!chDefEff) {
-      dock = { title: `${TYPE_NAME[chType]} : contre qui ?`, sub: "Touche un adversaire (en haut) ou un bouton", acts: [{ label: "Retour", kind: "ghost", onClick: () => setChType(null) }, ...opps2.map((id) => ({ label: (players.find((x) => x.id === id) || {}).name, onClick: () => setChDef(id) }))] };
+      const supN = (q.sup || []).map((id) => (players.find((x) => x.id === id) || {}).name).filter(Boolean);
+      dock = { title: `${TYPE_NAME[chType]} : contre qui ?`, sub: `Touche la pastille d'un joueur (en haut) pour regarder sa table, puis choisis${supN.length ? ` · tu soutiens ${supN.join(" et ")} : pas de défi contre lui` : ""}`,
+        acts: [{ label: "Retour", kind: "ghost", onClick: () => setChType(null) }, ...opps2.map((id) => ({ label: `Défier ${(players.find((x) => x.id === id) || {}).name}${isRival(id) ? " (rival : +1 Pouvoir)" : ""}`, onClick: () => { setChDef(id); setPov(null); } }))] };
     } else {
       const sum = sel.reduce((s, u) => s + ((insts[u] && insts[u].v.s) || 0), 0);
       const defP = players.find((x) => x.id === chDefEff);
@@ -440,6 +448,8 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
     dock = { title: q.title, sub: kind === "react" ? "Une carte peut réagir" : "Tu peux jouer une action",
       extra: <div className="ag-chips">{opts.map((o, i) => <button key={i} className="ag-chip" onClick={() => pick(o)}><Icon name={q.save ? "shield" : o.k === "act" ? "bolt" : "play"} size={14} />{label(o)}</button>)}</div>,
       acts: [pass()] };
+  } else if (kind === "title") {
+    dock = { title: "Choisis ton titre", sub: "Les autres ne le verront qu'une fois que tout le monde aura choisi.", acts: [{ label: "Voir les titres", icon: "crown", kind: "primary", onClick: () => setHideQ(false) }] };
   } else if (kind === "option") {
     dock = { title: q.title, acts: (q.opts || []).map((o) => ({ label: o.label, onClick: () => answer({ pick: o.id }) })) };
   } else dock = { title: q.title || "À toi", acts: [] };
@@ -453,6 +463,26 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
         <Sheet title="Ta main de départ" sub="Garde-la, ou change-la une fois (mulligan) : tu reprends 7 nouvelles cartes.">
           <div className="ag-grid">{hand.map((h) => <div key={h.u} className="gi"><CardFace d={CARD[h.d]} onClick={() => setZoom({ id: h.d })} /></div>)}</div>
           <div className="ag-btns">{hideBtn}<button className="btn ghost" onClick={() => answer({ keep: false })}><Icon name="shuffle" size={18} />Changer de main</button><button className="btn primary" onClick={() => answer({ keep: true })}><Icon name="check" size={18} />Garder</button></div>
+        </Sheet>
+      );
+    } else if (kind === "title") {
+      const pk = sel[0];
+      qSheet = (
+        <Sheet title="Choisis ton titre" sub="Il dure jusqu'à la fin du round. Tu ne peux pas défier le joueur dont tu soutiens le titre ; battre un rival en défi rapporte 1 Pouvoir (une fois par round et par rival).">
+          <div className="ag-titles">{(q.opts || []).map((o) => {
+            const t = TITLE[o.id];
+            if (!t) return null;
+            return (
+              <button key={o.id} className={"ag-title" + (pk === o.id ? " pick" : "")} onClick={() => setSel([o.id])} aria-pressed={pk === o.id}>
+                <span className="ag-title-i" aria-hidden="true"><Icon name={t.icon} size={20} /></span>
+                <b>{t.name}</b>
+                <p>{titleText(t)}</p>
+                {t.supports.length > 0 && <small>Soutient : {t.supports.map((x) => TITLE[x].name).join(", ")}</small>}
+                {t.rivals.length > 0 && <small>Rivaux : {t.rivals.map((x) => TITLE[x].name).join(", ")}</small>}
+              </button>
+            );
+          })}</div>
+          <div className="ag-btns">{hideBtn}<button className="btn primary" disabled={!pk} onClick={() => answer({ pick: pk })}><Icon name="check" size={18} />Prendre ce titre</button></div>
         </Sheet>
       );
     } else if (kind === "plot") {
@@ -475,6 +505,7 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
             <div key={u} className={"gi" + (on ? " pick" : "")}>
               <CardFace d={CARD[id]} str={it && it.v.s !== undefined ? it.v.s : undefined} onClick={() => toggle(u, q.max)} />
               {on && <i className="ck"><Icon name="check" size={16} /></i>}
+              <button className="gi-zoom" onClick={() => setZoom(it ? { id, inst: it.v, who: it.p.id === me.id ? "à toi" : it.p.name } : { id })} aria-label={`Lire ${CARD[id] ? CARD[id].name : "la carte"}`}><Icon name="search" size={14} /></button>
               <small>{where(u)}{it && it.v.k ? " · à genoux" : ""}</small>
             </div>); })}</div>
           <div className="ag-btns">{hideBtn}{q.min === 0 && <button className="btn ghost" onClick={() => answer({ pick: [] })}>Aucune</button>}<button className={"btn " + (q.harm ? "primary" : "good")} disabled={sel.length < q.min || sel.length > q.max} onClick={() => answer({ pick: sel })}><Icon name="check" size={18} />Valider ({sel.length})</button></div>
@@ -529,11 +560,12 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
               const think = waitingIds.includes(p.id) && p.id !== me.id;
               return (
                 <button key={p.id} role="tab" aria-selected={on} className={"agl-pov" + (on ? " on" : "") + (target ? " target" : "") + (think ? " think" : "") + (ag.ch && (ag.ch.att === p.id || ag.ch.def === p.id) ? " duel" : "")}
-                  style={{ "--fc": famColor(p) }} onClick={() => { if (target) { setChDef(p.id); sfx.select(); } else { setPov(meP && p.id === meP.id ? null : p.id); sfx.select(); } }}
-                  aria-label={target ? `Défier ${p.name}` : `Voir la table de ${p.id === me.id ? "moi" : p.name}`}>
+                  style={{ "--fc": famColor(p) }} onClick={() => { setPov(meP && p.id === meP.id ? null : p.id); sfx.select(); }}
+                  aria-label={`Voir la table de ${p.id === me.id ? "moi" : p.name}${target ? " (adversaire possible)" : ""}`}>
                   <span className="tb-emb"><Icon name={(FAMILY[p.fam] || FAMILY.neutre).icon} size={12} /></span>
                   <b>{p.id === me.id ? "Moi" : p.name}</b>
                   <span className="agl-pw"><Icon name="crown" size={10} stroke={2.4} />{p.power}</span>
+                  {p.ti && TITLE[p.ti] && <span className={"agl-ti" + (isRival(p.id) ? " rival" : "")} title={`${TITLE[p.ti].name} : ${titleText(TITLE[p.ti])}`}><Icon name={TITLE[p.ti].icon} size={11} stroke={2.2} /></span>}
                   {think && <span className="tb-think" aria-hidden="true"><i /><i /><i /></span>}
                 </button>
               );
@@ -574,7 +606,8 @@ export default function TroneGame({ room, me, api, priv, onLeave, gain, onHub, i
       {qSheet}
       {infoSheet}
       {sheet === "rules" && <Rules onClose={() => setSheet(null)} />}
-      {zoom && <CardZoom {...zoom} onClose={() => setZoom(null)} />}
+      {sheet === "kw" && <Rules page="mots" onClose={() => setSheet(null)} />}
+      {zoom && <CardZoom {...zoom} onClose={() => setZoom(null)} onHelp={() => { setZoom(null); setSheet("kw"); }} />}
     </div>
   );
 }

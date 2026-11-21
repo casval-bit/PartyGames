@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FAMILY } from "../cards/index.js";
 import { validateDeck } from "../deck.js";
 import * as P from "../progress.js";
-import { AG_GOALS, AG_TIMERS, AG_MAX } from "../../net/hostTrone.js";
+import { AG_GOALS, AG_TIMERS, AG_TITLES, AG_MAX } from "../../net/hostTrone.js";
 import { Icon } from "../../ui/Icon.jsx";
 import AccountBadge from "../../ui/AccountBadge.jsx";
 import { sfx } from "../../lib/sfx.js";
@@ -320,6 +320,10 @@ export default function TcgLobby({ room, me, net, isHost, t, setTcg, fr, acc, on
               <div className="tl-set">
                 <small>Temps pour chaque décision</small>
                 <div className="seg">{AG_TIMERS.map(([v, l]) => <button key={v} aria-pressed={s.agTimer === v} disabled={!isHost} onClick={() => net.setSettings({ agTimer: v })}>{l}</button>)}</div>
+              </div>
+              <div className="tl-set">
+                <small>Titres, à 3 ou 4 joueurs</small>
+                <div className="seg">{AG_TITLES.map(([v, l, sub]) => <button key={v} aria-pressed={(s.agTitles || "choix") === v} disabled={!isHost} onClick={() => net.setSettings({ agTitles: v })} data-testid={"tl-titles-" + v}><b className="w">{l}</b><span>{sub}</span></button>)}</div>
               </div>
             </section>
           </div>

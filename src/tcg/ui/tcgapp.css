@@ -203,6 +203,7 @@ html.tcg-only body::before { background: radial-gradient(42% 32% at 18% 12%, rgb
 .tl-set .seg button { flex: 1 1 0; min-width: 84px; min-height: 44px; padding: 6px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   font: 700 1.02rem var(--display); font-variant-numeric: lining-nums; }
 .tl-set .seg button b { font: 700 1.3rem/1 var(--display); font-variant-numeric: lining-nums; }
+.tl-set .seg button b.w { font-size: 1.05rem; line-height: 1.15; }
 .tl-set .seg button span { font: italic 500 .82rem/1.15 var(--display); opacity: .85; }
 .tl-set .seg button:disabled { opacity: 1; filter: none; cursor: default; }
 .tl-set .seg button:disabled:not([aria-pressed="true"]) { opacity: .55; }

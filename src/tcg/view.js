@@ -28,20 +28,24 @@ export function publicView(game) {
   const G = game.G, X = game.X;
   const ch = G.ch;
   const live = (l, who) => l.map((u) => X.inst(u)).filter((c) => c && c.z === "char" && c.c === who);
+  // force d'un camp : ses personnages, plus 1 si son titre est de ce type de défi (et qu'il a au moins un personnage)
+  const side = (l, who, t) => l.reduce((s, c) => s + X.str(c), 0) + (l.length ? X.titleStr(X.player(who), t) : 0);
+  const open = G.titles && G.titles.open;
   return {
     v: 1, round: G.round, phase: G.phase, goal: G.goal, first: (G.players[G.first] || {}).id || null, turn: G.turn,
     over: G.over, winner: G.winner, rank: G.rank,
+    titles: G.titles && G.titles.on ? { open: Boolean(G.titles.open), regent: Boolean(G.titles.regent) } : null,
     prompt: G.prompt && !G.over ? { id: G.prompt.id, kind: G.prompt.kind, who: game.waitingFor(), title: G.prompt.title } : null,
     ch: ch ? {
       type: ch.type, att: ch.att, def: ch.def, atk: ch.atk, dfd: ch.dfd, bypass: ch.bypass, stage: ch.stage, winner: ch.winner,
-      sa: live(ch.atk, ch.att).reduce((s, c) => s + X.str(c), 0), sd: live(ch.dfd, ch.def).reduce((s, c) => s + X.str(c), 0),
+      sa: side(live(ch.atk, ch.att), ch.att, ch.type), sd: side(live(ch.dfd, ch.def), ch.def, ch.type),
     } : null,
     players: G.players.map((p) => ({
       id: p.id, name: p.name, bot: p.bot, fam: p.fam, pt: p.pt, deck: p.deckName,
       power: X.totalPower(p), fp: p.power, gold: p.gold, hand: p.hand.length, left: p.deck.length, plotsLeft: p.plots.length,
       plot: p.plot ? p.plot.id : null, used: p.used.map((c) => c.id), disc: p.disc.map((c) => c.id), dead: p.dead.map((c) => c.id),
       chars: p.chars.map((c) => instView(X, c)), locs: p.locs.map((c) => instView(X, c)), sh: p.shadows.length, // l'ombre : face cachée
-      res: X.reserve(p), inc: p.plot ? X.income(p) : 0,
+      res: X.reserve(p), inc: p.plot ? X.income(p) : 0, ti: open ? p.title : null,
     })),
     log: G.log.slice(-60),
     st: G.st,

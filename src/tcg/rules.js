@@ -11,6 +11,8 @@ export const GAME_NAME = "Heavy is the Crown";
 export const TYPES = ["combat", "ruse", "influence"];
 export const TYPE_NAME = { combat: "Combat", ruse: "Ruse", influence: "Influence" };
 export const TYPE_ICON = { combat: "sword", ruse: "mask", influence: "crown" };
+/** « de Combat », « de Ruse », « d'Influence » (élision devant la voyelle). */
+export const deType = (t) => (t === "influence" ? "d'Influence" : `de ${TYPE_NAME[t]}`);
 /** « un défi de Combat », « un défi d'Influence », « un défi » (n'importe lequel). */
 export const unDefi = (t) => (!t || t === "*" ? "un défi" : `un défi {${t}}`);
 
@@ -24,6 +26,35 @@ export const PHASES = [
   { id: "taxation", name: "Taxe" },
 ];
 export const PHASE_NAME = Object.fromEntries(PHASES.map((p) => [p.id, p.name]));
+
+/**
+ * Les titres de la Mêlée (Trône de Fer JCE, 2e édition) : seulement à 3 joueurs ou plus. Pendant la phase Scénario, une fois les
+ * scénarios révélés, on mélange les 6 titres et on en retire au hasard (2 à 3 joueurs, 1 à 4 ou 5) ; chacun en choisit un, dans
+ * l'ordre du tour, en secret ; ils se révèlent ensemble et repartent à la Taxe.
+ *   supports : on ne peut pas lancer de défi contre le joueur qui a ce titre (on le soutient) ;
+ *   rivals : gagner un défi (en attaquant ou en défendant) contre le joueur qui a ce titre rapporte 1 Pouvoir, une fois par
+ *            round et par rival ;
+ *   type : +1 force au total du joueur dans ses défis de ce type, s'il y a au moins un personnage.
+ */
+export const TITLES = [
+  { id: "main", name: "La Main du Roi", short: "Main du Roi", icon: "crown", type: "influence", supports: ["justicier"], rivals: ["argentier", "navires"],
+    text: "Un défi d'Influence de plus pendant la phase des défis, contre un autre adversaire que le premier." },
+  { id: "chuchoteurs", name: "Le Maître des chuchoteurs", short: "Chuchoteurs", icon: "mask", type: "ruse", supports: ["main"], rivals: ["justicier", "argentier"],
+    text: "Quand tu gagnes un défi de Ruse en attaquant, sa revendication touche autant d'adversaires que tu veux." },
+  { id: "navires", name: "Le Maître des navires", short: "Navires", icon: "anchor", type: "combat", supports: ["chuchoteurs"], rivals: ["justicier", "main"],
+    text: "Revendication +1 quand tu attaques un de tes rivaux en Combat." },
+  { id: "argentier", name: "Le Grand Argentier", short: "Argentier", icon: "coins", supports: ["navires"], rivals: ["main", "chuchoteurs"],
+    text: "+2 or de revenu à chaque Recrutement." },
+  { id: "justicier", name: "Le Grand Justicier", short: "Justicier", icon: "scroll", supports: ["argentier"], rivals: ["chuchoteurs", "navires"],
+    text: "Une carte de plus à la Pioche, et Réserve +1." },
+  { id: "regent", name: "Le Régent de la Couronne", short: "Régent", icon: "castle", supports: [], rivals: [],
+    text: "Une fois ce round, détourne un défi : l'attaquant doit choisir un autre adversaire. +2 force pour la Domination." },
+];
+export const TITLE = Object.fromEntries(TITLES.map((t) => [t.id, t]));
+/** Le texte complet d'un titre (son effet et sa force dans les défis de son type). */
+export const titleText = (t) => t.text + (t.type ? ` +1 force à ton total dans tes défis de ${TYPE_NAME[t.type]} (si tu y as un personnage).` : "");
+/** Les titres jouent à partir de 3 joueurs (Mêlée). */
+export const TITLES_FROM = 3;
 
 export const CARD_TYPES = { char: "Personnage", loc: "Lieu", obj: "Objet", evt: "Événement", plot: "Scénario" };
 

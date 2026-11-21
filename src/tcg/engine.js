@@ -12,7 +12,7 @@
 // une question (prompt). La classe Game attend la réponse (ou la calcule pour un bot) et relance le générateur.
 // Les cartes ne sont jamais copiées : une instance = { u, id, o (propriétaire), c (contrôleur), k (agenouillée), pw, dup, att, host, z }.
 import { CARD, FAMILY, subOf } from "./cards/index.js";
-import { TYPES, TYPE_NAME, SETUP_GOLD, HAND_START, DEFAULT_GOAL, MAX_ROUNDS, plain } from "./rules.js";
+import { TYPES, TYPE_NAME, SETUP_GOLD, HAND_START, DEFAULT_GOAL, MAX_ROUNDS, plain, TITLES, TITLE, TITLES_FROM, deType } from "./rules.js";
 import { botAnswer } from "./bot.js";
 
 const OVER = new Error("partie terminée");
@@ -37,17 +37,21 @@ function famAbs(P) {
 }
 
 /* ================================ création ================================ */
-export function createGame({ players, goal = DEFAULT_GOAL, seed, maxRounds = MAX_ROUNDS }) {
+export function createGame({ players, goal = DEFAULT_GOAL, seed, maxRounds = MAX_ROUNDS, titles = "choix" }) {
   const G = {
     v: 1, rs: (seed >>> 0) || 1, goal, maxRounds, round: 0, phase: "setup", first: 0, turn: null,
     players: [], inst: {}, nextU: 1, mods: [], used: {}, ch: null, log: [], logN: 0,
     over: false, winner: null, rank: null, st: {}, prompt: null, seq: 0,
+    // titres de la Mêlée (3 joueurs ou plus) : open = révélés ce round ; regent = le Régent a déjà détourné un défi ce round
+    // mode : « choix » (règle officielle) ou « hasard » (chacun en reçoit un tiré au hasard)
+    titles: { on: players.length >= TITLES_FROM, mode: titles === "hasard" ? "hasard" : "choix", open: false, regent: false },
   };
   players.forEach((pl, i) => {
     const P = {
       id: pl.id, name: pl.name || "Joueur", bot: Boolean(pl.bot), idx: i, fam: pl.deck.fam, pt: pl.deck.pt || null, deckName: pl.deck.name || "",
       deck: [], hand: [], disc: [], dead: [], plots: [], used: [], plot: null, chars: [], locs: [], shadows: [],
       power: 0, gold: 0, limited: false, cheap: 0, done: { combat: 0, ruse: 0, influence: 0 }, fu: "F" + i,
+      title: null, chDefs: { combat: [], ruse: [], influence: [] }, rivalWon: [],
     };
     for (const [id, n] of Object.entries(pl.deck.cards)) for (let k = 0; k < n; k++) if (CARD[id]) P.deck.push(mk(G, id, P.id, "deck"));
     for (const id of pl.deck.plots) if (CARD[id]) P.plots.push(mk(G, id, P.id, "plots"));
@@ -145,13 +149,28 @@ export function makeApi(G) {
   X.immune = (inst) => anyHook("immune", inst);
   /** Un événement adverse ne peut pas viser un personnage immunisé. */
   X.targetable = (inst, src) => !(src && X.card(src) && X.card(src).type === "evt" && src.o !== inst.c && X.immune(inst));
-  X.income = (p) => (p.plot ? def(p.plot).inc : 0) + sumHook("income", p);
-  X.reserve = (p) => (p.plot ? def(p.plot).res : 7) + sumHook("reserve", p);
+  /* --- titres (Mêlée) --- */
+  X.title = (p) => (p && p.title ? TITLE[p.title] : null);
+  /** p soutient o : p ne peut pas lancer de défi contre o. */
+  X.supports = (p, o) => Boolean(p && o && p.title && o.title && TITLE[p.title].supports.includes(o.title));
+  /** o est un rival de p : battre o en défi rapporte 1 Pouvoir à p (une fois par round). */
+  X.rivals = (p, o) => Boolean(p && o && p.title && o.title && TITLE[p.title].rivals.includes(o.title));
+  /** +1 force au total d'un joueur dans les défis du type de son titre (s'il y a un personnage). */
+  X.titleStr = (p, t) => (p && p.title && TITLE[p.title].type === t ? 1 : 0);
+  /** Adversaires contre qui p peut lancer un défi de ce type (pas ceux qu'il soutient ; le défi d'Influence en plus de la Main
+   *  du Roi : contre un autre adversaire que le premier). */
+  X.chOpps = (p, t) => X.opps(p).filter((o) => !X.supports(p, o) && !(t === "influence" && p.title === "main" && p.done.influence >= 1 && p.chDefs.influence.includes(o.id)));
+  X.income = (p) => (p.plot ? def(p.plot).inc : 0) + sumHook("income", p) + (p.title === "argentier" ? 2 : 0);
+  X.reserve = (p) => (p.plot ? def(p.plot).res : 7) + sumHook("reserve", p) + (p.title === "justicier" ? 1 : 0);
   X.initiative = (p) => (p.plot ? def(p.plot).ini : 0);
-  X.claimOf = (ch) => { const a = P(ch.att); return Math.max(0, (a.plot ? def(a.plot).clm : 1) + sumHook("claim", ch) + ch.claimMod); };
-  X.maxCh = (p, t) => 1 + sumHook("extraCh", p, t);
+  X.claimOf = (ch) => {
+    const a = P(ch.att), d = P(ch.def);
+    const ships = ch.type === "combat" && a.title === "navires" && X.rivals(a, d) ? 1 : 0; // Maître des navires
+    return Math.max(0, (a.plot ? def(a.plot).clm : 1) + sumHook("claim", ch) + ch.claimMod + ships);
+  };
+  X.maxCh = (p, t) => 1 + sumHook("extraCh", p, t) + (t === "influence" && p.title === "main" ? 1 : 0);
   X.noCh = (t) => anyHook("noCh", t);
-  X.domOf = (p) => p.chars.filter((c) => !c.k).reduce((s, c) => s + X.str(c), 0) + p.gold + sumHook("domi", p);
+  X.domOf = (p) => p.chars.filter((c) => !c.k).reduce((s, c) => s + X.str(c), 0) + p.gold + sumHook("domi", p) + (p.title === "regent" ? 2 : 0);
   X.domBonus = () => sumHook("domBonus");
   X.noDom = () => anyHook("noDom");
   X.unoppBonus = (p) => sumHook("unoppBonus", p);
@@ -549,7 +568,7 @@ function attackers(G, X, p, t) {
 }
 function challengeTypes(G, X, p) {
   if (!X.opps(p).length) return [];
-  return TYPES.filter((t) => !X.noCh(t) && p.done[t] < X.maxCh(p, t) && attackers(G, X, p, t).length > 0);
+  return TYPES.filter((t) => !X.noCh(t) && p.done[t] < X.maxCh(p, t) && attackers(G, X, p, t).length > 0 && X.chOpps(p, t).length > 0);
 }
 
 /* ================================ le déroulé ================================ */
@@ -565,7 +584,11 @@ function* flow(G, X) {
       G.mods = G.mods.filter((m) => m.until !== "phase" && m.until !== "challenge");
     }
     G.mods = G.mods.filter((m) => m.until !== "round");
-    for (const p of G.players) { p.limited = false; p.cheap = 0; p.done = { combat: 0, ruse: 0, influence: 0 }; }
+    for (const p of G.players) {
+      p.limited = false; p.cheap = 0; p.done = { combat: 0, ruse: 0, influence: 0 };
+      p.title = null; p.chDefs = { combat: [], ruse: [], influence: [] }; p.rivalWon = []; // les titres repartent (Taxe)
+    }
+    G.titles.open = false; G.titles.regent = false;
   }
 }
 
@@ -630,10 +653,11 @@ const PHASE_FN = {
       for (const ab of d.abs) if (ab.reveal) { G.turn = p.id; yield* ab.reveal(X, p.plot); }
     }
     G.turn = null;
+    yield* titlePhase(G, X);
   },
   *draw(G, X) {
     const n = 2 + X.drawBonus();
-    for (const p of X.order()) X.draw(p, n);
+    for (const p of X.order()) X.draw(p, n + (p.title === "justicier" ? 1 : 0)); // Grand Justicier : une carte de plus
   },
   *marshal(G, X) {
     for (const p of X.order()) {
@@ -661,13 +685,16 @@ const PHASE_FN = {
         const types = challengeTypes(G, X, p);
         if (!types.length) break;
         const cands = Object.fromEntries(types.map((t) => [t, attackers(G, X, p, t).map((c) => c.u)]));
-        const opps = X.opps(p).map((o) => o.id);
-        const pick = yield ask(G, [p.id], { kind: "challenge", title: "Lancer un défi ?", types, cands, opps, done: { ...p.done } },
+        const oppsBy = Object.fromEntries(types.map((t) => [t, X.chOpps(p, t).map((o) => o.id)]));
+        const opps = [...new Set(Object.values(oppsBy).flat())];
+        const sup = X.opps(p).filter((o) => X.supports(p, o)).map((o) => o.id); // ceux qu'on soutient : pas de défi contre eux
+        const pick = yield ask(G, [p.id], { kind: "challenge", title: "Lancer un défi ?", types, cands, opps, oppsBy, sup, done: { ...p.done } },
           (pid, a) => {
             if (a && a.pass) return "pass";
             if (!a || !types.includes(a.type)) return null;
-            const def_ = opps.length === 1 ? opps[0] : a.def;
-            if (!opps.includes(def_)) return null;
+            const ok = oppsBy[a.type];
+            const def_ = ok.length === 1 ? ok[0] : a.def;
+            if (!ok.includes(def_)) return null;
             const atk = Array.isArray(a.atk) ? [...new Set(a.atk)] : [];
             if (!atk.length || !atk.every((u) => cands[a.type].includes(u))) return null;
             return { type: a.type, def: def_, atk };
@@ -709,6 +736,31 @@ const PHASE_FN = {
     }
   },
 };
+
+/* ------------------------------ titres (Mêlée) ------------------------------ */
+/** À 3 joueurs ou plus : on mélange les 6 titres, on en retire au hasard (2 à 3 joueurs, 1 à 4 ou 5), puis chacun en choisit un
+ *  dans l'ordre du tour, sans que les autres voient lequel ; tous se révèlent ensemble. */
+function* titlePhase(G, X) {
+  if (!G.titles.on) return;
+  const pool = shuffle(G, TITLES.map((t) => t.id));
+  if (G.titles.mode === "hasard") { // option de partie : un titre tiré au hasard pour chacun, parmi les 6
+    for (const p of X.order()) p.title = pool.shift();
+    G.titles.open = true; G.titles.regent = false;
+    X.log(`Titres tirés au hasard : ${X.order().map((p) => `${p.name}, ${TITLE[p.title].name}`).join(" ; ")}.`, { ty: "phase" });
+    return;
+  }
+  pool.splice(0, G.players.length === 3 ? 2 : G.players.length >= 6 ? 0 : 1);
+  G.titles.open = false; G.titles.regent = false;
+  for (const p of X.order()) {
+    G.turn = p.id;
+    const opts = pool.map((id) => ({ id, label: TITLE[id].name }));
+    const id = yield ask(G, [p.id], { kind: "title", title: "Choisis ton titre pour ce round", opts },
+      (pid, a) => (a && pool.includes(a.pick) ? a.pick : null), () => pool[0]);
+    p.title = id; pool.splice(pool.indexOf(id), 1);
+  }
+  G.turn = null; G.titles.open = true;
+  X.log(`Titres : ${X.order().map((p) => `${p.name}, ${TITLE[p.title].name}`).join(" ; ")}.`, { ty: "phase" });
+}
 
 /* ------------------------------ recrutement ------------------------------ */
 function* doMarshal(G, X, p, o) {
@@ -788,12 +840,31 @@ function* actionWindow(G, X, label) {
 
 /* ------------------------------ un défi ------------------------------ */
 function* runChallenge(G, X, A, pick) {
-  const D = P(G, pick.def);
+  let D = P(G, pick.def);
   const t = pick.type;
   const ch = (G.ch = { type: t, att: A.id, def: D.id, atk: [...pick.atk], dfd: [], bypass: [], claimMod: 0, parts: [], winner: null, sa: 0, sd: 0, stage: "atk" });
   A.done[t]++;
+  A.chDefs[t].push(D.id);
   for (const u of ch.atk) { const c = G.inst[u]; if (!X.noKneel(c, t)) X.kneel(c); }
-  X.log(`${A.name} lance un défi de ${TYPE_NAME[t]} contre ${D.name} avec ${ch.atk.map((u) => X.name(G.inst[u])).join(", ")}.`, { p: A.id, ty: "ch" });
+  X.log(`${A.name} lance un défi ${deType(t)} contre ${D.name} avec ${ch.atk.map((u) => X.name(G.inst[u])).join(", ")}.`, { p: A.id, ty: "ch" });
+  // Régent de la Couronne : une fois par round, il peut détourner un défi (l'attaquant choisit un autre adversaire)
+  const R = G.titles.on && !G.titles.regent ? G.players.find((x) => x.title === "regent" && x !== A) : null;
+  const alt = R ? X.opps(A).filter((o) => o !== D && !X.supports(A, o)) : [];
+  if (R && alt.length) {
+    const yes = yield ask(G, [R.id], { kind: "option", regent: true, title: `Régent de la Couronne : détourner le défi ${deType(t)} de ${A.name} contre ${D.name} ?`,
+      opts: [{ id: "non", label: "Laisser faire" }, { id: "oui", label: "Détourner le défi" }] }, (pid, a) => (a && (a.pick === "oui" || a.pick === "non") ? a.pick : null), () => "non");
+    if (yes === "oui") {
+      G.titles.regent = true;
+      let nd = alt[0];
+      if (alt.length > 1) {
+        const id = yield ask(G, [A.id], { kind: "option", redirect: true, title: `Le Régent détourne ton défi : contre qui, à la place de ${D.name} ?`, opts: alt.map((o) => ({ id: o.id, label: o.name })) },
+          (pid, a) => (a && alt.some((o) => o.id === a.pick) ? a.pick : null), () => alt[0].id);
+        nd = P(G, id);
+      }
+      X.log(`${R.name} (Régent de la Couronne) détourne le défi : ${A.name} attaque ${nd.name} à la place de ${D.name}.`, { p: R.id, ty: "ch" });
+      D = nd; ch.def = D.id;
+    }
+  }
   yield* fire(G, X, { ev: "atk", ch, p: A, defender: D });
   if (G.over) return;
   // Discret : chaque attaquant discret « contourne » un défenseur potentiel
@@ -823,7 +894,7 @@ function* runChallenge(G, X, A, pick) {
   const duel = live.length === 1 && X.hasKw(G.inst[live[0]], "duel");
   if (dc.length) {
     const max = duel ? 1 : dc.length;
-    const dfd = yield ask(G, [D.id], { kind: "defend", title: `Défendre contre ce défi de ${TYPE_NAME[t]} ?`, cands: dc.map((x) => x.u), max, duel },
+    const dfd = yield ask(G, [D.id], { kind: "defend", title: `Défendre contre ce défi ${deType(t)} ?`, cands: dc.map((x) => x.u), max, duel },
       (pid, a) => { const l = Array.isArray(a && a.dfd) ? [...new Set(a.dfd)] : null; return l && l.length <= max && l.every((u) => dc.some((x) => x.u === u)) ? l : null; }, () => []);
     ch.dfd = dfd;
     for (const u of dfd) X.kneel(G.inst[u]);
@@ -839,20 +910,28 @@ function* runChallenge(G, X, A, pick) {
   ch.stage = "res";
   const atkL = ch.atk.map((u) => G.inst[u]).filter((c) => c && c.z === "char" && X.ctrl(c) === A);
   const dfdL = ch.dfd.map((u) => G.inst[u]).filter((c) => c && c.z === "char" && X.ctrl(c) === D);
-  const sa = atkL.reduce((s, c) => s + X.str(c), 0), sd = dfdL.reduce((s, c) => s + X.str(c), 0);
+  // les titres ajoutent leur force au total du joueur dans les défis de leur type, s'il y a au moins un personnage
+  const sa = atkL.reduce((s, c) => s + X.str(c), 0) + (atkL.length ? X.titleStr(A, t) : 0);
+  const sd = dfdL.reduce((s, c) => s + X.str(c), 0) + (dfdL.length ? X.titleStr(D, t) : 0);
   ch.sa = sa; ch.sd = sd;
   ch.parts = [...atkL, ...dfdL].map((c) => c.u);
   let W = null, L = null;
   if (sa >= sd && sa > 0) { W = A; L = D; } else if (sd > sa) { W = D; L = A; }
-  if (!W) { X.log(`Défi de ${TYPE_NAME[t]} : ${sa} contre ${sd}, personne ne gagne.`, { ty: "ch" }); G.ch = null; return; }
+  if (!W) { X.log(`Défi ${deType(t)} : ${sa} contre ${sd}, personne ne gagne.`, { ty: "ch" }); G.ch = null; return; }
   ch.winner = W.id;
   G.st[W.id].won[t]++; G.st[L.id].lost++;
-  X.log(`${W.name} gagne le défi de ${TYPE_NAME[t]} (${sa} contre ${sd}).`, { p: W.id, ty: "chwin" });
+  X.log(`${W.name} gagne le défi ${deType(t)} (${sa} contre ${sd}).`, { p: W.id, ty: "chwin" });
   const winners = W === A ? atkL : dfdL;
   if (W === A && sd === 0) {
     G.st[A.id].unopp++;
     X.log("Défi sans opposition.", { p: A.id });
     X.gainPower(A, 1 + X.unoppBonus(A), null);
+  }
+  // rival battu : 1 Pouvoir, une fois par round et par rival
+  if (X.rivals(W, L) && !W.rivalWon.includes(L.id)) {
+    W.rivalWon.push(L.id);
+    X.log(`${W.name} bat son rival ${L.name} (${TITLE[L.title].name}).`, { p: W.id });
+    X.gainPower(W, 1, null);
   }
   for (const c of winners) if (c.z === "char" && X.hasKw(c, "celebre")) X.gainPower(W, 1, c);
   // Génie et Pillard : pour chaque personnage participant du gagnant (qu'il attaque ou qu'il défende)
@@ -878,7 +957,21 @@ function* runChallenge(G, X, A, pick) {
     const cev = { ev: "claim", ch, p: A, target: D, n, cancel: false };
     yield* interruptWindow(G, X, cev);
     if (cev.cancel) X.log("La revendication est annulée.", { ty: "save" });
-    else if (n > 0) yield* applyClaim(G, X, A, D, t, n);
+    else if (n > 0) {
+      yield* applyClaim(G, X, A, D, t, n);
+      // Maître des chuchoteurs : la revendication de Ruse peut toucher d'autres adversaires
+      const more = t === "ruse" && A.title === "chuchoteurs" ? X.opps(A).filter((o) => o !== D && o.hand.length) : [];
+      if (more.length && !G.over) {
+        const opts = [];
+        for (let m = 0; m < 1 << more.length; m++) {
+          const who = more.filter((_, i) => m & (1 << i));
+          opts.push({ id: String(m), label: who.length ? `Aussi ${who.map((o) => o.name).join(" et ")}` : `Seulement ${D.name}` });
+        }
+        const m = +(yield ask(G, [A.id], { kind: "option", whisper: true, title: "Maître des chuchoteurs : ta revendication de Ruse touche aussi…", opts },
+          (pid, a) => (a && opts.some((o) => o.id === a.pick) ? a.pick : null), () => String(opts.length - 1)));
+        for (const [i, o] of more.entries()) if (m & (1 << i)) { X.log(`Maître des chuchoteurs : ${o.name} subit aussi la revendication.`, { p: A.id }); yield* applyClaim(G, X, A, o, t, n); }
+      }
+    }
   }
   if (G.over) return;
   yield* fire(G, X, { ev: "win", ch, p: W, loser: L });

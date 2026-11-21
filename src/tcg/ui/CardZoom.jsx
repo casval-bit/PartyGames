@@ -2,7 +2,7 @@
 // mots-clés expliqués, actions possibles, et illustration personnalisée (choisir une image depuis l'appareil).
 // Depuis l'album, on feuillette les cartes (flèches, ou ← → au clavier) et les cartes pas encore obtenues restent grisées.
 import { useEffect, useRef, useState } from "react";
-import { CARD, FAMILY, TYPE_BONUS, subOf, subWords, subKind } from "../cards/index.js";
+import { CARD, FAMILY, TYPE_BONUS, subOf, subWords, subKind, traitNames } from "../cards/index.js";
 import { KEYWORDS, RARITY, CARD_TYPES, TYPE_NAME, FAMILY_BONUSES } from "../rules.js";
 import { starterById } from "../deck.js";
 import { alwaysFoil, shineCost } from "../progress.js";
@@ -178,7 +178,7 @@ function ArtTools({ d }) {
  * shine { jet, onShine } : jetons de brillance du joueur et rendre brillante cette carte (collection ; cartes de coût 0 à 6).
  * missing : carte pas encore obtenue (grisée) ; onPrev / onNext / pos : feuilleter (album).
  */
-export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who, owned, acts = [], art = false, note, onClose, onOpen, onPrev, onNext, pos, shine }) {
+export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who, owned, acts = [], art = false, note, onClose, onOpen, onPrev, onNext, pos, shine, onHelp }) {
   const tilt = useTilt();
   useEffect(() => {
     const k = (e) => {
@@ -217,7 +217,7 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
         )}
       </div>
       <div className="tz-info" onClick={(e) => e.stopPropagation()}>
-        {note && <div className="tz-box" style={{ borderColor: "rgba(94,225,255,.5)" }}>{note}</div>}
+        {note && <div className="tz-box" style={{ borderColor: "color-mix(in srgb, var(--cyan) 55%, transparent)" }}>{note}</div>}
         {acts.length > 0 && (
           <div className="tz-acts">
             {acts.map((a, i) => <button key={i} className={"btn " + (a.kind || (i === 0 ? "primary" : "ghost"))} disabled={a.disabled} onClick={() => { a.onClick(); }}>{a.icon && <Icon name={a.icon} size={18} />}{a.label}</button>)}
@@ -247,6 +247,16 @@ export default function CardZoom({ id, fam, pt, foil, missing = false, inst, who
             {kws.map((k) => <div key={k}><b>{KEYWORDS[k].name}{typeof d.kw[k] === "number" ? ` (${d.kw[k]})` : ""}</b> : {KEYWORDS[k].text}</div>)}
             {gained.map((k) => <div key={k}><b>{KW_LONG[k] || k}</b> (gagné en cours de partie) : {(KEYWORDS[k] || {}).text}</div>)}
           </div>
+        )}
+        {d && !plot && traitNames(d).length > 0 && (
+          <div className="tz-box tz-tr" data-testid="tz-traits">
+            <h4>Traits</h4>
+            <div className="tz-line">{traitNames(d).map((t) => <span key={t} className="pill dim">{t}</span>)}</div>
+            <p style={{ margin: 0, fontSize: ".8rem", color: "var(--txt-2)" }}>Un trait ne fait rien tout seul : des effets le nomment (« tes personnages Police gagnent +1 force », un objet réservé aux Chevaliers…). Quand un texte cite un trait, il parle de toutes les cartes qui l'ont.</p>
+          </div>
+        )}
+        {onHelp && d && (
+          <button className="btn ghost small tz-help" onClick={onHelp} data-testid="tz-help"><Icon name="book" size={16} />Tous les mots-clés et les traits</button>
         )}
         {d && !plot && (
           <div className="tz-box">

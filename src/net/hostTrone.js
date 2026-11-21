@@ -8,7 +8,10 @@ import { publicView, privateView } from "../tcg/view.js";
 export const AG_GOALS = [10, 15];
 export const AG_TIMERS = [[45, "45 s"], [90, "1 min 30"], [180, "3 min"], [0, "Illimité"]];
 export const AG_MAX = 4;
-export const AG_DEFAULTS = { agGoal: 15, agTimer: 90 };
+/** Titres de la Mêlée (3 joueurs ou plus) : « choix » = règle officielle (on en retire au hasard, puis chacun choisit dans l'ordre
+ *  du tour), « hasard » = chacun en reçoit un tiré au hasard parmi les 6, à chaque round. */
+export const AG_TITLES = [["choix", "Au choix", "règle officielle"], ["hasard", "Au hasard", "tiré à chaque round"]];
+export const AG_DEFAULTS = { agGoal: 15, agTimer: 90, agTitles: "choix" };
 
 const botDelay = () => (globalThis.TRONE_FAST ? 2 : 650);
 
@@ -69,7 +72,7 @@ export const troneMethods = {
     }));
     for (const p of this.S.players) if (p.bot) { const d = players.find((x) => x.id === p.id).deck; p.agDeck = { name: d.name, fam: d.fam, pt: d.pt || null }; }
     const s = this.S.settings;
-    this.agGame = new Game({ players, goal: AG_GOALS.includes(s.agGoal) ? s.agGoal : 15, seed: (Math.random() * 2 ** 31) | 0, autoBots: false });
+    this.agGame = new Game({ players, goal: AG_GOALS.includes(s.agGoal) ? s.agGoal : 15, seed: (Math.random() * 2 ** 31) | 0, autoBots: false, titles: s.agTitles === "hasard" ? "hasard" : "choix" });
     this.agSent = {};
     this.agStamp = (this.agStamp || 0) + 1;
     this.setPhase("ag_play", null);

@@ -17,7 +17,8 @@ function simple(q, v) {
     case "choose": return { pick: q.cands.slice(0, q.min) };
     case "option": return { pick: q.opts[0].id };
     case "defend": return { dfd: [] };
-    case "challenge": { const t = q.types[0]; return { type: t, def: q.opps[0], atk: [q.cands[t][0]] }; }
+    case "title": return { pick: q.opts[0].id };
+    case "challenge": { const t = q.types[0]; return { type: t, def: (q.oppsBy ? q.oppsBy[t] : q.opps)[0], atk: [q.cands[t][0]] }; }
     default: return { pass: true };
   }
 }

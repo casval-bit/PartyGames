@@ -490,7 +490,16 @@ animaux Sans objet. Pas de pose dans l'ombre pendant la mise en place (simplific
 devenues leurs cartes 7, sont dans RETIRED) ; images rangées par `ranger-jacinthe-v3.ps1` (il renomme aussi « Kym Ladell 4 » et « William Hawkes 4 »
 d'un ancien passage en 7, et écrit des cadrages qui gardent les têtes entières : dézoom pour les visages trop grands dans le bandeau, Lauren 2 zoomée). Équilibrage : tournoi entre les decks à thème avant/après les mots-clés
 (`node tools/test-tcg.js --sim 3000 --themes`) ; les familles qui y perdaient ont reçu plus de mots-clés (Teen Wolf, League of Legends).
-Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
+**Titres de la Mêlée** (à 3 ou 4 joueurs, `TITLES` dans `src/tcg/rules.js`, `titlePhase` dans `engine.js`) : la Main du Roi, le Maître des chuchoteurs,
+le Maître des navires, le Grand Argentier, le Grand Justicier et le Régent de la Couronne, comme dans le JCE 2e édition. Chaque round, après les scénarios,
+on en retire au hasard (2 à 3 joueurs, 1 à 4) et chacun choisit le sien dans l'ordre du tour, en secret ; ils se révèlent ensemble et repartent à la fin
+du round. Soutien : pas de défi contre le joueur dont on soutient le titre ; rival : gagner un défi contre lui rapporte 1 Pouvoir (une fois par round et
+par rival) ; chaque titre de type donne +1 force au total dans ses défis. Option du salon « Titres » (`agTitles`) : **Au choix** (règle officielle) ou
+**Au hasard** (chacun en reçoit un parmi les 6, sans choisir). Les titres se voient sur les pastilles des joueurs (rouge : un rival) et en tête de leur table.
+Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Toucher une carte l'ouvre en grand, avec ses mots-clés et ses traits expliqués
+(et « Tous les mots-clés et les traits », la page des règles) ; à la mise en place (round 0), toucher une carte de sa main l'ouvre aussi en grand, avec
+« Poser à la mise en place ». Les pastilles des joueurs montrent leur table à tout moment, même pendant le choix de l'adversaire d'un défi (le bouton
+« Défier » du pupitre choisit) ; les choix de cartes (tuer, défausser, cibler) ont une loupe sur chaque carte. Les pastilles des joueurs, en haut,
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.
 On touche n'importe quelle carte visible (scénarios compris) pour la lire en grand. Journal de partie (icône horloge).
 

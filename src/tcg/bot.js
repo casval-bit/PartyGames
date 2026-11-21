@@ -88,7 +88,15 @@ export function botAnswer(X, P, q) {
       return q.opts.length ? { u: q.opts[0].u } : { pass: true };
     }
     case "choose": return { pick: choose(X, P, q) };
+    case "title": return { pick: pickTitle(X, P, q) };
     case "option": {
+      if (q.regent) { const c = X.G.ch; return { pick: c && c.def === P.id ? "oui" : "non" }; } // Régent : détourne les défis lancés contre lui
+      if (q.redirect) { // le Régent détourne mon défi : l'adversaire le moins bien défendu dans ce type
+        const t = X.G.ch ? X.G.ch.type : "combat";
+        const best = [...q.opts].map((o) => ({ o, v: oppDefense(X, X.player(o.id), t) })).sort((a, b) => a.v - b.v)[0];
+        return { pick: best.o.id };
+      }
+      if (q.whisper) return { pick: q.opts[q.opts.length - 1].id }; // Maître des chuchoteurs : tous les adversaires possibles
       if (q.don) { // Don : poser l'or en gardant de quoi jouer la carte la moins chère de la main
         const max = Math.max(0, ...q.opts.map((o) => +o.id || 0));
         const cheap = Math.min(99, ...P.hand.filter((c) => ["char", "loc", "obj"].includes(X.card(c).type)).map((c) => X.card(c).cost));
@@ -101,6 +109,16 @@ export function botAnswer(X, P, q) {
     default: return q.dflt ? q.dflt(P.id) : null;
   }
   void G; void D;
+}
+
+/** Titre de la Mêlée : selon ce que le bot a en jeu (sans regarder les titres déjà pris par les autres, qui sont secrets). */
+function pickTitle(X, P, q) {
+  const icon = (t) => P.chars.filter((c) => X.hasIcon(c, t)).length;
+  const lead = X.opps(P).every((o) => X.totalPower(o) <= X.totalPower(P));
+  const v = { argentier: 5, justicier: 4.4 + (P.hand.length <= 3 ? 1 : 0), main: 3.8 + 0.4 * icon("influence"), chuchoteurs: 3.4 + 0.4 * icon("ruse"),
+    navires: 3.4 + 0.4 * icon("combat"), regent: 3.4 + (lead ? 1.6 : 0) };
+  const jit = (id) => (((X.G.round * 7 + P.idx * 3 + id.length) % 5) * 0.15);
+  return [...q.opts].map((o) => ({ id: o.id, s: (v[o.id] || 0) + jit(o.id) })).sort((a, b) => b.s - a.s)[0].id;
 }
 
 function marshal(X, P, q) {
@@ -150,7 +168,8 @@ function challenge(X, P, q) {
   for (const t of q.types) {
     const A = (c) => X.strAs(c, "atk", t);
     const mine = q.cands[t].map(C).sort((a, b) => A(b) - A(a));
-    for (const D of opps) {
+    const oppsT = q.oppsBy && q.oppsBy[t] ? q.oppsBy[t].map((id) => X.player(id)) : opps;
+    for (const D of oppsT) {
       let pick = [], sum = 0, def = oppDefense(X, D, t, 0);
       if (def === 0) {
         // personne pour défendre : le plus petit attaquant suffit (sans opposition)
@@ -178,6 +197,7 @@ function challenge(X, P, q) {
       if (def === 0) gain += 1.4;
       else gain -= 0.3; // il peut défendre et nous faire perdre
       gain += Math.min(1, X.totalPower(D) * 0.06);
+      if (X.rivals(P, D) && !P.rivalWon.includes(D.id)) gain += 0.9; // un rival battu rapporte 1 Pouvoir
       // agenouiller des personnages nous expose aux défis des adversaires qui jouent après nous
       const used = pick.reduce((a, u) => a + X.str(C(u)), 0);
       const leftC = P.chars.filter((c) => !c.k && !pick.includes(c.u) && X.hasIcon(c, "combat")).reduce((a, c) => a + X.str(c), 0);

@@ -288,3 +288,12 @@ html.tcg-only body::before { mix-blend-mode: normal; animation: none;
 .tcgapp .dk-chips button { border-radius: 5px; background: rgba(199,159,90,.12); border-color: rgba(199,159,90,.5); }
 .tcgapp .dk-opt { border-radius: 10px; background: linear-gradient(180deg, rgba(44,32,22,.92), rgba(22,16,11,.92)); }
 .tcgapp .dk-line { border-radius: 6px; }
+
+/* ------------------------------ choix en partie ------------------------------ */
+.tcgapp .ag-grid .gi.pick .tc, .tcgapp .ag-grid .gi.pick .tp { box-shadow: 0 0 0 3px #f5e9cf, 0 0 0 6px var(--brass), 0 0 18px rgba(199,159,90,.55), var(--thick); }
+.tcgapp .ag-grid .gi .ck { color: var(--brass-ink); background: linear-gradient(180deg, #e8cd93, #bf9750); }
+.tcgapp .gi-zoom { background: rgba(16,11,8,.85); border-color: rgba(199,159,90,.45); color: var(--brass-hi); }
+.tcgapp .ag-title.pick { border-color: var(--brass-hi); box-shadow: 0 0 0 1px var(--brass-hi), inset 0 0 0 1px rgba(232,205,147,.2); }
+.tcgapp .tz-wrap { background: radial-gradient(90% 60% at 50% 30%, rgba(48,34,22,.94), rgba(10,7,5,.97)); }
+.tcgapp .tz-box { border-radius: 10px; }
+.tcgapp .tz-kw b { color: var(--gold-pale); }

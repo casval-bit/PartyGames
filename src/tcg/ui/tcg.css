@@ -304,6 +304,7 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 .tz-box { padding: 12px 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--card-hi); font-size: .9rem; color: var(--txt); display: flex; flex-direction: column; gap: 6px; }
 .tz-box h4 { margin: 0; font: 700 .78rem var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--txt-3); }
 .tz-kw b { color: #ffe6a8; }
+.tz-help { align-self: flex-start; }
 .tz-acts { display: flex; flex-direction: column; gap: 8px; width: min(100%, 460px); }
 .tz-acts .btn { width: 100%; }
 .tz-att { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
@@ -423,6 +424,22 @@ button.tp { padding: 0; border: 0; cursor: pointer; }
 @keyframes sheetUp { from { transform: translateY(40%); opacity: .4; } }
 .ag-sheet h3 { font-size: 1.05rem; }
 .ag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; overflow-y: auto; padding: 4px 2px 8px; min-height: 0; }
+/* titres de la Mêlée (à 3 ou 4) : le choix au début du round, l'icône sur la pastille de chaque joueur (rouge : un rival), le nom en tête de sa table */
+/* loupe sur une carte à choisir (la lire en grand avant de la choisir) ; la coche du choix est en haut à droite */
+.gi-zoom { position: absolute; top: 4px; left: 4px; z-index: 3; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; padding: 0; cursor: pointer;
+  color: var(--txt); background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.25); }
+.ag-titles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; overflow-y: auto; padding: 4px 2px 8px; min-height: 0; }
+.ag-title { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: 10px; text-align: left; cursor: pointer; color: var(--txt);
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--card-hi); }
+.ag-title b { font: 700 1.05rem var(--display); }
+.ag-title p { margin: 0; font-size: .84rem; line-height: 1.35; color: var(--txt-2); }
+.ag-title small { font-size: .74rem; line-height: 1.3; color: var(--txt-3); }
+.ag-title.pick { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.ag-title-i { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); background: rgba(0,0,0,.25); }
+.agl-ti { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: var(--gold); background: rgba(0,0,0,.35); border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); }
+.agl-ti.rival { color: #f3d0c8; border-color: rgba(181,72,59,.85); background: rgba(140,47,39,.5); }
+.agb-ti { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 5px; font: 700 .78rem var(--display); color: var(--gold);
+  background: rgba(0,0,0,.45); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); white-space: nowrap; }
 .ag-grid.plots { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .ag-grid .gi { position: relative; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .ag-grid .gi small { font-size: .68rem; color: var(--txt-2); text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
