@@ -23,6 +23,8 @@ export const cards = [
   ch("Will Byers", "Le sixième sens", 4, 5, "RI", "Bande|Hawkins|Psychique", "", "enterSearch:Bande@Il le sent dans sa nuque", "R"),
   ch("Max Mayfield", "MadMax", 3, 4, "CR", "Bande|Hawkins", "discret", "loseStand@Échapper à Vecna", "R"),
   ch("Erica Sinclair", "La petite sœur de Lucas", 1, 1, "R", "Hawkins", "discret", "ifName:Lucas Sinclair,1@Tu ne peux pas gérer la vérité", "C"),
+  // (21/11/2026) saison 5 : le petit caïd de la classe de Holly, devenu le chouchou des fans
+  ch("Derek Turnbow", "Le petit caïd de la classe de Holly", 2, 2, "C", "Hawkins", "", "ifAtk:1@Le caïd de la récré", "U"),
   // --- les grands
   ch("Joyce Byers", "La mère courage", 4, 4, "RI", "Adulte|Hawkins", "", "guard:Bande@Les guirlandes", "R"),
   ch("Jim Hopper", "Le shérif de Hawkins", 5, 5, "CI", "Adulte|Hawkins|Police", "intimidation", "winKneel:combat@Interrogatoire musclé", "R"),
@@ -66,6 +68,7 @@ export const cards = [
   loc("Le Monde à l'envers", "La dimension parallèle", 3, "Monde à l'envers", "", "aura:Créature,1@Spores", "R"),
   loc("Le sous-sol des Wheeler", "Le QG de la bande", 2, "Bande", "", "actStand:Bande@La campagne du samedi", "U"),
   loc("Starcourt Mall", "Le centre commercial", 2, "Hawkins", "", "reserve:1 ; domi:1", "U"),
+  loc("La maison Creel", "La demeure de Vecna", 2, "Monde à l'envers", "", "reduce:Monde à l'envers,1@L'horloge des Creel", "U"),
   // --- objets
   obj("Talkies-walkies", "Tu me reçois ?", 1, "Radio", "", "attIcon:influence", "C"),
   obj("La batte cloutée", "L'arme de Steve", 2, "Arme", "", "attStr:2", "U", { req: "Ado" }),

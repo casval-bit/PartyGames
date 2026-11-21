@@ -665,6 +665,9 @@ Cynthia 7 (Dragon), Hélio 7 (Ténèbres), Penséa 5 (Fée) pour Sinnoh ; N Harm
 Tcheren 7 (Normal), Nikolaï 5 (Acier), Iris 5 (Dragon), Pieris 5 (Ténèbres), Inezia 4 (Électrik) pour Unys ; Dianthéa 7 (Fée) pour Kalos ; Guzma 6 (Insecte) pour Alola ;
 Tarak 7 (Feu), Roy 5 (Dragon), Faïza 4 (Combat), Donna 4 (Eau) pour Galar ; Kassis 7 (Plante), Dendra 4 (Combat) pour Paldea.
 Les cartes qui ont changé de coût avec cette échelle (Ronflex 6 devenu 5, Giovanni 5 et Tcheren 6 devenus 7, Goyah 6 devenu 7 comme les autres Maîtres…) gardent les exemplaires, les decks et les images importées (`RENAMED` dans `cards/index.js`).
+**Ajoutés le 21/11/2026** (avec les images de Brice, rangées par `ranger-lot6.ps1`) : **Perrin 7** « Sur la piste de la Lune Vermeille » (l'ancienne image de Perrin ;
+la photographe en plein air devient l'image de Perrin 3) et **Bria** 3, la professeure de l'Académie Myrtille (Dresseurs sans type) ; dans Stranger Things, **Derek Turnbow** 2
+(saison 5) et le lieu **La maison Creel** (Monde à l'envers) ; la Rainbow Room illustre Le Laboratoire de Hawkins.
 **Ajoutés le 17/11/2026** (avec les images de Brice) : des Dresseurs de toutes les régions, à un type (Champions, Conseil 4, Doyens, Capitaines, chefs et cadres des Teams)
 ou sans type (Serena, Bella, Juliette, Beladonis, Cardus, le Professeur Turum, Apia, Elsa-Mina, Bélila, Selena, et trois Dresseurs non uniques : Journaliste Télé,
 Montagnard, Ouvrière) : Jeannine (Kanto), Ariane et Lance de la Team Rocket (Johto), Roxanne, Adriane, Norman, Alizée, Amaryllis 6 et Timmy (Hoenn),

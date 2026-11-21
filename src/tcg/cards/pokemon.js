@@ -450,6 +450,9 @@ export const cards = [
   tr("Lilie", "La fille d'Elsa-Mina", 2, 1, "RI", "", "", "enterDraw:1@Le carnet de voyage ; ifName:Elsa-Mina,1@Mère et fille", "U"),
   tr("Lilie", "La protectrice de Nebby", 3, 1, "RI", "", "", "enterSearch:Pokémon@Le sac de Nebby ; guard:Pokémon@Courage, Nebby !", "U"),
   tr("Perrin", "La photographe de Kitakami", 3, 2, "R", "", "", "winDraw:ruse,1@Pris sur le vif", "U"),
+  // (21/11/2026) Perrin à 7 (la photo de l'Ursaking Lune Vermeille), et Bria, la professeure de l'Académie Myrtille qui a écrit le livre de la Zone Zéro
+  tr("Perrin", "Sur la piste de la Lune Vermeille", 7, 4, "RI", "", "discret", "actKneel:5@Ne bougez plus ! ; winDraw:ruse,2@La photo de sa vie", "L"),
+  tr("Bria", "L'autrice du livre de la Zone Zéro", 3, 2, "RI", "Savant", "genie", "enterSearch:Pokémon@L'expédition dans la Zone Zéro", "U"),
   tr("Pania", "La reine des Évolitions", 4, 2, "RI", "Team Star", "genie", "aura:Évolition,1@Opération Étoile", "R"),
   tr("Pepper", "Le randonneur de Paldea", 2, 1, "CR", "", "", "ifWith:Pokémon,1@Dogrino et moi", "U"),
   tr("Pepper", "Le chef cuisinier", 4, 2, "RI", "", "", "actStand:Pokémon@Sandwich ; enterSearch:Pokémon@Herbes Mystiques", "R"),
