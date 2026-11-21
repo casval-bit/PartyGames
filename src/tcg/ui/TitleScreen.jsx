@@ -1,7 +1,9 @@
-// Écran titre de Heavy is the Crown (appli du jeu seul) : la couronne dorée et le nom du jeu, posés sur la salle en 3D (la table
-// ronde vue d'en haut, qui tourne lentement, TableScene.jsx). On entre d'un clic (ou Entrée) : le titre s'envole et la caméra
-// descend s'asseoir à sa place, devant son plateau (l'accueil). Sans pseudo, on le choisit ici d'abord. Sans la salle en 3D
-// (scene absent), l'ancien décor : rayons, braises et cartes qui tournent.
+// Écran titre de Heavy is the Crown (appli du jeu seul) : le nom du jeu gravé dans le laiton, posé sur la salle en 3D (la table
+// ronde vue d'en haut, qui tourne lentement, TableScene.jsx). Tant que la salle n'est pas prête (three.js chargé, shaders
+// compilés : sceneReady), seul un fil de chargement s'affiche ; puis la salle apparaît en fondu et le titre se dévoile, une
+// seule fois et dans l'ordre (couronne, filets, nom, devise, invitation). On entre d'un clic (ou Entrée) : le titre s'efface et
+// la caméra descend s'asseoir à sa place, devant son plateau (l'accueil). Sans pseudo, on le choisit ici d'abord. Sans la salle
+// en 3D (scene absent), l'ancien décor : rayons, braises et cartes qui tournent.
 // En haut : le compte (connexion par e-mail : la progression est sauvegardée et suit le joueur).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../../ui/Icon.jsx";
@@ -42,17 +44,38 @@ export function CrownMark({ size = 160, className = "" }) {
   );
 }
 
-export default function TitleScreen({ name, setName, acc, onAccount, onEnter, scene = false }) {
-  const [ready, setReady] = useState(false);
+/** La couronne de l'écran titre sur la salle en 3D : un simple trait de laiton, entre deux filets. */
+function CrownCrest() {
+  return (
+    <div className="hts-crest" aria-hidden="true">
+      <i />
+      <svg viewBox="0 0 120 84" width="64" height="45">
+        <path d="M16 64 L9 24 L37 45 L60 13 L83 45 L111 24 L104 64 Z" fill="rgba(217,184,119,.12)" stroke="currentColor" strokeWidth="3.2" strokeLinejoin="round" />
+        <rect x="14" y="63" width="92" height="11" rx="1.5" fill="rgba(217,184,119,.2)" stroke="currentColor" strokeWidth="3.2" />
+        <circle cx="9" cy="21" r="4.2" fill="currentColor" /><circle cx="60" cy="9.5" r="4.6" fill="currentColor" /><circle cx="111" cy="21" r="4.2" fill="currentColor" />
+        <circle cx="60" cy="68.5" r="2.6" fill="#8c2f27" />
+      </svg>
+      <i />
+    </div>
+  );
+}
+
+export default function TitleScreen({ name, setName, acc, onAccount, onEnter, scene = false, sceneReady = false }) {
+  const [fontsOk, setFontsOk] = useState(false);
+  const [late, setLate] = useState(false); // la salle tarde trop : le titre s'affiche quand même
   const [boom, setBoom] = useState(false);
   const [pseudo, setPseudo] = useState(name || "");
   const need = !String(name || "").trim();
   const done = useRef(false);
-  useEffect(() => { // polices prêtes, au moins 1,2 s pour laisser la couronne s'allumer
-    const min = new Promise((r) => setTimeout(r, scene ? 700 : 1200));
+  useEffect(() => {
+    let ok = true;
+    const min = new Promise((r) => setTimeout(r, scene ? 0 : 1200));
     const fonts = (document.fonts && document.fonts.ready) || Promise.resolve();
-    Promise.all([min, fonts.catch(() => {})]).then(() => setReady(true));
-  }, []);
+    Promise.all([min, fonts.catch(() => {})]).then(() => { if (ok) setFontsOk(true); });
+    const t = setTimeout(() => setLate(true), 9000);
+    return () => { ok = false; clearTimeout(t); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const ready = fontsOk && (!scene || sceneReady || late);
   const go = () => {
     if (!ready || done.current) return;
     if (need) { const p = pseudo.trim().slice(0, 16); if (!p) return; setName(p); }
@@ -82,7 +105,7 @@ export default function TitleScreen({ name, setName, acc, onAccount, onEnter, sc
       </header>
 
       <div className="hts-center">
-        <CrownMark size={170} className="hts-crown" />
+        {scene ? <CrownCrest /> : <CrownMark size={170} className="hts-crown" />}
         <h1 className="hts-title" aria-label={GAME_NAME}>
           {GAME_NAME.split(" ").map((w, i) => <span key={i} className="hts-w" style={{ "--i": i }}>{w}</span>)}
         </h1>
@@ -100,8 +123,10 @@ export default function TitleScreen({ name, setName, acc, onAccount, onEnter, sc
             {acc && acc.enabled && !acc.user && <small className="muted">Déjà un compte ? <button type="button" className="hts-link" onClick={onAccount}>Connecte-toi</button> : ton pseudo et ta collection reviennent.</small>}
           </form>
         ) : ready ? (
-          <button className="hts-press" onClick={go} data-testid="ts-enter"><Icon name="play" size={16} />{DESKTOP ? "Clique ou appuie sur Entrée" : "Touche pour entrer"}</button>
-        ) : <div className="loadbar" aria-label="Chargement"><i /></div>}
+          scene
+            ? <button className="hts-press" onClick={go} data-testid="ts-enter">{DESKTOP ? "Clique ou appuie sur Entrée pour prendre place" : "Touche l'écran pour prendre place"}</button>
+            : <button className="hts-press" onClick={go} data-testid="ts-enter"><Icon name="play" size={16} />{DESKTOP ? "Clique ou appuie sur Entrée" : "Touche pour entrer"}</button>
+        ) : scene ? <div className="hts-load" role="status"><span>Préparation de la table</span><i /></div> : <div className="loadbar" aria-label="Chargement"><i /></div>}
         <small className="hts-save">{acc && acc.user ? "Ta progression est sauvegardée sur ton compte." : acc && acc.enabled ? "Connecte-toi avec ton e-mail pour sauvegarder ta progression." : "Profil local : il reste sur cet appareil."}</small>
       </div>
       {boom && !scene && <i className="hts-boom" aria-hidden="true" />}

@@ -1,0 +1,290 @@
+/* =====================================================================
+   HEAVY IS THE CROWN : LA TAVERNE
+   Les menus du jeu (écran titre, accueil, réglages, salon, collection, partie) prennent les matières de la salle en 3D :
+   noyer sombre, laiton, cuir, parchemin, cire rouge. Ni bleu ni lueurs : le laiton marque ce qu'on peut toucher et ce qui
+   est choisi, le rouge sang-de-bœuf les alertes et la boutique. Titres en Alegreya (petites capitales gravées pour le nom
+   du jeu, les grands boutons et les intitulés), texte courant inchangé (Noto Sans KR). Les faces des cartes gardent leur
+   propre typo et leurs couleurs (remises à zéro plus bas).
+   Chargé après les autres feuilles ; toutes les règles commencent par .tcgapp : elles l'emportent sans dépendre de l'ordre
+   des feuilles, et les autres jeux de Party Hub ne changent pas. Polices : Alegreya (SIL Open Font License, fonts/).
+   ===================================================================== */
+@font-face { font-family: "Alegreya"; font-style: normal; font-weight: 500; font-display: swap; src: url("./fonts/alegreya-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya"; font-style: normal; font-weight: 600; font-display: swap; src: url("./fonts/alegreya-latin-600-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya"; font-style: normal; font-weight: 700; font-display: swap; src: url("./fonts/alegreya-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya"; font-style: normal; font-weight: 800 900; font-display: swap; src: url("./fonts/alegreya-latin-800-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya"; font-style: normal; font-weight: 300 400; font-display: swap; src: url("./fonts/alegreya-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya"; font-style: italic; font-weight: 300 400; font-display: swap; src: url("./fonts/alegreya-latin-400-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya"; font-style: italic; font-weight: 500 900; font-display: swap; src: url("./fonts/alegreya-latin-500-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya SC"; font-style: normal; font-weight: 300 600; font-display: swap; src: url("./fonts/alegreya-sc-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alegreya SC"; font-style: normal; font-weight: 700 900; font-display: swap; src: url("./fonts/alegreya-sc-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* ------------------------------ jetons ------------------------------ */
+.app.tcgapp {
+  /* matières de la salle */
+  --wood: #20170f; --wood-2: #2b1f15; --wood-3: #3a2a1b; --soot: #0d0907; --leather: #100b08;
+  --brass: #c79f5a; --brass-hi: #e8cd93; --brass-lo: #7c5a28; --brass-ink: #23170a;
+  --oxblood: #8c2f27; --oxblood-hi: #b5483b;
+  --plate: linear-gradient(180deg, #ecd39b 0%, #cfa961 46%, #a98142 100%);
+  --plate-hi: inset 0 1px 0 rgba(255,248,225,.7), inset 0 -2px 0 rgba(90,60,20,.35);
+  /* les jetons du thème tablette, version taverne */
+  --bg: #16100b; --bg-deep: #0d0907; --panel: #20170f; --panel-2: #2b1f15; --line: #3f3022; --track: #100b08;
+  --blue: #b08a4a; --cyan: #d9b877; --violet: #a993c9; --pink: #b5483b; --ok: #9cbb6e; --ok-pale: #dde8c8; --steel: #a99c86; --wine: #6e2a22;
+  --warn: #d99a45; --danger: #c4553f;
+  --txt: #efe3c9; --txt-2: #bea98a; --txt-3: #927f64;
+  --ink: var(--bg); --ink-2: var(--panel); --ink-3: #2b1f15; --cream: var(--txt); --cream-2: #f5e9cf; --muted: var(--txt-2);
+  --outline: #070504; --fuse: var(--brass); --fuse-dark: var(--brass-lo); --blue-dark: var(--brass-lo); --yellow: var(--cyan); --spark: var(--brass-hi);
+  --display: "Alegreya", Georgia, "Times New Roman", serif;
+  --royal: "Alegreya SC", "Alegreya", Georgia, serif;
+  --card: linear-gradient(180deg, rgba(44,32,22,.97), rgba(28,20,14,.97));
+  --card-hi: inset 0 1px 0 rgba(255,228,180,.06), inset 0 0 0 1px rgba(0,0,0,.22);
+  --halo: 0 0 0 1px rgba(217,184,119,.75), 0 0 0 4px rgba(217,184,119,.12);
+  --halo-gold: var(--halo);
+  --panel-shadow: 0 18px 40px rgba(0,0,0,.5);
+  --gold: #d9b877; --gold-2: #8a6a33; --gold-pale: #efdcae;
+}
+/* les cartes gardent leur dessin d'origine (typo, couleurs de famille, éclats) */
+.tcgapp .tc, .tcgapp .tp, .tcgapp .tt, .tcgapp .tz-3d {
+  --display: "Sora", "Noto Sans KR", "Segoe UI", system-ui, sans-serif;
+  --body: "Noto Sans KR", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --cyan: #5ee1ff; --ok: #5dff9a; --gold: #ffd166; --line: #1f3a66; --txt: #f4f7ff; --txt-2: #9aa6c4; --txt-3: #7f95b8;
+}
+html.tcg-only, html.tcg-only body { background: #0d0907; }
+html.tcg-only body::before { mix-blend-mode: normal; animation: none;
+  background: radial-gradient(45% 35% at 50% 0%, rgba(214,140,60,.1), transparent 70%), radial-gradient(40% 32% at 86% 90%, rgba(140,47,39,.1), transparent 70%); }
+.tcgapp ::selection { background: rgba(199,159,90,.35); }
+.app.tcgapp h1, .app.tcgapp h2, .app.tcgapp h3 { letter-spacing: 0; }
+.tcgapp .eyebrow { font: 500 .84rem var(--royal); letter-spacing: .04em; text-transform: none; color: var(--txt-3); }
+
+/* ------------------------------ boutons ------------------------------ */
+.tcgapp .btn, .tcgapp .seg button, .tcgapp .iconbtn {
+  background: linear-gradient(180deg, #2c2118, #1f1711); border: 1px solid #4a3826; color: var(--txt);
+  font-family: var(--display); font-weight: 700; letter-spacing: .01em;
+  box-shadow: inset 0 1px 0 rgba(255,232,190,.07), 0 2px 0 rgba(0,0,0,.35), 0 6px 14px rgba(0,0,0,.28); }
+.tcgapp .btn { border-radius: 7px; font-size: 1.06rem; }
+.tcgapp .btn.small { border-radius: 6px; font-size: .96rem; }
+.tcgapp .iconbtn { border-radius: 7px; }
+.tcgapp .btn:hover:not(:disabled), .tcgapp .seg button:hover:not(:disabled), .tcgapp .iconbtn:hover { border-color: rgba(217,184,119,.6); }
+.tcgapp .btn:active:not(:disabled), .tcgapp .seg button:active:not(:disabled), .tcgapp .iconbtn:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255,232,190,.05), 0 1px 0 rgba(0,0,0,.35); }
+/* la plaque de laiton : l'action principale d'un écran */
+.tcgapp .btn.primary { color: var(--brass-ink); border-color: #6b4d22; background: var(--plate);
+  box-shadow: var(--plate-hi), 0 2px 0 #2a1c0c, 0 8px 18px rgba(0,0,0,.45);
+  font-family: var(--royal); font-weight: 700; font-size: 1.1rem; letter-spacing: .04em; text-shadow: 0 1px 0 rgba(255,240,205,.5); }
+.tcgapp .btn.primary:hover:not(:disabled) { border-color: #7d5a28; filter: brightness(1.05); }
+.tcgapp .btn.primary:disabled { opacity: .5; filter: saturate(.25) brightness(.8); color: var(--brass-ink); }
+.tcgapp .btn.good { color: #f3eedb; border-color: #2f4219; background: linear-gradient(180deg, #6c8a45, #4f6a2f);
+  box-shadow: inset 0 1px 0 rgba(230,245,200,.35), 0 2px 0 #1b2610, 0 8px 18px rgba(0,0,0,.4); text-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.tcgapp .btn.ghost { background: transparent; border-color: rgba(217,184,119,.22); box-shadow: none; color: var(--txt-2); }
+.tcgapp .btn.ghost:hover:not(:disabled) { color: var(--txt); background: rgba(199,159,90,.07); }
+.tcgapp .btn:disabled { opacity: .45; filter: saturate(.3); }
+/* choix à plusieurs cases : enfoncées dans le cuir, la case choisie en laiton */
+.tcgapp .seg button { border-radius: 6px; font-size: 1rem; color: var(--txt-2); background: var(--track); border-color: #35281b; box-shadow: inset 0 1px 3px rgba(0,0,0,.55); }
+.tcgapp .seg button[aria-pressed="true"] { color: var(--brass-ink); background: linear-gradient(180deg, #e2c587, #b89048); border-color: #6b4d22;
+  box-shadow: inset 0 1px 0 rgba(255,246,220,.55), 0 1px 0 rgba(0,0,0,.45); text-shadow: 0 1px 0 rgba(255,240,205,.4); }
+.tcgapp .sel, .tcgapp [aria-pressed="true"].glow { border-color: var(--brass-hi) !important; box-shadow: 0 0 0 1px rgba(232,205,147,.6), 0 0 0 4px rgba(199,159,90,.14) !important; }
+
+/* étiquettes, puces, messages, barres */
+.tcgapp .pill { border-radius: 4px; font: 600 .8rem var(--display); letter-spacing: .02em; text-transform: none; background: rgba(199,159,90,.1); border: 1px solid rgba(199,159,90,.32); color: #ead6a8; }
+.tcgapp .pill.ok { background: rgba(156,187,110,.12); border-color: rgba(156,187,110,.42); color: #dfe9cc; }
+.tcgapp .pill.warn { background: rgba(217,154,69,.12); border-color: rgba(217,154,69,.42); color: #f0d3a6; }
+.tcgapp .pill.vio { background: rgba(169,147,201,.12); border-color: rgba(169,147,201,.38); color: #e2d8f0; }
+.tcgapp .pill.pink { background: rgba(181,72,59,.16); border-color: rgba(181,72,59,.5); color: #f3d0c8; }
+.tcgapp .pill.dim { background: rgba(169,156,134,.07); border-color: rgba(169,156,134,.22); color: var(--steel); }
+.tcgapp .chip { border-radius: 5px; background: rgba(199,159,90,.1); border: 1px solid rgba(199,159,90,.3); color: #ead6a8; letter-spacing: .02em; }
+.tcgapp .chip i { background: var(--ok); box-shadow: none; }
+.tcgapp .chip.local i { background: var(--warn); box-shadow: none; }
+.tcgapp .toast { border-radius: 8px; background: linear-gradient(180deg, #5e1f19, #451611); border: 1px solid rgba(181,72,59,.6); color: #f7e2da; }
+.tcgapp .plerr, .tcgapp .bn-warn { background: rgba(140,47,39,.35); color: #f5d6cf; border: 1px solid rgba(181,72,59,.55); }
+.tcgapp .bar2 { border-radius: 2px; background: var(--track); border-color: #3a2b1d; }
+.tcgapp .bar2 > i { border-radius: 1px; background: linear-gradient(90deg, #5f7b3c, #9cbb6e); box-shadow: none; }
+.tcgapp .bar2.low > i { background: linear-gradient(90deg, #a5672a, #d99a45); box-shadow: none; }
+.tcgapp .bar2.blue > i, .tcgapp .bar2.gold > i { background: linear-gradient(90deg, #8a6a33, #e8cd93); box-shadow: none; }
+.tcgapp .emptyslot { border-radius: 8px; border-color: rgba(199,159,90,.3); }
+.tcgapp .emptyslot::before { border-color: rgba(199,159,90,.4); box-shadow: none; }
+.tcgapp .loadbar { height: 2px; border-radius: 0; background: rgba(199,159,90,.18); border: 0; }
+.tcgapp .loadbar i { background: linear-gradient(90deg, #8a6a33, #e8cd93); }
+.tcgapp .pl.me { border-color: var(--brass); background: rgba(199,159,90,.08); box-shadow: none; }
+.tcgapp .hub-search { border-radius: 6px; background: var(--track); border-color: #3a2b1d; box-shadow: inset 0 1px 3px rgba(0,0,0,.5); }
+.tcgapp .hub-search:focus { border-color: var(--brass); box-shadow: 0 0 0 3px rgba(199,159,90,.18); }
+.tcgapp .hub-card { border-radius: 10px; }
+.tcgapp .hub-card.warn { border-color: rgba(181,72,59,.55); background: linear-gradient(180deg, rgba(140,47,39,.3), rgba(28,20,14,.96)); }
+
+/* le fond des pages sans la salle en 3D : un mur de planches sombres à la lueur d'une lampe */
+.tcgapp .hub-bg { background: radial-gradient(60% 45% at 50% -4%, rgba(226,160,82,.16), transparent 70%), radial-gradient(55% 45% at 50% 108%, rgba(120,40,24,.16), transparent 70%),
+  linear-gradient(180deg, #1b130d 0%, #0e0a07 100%); }
+.tcgapp .hub-bg::before { opacity: .4; -webkit-mask-image: none; mask-image: none;
+  background: repeating-linear-gradient(180deg, transparent 0 132px, rgba(0,0,0,.45) 132px 134px, rgba(255,220,170,.035) 134px 135px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0025 .16' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .38 0 0 0 0 .22 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='600' height='600' filter='url(%23g)'/%3E%3C/svg%3E"); }
+.tcgapp .hub-bg::after { background: radial-gradient(120% 95% at 50% 40%, transparent 45%, rgba(0,0,0,.7)); }
+
+/* ------------------------------ accueil (HubHome) ------------------------------ */
+.tcgapp .hh-badge { background: var(--oxblood-hi); color: #fbeee6; box-shadow: 0 0 0 2px #140e0a; font-family: var(--display); }
+.tcgapp .hh-me { border-radius: 8px; background: linear-gradient(90deg, rgba(199,159,90,.12), rgba(20,14,10,.9) 55%); border-color: rgba(199,159,90,.32); }
+.tcgapp .hh-me-txt b { font-size: 1.1rem; }
+.tcgapp .hh-lv em, .tcgapp .pf-lv em { border-radius: 3px; color: var(--brass-ink); background: linear-gradient(180deg, #e8cd93, #bf9750); }
+.tcgapp .hh-cur { border-radius: 6px; background: rgba(16,11,8,.88); border: 1px solid #3f3022; box-shadow: inset 0 1px 0 rgba(255,228,180,.05); font: 700 1.02rem var(--display); font-variant-numeric: lining-nums tabular-nums; }
+.tcgapp .hh-cur.packs > svg, .tcgapp .hh-cur.tk > svg { color: var(--brass-hi); filter: none; }
+.tcgapp .hh-cur.tk { border-color: rgba(199,159,90,.45); background: rgba(16,11,8,.88); }
+.tcgapp .hh-cur.jet { border-color: #4a3b2c; background: rgba(16,11,8,.88); }
+.tcgapp .hh-cur.jet > svg { color: #e6dccb; filter: none; }
+.tcgapp .hh-cur.ec { border-color: rgba(169,147,201,.42); background: rgba(16,11,8,.88); box-shadow: inset 0 1px 0 rgba(255,228,180,.05); }
+.tcgapp .hh-cur.ec > svg { color: #cdb9ea; filter: none; }
+.tcgapp .hh-cur .plus { border-radius: 4px; color: var(--brass-ink); background: linear-gradient(180deg, #e8cd93, #bf9750); box-shadow: inset 0 1px 0 rgba(255,248,225,.6); }
+.tcgapp .hh-crest, .tcgapp .hs-ico { border-radius: 8px; color: var(--brass-hi); background: radial-gradient(circle at 35% 25%, rgba(232,205,147,.2), rgba(26,18,12,.95) 70%);
+  border: 1px solid rgba(199,159,90,.55); box-shadow: inset 0 1px 0 rgba(255,236,200,.14), 0 6px 14px rgba(0,0,0,.4); }
+.tcgapp .hh-logo small, .tcgapp .hs-title small { font: 500 .82rem var(--royal); letter-spacing: .04em; text-transform: none; color: rgba(232,205,147,.62); }
+.tcgapp .hh-logo b { font: 700 1.55rem var(--royal); letter-spacing: .04em; background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #ecd6a4;
+  -webkit-text-fill-color: currentColor; filter: none; text-shadow: 0 1px 0 #000, 0 3px 14px rgba(0,0,0,.7); }
+.tcgapp .hs-title h2 { font-size: 1.4rem; }
+.tcgapp .hh-side-h { font: 500 .95rem var(--royal); letter-spacing: .04em; text-transform: none; color: rgba(232,205,147,.72); text-shadow: 0 1px 6px rgba(0,0,0,.9); }
+.tcgapp .hh-side-h svg { color: var(--brass); }
+.tcgapp .hh-me-go { border-radius: 4px; color: var(--brass-hi); background: rgba(199,159,90,.1); border-color: rgba(199,159,90,.35); font: 700 .8rem var(--display); }
+/* les boutons de l'accueil : des plaques de bois sombre, l'icône dans un médaillon cerclé de laiton */
+.tcgapp .hh-nb { border-radius: 8px; background: linear-gradient(180deg, rgba(40,29,19,.94), rgba(24,17,11,.95)); border: 1px solid rgba(199,159,90,.22);
+  box-shadow: inset 0 1px 0 rgba(255,228,180,.05), 0 8px 18px rgba(0,0,0,.38); }
+.tcgapp .hh-nb-i { border-radius: 6px; color: var(--brass-hi); background: radial-gradient(circle at 35% 25%, rgba(232,205,147,.16), transparent 62%), #19110b;
+  border: 1px solid rgba(199,159,90,.48); box-shadow: inset 0 1px 0 rgba(255,236,200,.12), inset 0 -6px 10px rgba(0,0,0,.35); }
+.tcgapp .hh-nb.vio { border-color: rgba(199,159,90,.22); }
+.tcgapp .hh-nb.vio .hh-nb-i { color: #d6c6ee; border-color: rgba(169,147,201,.5); background: radial-gradient(circle at 35% 25%, rgba(214,198,238,.14), transparent 62%), #19110b; }
+.tcgapp .hh-nb.shop { border-color: rgba(199,159,90,.34); background: linear-gradient(180deg, rgba(48,30,22,.95), rgba(26,17,12,.96)); }
+.tcgapp .hh-nb.shop .hh-nb-i { color: #f6e6c8; border-color: rgba(232,205,147,.55); background: radial-gradient(circle at 35% 25%, rgba(255,205,180,.22), transparent 60%), linear-gradient(160deg, #94342b, #5c1b15);
+  box-shadow: inset 0 1px 0 rgba(255,220,190,.22), inset 0 -6px 10px rgba(0,0,0,.3); }
+@media (hover: hover) and (pointer: fine) {
+  .tcgapp .hh-nb:hover, .tcgapp .hh-nb.shop:hover { border-color: rgba(217,184,119,.6); background-color: transparent; }
+  .tcgapp .hh-deck:hover, .tcgapp .hh-me:hover { border-color: rgba(217,184,119,.6); }
+}
+.tcgapp .hh-nb-t b { font-size: 1.04rem; letter-spacing: .005em; }
+.tcgapp .hh-nb-t small { font-size: .72rem; }
+.tcgapp .hh-nb-go { color: var(--brass); }
+/* Jouer : la seule grande plaque de laiton de l'accueil */
+.tcgapp .hh-act { border-radius: 8px; }
+.tcgapp .hh-act.play { color: var(--brass-ink); border-color: #6b4d22; text-shadow: 0 1px 0 rgba(255,240,205,.5); background: var(--plate);
+  box-shadow: var(--plate-hi), 0 3px 0 #2a1c0c, 0 14px 28px rgba(0,0,0,.5); }
+.tcgapp .hh-act.play:hover { filter: brightness(1.05); }
+.tcgapp .hh-act-t b { font: 700 1.5rem/1.05 var(--royal); letter-spacing: .05em; }
+.tcgapp .hh-act-t small { font-size: .76rem; opacity: .8; }
+.tcgapp .hh-act-i { border-radius: 6px; background: rgba(60,38,10,.12); border-color: rgba(60,38,10,.35); }
+.tcgapp .hh-act::after { display: none; }
+.tcgapp .hh-deck { border-radius: 8px; background: rgba(20,14,10,.9); border-color: #3f3022; }
+.tcgapp .hh-deck .hub-fam { border-radius: 6px; }
+.tcgapp .hh-deck-t small, .tcgapp .hh-deck-go { font: 500 .82rem var(--royal); letter-spacing: .04em; text-transform: none; }
+.tcgapp .hh-deck-t b { font-size: 1.02rem; }
+/* au survol : le laiton s'éclaire, rien ne rebondit ni ne brille */
+@media (hover: hover) and (pointer: fine) {
+  .tcgapp .hh-me, .tcgapp .hh-cur, .tcgapp .hh-act, .tcgapp .hh-nb, .tcgapp .hh-nb-i, .tcgapp .hh-deck { transition: transform .18s ease-out, border-color .18s, filter .18s, background-color .18s, box-shadow .18s; }
+  .tcgapp .hh-me:hover, .tcgapp .hh-deck:hover, .tcgapp .hh-cur:hover, .tcgapp .hh-cur.packs:hover { transform: none; border-color: rgba(217,184,119,.6); box-shadow: inset 0 1px 0 rgba(255,228,180,.05); }
+  .tcgapp .hh-nb:hover, .tcgapp .hh-nb.vio:hover { transform: translateX(var(--hx, 0)); border-color: rgba(217,184,119,.6); background-color: transparent; }
+  .tcgapp .hh-side.l .hh-nb:hover { --hx: 3px; }
+  .tcgapp .hh-side.r .hh-nb:hover { --hx: -3px; }
+  .tcgapp .hh-nb:hover .hh-nb-i { border-color: rgba(232,205,147,.85); box-shadow: inset 0 1px 0 rgba(255,236,200,.18), inset 0 -6px 10px rgba(0,0,0,.3); }
+  .tcgapp .hh-nb:hover .hh-nb-i svg, .tcgapp .hh-nb:hover .hh-nb-go, .tcgapp .hh-act:hover .hh-act-i svg, .tcgapp .hh-act:hover .hh-act-go { animation: none; }
+  .tcgapp .hh-act:hover { transform: translateY(-1px); box-shadow: var(--plate-hi), 0 4px 0 #2a1c0c, 0 16px 30px rgba(0,0,0,.55); }
+  .tcgapp .hh-act:hover::after { animation: none; }
+  .tcgapp .hub-grid > button.tc:hover, .tcgapp .hub-offer > button.tc:hover, .tcgapp .db-add > button.tc:hover, .tcgapp .hub-strip button.tc:hover, .tcgapp .alb-grid button.tc:hover {
+    box-shadow: 0 16px 32px rgba(0,0,0,.55), 0 0 0 2px rgba(217,184,119,.6); }
+}
+
+/* ------------------------------ éléments communs aux pages ------------------------------ */
+/* survol à la souris (remplace celui du thème tablette : pas de halo bleu, pas d'icône qui sautille) */
+@media (hover: hover) and (pointer: fine) {
+  .tcgapp .btn, .tcgapp .iconbtn, .tcgapp .hub-fambtn, .tcgapp .hub-starter, .tcgapp .accbadge, .tcgapp .profbtn, .tcgapp .alb-entry {
+    transition: transform .16s ease-out, box-shadow .16s, border-color .16s, filter .16s, background-color .16s, color .16s; }
+  .tcgapp .btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.07); box-shadow: inset 0 1px 0 rgba(255,232,190,.08), 0 3px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.35); }
+  .tcgapp .btn.primary:not(:disabled):hover { box-shadow: var(--plate-hi), 0 3px 0 #2a1c0c, 0 12px 22px rgba(0,0,0,.45); }
+  .tcgapp .btn.ghost:not(:disabled):hover { box-shadow: none; }
+  .tcgapp .btn:not(:disabled):hover > svg, .tcgapp .iconbtn:not(:disabled):hover svg, .tcgapp .bigbtn:not(:disabled):hover .bigico svg { animation: none; }
+  .tcgapp .iconbtn:not(:disabled):hover { border-color: rgba(217,184,119,.7); box-shadow: inset 0 1px 0 rgba(255,232,190,.07), 0 2px 0 rgba(0,0,0,.35); color: var(--brass-hi); }
+  .tcgapp .hub-fambtn:hover, .tcgapp .hub-starter:hover, .tcgapp .alb-entry:hover, .tcgapp .profbtn:hover {
+    transform: translateY(-1px); border-color: rgba(217,184,119,.6); box-shadow: 0 10px 22px rgba(0,0,0,.4); }
+  .tcgapp button.accbadge:hover { transform: none; border-color: rgba(217,184,119,.6); }
+  .tcgapp .seg button:not(:disabled):not([aria-pressed="true"]):hover, .tcgapp .hub-tabs button:not([aria-pressed="true"]):hover,
+  .tcgapp .hub-filters button:not([aria-pressed="true"]):hover { background-color: rgba(199,159,90,.08); color: var(--txt); }
+}
+/* le compte (en haut de l'écran titre et de l'accueil) */
+.tcgapp .accbadge { border-radius: 8px; border-color: #3f3022; background: rgba(20,14,10,.85); }
+.tcgapp .accbadge.compact { border-radius: 6px; }
+.tcgapp .accbadge .ab-dot, .tcgapp .accbadge.compact .ab-dot { border-radius: 5px; }
+.tcgapp .accbadge .ab-go { border-radius: 4px; color: var(--brass-ink); background: linear-gradient(180deg, #e8cd93, #bf9750); box-shadow: inset 0 1px 0 rgba(255,248,225,.6); }
+.tcgapp .accbadge.ok { border-color: rgba(156,187,110,.4); background: linear-gradient(90deg, rgba(156,187,110,.1), rgba(20,14,10,.85) 60%); }
+.tcgapp .accbadge.ok .ab-dot { border-color: rgba(156,187,110,.5); background: rgba(156,187,110,.1); }
+.tcgapp .accbadge.warn, .tcgapp .accbadge.local { border-color: rgba(217,154,69,.45); background: rgba(20,14,10,.85); }
+.tcgapp .accbadge.local { border-style: solid; }
+.tcgapp .accbadge.warn .ab-dot, .tcgapp .accbadge.local .ab-dot { border-color: rgba(217,154,69,.45); background: rgba(217,154,69,.1); }
+/* onglets et filtres des pages de l'accueil (decks, collection, album, boutique) */
+.tcgapp .hub-tabs { border-radius: 8px; }
+.tcgapp .hub-tabs button { border-radius: 5px; font: 600 .86rem var(--display); }
+.tcgapp .hub-tabs button[aria-pressed="true"] { color: var(--brass-ink); background: linear-gradient(180deg, #e2c587, #b89048); box-shadow: inset 0 1px 0 rgba(255,246,220,.55); }
+.tcgapp .hub-tabs .dot { background: var(--oxblood-hi); box-shadow: none; }
+.tcgapp .hub-filters button, .tcgapp .hub-filters select { border-radius: 5px; font: 600 .9rem var(--display); }
+.tcgapp .hub-filters button[aria-pressed="true"] { color: var(--brass-ink); border-color: #6b4d22; background: linear-gradient(180deg, #e2c587, #b89048); }
+.tcgapp .hub-starter, .tcgapp .hub-fambtn { border-radius: 8px; }
+.tcgapp .hub-fambtn { background: linear-gradient(135deg, color-mix(in srgb, var(--fc) 16%, #241a12), #18110c 70%); }
+.tcgapp .hub-starter[aria-pressed="true"], .tcgapp .hub-fambtn[aria-pressed="true"] { border-color: var(--brass-hi); box-shadow: 0 0 0 1px rgba(232,205,147,.5); }
+.tcgapp .alb-entry { border-color: rgba(199,159,90,.45); }
+
+/* ------------------------------ partie (Game) : la même salle, une table de jeu à tapis vert ------------------------------ */
+.tcgapp .agl { background: radial-gradient(120% 90% at 50% 35%, #2a1d13, #0d0907 75%); }
+.tcgapp .agl-surface { background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(120% 80% at 50% 60%, #2b4733 0%, #1c3124 52%, #0f1c14 100%); }
+.tcgapp .agb { background: linear-gradient(180deg, color-mix(in srgb, var(--fc) 14%, rgba(14,10,7,.6)), rgba(14,10,7,.45)), var(--mat) center / cover no-repeat; border-radius: 8px; }
+.tcgapp .agb::before { border-radius: 6px; }
+.tcgapp .ag-sheet { background: rgba(10,7,5,.72); }
+.tcgapp .ag-sheet > div { border-radius: 12px 12px 0 0; background: linear-gradient(180deg, #2c2118, #1a130d); border-top: 1px solid rgba(199,159,90,.5); }
+.tcgapp .ag-sheet h3 { font: 500 1.35rem var(--royal); letter-spacing: .03em; color: var(--gold-pale); }
+.tcgapp .tb-dock { border-radius: 10px; background: linear-gradient(180deg, rgba(50,36,24,.97), rgba(28,20,14,.97)); border: 1px solid rgba(199,159,90,.55); box-shadow: 0 8px 22px rgba(0,0,0,.45); }
+.tcgapp .tb-dock.idle { background: rgba(20,14,10,.85); border-color: #3f3022; box-shadow: none; }
+.tcgapp .tb-dq b { font-size: 1.02rem; }
+.tcgapp .agl-side .tb-arena { border-radius: 10px; background: rgba(20,14,10,.82); border-color: rgba(199,159,90,.2); }
+.tcgapp .tb-phase { font: 500 1rem var(--royal); letter-spacing: .06em; text-transform: none; color: #e8cf9c; }
+.tcgapp .tb-phase i { background: linear-gradient(90deg, transparent, rgba(217,184,119,.75)); }
+.tcgapp .ag-chip { border-radius: 6px; background: rgba(199,159,90,.1); border-color: rgba(199,159,90,.35); font-size: .92rem; }
+.tcgapp .tb-plate { background: rgba(16,11,8,.86); }
+.tcgapp .tb-plots { background: rgba(16,11,8,.8); border-color: rgba(199,159,90,.35); color: #ead6a8; }
+.tcgapp .agl-pov { background: rgba(16,11,8,.8); border-color: #3f3022; border-radius: 6px; font-size: .9rem; }
+.tcgapp .agl-pov.on { background: color-mix(in srgb, var(--fc) 20%, rgba(16,11,8,.9)); box-shadow: 0 0 0 1px var(--fc); }
+.tcgapp .agl-pov.target { border-color: var(--brass-hi); }
+.tcgapp .agl-pw, .tcgapp .tb-goal { color: var(--brass-ink); background: linear-gradient(180deg, #e8cd93, #bf9750); border-color: #6b4d22; }
+.tcgapp .tb-goal { border-radius: 5px; }
+.tcgapp .agl-pw { border-radius: 3px; }
+.tcgapp .tb-round small { font: 500 .8rem var(--royal); letter-spacing: .04em; text-transform: none; }
+.tcgapp .tb-round b { font-size: 1.08rem; }
+.tcgapp .tb-pips i { border-radius: 1px; background: rgba(255,228,180,.1); }
+.tcgapp .tb-pips i.done { background: rgba(199,159,90,.4); }
+.tcgapp .tb-pips i.on { background: linear-gradient(90deg, #a98142, #e8cd93); box-shadow: none; }
+.tcgapp .tb-think i { background: var(--brass-hi); }
+.tcgapp .tb-time i { background: linear-gradient(90deg, #5f7b3c, #9cbb6e); box-shadow: none; }
+.tcgapp .tb-sealbtn { border-radius: 8px; background: rgba(16,11,8,.55); border-color: rgba(199,159,90,.18); }
+.tcgapp .tb-hint { color: rgba(236,218,178,.38); }
+.tcgapp .ag-log p { border-radius: 4px; }
+.tcgapp .ag-log p:nth-child(odd) { background: rgba(255,228,180,.04); }
+.tcgapp .ag-log p.ty-round { color: var(--brass-hi); }
+.tcgapp .quitbtn { background: rgba(20,14,10,.9); border-color: #3f3022; }
+
+/* ------------------------------ profil ------------------------------ */
+.tcgapp .pf-hero { border-radius: 10px; background: linear-gradient(135deg, rgba(58,40,24,.95), rgba(24,17,11,.96) 60%); border-color: rgba(199,159,90,.38); }
+.tcgapp .pf-stats div, .tcgapp .pf-pick { border-radius: 8px; background: rgba(16,11,8,.72); }
+.tcgapp .pf-stats dt { font: 500 .8rem var(--royal); letter-spacing: .03em; text-transform: none; }
+.tcgapp .pf-stats dd { font: 700 1.3rem var(--display); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ------------------------------ atelier de deck (DeckBuilder) ------------------------------ */
+.tcgapp .dk-name-in input { border-radius: 6px; background: var(--track); }
+.tcgapp .dk-guide { border-radius: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--tc) 9%, rgba(16,11,8,.85)), rgba(16,11,8,.75)); border-color: color-mix(in srgb, var(--tc) 40%, #3f3022); }
+.tcgapp .dk-side, .tcgapp .dk-filtpanel, .tcgapp .dk-start-sub { border-radius: 10px; background: rgba(16,11,8,.7); }
+.tcgapp .dk-cols > .hub-body, .tcgapp .dk-fams, .tcgapp .dk-autofams { scrollbar-color: rgba(199,159,90,.3) transparent; }
+.tcgapp .dk-filtbtn.on, .tcgapp .dk-types button[aria-pressed="true"] { border-color: var(--brass); background: rgba(199,159,90,.14); }
+.tcgapp .dk-switch input:checked + i { background: rgba(199,159,90,.35); border-color: var(--brass); }
+.tcgapp .dk-fam, .tcgapp .dk-mix-f, .tcgapp .dk-tpl { background: color-mix(in srgb, var(--fc) 10%, #100b08); border-color: color-mix(in srgb, var(--fc) 34%, #3f3022); }
+.tcgapp .dk-fam { border-radius: 6px; }
+.tcgapp .dk-fam.on, .tcgapp .dk-fam:hover:not(:disabled) { background: color-mix(in srgb, var(--fc) 26%, #16100b); }
+.tcgapp .dk-chips button { border-radius: 5px; background: rgba(199,159,90,.12); border-color: rgba(199,159,90,.5); }
+.tcgapp .dk-opt { border-radius: 10px; background: linear-gradient(180deg, rgba(44,32,22,.92), rgba(22,16,11,.92)); }
+.tcgapp .dk-line { border-radius: 6px; }

@@ -1,12 +1,14 @@
 /* Décor 3D de l'écran titre et de l'accueil (TableScene.jsx) : toile plein écran derrière tout le reste. */
 .t3d { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
-  background: radial-gradient(80% 60% at 50% 55%, #1a1208 0%, #0a0a12 55%, #04060d 100%); transition: opacity .45s ease; }
-.t3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  background: radial-gradient(80% 60% at 50% 55%, #1c130a 0%, #0c0907 55%, #060405 100%); transition: opacity .45s ease; }
+.t3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .9s ease; }
+/* la toile n'apparaît qu'une fois la salle prête (shaders compilés, premières images dessinées) : en fondu, sans à-coup */
+.t3d[data-ready] canvas { opacity: 1; }
 .t3d.off { opacity: 0; }
 /* l'écran titre assombrit la salle autour du titre ; le voile se lève quand on entre */
 .t3d-veil { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease;
-  background: radial-gradient(70% 55% at 50% 42%, rgba(4,6,13,.25), rgba(4,6,13,.82) 80%), linear-gradient(180deg, rgba(4,6,13,.55), transparent 35%, transparent 70%, rgba(4,6,13,.7)); }
+  background: radial-gradient(70% 55% at 50% 42%, rgba(10,7,5,.25), rgba(10,7,5,.82) 80%), linear-gradient(180deg, rgba(10,7,5,.55), transparent 35%, transparent 70%, rgba(10,7,5,.7)); }
 .t3d.title .t3d-veil { opacity: 1; }
 /* bords de l'image (vignette) à l'accueil : les panneaux restent lisibles */
 .t3d::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 55%, transparent 55%, rgba(2,3,8,.55) 100%); }
+  background: radial-gradient(120% 90% at 50% 55%, transparent 55%, rgba(6,4,3,.55) 100%); }

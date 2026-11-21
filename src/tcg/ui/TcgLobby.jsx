@@ -265,7 +265,7 @@ export default function TcgLobby({ room, me, net, isHost, t, setTcg, fr, acc, on
     <div className="screen tl tl-room" data-testid="tcg-lobby-room">
       <header className="tl-top">
         <button className="iconbtn" onClick={onBack} aria-label="Accueil du jeu (tu restes dans le salon)" title="Accueil du jeu"><Icon name="back" /></button>
-        <div className="hs-title"><small>{GAME_NAME} · salon de {(players.find((p) => p.id === room.hostId) || { name: "?" }).name}</small><h2>Salon</h2></div>
+        <div className="hs-title"><small>{GAME_NAME}</small><h2>Salon de {(players.find((p) => p.id === room.hostId) || { name: "?" }).name}</h2></div>
         <CopyCode code={room.id} label="Code à donner" testId="tl-roomcode" />
         <span className="grow" />
         <button className="btn small ghost tl-friends-btn" onClick={() => setFriendsOpen((v) => !v)} aria-pressed={friendsOpen}><Icon name="users" size={16} />Amis{fr.friends.some((f) => fr.onlineOf(f.code)) ? ` · ${fr.friends.filter((f) => fr.onlineOf(f.code)).length}` : ""}</button>
@@ -312,10 +312,10 @@ export default function TcgLobby({ room, me, net, isHost, t, setTcg, fr, acc, on
               </div>
             </section>
             <section className="tl-panel tl-settings">
-              <h3><Icon name="settings" size={17} />Réglages {isHost ? "" : <small>(le créateur choisit)</small>}</h3>
+              <h3><Icon name="settings" size={17} />Règles de la partie {isHost ? "" : <small>Le créateur les choisit</small>}</h3>
               <div className="tl-set">
-                <small>Objectif de Pouvoir</small>
-                <div className="seg">{AG_GOALS.map((n) => <button key={n} aria-pressed={s.agGoal === n} disabled={!isHost} onClick={() => net.setSettings({ agGoal: n })}>{n === 10 ? "10 · rapide" : `${n} · classique`}</button>)}</div>
+                <small>Pouvoir pour gagner</small>
+                <div className="seg">{AG_GOALS.map((n) => <button key={n} aria-pressed={s.agGoal === n} disabled={!isHost} onClick={() => net.setSettings({ agGoal: n })}><b>{n}</b><span>{n <= 10 ? "partie rapide" : "partie classique"}</span></button>)}</div>
               </div>
               <div className="tl-set">
                 <small>Temps pour chaque décision</small>

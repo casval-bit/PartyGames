@@ -19,6 +19,7 @@ import TitleScreen from "./TitleScreen.jsx";
 import TcgLobby, { InviteToast } from "./TcgLobby.jsx";
 import CrownFx from "./CrownFx.jsx";
 import "./tcgapp.css";
+import "./taverne.css";
 
 // la salle en 3D (three.js, chargé à part) : derrière l'écran titre et l'accueil, la même du début à la fin (la caméra glisse de l'un à l'autre)
 const TableScene = lazy(() => import("./table3d/TableScene.jsx"));
@@ -32,6 +33,7 @@ export default function TcgApp() {
   const [name, setName] = useState(() => store("tu-name") || "");
   const [hubView, setHubView] = useState("home"); // ce que montre l'accueil (home, decks, coll…) : la salle 3D ne se dessine qu'à l'accueil
   const [intro, setIntro] = useState(false); // on vient d'entrer depuis l'écran titre : l'accueil apparaît pendant que la caméra descend
+  const [sceneReady, setSceneReady] = useState(false); // la salle 3D est dessinée (ou impossible) : l'écran titre peut s'animer
   const prefs = useTcgPrefs();
   const id = useMemo(() => {
     // un identifiant par onglet (sessionStorage) pour tester plusieurs joueurs dans un même navigateur
@@ -114,21 +116,24 @@ export default function TcgApp() {
       notice={notice} clearNotice={() => { setNotice(""); net.clearNotice(); }} busy={net.busy}
       onBack={() => openHub("home")} onDecks={() => openHub("decks")} onProfile={() => openHub("profile")} onCreate={create} onJoin={join} />;
   } else {
-    body = <TitleScreen name={name} setName={setName} acc={acc} onAccount={() => setAccountOpen(true)} scene
+    body = <TitleScreen name={name} setName={setName} acc={acc} onAccount={() => setAccountOpen(true)} scene sceneReady={sceneReady}
       onEnter={() => { setIntro(true); openHub("home"); setTimeout(() => setIntro(false), 2800); }} />;
   }
 
   // transitions propres au jeu (CrownFx) : écran titre, accueil, lobby, partie, compte
   const fxKey = accountOpen ? "account" : view === "hub" ? "hub" : inGame ? "game" : view === "lobby" || room ? "lobby" : "title";
   const inv = fr.invites[0];
-  // la salle 3D : à l'écran titre (vue d'en haut) et à l'accueil du jeu (assis devant son plateau) ; cachée ailleurs
-  const onTitle = fxKey === "title", onHub = fxKey === "hub";
+  // la salle 3D : à l'écran titre (vue d'en haut) et à l'accueil du jeu (assis devant son plateau). Ailleurs (salon, compte, autres
+  // pages de l'accueil) elle reste chargée mais cachée et ne dessine rien : on y revient sans attendre. Libérée pendant une partie.
+  const onTitle = fxKey === "title", onHub = fxKey === "hub", sceneOn = !inGame || onHub;
   const sceneDeck = t.decks.find((d) => d.id === t.sel) || t.decks[0] || null;
+  useEffect(() => { if (!sceneOn) setSceneReady(false); }, [sceneOn]);
   return (
     <div className={"app tcgapp" + (inGame && view !== "hub" ? " ingame" : "")} data-view={fxKey}>
-      {(onTitle || onHub) && (
+      {sceneOn && (
         <Suspense fallback={null}>
-          <TableScene mode={onTitle ? "title" : "menu"} active={onTitle || hubView === "home"} deck={sceneDeck} calm={prefs.motion === "reduced"} />
+          <TableScene mode={onTitle ? "title" : "menu"} active={onTitle || (onHub && hubView === "home")} deck={sceneDeck} calm={prefs.motion === "reduced"}
+            onReady={() => setSceneReady(true)} />
         </Suspense>
       )}
       {body}

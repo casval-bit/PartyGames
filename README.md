@@ -117,9 +117,21 @@ lance d'abord « Chercher les images des cartes » (§8).
 
 L'appli PC n'a plus que le jeu de cartes, **Heavy is the Crown** (l'ancien Trône des Mondes) : pas de Party Hub ni des autres jeux
 (`src/tcg/ui/TcgApp.jsx`, choisi par `TRONE_ONLY` dans `src/lib/device.js` ; dans un navigateur, ajoute `?trone` à l'adresse pour avoir la même appli).
-**Écran titre** (`TitleScreen.jsx`) : simple, la couronne dorée et le nom du jeu posés sur la **salle en 3D** (la table ronde vue d'en haut, qui tourne
-lentement, assombrie) ; on entre d'un clic ou avec Entrée (sans pseudo, on le choisit là). **L'entrée dans le jeu** : le titre s'envole et la caméra
-descend s'asseoir à ta place, devant ton plateau, pendant que l'accueil apparaît (la même salle 3D du début à la fin, `TcgApp.jsx`). Autres
+**Écran titre** (`TitleScreen.jsx`) : le nom du jeu gravé dans le laiton (Alegreya en petites capitales), une couronne au trait entre deux filets,
+posés sur la **salle en 3D** (la table ronde vue d'en haut, qui tourne lentement, assombrie). **Chargement** : tant que la salle n'est pas prête
+(three.js chargé, shaders compilés d'avance par `compileAsync`, deux premières images dessinées toile cachée), seul un fil « Préparation de la table »
+s'affiche ; puis la salle apparaît en fondu et le titre se dévoile une seule fois, dans l'ordre (couronne, nom, devise, « Clique ou appuie sur Entrée
+pour prendre place »). Sans WebGL, ou si la salle tarde plus de 9 s, le titre s'affiche quand même. On entre d'un clic ou avec Entrée (sans pseudo, on le
+choisit là). **L'entrée dans le jeu** : le titre s'efface et la caméra descend s'asseoir à ta place, devant ton plateau, pendant que l'accueil apparaît
+(la même salle 3D du début à la fin, `TcgApp.jsx` ; la descente avance au rythme des images, un à-coup ne la fait pas sauter). La salle reste chargée
+(cachée) dans le salon, le compte et les autres pages de l'accueil : on y revient sans attendre ; elle n'est libérée que pendant une partie. Changer de
+deck refait seulement la table, pas le rendu WebGL.
+**La taverne** (`src/tcg/ui/taverne.css`, polices dans `src/tcg/ui/fonts/`, licence OFL) : tous les écrans du jeu prennent les matières de la salle
+(noyer sombre, laiton, cuir, parchemin, cire rouge) au lieu du bleu nuit de Party Hub : boutons en plaques de laiton, choix enfoncés dans le cuir, la case
+choisie en laiton, titres en Alegreya, survols discrets (plus de halo ni d'icône qui sautille). Les règles commencent toutes par `.tcgapp` : les autres
+jeux de Party Hub ne changent pas, et les faces des cartes gardent leur typo et leurs couleurs. Les réglages (`settings.css`), le salon (règles de la
+partie : « Pouvoir pour gagner » 10 ou 15, « Temps pour chaque décision ») et les transitions (`tcgapp.css`) suivent le même thème ; en partie, le tapis
+est vert et les panneaux en bois. Autres
 **transitions** propres au jeu (`CrownFx.jsx`) : deux battants s'écartent derrière une couronne (lobby → partie) ; ailleurs, un éventail de dos de cartes
 balaie l'écran ; elles s'affichent avant le nouvel écran (plus d'éclair du nouvel écran avant la transition). Le **compte** (connexion par e-mail et code) est le même :
 la collection, les decks, le profil et les amis sont sauvegardés dessus. Le web et l'APK gardent Party Hub avec tous les jeux.
@@ -475,7 +487,8 @@ Mangemorts… dans l'Ombre ; assassins, chasseurs, loups-garous en Embuscade ; d
 châteaux et trésors avec Don ; chefs, vilains et pirates de coût 5 ou plus mis à prix (2 pour une carte 7) ; lieux de revenu Limités ; objets jetables Terminaux ;
 animaux Sans objet. Pas de pose dans l'ombre pendant la mise en place (simplification). **La Jacinthe Violette** (Purple Hyacinth, neutres) : Kieran White
 (3, 4, 5, 7), Lauren Sinclair (2, 4, 7), Kym Ladell (1, 3, 7), William Hawkes (2, 3, 7) : chacun a sa carte 7 (Kym Ladell 4 et William Hawkes 4,
-devenues leurs cartes 7, sont dans RETIRED) ; images rangées par `ranger-jacinthe.ps1`. Équilibrage : tournoi entre les decks à thème avant/après les mots-clés
+devenues leurs cartes 7, sont dans RETIRED) ; images rangées par `ranger-jacinthe-v3.ps1` (il renomme aussi « Kym Ladell 4 » et « William Hawkes 4 »
+d'un ancien passage en 7, et écrit des cadrages qui gardent les têtes entières : dézoom pour les visages trop grands dans le bandeau, Lauren 2 zoomée). Équilibrage : tournoi entre les decks à thème avant/après les mots-clés
 (`node tools/test-tcg.js --sim 3000 --themes`) ; les familles qui y perdaient ont reçu plus de mots-clés (Teen Wolf, League of Legends).
 Pendant la partie (en paysage, plein écran ; l'appli Android tourne l'écran toute seule, l'appli PC garde l'écran tel quel) : ton plateau en grand et ta main en éventail en bas. Les pastilles des joueurs, en haut,
 font passer sur le plateau d'un adversaire (« Ma table » pour revenir) ; pendant un défi, toucher la pastille d'un adversaire le choisit comme défenseur.

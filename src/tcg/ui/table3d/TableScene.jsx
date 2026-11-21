@@ -5,6 +5,9 @@
 //     position à l'écran (événement « tcg-board ») et la caméra se cale pour que la table soit juste dessous.
 // Le passage de « title » à « menu » est l'animation d'entrée dans le jeu (la caméra descend s'asseoir). Rien ne bouge si les
 // animations sont réduites. Le rendu s'arrête quand le décor est caché (autre écran) ou que la fenêtre est en arrière-plan.
+// Chargement : la salle se construit, ses shaders se compilent (compileAsync), puis la première image est dessinée hors de vue ;
+// alors seulement la toile apparaît en fondu et onReady(true) prévient l'écran titre (onReady(false) si la 3D est impossible).
+// Changer de deck ne reconstruit que la salle (pas le rendu WebGL) : pas d'écran noir quand la collection se synchronise.
 import { useEffect, useRef } from "react";
 import { DESKTOP } from "../../../lib/device.js";
 import { onArtChange } from "../artStore.js";
@@ -15,28 +18,30 @@ const TWEEN = 1.9; // secondes : la caméra qui descend s'asseoir
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const lerp = (a, b, k) => a + (b - a) * k;
 const DEG = Math.PI / 180;
+const keyOf = (d) => (d ? `${d.fam}|${Object.keys(d.cards || {}).slice(0, 12).join(",")}` : "");
 
 export default function TableScene({ mode = "menu", active = true, deck = null, calm = false, onReady }) {
   const box = useRef(null);
   const st = useRef({ mode, active, calm, ready: onReady });
   st.current.mode = mode; st.current.active = active; st.current.calm = calm; st.current.ready = onReady;
   const api = useRef(null);
-  const deckKey = deck ? `${deck.fam}|${Object.keys(deck.cards || {}).slice(0, 12).join(",")}` : "";
+  const deckKey = keyOf(deck);
 
   useEffect(() => {
     let dead = false, raf = 0, ro = null, renderer = null, world = null, scene = null, offArt = null;
     const el = box.current;
+    const fail = () => { if (!dead && st.current.ready) st.current.ready(false); };
     (async () => {
       let THREE, RB = null, ENV = null;
       try {
         THREE = await import("three");
         try { RB = (await import("three/examples/jsm/geometries/RoundedBoxGeometry.js")).RoundedBoxGeometry; } catch { RB = null; }
         try { ENV = (await import("three/examples/jsm/environments/RoomEnvironment.js")).RoomEnvironment; } catch { ENV = null; }
-      } catch { return; }
+      } catch { fail(); return; }
       if (dead || !el) return;
       const dpr = window.devicePixelRatio || 1;
       const hi = DESKTOP || (window.innerWidth >= 900 && Math.min(window.innerWidth, window.innerHeight) >= 600);
-      try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" }); } catch { return; }
+      try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" }); } catch { fail(); return; }
       renderer.setPixelRatio(Math.min(dpr, hi ? 1.75 : 1.35));
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
       if (hi) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
@@ -44,8 +49,8 @@ export default function TableScene({ mode = "menu", active = true, deck = null, 
       el.insertBefore(renderer.domElement, el.firstChild);
 
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x04060d);
-      scene.fog = new THREE.FogExp2(0x04060d, 0.05);
+      scene.background = new THREE.Color(0x0a0706); // le noir chaud de la salle (comme les menus)
+      scene.fog = new THREE.FogExp2(0x0a0706, 0.05);
       // un reflet de salle (faible) pour que l'or, le laiton et le vernis brillent sans tout éclairer
       if (ENV) {
         try { const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new ENV(), 0.04).texture; scene.environmentIntensity = 0.28; pm.dispose(); } catch { /* sans reflet */ }
@@ -59,7 +64,9 @@ export default function TableScene({ mode = "menu", active = true, deck = null, 
       scene.add(spot, spot.target);
       const hearth = new THREE.PointLight(0xff8a3d, 60, 22, 2); hearth.position.set(-6.2, 1.2, -6.5); scene.add(hearth);
 
-      world = buildTable(THREE, { deck: api.current ? api.current.deck : null, quality: hi ? "high" : "low", RoundedBoxGeometry: RB });
+      const make = (d) => buildTable(THREE, { deck: d, quality: hi ? "high" : "low", RoundedBoxGeometry: RB });
+      world = make(api.current ? api.current.deck : null);
+      api.current.built = keyOf(api.current.deck);
       scene.add(world.group);
       offArt = onArtChange(() => world && world.refreshArt());
 
@@ -125,6 +132,12 @@ export default function TableScene({ mode = "menu", active = true, deck = null, 
       let shown = st.current.mode, tw = null, t0 = performance.now(), last = t0, frame = 0, front = shown === "menu" ? 0 : 1;
       const cur = { ...(shown === "menu" ? menuPose() : titlePose(0)) };
       world.setFront(front);
+      // les shaders compilés d'avance (en parallèle quand le pilote le permet) : pas d'à-coup aux premières images
+      apply(cur);
+      try { if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera); } catch { /* compilés au premier rendu */ }
+      if (dead) return;
+      t0 = performance.now(); last = t0;
+      let warm = 0; // images dessinées toile encore cachée (textures envoyées, ombres calculées), avant de l'afficher
       const loop = (now) => {
         raf = requestAnimationFrame(loop);
         const s = st.current;
@@ -135,12 +148,14 @@ export default function TableScene({ mode = "menu", active = true, deck = null, 
           // changement de place : la caméra glisse (ou saute, si les animations sont réduites)
           const from = { ...cur };
           if (s.mode === "menu") { let y = from.yaw % (Math.PI * 2); if (y > Math.PI) y -= Math.PI * 2; if (y < -Math.PI) y += Math.PI * 2; from.yaw = y; }
-          tw = calmNow() ? null : { from, k: 0, t0: now }; // à l'horloge : même durée sur un appareil lent
+          tw = calmNow() || !el.dataset.ready ? null : { from, k: 0 };
           shown = s.mode; dirty = true;
         }
         let target = shown === "menu" ? menuPose() : titlePose(t);
         if (tw) {
-          tw.k = Math.min(1, (now - tw.t0) / 1000 / TWEEN);
+          // au temps des images (dt plafonné à 1/20 s) : un à-coup du reste de l'appli (l'accueil qui se monte) met la descente en
+          // pause au lieu de la faire sauter ; sur un appareil lent elle dure à peine plus longtemps
+          tw.k = Math.min(1, tw.k + dt / TWEEN);
           const e = ease(tw.k);
           for (const key of Object.keys(cur)) cur[key] = lerp(tw.from[key], target[key], e);
           if (tw.k >= 1) tw = null;
@@ -164,10 +179,19 @@ export default function TableScene({ mode = "menu", active = true, deck = null, 
         scene.fog.density = 0.05 * Math.min(1, 13.5 / Math.max(1, cur.dist)); // de loin (téléphone), moins de brouillard
         renderer.render(scene, camera);
         dirty = false;
-        if (!el.dataset.ready) { el.dataset.ready = "1"; if (s.ready) s.ready(); }
+        if (!el.dataset.ready) { if (++warm >= 2) { el.dataset.ready = "1"; if (s.ready) s.ready(true); } else dirty = true; }
       };
       raf = requestAnimationFrame(loop);
-      api.current = { ...(api.current || {}), cleanup: () => window.removeEventListener("tcg-board", onBoard), TABLE_R };
+      // un autre deck : seule la salle est refaite (le plateau du premier plan et les decks des voisins), au même endroit
+      api.current.setDeck = (d) => {
+        if (dead) return;
+        const old = world;
+        world = make(d); api.current.built = keyOf(d);
+        world.setFront(front); scene.add(world.group);
+        if (old) { scene.remove(old.group); try { old.dispose(); } catch { /* déjà libéré */ } }
+        dirty = true;
+      };
+      api.current.cleanup = () => window.removeEventListener("tcg-board", onBoard);
     })();
     return () => {
       dead = true; cancelAnimationFrame(raf);
@@ -178,9 +202,10 @@ export default function TableScene({ mode = "menu", active = true, deck = null, 
       if (scene) { scene.traverse((o) => { if (o.isLight && o.shadow && o.shadow.map) o.shadow.map.dispose(); }); if (scene.environment) scene.environment.dispose(); }
       if (renderer) { renderer.dispose(); try { renderer.forceContextLoss(); } catch { /* sans objet */ } renderer.domElement.remove(); }
     };
-  }, [deckKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   if (!api.current) api.current = {};
   api.current.deck = deck;
+  useEffect(() => { const a = api.current; if (a.setDeck && a.built !== deckKey) a.setDeck(deck); }, [deckKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div ref={box} className={"t3d" + (mode === "title" ? " title" : "") + (active ? "" : " off")} aria-hidden="true">
